@@ -21,8 +21,7 @@ class SubtaskType(SubtaskTypeBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    class Config:
-        orm_mode = True
+    model_config = { "from_attributes": True }
 
 class StatusBase(BaseModel):
     status_name: str
@@ -43,8 +42,7 @@ class Status(StatusBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    class Config:
-        orm_mode = True
+    model_config = { "from_attributes": True }
 
 class MemberBase(BaseModel):
     member_name: str
@@ -63,8 +61,7 @@ class Member(MemberBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    class Config:
-        orm_mode = True
+    model_config = { "from_attributes": True }
 
 # --- Subtasks ---
 class SubtaskBase(BaseModel):
@@ -113,8 +110,7 @@ class Subtask(SubtaskBase):
     is_deleted: bool
     created_at: datetime
     updated_at: datetime
-    class Config:
-        orm_mode = True
+    model_config = { "from_attributes": True }
 
 # --- Tasks ---
 class TaskBase(BaseModel):
@@ -147,8 +143,7 @@ class Task(TaskBase):
     created_at: datetime
     updated_at: datetime
     subtasks: List[Subtask] = []
-    class Config:
-        orm_mode = True
+    model_config = { "from_attributes": True }
 
 class TaskWBS(Task):
     planned_effort_total: float = 0.0
@@ -184,8 +179,7 @@ class Project(ProjectBase):
     created_at: datetime
     updated_at: datetime
     tasks: List[Task] = []
-    class Config:
-        orm_mode = True
+    model_config = { "from_attributes": True }
 
 class ProjectWBS(Project):
     planned_effort_total: float = 0.0

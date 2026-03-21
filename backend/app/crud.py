@@ -98,10 +98,25 @@ def delete_subtask(db: Session, subtask_id: int):
 
 # --- WBS Aggregation ---
 def get_wbs_data(db: Session, project_ids: list[int] = None, include_removed: bool = False):
-    query = db.query(models.Project).filter(models.Project.is_deleted == False)
+    from sqlalchemy.orm import selectinload
+    
+    query = db.query(models.Project)
+    if not include_removed:
+        query = query.filter(models.Project.is_deleted == False)
+        
     if project_ids:
         query = query.filter(models.Project.id.in_(project_ids))
     
+    if not include_removed:
+        query = query.options(
+            selectinload(models.Project.tasks.and_(models.Task.is_deleted == False))
+            .selectinload(models.Task.subtasks.and_(models.Subtask.is_deleted == False))
+        )
+    else:
+        query = query.options(
+            selectinload(models.Project.tasks)
+            .selectinload(models.Task.subtasks)
+        )
+        
     projects = query.order_by(models.Project.sort_order).all()
-    # Eager loading could be done here, but simple return for now.
     return projects

@@ -1,5 +1,5 @@
 import { ChevronRight, ChevronDown, Plus, Trash2, Copy, FileText } from 'lucide-react';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { Project, Task, Subtask } from '../types/wbs';
 import { InitialData } from '../types';
 import { wbsOps } from '../api/wbsOperations';
@@ -39,6 +39,17 @@ export default function WBSTree({
   const toggleProject = (id: number) => setExpandedProjects(p => ({ ...p, [id]: !p[id] }));
   const toggleTask = (id: number) => setExpandedTasks(t => ({ ...t, [id]: !t[id] }));
 
+  const handleAddProject = useCallback(async () => {
+    await wbsOps.createProject('新しいプロジェクト');
+    onUpdate();
+  }, [onUpdate]);
+
+  useEffect(() => {
+    const handler = () => handleAddProject();
+    window.addEventListener('add-project', handler);
+    return () => window.removeEventListener('add-project', handler);
+  }, [handleAddProject]);
+
   // --- CRUD Operations ---
   const handleUpdate = async (type: 'project'|'task'|'subtask', id: number, field: string, value: any) => {
     try {
@@ -53,11 +64,6 @@ export default function WBSTree({
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleAddProject = async () => {
-    await wbsOps.createProject('新しいプロジェクト');
-    onUpdate();
   };
 
   const handleAddTask = async (projectId: number) => {
@@ -105,13 +111,12 @@ export default function WBSTree({
 
   return (
     <div className="flex flex-col h-full w-full bg-white border-r relative">
-      {/* Top action bar */}
-      <div className="p-2 border-b bg-gray-50 flex items-center justify-between">
-        <button onClick={handleAddProject} className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm font-medium">
-          <Plus size={16} /> 新規プロジェクト
-        </button>
-        {saving && <span className="text-xs text-blue-500 font-medium">Saving...</span>}
-      </div>
+      {/* WBSTree component starts directly below the global header */}
+      {saving && (
+        <div className="absolute top-0 right-4 z-50">
+           <span className="text-xs text-blue-500 font-medium">Saving...</span>
+        </div>
+      )}
 
       <div className="sticky top-0 z-10 flex border-b bg-gray-50 shadow-sm whitespace-nowrap min-w-max h-[33px]">
         <div className={`w-80 flex items-center ${commonHeaderClasses}`}>名称</div>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Settings, ListTree } from 'lucide-react';
+import { Settings, ListTree, Plus } from 'lucide-react';
 
 export default function Header() {
   return (
@@ -24,12 +24,19 @@ export default function Header() {
             <span className="text-sm font-medium">マスタ管理</span>
           </Link>
         </nav>
+
       </div>
       <div className="flex items-center gap-4">
         {/* 自動保存等ステータス表示用プレースホルダー */}
         <span className="text-xs text-gray-400 font-medium px-2 py-1 bg-gray-50 rounded border border-gray-100">
           Saved
         </span>
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent('add-project'))} 
+          className="ml-auto flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm font-medium"
+        >
+          <Plus size={16} /> 新規プロジェクト
+        </button>
       </div>
     </header>
   );
