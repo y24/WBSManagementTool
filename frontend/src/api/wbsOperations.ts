@@ -1,0 +1,30 @@
+import { apiClient } from './client';
+
+export const wbsOps = {
+  createProject: (projectName: string) => 
+    apiClient.post('/projects', { project_name: projectName }),
+    
+  createTask: (projectId: number, taskName: string) => 
+    apiClient.post('/tasks', { project_id: projectId, task_name: taskName }),
+    
+  createSubtask: (taskId: number, typeId: number, statusId: number) => 
+    apiClient.post('/subtasks', { task_id: taskId, subtask_type_id: typeId, status_id: statusId }),
+    
+  updateProject: (id: number, data: any) => 
+    apiClient.patch(`/projects/${id}`, data),
+    
+  updateTask: (id: number, data: any) => 
+    apiClient.patch(`/tasks/${id}`, data),
+    
+  updateSubtask: (id: number, data: any) => 
+    apiClient.patch(`/subtasks/${id}`, data),
+    
+  deleteProject: (id: number) => 
+    apiClient.delete(`/projects/${id}`),
+    
+  deleteTask: (id: number) => 
+    apiClient.delete(`/tasks/${id}`),
+    
+  deleteSubtask: (id: number) => 
+    apiClient.delete(`/subtasks/${id}`),
+};

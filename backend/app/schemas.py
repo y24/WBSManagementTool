@@ -1,0 +1,210 @@
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from datetime import date, datetime
+from decimal import Decimal
+
+# --- Masters ---
+class SubtaskTypeBase(BaseModel):
+    type_name: str
+    sort_order: int = 0
+    is_active: bool = True
+
+class SubtaskTypeCreate(SubtaskTypeBase):
+    pass
+
+class SubtaskTypeUpdate(BaseModel):
+    type_name: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class SubtaskType(SubtaskTypeBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    class Config:
+        orm_mode = True
+
+class StatusBase(BaseModel):
+    status_name: str
+    color_code: str
+    sort_order: int = 0
+    is_active: bool = True
+
+class StatusCreate(StatusBase):
+    pass
+
+class StatusUpdate(BaseModel):
+    status_name: Optional[str] = None
+    color_code: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class Status(StatusBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    class Config:
+        orm_mode = True
+
+class MemberBase(BaseModel):
+    member_name: str
+    sort_order: int = 0
+    is_active: bool = True
+
+class MemberCreate(MemberBase):
+    pass
+
+class MemberUpdate(BaseModel):
+    member_name: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class Member(MemberBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    class Config:
+        orm_mode = True
+
+# --- Subtasks ---
+class SubtaskBase(BaseModel):
+    subtask_detail: Optional[str] = None
+    progress_percent: Optional[int] = Field(None, ge=0, le=100)
+    planned_start_date: Optional[date] = None
+    planned_end_date: Optional[date] = None
+    actual_start_date: Optional[date] = None
+    actual_end_date: Optional[date] = None
+    planned_effort_days: Optional[Decimal] = None
+    actual_effort_days: Optional[Decimal] = None
+    review_days: Optional[Decimal] = None
+    ticket_id: Optional[int] = None
+    memo: Optional[str] = None
+    sort_order: int = 0
+
+class SubtaskCreate(SubtaskBase):
+    task_id: int
+    subtask_type_id: int
+    status_id: int
+    assignee_id: Optional[int] = None
+
+class SubtaskUpdate(BaseModel):
+    subtask_type_id: Optional[int] = None
+    status_id: Optional[int] = None
+    assignee_id: Optional[int] = None
+    subtask_detail: Optional[str] = None
+    progress_percent: Optional[int] = Field(None, ge=0, le=100)
+    planned_start_date: Optional[date] = None
+    planned_end_date: Optional[date] = None
+    actual_start_date: Optional[date] = None
+    actual_end_date: Optional[date] = None
+    planned_effort_days: Optional[Decimal] = None
+    actual_effort_days: Optional[Decimal] = None
+    review_days: Optional[Decimal] = None
+    ticket_id: Optional[int] = None
+    memo: Optional[str] = None
+    sort_order: Optional[int] = None
+
+class Subtask(SubtaskBase):
+    id: int
+    task_id: int
+    subtask_type_id: int
+    status_id: int
+    assignee_id: Optional[int]
+    is_deleted: bool
+    created_at: datetime
+    updated_at: datetime
+    class Config:
+        orm_mode = True
+
+# --- Tasks ---
+class TaskBase(BaseModel):
+    task_name: str
+    planned_start_date: Optional[date] = None
+    planned_end_date: Optional[date] = None
+    actual_start_date: Optional[date] = None
+    actual_end_date: Optional[date] = None
+    is_auto_planned_date: bool = False
+    is_auto_actual_date: bool = False
+    sort_order: int = 0
+
+class TaskCreate(TaskBase):
+    project_id: int
+
+class TaskUpdate(BaseModel):
+    task_name: Optional[str] = None
+    planned_start_date: Optional[date] = None
+    planned_end_date: Optional[date] = None
+    actual_start_date: Optional[date] = None
+    actual_end_date: Optional[date] = None
+    is_auto_planned_date: Optional[bool] = None
+    is_auto_actual_date: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+class Task(TaskBase):
+    id: int
+    project_id: int
+    is_deleted: bool
+    created_at: datetime
+    updated_at: datetime
+    subtasks: List[Subtask] = []
+    class Config:
+        orm_mode = True
+
+class TaskWBS(Task):
+    planned_effort_total: float = 0.0
+    actual_effort_total: float = 0.0
+
+# --- Projects ---
+class ProjectBase(BaseModel):
+    project_name: str
+    planned_start_date: Optional[date] = None
+    planned_end_date: Optional[date] = None
+    actual_start_date: Optional[date] = None
+    actual_end_date: Optional[date] = None
+    is_auto_planned_date: bool = False
+    is_auto_actual_date: bool = False
+    sort_order: int = 0
+
+class ProjectCreate(ProjectBase):
+    pass
+
+class ProjectUpdate(BaseModel):
+    project_name: Optional[str] = None
+    planned_start_date: Optional[date] = None
+    planned_end_date: Optional[date] = None
+    actual_start_date: Optional[date] = None
+    actual_end_date: Optional[date] = None
+    is_auto_planned_date: Optional[bool] = None
+    is_auto_actual_date: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+class Project(ProjectBase):
+    id: int
+    is_deleted: bool
+    created_at: datetime
+    updated_at: datetime
+    tasks: List[Task] = []
+    class Config:
+        orm_mode = True
+
+class ProjectWBS(Project):
+    planned_effort_total: float = 0.0
+    actual_effort_total: float = 0.0
+
+# --- Response Models ---
+class ReorderRequest(BaseModel):
+    ordered_ids: List[int]
+
+class SubtaskMoveRequest(BaseModel):
+    to_task_id: int
+    to_sort_order: int
+
+class GanttRange(BaseModel):
+    start_date: Optional[date]
+    end_date: Optional[date]
+    today: date
+
+class WBSResponse(BaseModel):
+    filters: dict
+    gantt_range: GanttRange
+    projects: List[ProjectWBS]

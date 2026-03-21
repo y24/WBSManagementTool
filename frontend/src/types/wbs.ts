@@ -1,0 +1,66 @@
+import { MasterBase, MstStatus, MstSubtaskType, MstMember } from './index';
+
+export interface Subtask {
+  id: number;
+  task_id: number;
+  subtask_type_id: number;
+  status_id: number;
+  assignee_id?: number | null;
+  subtask_detail?: string | null;
+  progress_percent?: number | null;
+  planned_start_date?: string | null;
+  planned_end_date?: string | null;
+  actual_start_date?: string | null;
+  actual_end_date?: string | null;
+  planned_effort_days?: number | null;
+  actual_effort_days?: number | null;
+  review_days?: number | null;
+  ticket_id?: number | null;
+  memo?: string | null;
+  sort_order: number;
+  is_deleted: boolean;
+  
+  // Relations mapped by backend (if needed, otherwise manually mapped from initial-data)
+  // For now we map using the masters
+}
+
+export interface Task {
+  id: number;
+  project_id: number;
+  task_name: string;
+  planned_start_date?: string | null;
+  planned_end_date?: string | null;
+  actual_start_date?: string | null;
+  actual_end_date?: string | null;
+  is_auto_planned_date: boolean;
+  is_auto_actual_date: boolean;
+  sort_order: number;
+  is_deleted: boolean;
+  subtasks: Subtask[];
+}
+
+export interface Project {
+  id: number;
+  project_name: string;
+  planned_start_date?: string | null;
+  planned_end_date?: string | null;
+  actual_start_date?: string | null;
+  actual_end_date?: string | null;
+  is_auto_planned_date: boolean;
+  is_auto_actual_date: boolean;
+  sort_order: number;
+  is_deleted: boolean;
+  tasks: Task[];
+}
+
+export interface GanttRange {
+  start_date: string;
+  end_date: string;
+  today: string;
+}
+
+export interface WBSResponse {
+  filters: any;
+  gantt_range: GanttRange;
+  projects: Project[];
+}
