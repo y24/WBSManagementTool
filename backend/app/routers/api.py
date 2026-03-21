@@ -103,10 +103,11 @@ def delete_subtask(subtask_id: int, db: Session = Depends(get_db)):
     return db_subtask
 
 # --- Masters ---
-@router.get("/initial-data")
+@router.get("/initial-data", response_model=schemas.InitialData)
 def get_initial_data(db: Session = Depends(get_db)):
     return {
         "statuses": crud.get_statuses(db),
         "subtask_types": crud.get_subtask_types(db),
-        "members": crud.get_members(db)
+        "members": crud.get_members(db),
+        "holidays": crud.get_holidays(db)
     }

@@ -21,6 +21,12 @@ def get_members(db: Session, include_inactive: bool = False):
         query = query.filter(models.MstMember.is_active == True)
     return query.order_by(models.MstMember.sort_order).all()
 
+def get_holidays(db: Session, include_inactive: bool = False):
+    query = db.query(models.MstHoliday)
+    if not include_inactive:
+        query = query.filter(models.MstHoliday.is_active == True)
+    return query.order_by(models.MstHoliday.holiday_date).all()
+
 # --- Projects ---
 def create_project(db: Session, project: schemas.ProjectCreate):
     db_project = models.Project(**project.dict())

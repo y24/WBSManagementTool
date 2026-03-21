@@ -24,6 +24,13 @@ export default function GanttChart({ projects, initialData, range, expandedProje
     }
   }, [scrollTop]);
 
+  // 休日判定ロジック
+  const isHoliday = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const holiday = initialData?.holidays.find(h => h.holiday_date === dateStr);
+    return !!holiday;
+  };
+
   const days = useMemo(() => {
     if (!range.start_date || !range.end_date) return [];
     try {
@@ -86,62 +93,71 @@ export default function GanttChart({ projects, initialData, range, expandedProje
 
   const commonRowClasses = "border-b h-[37px]"; // border-bを含めて、ツリー側の行高(約37px)に合わせる
 
+  const totalWidth = useMemo(() => days.length * CELL_WIDTH, [days]);
+
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-white">
-      {/* ヘッダー領域 */}
-      <div className="flex border-b shadow-sm sticky top-0 z-20 bg-gray-50 flex-shrink-0" style={{ height: '33px' }}>
-        {days.map(d => {
-          const isWeekend = getDay(d) === 0 || getDay(d) === 6;
-          return (
-            <div 
-              key={d.toISOString()} 
-              className={`flex-shrink-0 border-r border-gray-200 flex items-center justify-center text-[10px] ${isWeekend ? 'bg-red-50 text-red-400' : 'text-gray-500'}`}
-              style={{ width: `${CELL_WIDTH}px` }}
-            >
-              {format(d, 'd')}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* スクロール領域 (Ganttバー) */}
-      <div ref={containerRef} className="flex-1 overflow-auto relative">
-        {/* 背景の縦線 ＆ 今日線 */}
-        <div className="absolute inset-0 flex pointer-events-none z-0">
-          {days.map(d => {
-            const isWeekend = getDay(d) === 0 || getDay(d) === 6;
-            const today = isToday(d);
-            return (
-              <div 
-                key={`bg-${d.toISOString()}`} 
-                className={`flex-shrink-0 border-r border-gray-100 ${isWeekend ? 'bg-red-50/20' : ''} ${today ? 'border-r-red-400 border-r-2' : ''}`}
-                style={{ width: `${CELL_WIDTH}px` }}
-              />
-            );
-          })}
-        </div>
-
-        {/* 要素行の描画 (z-indexを使用して背景の上に配置) */}
-        <div className="relative z-10">
-          {projects.map(project => (
-            <div key={`p-${project.id}`}>
-              {/* Project Row */}
-              <div className={commonRowClasses}>{renderBar(project, false)}</div>
-
-              {expandedProjects[project.id] !== false && project.tasks.map(task => (
-                <div key={`t-${task.id}`}>
-                  {/* Task Row */}
-                  <div className={commonRowClasses}>{renderBar(task, false)}</div>
-
-                  {expandedTasks[task.id] !== false && task.subtasks.map(subtask => (
-                    <div key={`s-${subtask.id}`} className={`${commonRowClasses} bg-white hover:bg-black/5`}>
-                      {renderBar(subtask, true)}
-                    </div>
-                  ))}
+    <div className="h-full w-full overflow-hidden bg-white">
+      {/* スクロール領域 (Ganttバー & ヘッダー) */}
+      <div ref={containerRef} className="h-full overflow-auto relative">
+        <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
+          {/* ヘッダー領域 (垂直スクロールに追従するためsticky) */}
+          <div className="flex border-b shadow-sm sticky top-0 z-30 bg-gray-50 flex-shrink-0" style={{ height: '33px' }}>
+            {days.map(d => {
+              const isWeekend = getDay(d) === 0 || getDay(d) === 6;
+              const holidayFlag = isHoliday(d);
+              const holidayInfo = initialData?.holidays.find(h => h.holiday_date === format(d, 'yyyy-MM-dd'));
+              
+              return (
+                <div 
+                  key={d.toISOString()} 
+                  className={`flex-shrink-0 border-r border-gray-200 flex items-center justify-center text-[10px] ${isWeekend || holidayFlag ? 'bg-red-50 text-red-500' : 'text-gray-500'}`}
+                  style={{ width: `${CELL_WIDTH}px` }}
+                  title={holidayInfo?.holiday_name}
+                >
+                  {format(d, 'd')}
                 </div>
-              ))}
-            </div>
-          ))}
+              );
+            })}
+          </div>
+
+          {/* 背景の縦線 ＆ 今日線 (z-0) */}
+          <div className="absolute inset-0 flex pointer-events-none z-0">
+            {days.map(d => {
+              const isWeekend = getDay(d) === 0 || getDay(d) === 6;
+              const holidayFlag = isHoliday(d);
+              const today = isToday(d);
+              return (
+                <div 
+                  key={`bg-${d.toISOString()}`} 
+                  className={`flex-shrink-0 border-r border-gray-100 ${isWeekend || holidayFlag ? 'bg-red-50/20' : ''} ${today ? 'border-r-red-400 border-r-2' : ''}`}
+                  style={{ width: `${CELL_WIDTH}px` }}
+                />
+              );
+            })}
+          </div>
+
+          {/* 要素行の描画 (z-10) */}
+          <div className="relative z-10">
+            {projects.map(project => (
+              <div key={`p-${project.id}`}>
+                {/* Project Row */}
+                <div className={commonRowClasses}>{renderBar(project, false)}</div>
+
+                {expandedProjects[project.id] !== false && project.tasks.map(task => (
+                  <div key={`t-${task.id}`}>
+                    {/* Task Row */}
+                    <div className={commonRowClasses}>{renderBar(task, false)}</div>
+
+                    {expandedTasks[task.id] !== false && task.subtasks.map(subtask => (
+                      <div key={`s-${subtask.id}`} className={`${commonRowClasses} bg-white/0 hover:bg-black/5`}>
+                        {renderBar(subtask, true)}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

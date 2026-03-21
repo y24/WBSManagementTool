@@ -63,6 +63,21 @@ class Member(MemberBase):
     updated_at: datetime
     model_config = { "from_attributes": True }
 
+# --- Holiday ---
+class HolidayBase(BaseModel):
+    holiday_date: date
+    holiday_name: str
+    is_active: bool = True
+
+class HolidayCreate(HolidayBase):
+    pass
+
+class Holiday(HolidayBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    model_config = { "from_attributes": True }
+
 # --- Subtasks ---
 class SubtaskBase(BaseModel):
     subtask_detail: Optional[str] = None
@@ -205,3 +220,9 @@ class WBSResponse(BaseModel):
     filters: dict
     gantt_range: GanttRange
     projects: List[ProjectWBS]
+
+class InitialData(BaseModel):
+    statuses: List[Status]
+    subtask_types: List[SubtaskType]
+    members: List[Member]
+    holidays: List[Holiday]

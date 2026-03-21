@@ -19,8 +19,14 @@ export interface MstMember extends MasterBase {
   member_name: string;
 }
 
+export interface MstHoliday extends MasterBase {
+  holiday_date: string;
+  holiday_name: string;
+}
+
 export interface InitialData {
   statuses: MstStatus[];
   subtask_types: MstSubtaskType[];
   members: MstMember[];
+  holidays: MstHoliday[];
 }

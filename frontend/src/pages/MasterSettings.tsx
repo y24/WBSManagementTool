@@ -53,6 +53,17 @@ export default function MasterSettings() {
             ))}
           </ul>
         </section>
+
+        <section>
+          <h3 className="text-lg font-semibold mb-4 bg-gray-50 px-3 py-2 rounded">祝日一覧</h3>
+          <ul className="flex flex-wrap gap-2 text-sm text-gray-700">
+            {data?.holidays.map(h => (
+              <li key={h.id} className="px-3 py-1.5 border rounded-lg bg-orange-50 text-orange-800 font-medium">
+                {h.holiday_date}: {h.holiday_name}
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
     </div>
   );
