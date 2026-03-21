@@ -93,19 +93,62 @@ export default function WBSTree({
 
   const EditableInput = ({ value, onChange, type = "text", className = "" }: any) => {
     const [val, setVal] = useState(value || '');
+    const [isEditing, setIsEditing] = useState(false);
+
     useEffect(() => setVal(value || ''), [value]);
+
+    const formatDisplayDate = (dateStr: string) => {
+      if (!dateStr || type !== 'date') return dateStr;
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[1]}/${parts[2]}`; // MM/DD
+      }
+      return dateStr;
+    };
+
+    if (type === 'date' && !isEditing) {
+      return (
+        <div 
+          className={`w-full h-full flex items-center cursor-pointer hover:bg-gray-50 transition-colors ${className}`}
+          onClick={() => setIsEditing(true)}
+          title={value}
+        >
+          {value ? formatDisplayDate(value) : <span className="text-gray-300 text-[10px]">--/--</span>}
+        </div>
+      );
+    }
+
     return (
-      <input 
-        type={type}
-        className={`bg-transparent w-full h-full border-none outline-blue-400 px-1 ${className}`}
-        value={val}
-        onChange={(e) => setVal(e.target.value)}
-        onBlur={() => val !== (value||'') && onChange(val)}
-      />
+      <div className={type === 'date' ? "relative w-full h-full" : "w-full h-full"}>
+        <input 
+          type={type}
+          className={`
+            bg-white h-full border-none outline-blue-400 px-1 
+            ${type === 'date' 
+              ? 'absolute left-0 top-0 z-50 !w-[150px] !min-w-[150px] shadow-2xl border-2 border-blue-500 rounded-md' 
+              : 'w-full'
+            }
+            ${className}
+          `}
+          value={val}
+          autoFocus={isEditing}
+          onChange={(e) => setVal(e.target.value)}
+          onBlur={() => {
+            setIsEditing(false);
+            if (val !== (value || '')) onChange(val);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+        />
+      </div>
     );
   };
 
   const commonCellClasses = "px-2 py-1 text-sm border-r border-gray-200 truncate";
+  const dateCellClasses = "px-2 py-1 text-sm border-r border-gray-200 relative";
   const commonHeaderClasses = "px-2 py-2 text-xs font-semibold text-gray-600 border-r border-gray-200 bg-gray-50 uppercase tracking-wide";
   const commonRowClasses = "border-b hover:bg-gray-50 bg-white h-[37px]";
 
@@ -122,8 +165,10 @@ export default function WBSTree({
         <div className={`w-80 flex items-center ${commonHeaderClasses}`}>名称</div>
         <div className={`w-28 flex items-center ${commonHeaderClasses}`}>ステータス</div>
         <div className={`w-28 flex items-center ${commonHeaderClasses}`}>担当者</div>
-        <div className={`w-32 flex items-center ${commonHeaderClasses}`}>計画開始日</div>
-        <div className={`w-32 flex items-center ${commonHeaderClasses}`}>計画終了日</div>
+        <div className={`w-20 flex items-center ${commonHeaderClasses}`}>計画開始</div>
+        <div className={`w-20 flex items-center ${commonHeaderClasses}`}>計画終了</div>
+        <div className={`w-20 flex items-center ${commonHeaderClasses}`}>実績開始</div>
+        <div className={`w-20 flex items-center ${commonHeaderClasses}`}>実績終了</div>
         <div className={`w-16 flex items-center ${commonHeaderClasses}`}>進捗</div>
         <div className={`w-20 flex items-center justify-center ${commonHeaderClasses}`}>操作</div>
       </div>
@@ -141,8 +186,10 @@ export default function WBSTree({
                 </div>
                 <div className={`w-28 ${commonCellClasses}`}></div>
                 <div className={`w-28 ${commonCellClasses}`}></div>
-                <div className={`w-32 ${commonCellClasses}`}><EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_start_date', v)} /></div>
-                <div className={`w-32 ${commonCellClasses}`}><EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_end_date', v)} /></div>
+                <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_start_date', v)} /></div>
+                <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_end_date', v)} /></div>
+                <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={project.actual_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_start_date', v)} /></div>
+                <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={project.actual_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_end_date', v)} /></div>
                 <div className={`w-16 ${commonCellClasses}`}></div>
                 <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
                   <button onClick={() => handleAddTask(project.id)} className="text-gray-400 hover:text-blue-500" title="タスクを追加"><Plus size={14}/></button>
@@ -161,8 +208,10 @@ export default function WBSTree({
                     </div>
                     <div className={`w-28 ${commonCellClasses}`}></div>
                     <div className={`w-28 ${commonCellClasses}`}></div>
-                    <div className={`w-32 ${commonCellClasses}`}><EditableInput type="date" value={task.planned_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_start_date', v)} /></div>
-                    <div className={`w-32 ${commonCellClasses}`}><EditableInput type="date" value={task.planned_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_end_date', v)} /></div>
+                    <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={task.planned_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_start_date', v)} /></div>
+                    <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={task.planned_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_end_date', v)} /></div>
+                    <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={task.actual_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_start_date', v)} /></div>
+                    <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={task.actual_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_end_date', v)} /></div>
                     <div className={`w-16 ${commonCellClasses}`}></div>
                     <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
                       <button onClick={() => handleAddSubtask(task.id)} className="text-gray-400 hover:text-blue-500" title="サブタスクを追加"><Plus size={14}/></button>
@@ -197,8 +246,10 @@ export default function WBSTree({
                             {initialData?.members.map(m => <option key={m.id} value={m.id}>{m.member_name}</option>)}
                           </select>
                         </div>
-                        <div className={`w-32 ${commonCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'planned_start_date', v)} /></div>
-                        <div className={`w-32 ${commonCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'planned_end_date', v)} /></div>
+                        <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'planned_start_date', v)} /></div>
+                        <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'planned_end_date', v)} /></div>
+                        <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'actual_start_date', v)} /></div>
+                        <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'actual_end_date', v)} /></div>
                         <div className={`w-16 ${commonCellClasses}`}>
                           <EditableInput type="number" value={subtask.progress_percent} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'progress_percent', v ? Number(v) : null)} />
                         </div>

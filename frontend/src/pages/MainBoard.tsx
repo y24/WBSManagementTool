@@ -16,7 +16,7 @@ export default function MainBoard() {
   const [expandedTasks, setExpandedTasks] = useState<Record<number, boolean>>({});
 
   // レイアウトの幅調整
-  const [treeWidth, setTreeWidth] = useState(800);
+  const [treeWidth, setTreeWidth] = useState(1000);
   const [isResizing, setIsResizing] = useState(false);
 
   // ガントとツリーのスクロール同期
