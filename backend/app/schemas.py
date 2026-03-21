@@ -148,6 +148,7 @@ class Task(TaskBase):
 class TaskWBS(Task):
     planned_effort_total: float = 0.0
     actual_effort_total: float = 0.0
+    is_overlapping: bool = False
 
 # --- Projects ---
 class ProjectBase(BaseModel):
@@ -182,8 +183,10 @@ class Project(ProjectBase):
     model_config = { "from_attributes": True }
 
 class ProjectWBS(Project):
+    tasks: List[TaskWBS] = []
     planned_effort_total: float = 0.0
     actual_effort_total: float = 0.0
+    is_overlapping: bool = False
 
 # --- Response Models ---
 class ReorderRequest(BaseModel):

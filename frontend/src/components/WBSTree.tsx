@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronDown, Plus, Trash2, Copy, FileText } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Trash2, Copy, FileText, AlertTriangle, Calendar } from 'lucide-react';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { Project, Task, Subtask } from '../types/wbs';
 import { InitialData } from '../types';
@@ -94,8 +94,25 @@ export default function WBSTree({
   const EditableInput = ({ value, onChange, type = "text", className = "" }: any) => {
     const [val, setVal] = useState(value || '');
     const [isEditing, setIsEditing] = useState(false);
+    const isCommittingRef = useRef(false);
 
-    useEffect(() => setVal(value || ''), [value]);
+    useEffect(() => {
+      setVal(value || '');
+      if (!isEditing) {
+        isCommittingRef.current = false;
+      }
+    }, [value, isEditing]);
+
+    const handleCommit = useCallback((newVal: string) => {
+      if (!isEditing || isCommittingRef.current) return;
+      
+      const hasChanged = newVal !== (value || '');
+      if (hasChanged) {
+        isCommittingRef.current = true;
+        onChange(newVal);
+      }
+      setIsEditing(false);
+    }, [isEditing, value, onChange]);
 
     const formatDisplayDate = (dateStr: string) => {
       if (!dateStr || type !== 'date') return dateStr;
@@ -110,10 +127,13 @@ export default function WBSTree({
       return (
         <div 
           className={`w-full h-full flex items-center cursor-pointer hover:bg-gray-50 transition-colors ${className}`}
-          onClick={() => setIsEditing(true)}
-          title={value}
+          onClick={() => {
+            setIsEditing(true);
+            isCommittingRef.current = false;
+          }}
+          title={val}
         >
-          {value ? formatDisplayDate(value) : <span className="text-gray-300 text-[10px]">--/--</span>}
+          {val ? formatDisplayDate(val) : <span className="text-gray-300 text-[10px]">--/--</span>}
         </div>
       );
     }
@@ -125,21 +145,26 @@ export default function WBSTree({
           className={`
             bg-white h-full border-none outline-blue-400 px-1 
             ${type === 'date' 
-              ? 'absolute left-0 top-0 z-50 !w-[150px] !min-w-[150px] shadow-2xl border-2 border-blue-500 rounded-md' 
+              ? 'absolute left-0 top-0 z-50 !w-[120px] !min-w-[120px] shadow-xl border-2 border-blue-500 rounded-md' 
               : 'w-full'
             }
             ${className}
           `}
           value={val}
           autoFocus={isEditing}
-          onChange={(e) => setVal(e.target.value)}
-          onBlur={() => {
-            setIsEditing(false);
-            if (val !== (value || '')) onChange(val);
+          onChange={(e) => {
+            const newValue = e.target.value;
+            setVal(newValue);
+            if (type === 'date' && newValue !== (value || '')) {
+              handleCommit(newValue);
+            }
+          }}
+          onBlur={(e) => {
+            handleCommit(e.target.value);
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              (e.target as HTMLInputElement).blur();
+              handleCommit((e.target as HTMLInputElement).value);
             }
           }}
         />
@@ -183,13 +208,40 @@ export default function WBSTree({
                     {expandedProjects[project.id] === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                   </button>
                   <EditableInput value={project.project_name} onChange={(v: string) => handleUpdate('project', project.id, 'project_name', v)} className="font-semibold" />
+                  {project.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
                 </div>
                 <div className={`w-28 ${commonCellClasses}`}></div>
                 <div className={`w-28 ${commonCellClasses}`}></div>
-                <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_start_date', v)} /></div>
-                <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_end_date', v)} /></div>
-                <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={project.actual_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_start_date', v)} /></div>
-                <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={project.actual_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_end_date', v)} /></div>
+                <div className={`w-20 ${dateCellClasses}`}>
+                  <div className="flex items-center gap-1 group/date h-full">
+                    <EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_start_date', v)} />
+                    <button 
+                      onClick={() => handleUpdate('project', project.id, 'is_auto_planned_date', !project.is_auto_planned_date)}
+                      className={`p-0.5 rounded transition-colors ${project.is_auto_planned_date ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
+                      title="下位要素から自動計算"
+                    >
+                      <Calendar size={12} />
+                    </button>
+                  </div>
+                </div>
+                <div className={`w-20 ${dateCellClasses}`}>
+                   <EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_end_date', v)} />
+                </div>
+                <div className={`w-20 ${dateCellClasses}`}>
+                  <div className="flex items-center gap-1 group/date h-full">
+                    <EditableInput type="date" value={project.actual_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_start_date', v)} />
+                    <button 
+                      onClick={() => handleUpdate('project', project.id, 'is_auto_actual_date', !project.is_auto_actual_date)}
+                      className={`p-0.5 rounded transition-colors ${project.is_auto_actual_date ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
+                      title="下位要素から自動計算"
+                    >
+                      <Calendar size={12} />
+                    </button>
+                  </div>
+                </div>
+                <div className={`w-20 ${dateCellClasses}`}>
+                  <EditableInput type="date" value={project.actual_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_end_date', v)} />
+                </div>
                 <div className={`w-16 ${commonCellClasses}`}></div>
                 <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
                   <button onClick={() => handleAddTask(project.id)} className="text-gray-400 hover:text-blue-500" title="タスクを追加"><Plus size={14}/></button>
@@ -205,13 +257,40 @@ export default function WBSTree({
                         {expandedTasks[task.id] === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                       </button>
                       <EditableInput value={task.task_name} onChange={(v: string) => handleUpdate('task', task.id, 'task_name', v)} className="font-medium" />
+                      {task.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
                     </div>
                     <div className={`w-28 ${commonCellClasses}`}></div>
                     <div className={`w-28 ${commonCellClasses}`}></div>
-                    <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={task.planned_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_start_date', v)} /></div>
-                    <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={task.planned_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_end_date', v)} /></div>
-                    <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={task.actual_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_start_date', v)} /></div>
-                    <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={task.actual_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_end_date', v)} /></div>
+                    <div className={`w-20 ${dateCellClasses}`}>
+                      <div className="flex items-center gap-1 group/date h-full">
+                        <EditableInput type="date" value={task.planned_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_start_date', v)} />
+                        <button 
+                          onClick={() => handleUpdate('task', task.id, 'is_auto_planned_date', !task.is_auto_planned_date)}
+                          className={`p-0.5 rounded transition-colors ${task.is_auto_planned_date ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
+                          title="下位要素から自動計算"
+                        >
+                          <Calendar size={12} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className={`w-20 ${dateCellClasses}`}>
+                      <EditableInput type="date" value={task.planned_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_end_date', v)} />
+                    </div>
+                    <div className={`w-20 ${dateCellClasses}`}>
+                      <div className="flex items-center gap-1 group/date h-full">
+                        <EditableInput type="date" value={task.actual_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_start_date', v)} />
+                        <button 
+                          onClick={() => handleUpdate('task', task.id, 'is_auto_actual_date', !task.is_auto_actual_date)}
+                          className={`p-0.5 rounded transition-colors ${task.is_auto_actual_date ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
+                          title="下位要素から自動計算"
+                        >
+                          <Calendar size={12} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className={`w-20 ${dateCellClasses}`}>
+                      <EditableInput type="date" value={task.actual_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_end_date', v)} />
+                    </div>
                     <div className={`w-16 ${commonCellClasses}`}></div>
                     <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
                       <button onClick={() => handleAddSubtask(task.id)} className="text-gray-400 hover:text-blue-500" title="サブタスクを追加"><Plus size={14}/></button>

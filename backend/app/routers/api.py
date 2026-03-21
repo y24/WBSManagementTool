@@ -17,16 +17,30 @@ def read_wbs(
 ):
     projects = crud.get_wbs_data(db, project_ids, include_removed)
     
-    # In a real scenario, gantt_range should be calculated based on subtask dates.
+    # Dynamic gantt range calculation
     from datetime import date, timedelta
     today = date.today()
+    
+    all_dates = []
+    for p in projects:
+        if p.planned_start_date: all_dates.append(p.planned_start_date)
+        if p.planned_end_date: all_dates.append(p.planned_end_date)
+        if p.actual_start_date: all_dates.append(p.actual_start_date)
+        if p.actual_end_date: all_dates.append(p.actual_end_date)
+        
+    start_point = min(all_dates) if all_dates else today
+    end_point = max(all_dates) if all_dates else today
+    
+    # Add 1 week buffer before and after (or use defaults if no dates)
+    start_date = min(start_point - timedelta(days=7), today - timedelta(days=7))
+    target_end = max(end_point + timedelta(days=14), today + timedelta(days=weeks*7))
+    
     gantt_range = schemas.GanttRange(
-        start_date=today - timedelta(days=7),
-        end_date=today + timedelta(days=weeks*7),
+        start_date=start_date,
+        end_date=target_end,
         today=today
     )
     
-    # Mapping to response model
     return {
         "filters": {
             "project_ids": project_ids or [],

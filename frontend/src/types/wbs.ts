@@ -36,6 +36,7 @@ export interface Task {
   is_auto_actual_date: boolean;
   sort_order: number;
   is_deleted: boolean;
+  is_overlapping?: boolean;
   subtasks: Subtask[];
 }
 
@@ -50,6 +51,7 @@ export interface Project {
   is_auto_actual_date: boolean;
   sort_order: number;
   is_deleted: boolean;
+  is_overlapping?: boolean;
   tasks: Task[];
 }
 
