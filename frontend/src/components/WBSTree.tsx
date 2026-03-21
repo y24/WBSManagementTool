@@ -1,5 +1,6 @@
-import { ChevronRight, ChevronDown, Plus, Trash2, Copy, FileText, AlertTriangle, Calendar } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Trash2, Copy, FileText, AlertTriangle, Calendar, Pencil, X, Check } from 'lucide-react';
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Project, Task, Subtask } from '../types/wbs';
 import { InitialData } from '../types';
 import { wbsOps } from '../api/wbsOperations';
@@ -16,9 +17,9 @@ interface WBSTreeProps {
   syncScrollTop?: number;
 }
 
-export default function WBSTree({ 
-  projects, 
-  initialData, 
+export default function WBSTree({
+  projects,
+  initialData,
   onUpdate,
   expandedProjects,
   setExpandedProjects,
@@ -29,6 +30,9 @@ export default function WBSTree({
 }: WBSTreeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
+  const [editingSubtask, setEditingSubtask] = useState<Subtask | null>(null);
+  const [detailValue, setDetailValue] = useState('');
+  const detailInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (containerRef.current && syncScrollTop !== undefined) {
@@ -51,7 +55,7 @@ export default function WBSTree({
   }, [handleAddProject]);
 
   // --- CRUD Operations ---
-  const handleUpdate = async (type: 'project'|'task'|'subtask', id: number, field: string, value: any) => {
+  const handleUpdate = async (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => {
     try {
       setSaving(true);
       if (type === 'project') await wbsOps.updateProject(id, { [field]: value });
@@ -81,7 +85,7 @@ export default function WBSTree({
     onUpdate();
   };
 
-  const handleDelete = async (type: 'project'|'task'|'subtask', id: number) => {
+  const handleDelete = async (type: 'project' | 'task' | 'subtask', id: number) => {
     if (!window.confirm('削除してもよろしいですか？')) return;
     if (type === 'project') await wbsOps.deleteProject(id);
     else if (type === 'task') await wbsOps.deleteTask(id);
@@ -105,7 +109,7 @@ export default function WBSTree({
 
     const handleCommit = useCallback((newVal: string) => {
       if (!isEditing || isCommittingRef.current) return;
-      
+
       const hasChanged = newVal !== (value || '');
       if (hasChanged) {
         isCommittingRef.current = true;
@@ -125,7 +129,7 @@ export default function WBSTree({
 
     if (type === 'date' && !isEditing) {
       return (
-        <div 
+        <div
           className={`w-full h-full flex items-center cursor-pointer hover:bg-gray-50 transition-colors ${className}`}
           onClick={() => {
             setIsEditing(true);
@@ -140,12 +144,12 @@ export default function WBSTree({
 
     return (
       <div className={type === 'date' ? "relative w-full h-full" : "w-full h-full"}>
-        <input 
+        <input
           type={type}
           className={`
             bg-white h-full border-none outline-blue-400 px-1 
-            ${type === 'date' 
-              ? 'absolute left-0 top-0 z-50 !w-[120px] !min-w-[120px] shadow-xl border-2 border-blue-500 rounded-md' 
+            ${type === 'date'
+              ? 'absolute left-0 top-0 z-50 !w-[120px] !min-w-[120px] shadow-xl border-2 border-blue-500 rounded-md'
               : 'w-full'
             }
             ${className}
@@ -182,7 +186,7 @@ export default function WBSTree({
       {/* WBSTree component starts directly below the global header */}
       {saving && (
         <div className="absolute top-0 right-4 z-50">
-           <span className="text-xs text-blue-500 font-medium">Saving...</span>
+          <span className="text-xs text-blue-500 font-medium">Saving...</span>
         </div>
       )}
 
@@ -215,7 +219,7 @@ export default function WBSTree({
                 <div className={`w-20 ${dateCellClasses}`}>
                   <div className="flex items-center gap-1 group/date h-full">
                     <EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_start_date', v)} />
-                    <button 
+                    <button
                       onClick={() => handleUpdate('project', project.id, 'is_auto_planned_date', !project.is_auto_planned_date)}
                       className={`p-0.5 rounded transition-colors ${project.is_auto_planned_date ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
                       title="下位要素から自動計算"
@@ -225,12 +229,12 @@ export default function WBSTree({
                   </div>
                 </div>
                 <div className={`w-20 ${dateCellClasses}`}>
-                   <EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_end_date', v)} />
+                  <EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_end_date', v)} />
                 </div>
                 <div className={`w-20 ${dateCellClasses}`}>
                   <div className="flex items-center gap-1 group/date h-full">
                     <EditableInput type="date" value={project.actual_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_start_date', v)} />
-                    <button 
+                    <button
                       onClick={() => handleUpdate('project', project.id, 'is_auto_actual_date', !project.is_auto_actual_date)}
                       className={`p-0.5 rounded transition-colors ${project.is_auto_actual_date ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
                       title="下位要素から自動計算"
@@ -244,8 +248,8 @@ export default function WBSTree({
                 </div>
                 <div className={`w-16 ${commonCellClasses}`}></div>
                 <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
-                  <button onClick={() => handleAddTask(project.id)} className="text-gray-400 hover:text-blue-500" title="タスクを追加"><Plus size={14}/></button>
-                  <button onClick={() => handleDelete('project', project.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14}/></button>
+                  <button onClick={() => handleAddTask(project.id)} className="text-gray-400 hover:text-blue-500" title="タスクを追加"><Plus size={14} /></button>
+                  <button onClick={() => handleDelete('project', project.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
                 </div>
               </div>
 
@@ -264,7 +268,7 @@ export default function WBSTree({
                     <div className={`w-20 ${dateCellClasses}`}>
                       <div className="flex items-center gap-1 group/date h-full">
                         <EditableInput type="date" value={task.planned_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_start_date', v)} />
-                        <button 
+                        <button
                           onClick={() => handleUpdate('task', task.id, 'is_auto_planned_date', !task.is_auto_planned_date)}
                           className={`p-0.5 rounded transition-colors ${task.is_auto_planned_date ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
                           title="下位要素から自動計算"
@@ -279,7 +283,7 @@ export default function WBSTree({
                     <div className={`w-20 ${dateCellClasses}`}>
                       <div className="flex items-center gap-1 group/date h-full">
                         <EditableInput type="date" value={task.actual_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_start_date', v)} />
-                        <button 
+                        <button
                           onClick={() => handleUpdate('task', task.id, 'is_auto_actual_date', !task.is_auto_actual_date)}
                           className={`p-0.5 rounded transition-colors ${task.is_auto_actual_date ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
                           title="下位要素から自動計算"
@@ -293,8 +297,8 @@ export default function WBSTree({
                     </div>
                     <div className={`w-16 ${commonCellClasses}`}></div>
                     <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
-                      <button onClick={() => handleAddSubtask(task.id)} className="text-gray-400 hover:text-blue-500" title="サブタスクを追加"><Plus size={14}/></button>
-                      <button onClick={() => handleDelete('task', task.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14}/></button>
+                      <button onClick={() => handleAddSubtask(task.id)} className="text-gray-400 hover:text-blue-500" title="サブタスクを追加"><Plus size={14} /></button>
+                      <button onClick={() => handleDelete('task', task.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
                     </div>
                   </div>
 
@@ -303,10 +307,30 @@ export default function WBSTree({
                     return (
                       <div key={`s-${subtask.id}`} className={`flex group hover:bg-blue-50/30 ${commonRowClasses}`}>
                         <div className={`w-80 flex items-center gap-1 pl-12 text-gray-600 ${commonCellClasses}`}>
-                          <EditableInput value={subtask.subtask_detail} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'subtask_detail', v)} />
+                          <div className="flex items-center gap-1 flex-1 min-w-0">
+                            <select
+                              className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer hover:bg-gray-100/50 rounded px-1 -ml-1 transition-colors shrink-0"
+                              value={subtask.subtask_type_id}
+                              onChange={e => handleUpdate('subtask', subtask.id, 'subtask_type_id', Number(e.target.value))}
+                            >
+                              {initialData?.subtask_types.map(t => <option key={t.id} value={t.id}>{t.type_name}</option>)}
+                            </select>
+                            {subtask.subtask_detail && (
+                              <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail}>
+                                {subtask.subtask_detail}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
+                            className="text-gray-300 hover:text-blue-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                            title="詳細を編集"
+                          >
+                            <Pencil size={14} />
+                          </button>
                         </div>
                         <div className={`w-28 flex items-center ${commonCellClasses}`}>
-                          <select 
+                          <select
                             className="bg-transparent w-full outline-none text-xs font-semibold"
                             style={{ color: statusInfo?.color_code }}
                             value={subtask.status_id}
@@ -316,7 +340,7 @@ export default function WBSTree({
                           </select>
                         </div>
                         <div className={`w-28 flex items-center ${commonCellClasses}`}>
-                          <select 
+                          <select
                             className="bg-transparent w-full outline-none text-sm"
                             value={subtask.assignee_id || ''}
                             onChange={e => handleUpdate('subtask', subtask.id, 'assignee_id', e.target.value ? Number(e.target.value) : null)}
@@ -333,8 +357,14 @@ export default function WBSTree({
                           <EditableInput type="number" value={subtask.progress_percent} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'progress_percent', v ? Number(v) : null)} />
                         </div>
                         <div className={`w-20 flex gap-1 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${commonCellClasses}`}>
-                          <button className="text-gray-400 hover:text-blue-500" title="詳細"><FileText size={14}/></button>
-                          <button onClick={() => handleDelete('subtask', subtask.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14}/></button>
+                          <button
+                            onClick={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
+                            className="text-gray-400 hover:text-blue-500"
+                            title="詳細を編集"
+                          >
+                            <FileText size={14} />
+                          </button>
+                          <button onClick={() => handleDelete('subtask', subtask.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
                         </div>
                       </div>
                     );
@@ -351,6 +381,69 @@ export default function WBSTree({
           )}
         </div>
       </div>
+      {/* Detail Edit Modal */}
+      {editingSubtask && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50/50">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <Pencil size={18} className="text-blue-500" />
+                サブタスクの詳細
+              </h3>
+              <button
+                onClick={() => setEditingSubtask(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="mb-3 text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <div className="w-1 h-3 bg-blue-500 rounded-full"></div>
+                サブタスクの詳細 (1行)
+              </div>
+              <input
+                type="text"
+                className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 font-medium"
+                value={detailValue}
+                autoFocus
+                onChange={(e) => setDetailValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (editingSubtask) {
+                      handleUpdate('subtask', editingSubtask.id, 'subtask_detail', detailValue);
+                      setEditingSubtask(null);
+                    }
+                  }
+                }}
+                placeholder="詳細を入力してください..."
+              />
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t items-center">
+              <div className="flex-1 text-xs text-gray-400 italic">保存すると即座に反映されます</div>
+              <button
+                onClick={() => setEditingSubtask(null)}
+                className="px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-white hover:border-gray-200 border border-transparent rounded-lg transition-all"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={async () => {
+                  if (editingSubtask) {
+                    await handleUpdate('subtask', editingSubtask.id, 'subtask_detail', detailValue);
+                    setEditingSubtask(null);
+                  }
+                }}
+                className="flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-200 transition-all active:scale-95"
+              >
+                <Check size={16} />
+                保存する
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
