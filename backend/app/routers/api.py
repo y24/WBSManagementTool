@@ -68,6 +68,11 @@ def delete_project(project_id: int, db: Session = Depends(get_db)):
     if not db_proj: raise HTTPException(status_code=404, detail="Project not found")
     return db_proj
 
+@router.post("/projects/reorder")
+def reorder_projects(req: schemas.ReorderRequest, db: Session = Depends(get_db)):
+    crud.reorder_projects(db, req.ordered_ids)
+    return {"status": "ok"}
+
 # --- Tasks ---
 @router.post("/tasks", response_model=schemas.Task)
 def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
@@ -85,6 +90,11 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     if not db_task: raise HTTPException(status_code=404, detail="Task not found")
     return db_task
 
+@router.post("/tasks/reorder")
+def reorder_tasks(req: schemas.ReorderRequest, db: Session = Depends(get_db)):
+    crud.reorder_tasks(db, req.ordered_ids)
+    return {"status": "ok"}
+
 # --- Subtasks ---
 @router.post("/subtasks", response_model=schemas.Subtask)
 def create_subtask(subtask: schemas.SubtaskCreate, db: Session = Depends(get_db)):
@@ -101,6 +111,11 @@ def delete_subtask(subtask_id: int, db: Session = Depends(get_db)):
     db_subtask = crud.delete_subtask(db, subtask_id)
     if not db_subtask: raise HTTPException(status_code=404, detail="Subtask not found")
     return db_subtask
+
+@router.post("/subtasks/reorder")
+def reorder_subtasks(req: schemas.ReorderRequest, db: Session = Depends(get_db)):
+    crud.reorder_subtasks(db, req.ordered_ids)
+    return {"status": "ok"}
 
 # --- Masters ---
 @router.get("/initial-data", response_model=schemas.InitialData)

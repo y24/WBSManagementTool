@@ -27,4 +27,13 @@ export const wbsOps = {
     
   deleteSubtask: (id: number) => 
     apiClient.delete(`/subtasks/${id}`),
+    
+  reorderProjects: (orderedIds: number[]) =>
+    apiClient.post('/projects/reorder', { ordered_ids: orderedIds }),
+    
+  reorderTasks: (orderedIds: number[]) =>
+    apiClient.post('/tasks/reorder', { ordered_ids: orderedIds }),
+    
+  reorderSubtasks: (orderedIds: number[]) =>
+    apiClient.post('/subtasks/reorder', { ordered_ids: orderedIds }),
 };

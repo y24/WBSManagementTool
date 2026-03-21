@@ -1,6 +1,7 @@
-import { ChevronRight, ChevronDown, Plus, Trash2, Copy, FileText, AlertTriangle, Calendar, Pencil, X, Check } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Trash2, Copy, FileText, AlertTriangle, Calendar, Pencil, X, Check, GripVertical } from 'lucide-react';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Project, Task, Subtask } from '../types/wbs';
 import { InitialData } from '../types';
 import { wbsOps } from '../api/wbsOperations';
@@ -32,7 +33,6 @@ export default function WBSTree({
   const [saving, setSaving] = useState(false);
   const [editingSubtask, setEditingSubtask] = useState<Subtask | null>(null);
   const [detailValue, setDetailValue] = useState('');
-  const detailInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (containerRef.current && syncScrollTop !== undefined) {
@@ -91,6 +91,48 @@ export default function WBSTree({
     else if (type === 'task') await wbsOps.deleteTask(id);
     else await wbsOps.deleteSubtask(id);
     onUpdate();
+  };
+
+  const onDragEnd = async (result: DropResult) => {
+    const { destination, source, type } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    try {
+      setSaving(true);
+      if (type === 'PROJECT') {
+        const newProjects = Array.from(projects);
+        const [removed] = newProjects.splice(source.index, 1);
+        newProjects.splice(destination.index, 0, removed);
+        await wbsOps.reorderProjects(newProjects.map(p => p.id));
+      } else if (type === 'TASK') {
+        const projectId = parseInt(source.droppableId.split('-')[1]);
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+        const newTasks = Array.from(project.tasks);
+        const [removed] = newTasks.splice(source.index, 1);
+        newTasks.splice(destination.index, 0, removed);
+        await wbsOps.reorderTasks(newTasks.map(t => t.id));
+      } else if (type === 'SUBTASK') {
+        const taskId = parseInt(source.droppableId.split('-')[1]);
+        let targetTask: Task | undefined;
+        for (const p of projects) {
+          targetTask = p.tasks.find(t => t.id === taskId);
+          if (targetTask) break;
+        }
+        if (!targetTask) return;
+        const newSubtasks = Array.from(targetTask.subtasks);
+        const [removed] = newSubtasks.splice(source.index, 1);
+        newSubtasks.splice(destination.index, 0, removed);
+        await wbsOps.reorderSubtasks(newSubtasks.map(s => s.id));
+      }
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('並び替えの保存に失敗しました');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getStatus = (id: number) => initialData?.statuses.find(s => s.id === id);
@@ -183,7 +225,6 @@ export default function WBSTree({
 
   return (
     <div className="flex flex-col h-full w-full bg-white border-r relative">
-      {/* WBSTree component starts directly below the global header */}
       {saving && (
         <div className="absolute top-0 right-4 z-50">
           <span className="text-xs text-blue-500 font-medium">Saving...</span>
@@ -203,185 +244,231 @@ export default function WBSTree({
       </div>
 
       <div ref={containerRef} className="flex-1 w-full overflow-y-auto overflow-x-auto pb-32" onScroll={onScroll}>
-        <div className="min-w-max pb-16">
-          {projects.map(project => (
-            <div key={`p-${project.id}`}>
-              <div className={`flex bg-gray-100/50 ${commonRowClasses}`}>
-                <div className={`w-80 flex items-center gap-1 font-semibold text-gray-800 ${commonCellClasses}`}>
-                  <button onClick={() => toggleProject(project.id)} className="p-0.5 hover:bg-gray-200 rounded">
-                    {expandedProjects[project.id] === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                  </button>
-                  <EditableInput value={project.project_name} onChange={(v: string) => handleUpdate('project', project.id, 'project_name', v)} className="font-semibold" />
-                  {project.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
-                </div>
-                <div className={`w-28 ${commonCellClasses}`}></div>
-                <div className={`w-28 ${commonCellClasses}`}></div>
-                <div className={`w-20 ${dateCellClasses}`}>
-                  <div className="flex items-center gap-1 group/date h-full">
-                    <EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_start_date', v)} />
-                    <button
-                      onClick={() => handleUpdate('project', project.id, 'is_auto_planned_date', !project.is_auto_planned_date)}
-                      className={`p-0.5 rounded transition-colors ${project.is_auto_planned_date ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
-                      title="下位要素から自動計算"
-                    >
-                      <Calendar size={12} />
-                    </button>
-                  </div>
-                </div>
-                <div className={`w-20 ${dateCellClasses}`}>
-                  <EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_end_date', v)} />
-                </div>
-                <div className={`w-20 ${dateCellClasses}`}>
-                  <div className="flex items-center gap-1 group/date h-full">
-                    <EditableInput type="date" value={project.actual_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_start_date', v)} />
-                    <button
-                      onClick={() => handleUpdate('project', project.id, 'is_auto_actual_date', !project.is_auto_actual_date)}
-                      className={`p-0.5 rounded transition-colors ${project.is_auto_actual_date ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
-                      title="下位要素から自動計算"
-                    >
-                      <Calendar size={12} />
-                    </button>
-                  </div>
-                </div>
-                <div className={`w-20 ${dateCellClasses}`}>
-                  <EditableInput type="date" value={project.actual_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_end_date', v)} />
-                </div>
-                <div className={`w-16 ${commonCellClasses}`}></div>
-                <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
-                  <button onClick={() => handleAddTask(project.id)} className="text-gray-400 hover:text-blue-500" title="タスクを追加"><Plus size={14} /></button>
-                  <button onClick={() => handleDelete('project', project.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
-                </div>
-              </div>
-
-              {expandedProjects[project.id] !== false && project.tasks.map(task => (
-                <div key={`t-${task.id}`}>
-                  <div className={`flex ${commonRowClasses}`}>
-                    <div className={`w-80 flex items-center gap-1 font-medium pl-6 text-gray-700 ${commonCellClasses}`}>
-                      <button onClick={() => toggleTask(task.id)} className="p-0.5 hover:bg-gray-200 rounded">
-                        {expandedTasks[task.id] === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                      </button>
-                      <EditableInput value={task.task_name} onChange={(v: string) => handleUpdate('task', task.id, 'task_name', v)} className="font-medium" />
-                      {task.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
-                    </div>
-                    <div className={`w-28 ${commonCellClasses}`}></div>
-                    <div className={`w-28 ${commonCellClasses}`}></div>
-                    <div className={`w-20 ${dateCellClasses}`}>
-                      <div className="flex items-center gap-1 group/date h-full">
-                        <EditableInput type="date" value={task.planned_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_start_date', v)} />
-                        <button
-                          onClick={() => handleUpdate('task', task.id, 'is_auto_planned_date', !task.is_auto_planned_date)}
-                          className={`p-0.5 rounded transition-colors ${task.is_auto_planned_date ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
-                          title="下位要素から自動計算"
-                        >
-                          <Calendar size={12} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className={`w-20 ${dateCellClasses}`}>
-                      <EditableInput type="date" value={task.planned_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_end_date', v)} />
-                    </div>
-                    <div className={`w-20 ${dateCellClasses}`}>
-                      <div className="flex items-center gap-1 group/date h-full">
-                        <EditableInput type="date" value={task.actual_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_start_date', v)} />
-                        <button
-                          onClick={() => handleUpdate('task', task.id, 'is_auto_actual_date', !task.is_auto_actual_date)}
-                          className={`p-0.5 rounded transition-colors ${task.is_auto_actual_date ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
-                          title="下位要素から自動計算"
-                        >
-                          <Calendar size={12} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className={`w-20 ${dateCellClasses}`}>
-                      <EditableInput type="date" value={task.actual_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_end_date', v)} />
-                    </div>
-                    <div className={`w-16 ${commonCellClasses}`}></div>
-                    <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
-                      <button onClick={() => handleAddSubtask(task.id)} className="text-gray-400 hover:text-blue-500" title="サブタスクを追加"><Plus size={14} /></button>
-                      <button onClick={() => handleDelete('task', task.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
-                    </div>
-                  </div>
-
-                  {expandedTasks[task.id] !== false && task.subtasks.map(subtask => {
-                    const statusInfo = getStatus(subtask.status_id);
-                    return (
-                      <div key={`s-${subtask.id}`} className={`flex group hover:bg-blue-50/30 ${commonRowClasses}`}>
-                        <div className={`w-80 flex items-center gap-1 pl-12 text-gray-600 ${commonCellClasses}`}>
-                          <div className="flex items-center gap-1 flex-1 min-w-0">
-                            <select
-                              className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer hover:bg-gray-100/50 rounded px-1 -ml-1 transition-colors shrink-0"
-                              value={subtask.subtask_type_id}
-                              onChange={e => handleUpdate('subtask', subtask.id, 'subtask_type_id', Number(e.target.value))}
-                            >
-                              {initialData?.subtask_types.map(t => <option key={t.id} value={t.id}>{t.type_name}</option>)}
-                            </select>
-                            {subtask.subtask_detail && (
-                              <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail}>
-                                {subtask.subtask_detail}
-                              </span>
-                            )}
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="projects-root" type="PROJECT">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef} className="min-w-max pb-16">
+                {projects.map((project, pIndex) => (
+                  <Draggable key={`p-${project.id}`} draggableId={`p-${project.id}`} index={pIndex}>
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.draggableProps}>
+                        <div className={`flex bg-gray-100/50 ${commonRowClasses}`}>
+                          <div className={`w-80 flex items-center gap-1 font-semibold text-gray-800 ${commonCellClasses}`}>
+                            <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+                              <GripVertical size={14} />
+                            </div>
+                            <button onClick={() => toggleProject(project.id)} className="p-0.5 hover:bg-gray-200 rounded">
+                              {expandedProjects[project.id] === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                            <EditableInput value={project.project_name} onChange={(v: string) => handleUpdate('project', project.id, 'project_name', v)} className="font-semibold" />
+                            {project.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
                           </div>
-                          <button
-                            onClick={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
-                            className="text-gray-300 hover:text-blue-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                            title="詳細を編集"
-                          >
-                            <Pencil size={14} />
-                          </button>
+                          <div className={`w-28 ${commonCellClasses}`}></div>
+                          <div className={`w-28 ${commonCellClasses}`}></div>
+                          <div className={`w-20 ${dateCellClasses}`}>
+                            <div className="flex items-center gap-1 group/date h-full">
+                              <EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_start_date', v)} />
+                              <button
+                                onClick={() => handleUpdate('project', project.id, 'is_auto_planned_date', !project.is_auto_planned_date)}
+                                className={`p-0.5 rounded transition-colors ${project.is_auto_planned_date ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
+                                title="下位要素から自動計算"
+                              >
+                                <Calendar size={12} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className={`w-20 ${dateCellClasses}`}>
+                            <EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_end_date', v)} />
+                          </div>
+                          <div className={`w-20 ${dateCellClasses}`}>
+                            <div className="flex items-center gap-1 group/date h-full">
+                              <EditableInput type="date" value={project.actual_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_start_date', v)} />
+                              <button
+                                onClick={() => handleUpdate('project', project.id, 'is_auto_actual_date', !project.is_auto_actual_date)}
+                                className={`p-0.5 rounded transition-colors ${project.is_auto_actual_date ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
+                                title="下位要素から自動計算"
+                              >
+                                <Calendar size={12} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className={`w-20 ${dateCellClasses}`}>
+                            <EditableInput type="date" value={project.actual_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_end_date', v)} />
+                          </div>
+                          <div className={`w-16 ${commonCellClasses}`}></div>
+                          <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
+                            <button onClick={() => handleAddTask(project.id)} className="text-gray-400 hover:text-blue-500" title="タスクを追加"><Plus size={14} /></button>
+                            <button onClick={() => handleDelete('project', project.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
+                          </div>
                         </div>
-                        <div className={`w-28 flex items-center ${commonCellClasses}`}>
-                          <select
-                            className="bg-transparent w-full outline-none text-xs font-semibold"
-                            style={{ color: statusInfo?.color_code }}
-                            value={subtask.status_id}
-                            onChange={e => handleUpdate('subtask', subtask.id, 'status_id', Number(e.target.value))}
-                          >
-                            {initialData?.statuses.map(s => <option key={s.id} value={s.id}>{s.status_name}</option>)}
-                          </select>
-                        </div>
-                        <div className={`w-28 flex items-center ${commonCellClasses}`}>
-                          <select
-                            className="bg-transparent w-full outline-none text-sm"
-                            value={subtask.assignee_id || ''}
-                            onChange={e => handleUpdate('subtask', subtask.id, 'assignee_id', e.target.value ? Number(e.target.value) : null)}
-                          >
-                            <option value="">未設定</option>
-                            {initialData?.members.map(m => <option key={m.id} value={m.id}>{m.member_name}</option>)}
-                          </select>
-                        </div>
-                        <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'planned_start_date', v)} /></div>
-                        <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'planned_end_date', v)} /></div>
-                        <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'actual_start_date', v)} /></div>
-                        <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'actual_end_date', v)} /></div>
-                        <div className={`w-16 ${commonCellClasses}`}>
-                          <EditableInput type="number" value={subtask.progress_percent} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'progress_percent', v ? Number(v) : null)} />
-                        </div>
-                        <div className={`w-20 flex gap-1 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${commonCellClasses}`}>
-                          <button
-                            onClick={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
-                            className="text-gray-400 hover:text-blue-500"
-                            title="詳細を編集"
-                          >
-                            <FileText size={14} />
-                          </button>
-                          <button onClick={() => handleDelete('subtask', subtask.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          ))}
 
-          {projects.length === 0 && (
-            <div className="p-8 text-center text-gray-500 w-full col-span-full">
-              上部のボタンからプロジェクトを追加してください。
-            </div>
-          )}
-        </div>
+                        {expandedProjects[project.id] !== false && (
+                          <Droppable droppableId={`project-${project.id}`} type="TASK">
+                            {(provided) => (
+                              <div {...provided.droppableProps} ref={provided.innerRef}>
+                                {project.tasks.map((task, tIndex) => (
+                                  <Draggable key={`t-${task.id}`} draggableId={`t-${task.id}`} index={tIndex}>
+                                    {(provided) => (
+                                      <div ref={provided.innerRef} {...provided.draggableProps}>
+                                        <div className={`flex ${commonRowClasses}`}>
+                                          <div className={`w-80 flex items-center gap-1 font-medium pl-6 text-gray-700 ${commonCellClasses}`}>
+                                            <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
+                                              <GripVertical size={14} />
+                                            </div>
+                                            <button onClick={() => toggleTask(task.id)} className="p-0.5 hover:bg-gray-200 rounded">
+                                              {expandedTasks[task.id] === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                                            </button>
+                                            <EditableInput value={task.task_name} onChange={(v: string) => handleUpdate('task', task.id, 'task_name', v)} className="font-medium" />
+                                            {task.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
+                                          </div>
+                                          <div className={`w-28 ${commonCellClasses}`}></div>
+                                          <div className={`w-28 ${commonCellClasses}`}></div>
+                                          <div className={`w-20 ${dateCellClasses}`}>
+                                            <div className="flex items-center gap-1 group/date h-full">
+                                              <EditableInput type="date" value={task.planned_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_start_date', v)} />
+                                              <button
+                                                onClick={() => handleUpdate('task', task.id, 'is_auto_planned_date', !task.is_auto_planned_date)}
+                                                className={`p-0.5 rounded transition-colors ${task.is_auto_planned_date ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
+                                                title="下位要素から自動計算"
+                                              >
+                                                <Calendar size={12} />
+                                              </button>
+                                            </div>
+                                          </div>
+                                          <div className={`w-20 ${dateCellClasses}`}>
+                                            <EditableInput type="date" value={task.planned_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_end_date', v)} />
+                                          </div>
+                                          <div className={`w-20 ${dateCellClasses}`}>
+                                            <div className="flex items-center gap-1 group/date h-full">
+                                              <EditableInput type="date" value={task.actual_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_start_date', v)} />
+                                              <button
+                                                onClick={() => handleUpdate('task', task.id, 'is_auto_actual_date', !task.is_auto_actual_date)}
+                                                className={`p-0.5 rounded transition-colors ${task.is_auto_actual_date ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
+                                                title="下位要素から自動計算"
+                                              >
+                                                <Calendar size={12} />
+                                              </button>
+                                            </div>
+                                          </div>
+                                          <div className={`w-20 ${dateCellClasses}`}>
+                                            <EditableInput type="date" value={task.actual_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_end_date', v)} />
+                                          </div>
+                                          <div className={`w-16 ${commonCellClasses}`}></div>
+                                          <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
+                                            <button onClick={() => handleAddSubtask(task.id)} className="text-gray-400 hover:text-blue-500" title="サブタスクを追加"><Plus size={14} /></button>
+                                            <button onClick={() => handleDelete('task', task.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
+                                          </div>
+                                        </div>
+
+                                        {expandedTasks[task.id] !== false && (
+                                          <Droppable droppableId={`task-${task.id}`} type="SUBTASK">
+                                            {(provided) => (
+                                              <div {...provided.droppableProps} ref={provided.innerRef}>
+                                                {task.subtasks.map((subtask, sIndex) => {
+                                                  const statusInfo = getStatus(subtask.status_id);
+                                                  return (
+                                                    <Draggable key={`s-${subtask.id}`} draggableId={`s-${subtask.id}`} index={sIndex}>
+                                                      {(provided) => (
+                                                        <div ref={provided.innerRef} {...provided.draggableProps} className={`flex group hover:bg-blue-50/30 ${commonRowClasses}`}>
+                                                          <div className={`w-80 flex items-center gap-1 pl-12 text-gray-600 ${commonCellClasses}`}>
+                                                            <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
+                                                              <GripVertical size={14} />
+                                                            </div>
+                                                            <div className="flex items-center gap-1 flex-1 min-w-0">
+                                                              <select
+                                                                className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer hover:bg-gray-100/50 rounded px-1 -ml-1 transition-colors shrink-0"
+                                                                value={subtask.subtask_type_id}
+                                                                onChange={e => handleUpdate('subtask', subtask.id, 'subtask_type_id', Number(e.target.value))}
+                                                              >
+                                                                {initialData?.subtask_types.map(t => <option key={t.id} value={t.id}>{t.type_name}</option>)}
+                                                              </select>
+                                                              {subtask.subtask_detail && (
+                                                                <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail}>
+                                                                  {subtask.subtask_detail}
+                                                                </span>
+                                                              )}
+                                                            </div>
+                                                            <button
+                                                              onClick={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
+                                                              className="text-gray-300 hover:text-blue-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                                              title="詳細を編集"
+                                                            >
+                                                              <Pencil size={14} />
+                                                            </button>
+                                                          </div>
+                                                          <div className={`w-28 flex items-center ${commonCellClasses}`}>
+                                                            <select
+                                                              className="bg-transparent w-full outline-none text-xs font-semibold"
+                                                              style={{ color: statusInfo?.color_code }}
+                                                              value={subtask.status_id}
+                                                              onChange={e => handleUpdate('subtask', subtask.id, 'status_id', Number(e.target.value))}
+                                                            >
+                                                              {initialData?.statuses.map(s => <option key={s.id} value={s.id}>{s.status_name}</option>)}
+                                                            </select>
+                                                          </div>
+                                                          <div className={`w-28 flex items-center ${commonCellClasses}`}>
+                                                            <select
+                                                              className="bg-transparent w-full outline-none text-sm"
+                                                              value={subtask.assignee_id || ''}
+                                                              onChange={e => handleUpdate('subtask', subtask.id, 'assignee_id', e.target.value ? Number(e.target.value) : null)}
+                                                            >
+                                                              <option value="">未設定</option>
+                                                              {initialData?.members.map(m => <option key={m.id} value={m.id}>{m.member_name}</option>)}
+                                                            </select>
+                                                          </div>
+                                                          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'planned_start_date', v)} /></div>
+                                                          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'planned_end_date', v)} /></div>
+                                                          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'actual_start_date', v)} /></div>
+                                                          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'actual_end_date', v)} /></div>
+                                                          <div className={`w-16 ${commonCellClasses}`}>
+                                                            <EditableInput type="number" value={subtask.progress_percent} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'progress_percent', v ? Number(v) : null)} />
+                                                          </div>
+                                                          <div className={`w-20 flex gap-1 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${commonCellClasses}`}>
+                                                            <button
+                                                              onClick={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
+                                                              className="text-gray-400 hover:text-blue-500"
+                                                              title="詳細を編集"
+                                                            >
+                                                              <FileText size={14} />
+                                                            </button>
+                                                            <button onClick={() => handleDelete('subtask', subtask.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
+                                                          </div>
+                                                        </div>
+                                                      )}
+                                                    </Draggable>
+                                                  );
+                                                })}
+                                                {provided.placeholder}
+                                              </div>
+                                            )}
+                                          </Droppable>
+                                        )}
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                ))}
+                                {provided.placeholder}
+                              </div>
+                            )}
+                          </Droppable>
+                        )}
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+
+        {projects.length === 0 && (
+          <div className="p-8 text-center text-gray-500 w-full col-span-full">
+            上部のボタンからプロジェクトを追加してください。
+          </div>
+        )}
       </div>
-      {/* Detail Edit Modal */}
+
       {editingSubtask && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">

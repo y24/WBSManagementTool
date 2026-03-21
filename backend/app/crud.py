@@ -288,3 +288,28 @@ def check_overlap(periods: list[tuple[date, date]]) -> bool:
         if sorted_periods[i][1] > sorted_periods[i+1][0]:
             return True
     return False
+# --- Reordering ---
+
+def reorder_projects(db: Session, ordered_ids: list[int]):
+    for i, id in enumerate(ordered_ids):
+        project = db.query(models.Project).filter(models.Project.id == id).first()
+        if project:
+            project.sort_order = i
+    db.commit()
+    return True
+
+def reorder_tasks(db: Session, ordered_ids: list[int]):
+    for i, id in enumerate(ordered_ids):
+        task = db.query(models.Task).filter(models.Task.id == id).first()
+        if task:
+            task.sort_order = i
+    db.commit()
+    return True
+
+def reorder_subtasks(db: Session, ordered_ids: list[int]):
+    for i, id in enumerate(ordered_ids):
+        subtask = db.query(models.Subtask).filter(models.Subtask.id == id).first()
+        if subtask:
+            subtask.sort_order = i
+    db.commit()
+    return True
