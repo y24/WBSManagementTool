@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Calendar } from 'lucide-react';
 import { formatDateForInput, parseDateFromInput, formatDisplayDate } from './utils';
 
-const EditableInput = memo(({ value, onChange, type = "text", className = "" }: any) => {
+const EditableInput = memo(({ value, onChange, type = "text", className = "", min, max, suffix }: any) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const isCommittingRef = useRef(false);
@@ -10,7 +10,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "" }: 
 
   useEffect(() => {
     if (!isEditing) {
-      setVal(type === 'date' ? formatDateForInput(value) : (value || ''));
+      setVal(type === 'date' ? formatDateForInput(value) : (value != null ? String(value) : ''));
       isCommittingRef.current = false;
     }
   }, [value, isEditing, type]);
@@ -18,7 +18,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "" }: 
   const handleCommit = useCallback((newVal: string) => {
     if (!isEditing || isCommittingRef.current) return;
 
-    let valueToSave = newVal;
+    let valueToSave: any = newVal;
     if (type === 'date') {
       if (newVal === '') {
         valueToSave = '';
@@ -32,27 +32,56 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "" }: 
           return;
         }
       }
+    } else if (type === 'number') {
+      if (newVal === '') {
+        valueToSave = null;
+      } else {
+        let numVal = Number(newVal);
+        if (isNaN(numVal)) {
+          setVal(value != null ? String(value) : '');
+          setIsEditing(false);
+          return;
+        }
+        // Validate min/max
+        if (min !== undefined && numVal < min) numVal = min;
+        if (max !== undefined && numVal > max) numVal = max;
+        valueToSave = numVal;
+      }
     }
 
-    const hasChanged = valueToSave !== (value || '');
+    const currentValAsString = type === 'date' ? (value || '') : (value != null ? String(value) : '');
+    const newValAsString = type === 'number' && valueToSave != null ? String(valueToSave) : String(valueToSave || '');
+
+    const hasChanged = newValAsString !== currentValAsString;
+    
     if (hasChanged) {
       isCommittingRef.current = true;
       onChange(valueToSave);
     }
     setIsEditing(false);
-  }, [isEditing, value, onChange, type]);
+  }, [isEditing, value, onChange, type, min, max]);
 
-  if (type === 'date' && !isEditing) {
+  const displayValue = () => {
+    if (type === 'date') {
+      return value ? formatDisplayDate(value, type) : <span className="text-gray-300 text-[10px]">--/--</span>;
+    }
+    if (value == null || value === '') {
+      return <span className="text-gray-300 text-[10px]">-</span>;
+    }
+    return `${value}${suffix || ''}`;
+  };
+
+  if (!isEditing) {
     return (
       <div
-        className={`w-full h-full flex items-center cursor-pointer hover:bg-black/5 transition-colors ${className}`}
+        className={`w-full h-full flex items-center cursor-pointer hover:bg-black/5 transition-colors overflow-hidden truncate px-1 ${className}`}
         onClick={() => {
           setIsEditing(true);
           isCommittingRef.current = false;
         }}
-        title={value ? formatDateForInput(value) : "未入力"}
+        title={type === 'date' && value ? formatDateForInput(value) : String(value || "未入力")}
       >
-        {value ? formatDisplayDate(value, type) : <span className="text-gray-300 text-[10px]">--/--</span>}
+        {displayValue()}
       </div>
     );
   }
@@ -100,7 +129,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "" }: 
       ) : (
         <input
           type={type === 'date' ? "text" : type}
-          className={`bg-transparent h-full border-none outline-blue-400 px-1 focus:bg-white/50 w-full ${className}`}
+          className={`bg-white h-full border-2 border-blue-400 outline-none px-1 w-full shadow-sm rounded ${className}`}
           value={val}
           autoFocus={isEditing}
           onFocus={(e) => e.target.select()}
@@ -108,11 +137,13 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "" }: 
           onBlur={(e) => handleCommit(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleCommit((e.target as HTMLInputElement).value);
-            else if (e.key === 'Escape' && type === 'date') {
-              setVal(formatDateForInput(value));
+            else if (e.key === 'Escape') {
+              setVal(type === 'date' ? formatDateForInput(value) : (value != null ? String(value) : ''));
               setIsEditing(false);
             }
           }}
+          min={min}
+          max={max}
         />
       )}
 

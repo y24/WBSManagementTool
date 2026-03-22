@@ -167,9 +167,19 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const handleUpdate = useCallback(async (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => {
     try {
       setSaving(true);
-      if (type === 'project') await wbsOps.updateProject(id, { [field]: value });
-      else if (type === 'task') await wbsOps.updateTask(id, { [field]: value });
-      else await wbsOps.updateSubtask(id, { [field]: value });
+      const updates: any = { [field]: value };
+
+      // Side effect: If status changed to Done, set progress to 100%
+      if (type === 'subtask' && field === 'status_id' && initialData) {
+        const doneStatus = initialData.statuses.find(s => s.status_name === 'Done');
+        if (doneStatus && value === doneStatus.id) {
+          updates.progress_percent = 100;
+        }
+      }
+
+      if (type === 'project') await wbsOps.updateProject(id, updates);
+      else if (type === 'task') await wbsOps.updateTask(id, updates);
+      else await wbsOps.updateSubtask(id, updates);
       onUpdate();
     } catch (err) {
       console.error(err);
@@ -177,7 +187,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     } finally {
       setSaving(false);
     }
-  }, [onUpdate]);
+  }, [onUpdate, initialData]);
 
   const handleAddTask = useCallback(async (projectId: number) => {
     await wbsOps.createTask(projectId, '新しいタスク');

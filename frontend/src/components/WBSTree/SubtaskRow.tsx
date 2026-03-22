@@ -96,7 +96,14 @@ const SubtaskRow = memo(({
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v) } /></div>
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v) } /></div>
       <div className={`w-16 ${commonCellClasses}`}>
-        <EditableInput type="number" value={subtask.progress_percent} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'progress_percent', v ? Number(v) : null)} />
+        <EditableInput 
+          type="number" 
+          value={subtask.progress_percent} 
+          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'progress_percent', v)} 
+          min={0} 
+          max={100} 
+          suffix="%"
+        />
       </div>
     </div>
   );
