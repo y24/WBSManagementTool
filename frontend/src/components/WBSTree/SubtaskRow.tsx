@@ -81,7 +81,10 @@ const SubtaskRow = memo(({
       <div className={`w-28 flex items-center ${commonCellClasses}`}>
         <PortalSelect
           value={subtask.assignee_id}
-          options={initialData?.members.map(m => ({ id: m.id, name: m.member_name })) || []}
+          options={[
+            { id: null, name: '未設定' },
+            ...(initialData?.members.map(m => ({ id: m.id, name: m.member_name })) || [])
+          ]}
           onChange={v => onUpdateField('subtask', subtask.id, 'assignee_id', v)}
           className="w-full text-sm"
           placeholder="未設定"

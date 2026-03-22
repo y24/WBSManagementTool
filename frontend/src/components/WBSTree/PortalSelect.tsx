@@ -88,7 +88,7 @@ const PortalSelect = memo(({
           <div className="max-h-60 overflow-y-auto overscroll-contain">
             {options.map((opt) => (
               <button
-                key={opt.id}
+                key={opt.id ?? 'null'}
                 className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left ${opt.id === value ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-900'}`}
                 onClick={(e) => {
                   e.stopPropagation();
