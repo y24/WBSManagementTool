@@ -39,7 +39,7 @@ python -m venv venv
 .\venv\Scripts\activate
 
 # 必要なライブラリのインストール
-pip install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings
+pip install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings httpx
 
 # DBの作成（wbs_dbを自動作成します）
 python setup_db.py
