@@ -1,14 +1,20 @@
+import os
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import sys
+from dotenv import load_dotenv
+
+# .envファイルを読み込む
+load_dotenv()
 
 # データベース設定
-DB_HOST = "localhost"
-DB_PORT = "5432"
-DB_USER = "postgres"
-DB_PASS = "admin"
-DB_NAME = "wbs_db"
-MAINTENANCE_DB = "postgres"  # DB作成のために接続するデフォルトDB
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASS = os.getenv("DB_PASS", "admin")
+DB_NAME = os.getenv("DB_NAME", "wbs_db")
+MAINTENANCE_DB = os.getenv("MAINTENANCE_DB", "postgres")  # DB作成のために接続するデフォルトDB
+
 
 def create_database():
     print(f"PostgreSQLサーバー ({DB_HOST}:{DB_PORT}) に接続しています...")
