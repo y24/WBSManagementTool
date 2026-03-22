@@ -16,6 +16,7 @@ export default function MainBoard() {
     projectIds: [],
     statusIds: [],
     assigneeIds: [],
+    subtaskTypeIds: [],
     onlyDelayed: false,
     searchTerm: '',
     showRemoved: false,
@@ -67,6 +68,7 @@ export default function MainBoard() {
     
     const hasConditions = filters.statusIds.length > 0 || 
                           filters.assigneeIds.length > 0 || 
+                          filters.subtaskTypeIds.length > 0 ||
                           filters.onlyDelayed || 
                           filters.searchTerm !== '';
 
@@ -101,6 +103,8 @@ export default function MainBoard() {
             if (filters.statusIds.length > 0 && !filters.statusIds.includes(subtask.status_id)) return false;
             // 担当者
             if (filters.assigneeIds.length > 0 && (!subtask.assignee_id || !filters.assigneeIds.includes(subtask.assignee_id))) return false;
+            // サブタスク種別
+            if (filters.subtaskTypeIds.length > 0 && !filters.subtaskTypeIds.includes(subtask.subtask_type_id)) return false;
             // 遅延
             if (filters.onlyDelayed) {
               const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
@@ -120,6 +124,11 @@ export default function MainBoard() {
 
           // タスク自体の判定
           const taskMatches = (() => {
+            // タスクに種別はないため、サブタスク種別フィルタが効いている場合はタスク単体でのマッチは（サブタスクがない限り）しないようにする
+            // ただし、タスク自体をどう扱うかは要件次第。ここでは「サブタスク種別が選択されている＝サブタスクを対象としたフィルタ」と解釈し、
+            // タスク単体ではマッチしないようにする。
+            if (filters.subtaskTypeIds.length > 0) return false;
+
             if (filters.statusIds.length > 0 && task.status_id && !filters.statusIds.includes(task.status_id)) return false;
             if (filters.assigneeIds.length > 0 && task.assignee_id && !filters.assigneeIds.includes(task.assignee_id)) return false;
             if (filters.onlyDelayed) {
@@ -211,10 +220,12 @@ export default function MainBoard() {
         projects={data?.projects || []}
         statuses={initialData?.statuses || []}
         members={initialData?.members || []}
+        subtaskTypes={initialData?.subtask_types || []}
         onClear={() => setFilters({
           projectIds: [],
           statusIds: [],
           assigneeIds: [],
+          subtaskTypeIds: [],
           onlyDelayed: false,
           searchTerm: '',
           showRemoved: false,

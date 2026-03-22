@@ -1,13 +1,14 @@
 import React from 'react';
 import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw } from 'lucide-react';
 import MultiSelect from './MultiSelect';
-import { MstStatus, MstMember } from '../types';
+import { MstStatus, MstMember, MstSubtaskType } from '../types';
 import { Project } from '../types/wbs';
 
 export interface FilterState {
   projectIds: number[];
   statusIds: number[];
   assigneeIds: number[];
+  subtaskTypeIds: number[];
   onlyDelayed: boolean;
   searchTerm: string;
   showRemoved: boolean;
@@ -20,6 +21,7 @@ interface FilterPanelProps {
   projects: Project[];
   statuses: MstStatus[];
   members: MstMember[];
+  subtaskTypes: MstSubtaskType[];
   onClear: () => void;
 }
 
@@ -29,11 +31,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   projects,
   statuses,
   members,
+  subtaskTypes,
   onClear
 }) => {
   const isFiltered = filters.projectIds.length > 0 ||
     filters.statusIds.length > 0 ||
     filters.assigneeIds.length > 0 ||
+    filters.subtaskTypeIds.length > 0 ||
     filters.onlyDelayed ||
     filters.searchTerm !== '' ||
     filters.showRemoved ||
@@ -73,6 +77,16 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           onChange={(ids) => setFilters(prev => ({ ...prev, assigneeIds: ids as number[] }))}
           placeholder="担当者を選択"
           dropdownTitle="担当者"
+          className="hover:shadow-md h-[34px]"
+        />
+
+        {/* Subtask Type Filter */}
+        <MultiSelect
+          values={filters.subtaskTypeIds}
+          options={subtaskTypes.map(t => ({ id: t.id, name: t.type_name }))}
+          onChange={(ids) => setFilters(prev => ({ ...prev, subtaskTypeIds: ids as number[] }))}
+          placeholder="サブタスク種別を選択"
+          dropdownTitle="サブタスク種別"
           className="hover:shadow-md h-[34px]"
         />
 
