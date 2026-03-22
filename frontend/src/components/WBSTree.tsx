@@ -309,8 +309,17 @@ export default function WBSTree({
                             <button onClick={() => toggleProject(project.id)} className="p-0.5 hover:bg-gray-200 rounded">
                               {expandedProjects[project.id] === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                             </button>
-                            <EditableInput value={project.project_name} onChange={(v: string) => handleUpdate('project', project.id, 'project_name', v)} className="font-semibold" />
+                            <div className="flex-1 min-w-0">
+                              <EditableInput value={project.project_name} onChange={(v: string) => handleUpdate('project', project.id, 'project_name', v)} className="font-semibold" />
+                            </div>
                             {project.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
+                            <button 
+                              onClick={() => handleAddTask(project.id)} 
+                              className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0" 
+                              title="タスクを追加"
+                            >
+                              <Plus size={14} />
+                            </button>
                           </div>
                           <div className={`w-28 ${commonCellClasses}`}></div>
                           <div className={`w-28 ${commonCellClasses}`}></div>
@@ -346,7 +355,6 @@ export default function WBSTree({
                           </div>
                           <div className={`w-16 ${commonCellClasses}`}></div>
                           <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
-                            <button onClick={() => handleAddTask(project.id)} className="text-gray-400 hover:text-blue-500" title="タスクを追加"><Plus size={14} /></button>
                             <button onClick={() => handleDelete('project', project.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
                           </div>
                         </div>
@@ -370,8 +378,17 @@ export default function WBSTree({
                                             <button onClick={() => toggleTask(task.id)} className="p-0.5 hover:bg-gray-200 rounded">
                                               {expandedTasks[task.id] === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                                             </button>
-                                            <EditableInput value={task.task_name} onChange={(v: string) => handleUpdate('task', task.id, 'task_name', v)} className="font-medium" />
+                                            <div className="flex-1 min-w-0">
+                                              <EditableInput value={task.task_name} onChange={(v: string) => handleUpdate('task', task.id, 'task_name', v)} className="font-medium" />
+                                            </div>
                                             {task.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
+                                            <button 
+                                              onClick={() => handleAddSubtask(task.id)} 
+                                              className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0" 
+                                              title="サブタスクを追加"
+                                            >
+                                              <Plus size={14} />
+                                            </button>
                                           </div>
                                           <div className={`w-28 ${commonCellClasses}`}></div>
                                           <div className={`w-28 ${commonCellClasses}`}></div>
@@ -407,7 +424,6 @@ export default function WBSTree({
                                           </div>
                                           <div className={`w-16 ${commonCellClasses}`}></div>
                                           <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
-                                            <button onClick={() => handleAddSubtask(task.id)} className="text-gray-400 hover:text-blue-500" title="サブタスクを追加"><Plus size={14} /></button>
                                             <button onClick={() => handleDelete('task', task.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
                                           </div>
                                         </div>
