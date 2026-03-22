@@ -150,8 +150,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     };
   }, [isResizingName]);
 
-  const toggleProject = useCallback((id: number) => setExpandedProjects(p => ({ ...p, [id]: !p[id] })), [setExpandedProjects]);
-  const toggleTask = useCallback((id: number) => setExpandedTasks(t => ({ ...t, [id]: !t[id] })), [setExpandedTasks]);
+  const toggleProject = useCallback((id: number) => setExpandedProjects(p => ({ ...p, [id]: !(p[id] !== false) })), [setExpandedProjects]);
+  const toggleTask = useCallback((id: number) => setExpandedTasks(t => ({ ...t, [id]: !(t[id] !== false) })), [setExpandedTasks]);
 
   const handleAddProject = useCallback(async () => {
     await wbsOps.createProject('新しいプロジェクト');
