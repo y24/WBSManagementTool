@@ -100,7 +100,7 @@ class SubtaskBase(BaseModel):
 
 class SubtaskCreate(SubtaskBase):
     task_id: int
-    subtask_type_id: int
+    subtask_type_id: Optional[int] = None
     status_id: int
     assignee_id: Optional[int] = None
 
@@ -124,7 +124,7 @@ class SubtaskUpdate(BaseModel):
 class Subtask(SubtaskBase):
     id: int
     task_id: int
-    subtask_type_id: int
+    subtask_type_id: Optional[int]
     status_id: int
     assignee_id: Optional[int]
     is_deleted: bool

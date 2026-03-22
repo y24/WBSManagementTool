@@ -7,7 +7,7 @@ export const wbsOps = {
   createTask: (projectId: number, taskName: string) => 
     apiClient.post('/tasks', { project_id: projectId, task_name: taskName }),
     
-  createSubtask: (taskId: number, typeId: number, statusId: number) => 
+  createSubtask: (taskId: number, typeId: number | null, statusId: number) => 
     apiClient.post('/subtasks', { task_id: taskId, subtask_type_id: typeId, status_id: statusId }),
     
   updateProject: (id: number, data: any) => 

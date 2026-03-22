@@ -187,7 +187,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
   const handleAddSubtask = useCallback(async (taskId: number) => {
     if (!initialData) return;
-    const typeId = initialData.subtask_types[0]?.id || 1;
+    const typeId = null;
     const statusId = initialData.statuses[0]?.id || 1;
     await wbsOps.createSubtask(taskId, typeId, statusId);
     setExpandedTasks(t => ({ ...t, [taskId]: true }));

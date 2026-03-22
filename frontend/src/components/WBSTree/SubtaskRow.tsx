@@ -51,6 +51,7 @@ const SubtaskRow = memo(({
             options={initialData?.subtask_types.map(t => ({ id: t.id, name: t.type_name })) || []}
             onChange={v => onUpdateField('subtask', subtask.id, 'subtask_type_id', v)}
             className="font-semibold text-gray-700 -ml-1"
+            placeholder="未設定"
             dropdownTitle="種別を変更"
           />
           <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail || undefined}>

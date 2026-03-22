@@ -135,7 +135,7 @@ class Subtask(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False, index=True)
-    subtask_type_id = Column(Integer, ForeignKey("mst_subtask_types.id"), nullable=False)
+    subtask_type_id = Column(Integer, ForeignKey("mst_subtask_types.id"), nullable=True)
     subtask_detail = Column(String(300), nullable=True)
     status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=False, index=True)
     progress_percent = Column(Integer, nullable=True)
