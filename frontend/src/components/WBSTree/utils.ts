@@ -64,3 +64,47 @@ export const formatDisplayDate = (dateStr: string, type: string) => {
   }
   return dateStr;
 };
+
+export const getDisabledStatusIds = (type: 'project' | 'task' | 'subtask', item: any, initialData: InitialData | null): number[] => {
+  if (!initialData || type === 'subtask') return [];
+
+  const children = type === 'project' ? item.tasks : item.subtasks;
+  if (!children || (children as any[]).length === 0) return [];
+
+  const parseMapping = (m: string | null | undefined, defaultVal: number[]) => 
+    m ? m.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)) : defaultVal;
+
+  const newIds = parseMapping(initialData.status_mapping_new, [1, 7]);
+  const doneIds = parseMapping(initialData.status_mapping_done, [4, 7]);
+  const blockedIds = parseMapping(initialData.status_mapping_blocked, [5]);
+
+  const childStatusIds = (children as any[]).map(c => c.status_id).filter(sid => sid != null);
+  if (childStatusIds.length === 0) return [];
+
+  const allNew = childStatusIds.every(sid => newIds.includes(sid));
+  const allDone = childStatusIds.every(sid => doneIds.includes(sid));
+  const anyBlocked = type === 'task' && childStatusIds.some(sid => blockedIds.includes(sid));
+
+  const disabled = new Set<number>();
+  
+  if (allNew) {
+    initialData.statuses.forEach(s => {
+      if (!newIds.includes(s.id)) disabled.add(s.id);
+    });
+  } else if (allDone) {
+    initialData.statuses.forEach(s => {
+      if (!doneIds.includes(s.id)) disabled.add(s.id);
+    });
+  } else if (anyBlocked) {
+    initialData.statuses.forEach(s => {
+      if (!blockedIds.includes(s.id)) disabled.add(s.id);
+    });
+  } else {
+    initialData.statuses.forEach(s => {
+      if (newIds.includes(s.id) || doneIds.includes(s.id)) disabled.add(s.id);
+      if (type === 'task' && blockedIds.includes(s.id)) disabled.add(s.id);
+    });
+  }
+
+  return Array.from(disabled);
+};

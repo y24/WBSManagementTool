@@ -5,7 +5,7 @@ import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
 import StatusSelect from './StatusSelect';
 import PortalSelect from './PortalSelect';
-import { getWarning } from './utils';
+import { getWarning, getDisabledStatusIds } from './utils';
 import { commonRowClasses, commonCellClasses, dateCellClasses } from './constants';
 
 interface TaskRowProps {
@@ -96,6 +96,7 @@ const TaskRow = memo(({
           statusId={task.status_id}
           initialData={initialData} 
           onUpdateField={onUpdateField} 
+          disabledStatusIds={getDisabledStatusIds('task', task, initialData)}
         />
       </div>
       <div className={`w-28 flex items-center ${commonCellClasses}`}>

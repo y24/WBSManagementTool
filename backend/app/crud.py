@@ -467,6 +467,13 @@ def recalculate_task_status(db: Session, task_id: int):
     
     if not subtasks: return
     
+    # If explicitly marked as Removed (ID 7), don't auto-recalculate from subtasks.
+    # This allows manual "Removed" status to stick.
+    if db_task.status_id == 7:
+        # Trigger project update just in case it's affected
+        recalculate_project_status(db, db_task.project_id)
+        return
+    
     new_ids = get_status_ids_by_category(db, "new")
     blocked_ids = get_status_ids_by_category(db, "blocked")
     done_ids = get_status_ids_by_category(db, "done")
@@ -504,6 +511,10 @@ def recalculate_project_status(db: Session, project_id: int):
     ).all()
     
     if not tasks: return
+    
+    # If explicitly marked as Removed (ID 7), don't auto-recalculate from tasks.
+    if db_project.status_id == 7:
+        return
     
     new_ids = get_status_ids_by_category(db, "new")
     blocked_ids = get_status_ids_by_category(db, "blocked")
