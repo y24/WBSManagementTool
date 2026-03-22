@@ -28,10 +28,23 @@ if (-not (Test-Path "$backendRoot\venv")) {
 }
 
 Write-Host "  Installing dependencies..."
-& "$backendRoot\venv\Scripts\pip.exe" install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings httpx
+& "$backendRoot\venv\Scripts\pip.exe" install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings httpx python-dotenv
+
+Write-Host "  Setting up .env file..."
+if (-not (Test-Path "$backendRoot\.env")) {
+    if (Test-Path "$backendRoot\.env.example") {
+        Copy-Item "$backendRoot\.env.example" "$backendRoot\.env"
+        Write-Host "    Created .env from .env.example" -ForegroundColor Green
+    } else {
+        Write-Warning "    .env.example not found. Skipping .env creation."
+    }
+} else {
+    Write-Host "    .env already exists."
+}
 
 Write-Host "  Setting up database if not exists..."
 & "$backendRoot\venv\Scripts\python.exe" "$backendRoot\setup_db.py"
+
 
 Write-Host "  Running migrations..."
 # Alembic needs to be run from backend root

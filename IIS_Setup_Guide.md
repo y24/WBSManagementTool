@@ -41,10 +41,15 @@
 
 ### スクリプトの実行内容
 - バックエンドの仮想環境 (`venv`) 作成とライブラリのインストール
+- **`backend/.env` の自動準備 ( `.env.example` から作成 )**
 - データベースの作成とマイグレーション (`alembic upgrade`)
 - 初期データの投入 (`seed.py`)
 - フロントエンドの `npm install` と `npm run build`
 - `frontend/dist` への `web.config` 書き出し
+
+> [!NOTE]
+> データベースの接続情報（ホスト名やパスワード等）を変更する必要がある場合は、`server_setup.bat` 実行後に `backend/.env` を編集してください。
+
 
 ---
 

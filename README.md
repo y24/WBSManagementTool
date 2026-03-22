@@ -14,15 +14,18 @@ Excelで行っているWBS管理をWeb化し、複数プロジェクトの横断
 
 ### 1. データベースのセットアップ
 PostgreSQLがローカルで動作していることを確認します。
-初期設定では以下の接続要件を使用しています：
-* Server: localhost
-* Port: 5432
-* User: postgres
-* Password: admin
 
-環境が異なる場合は、バックエンド内の以下の接続情報およびスクリプトを環境に合わせて変更してください。
-- `backend/app/database.py`内の`DATABASE_URL`
-- `backend/setup_db.py`内の各種変数
+#### 接続情報の設定（.env）
+バックエンドのディレクトリ（`backend/`）にある `.env` ファイルでデータベースの接続情報を管理します。
+1.  `backend/.env.example` をコピーして `backend/.env` を作成します。
+2.  作成した `.env` ファイルを開き、環境に合わせて接続要件を編集します。
+
+初期設定（.env.example）の内容：
+* DB_HOST=localhost
+* DB_PORT=5432
+* DB_USER=postgres
+* DB_PASS=admin
+* DB_NAME=wbs_db
 
 #### データベース構築の実行コマンド
 Pythonのスクリプトを用いて、自動で空のデータベースを作成します。（※後で仮想環境が有効な状態で実行します）
@@ -39,10 +42,15 @@ python -m venv venv
 .\venv\Scripts\activate
 
 # 必要なライブラリのインストール
-pip install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings httpx
+pip install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings httpx python-dotenv
+
+# 設定ファイルの準備（.envがない場合）
+if (-not (Test-Path .env)) { copy .env.example .env }
 
 # DBの作成（wbs_dbを自動作成します）
 python setup_db.py
+```
+
 
 # フェーズ2：モデル情報のDB反映(マイグレーション)と初期データの投入をスクリプトで一括実行
 powershell -ExecutionPolicy Bypass -File .\setup_phase2.ps1
