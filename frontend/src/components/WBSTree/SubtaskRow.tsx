@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { GripVertical, AlertTriangle, Pencil } from 'lucide-react';
+import { GripVertical, AlertTriangle, Pencil, ExternalLink } from 'lucide-react';
 import { Subtask } from '../../types/wbs';
 import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
@@ -61,6 +61,18 @@ const SubtaskRow = memo(({
             <span title={warning} className="cursor-help inline-flex">
               <AlertTriangle size={14} className="text-amber-500 shrink-0" />
             </span>
+          )}
+          {subtask.ticket_id && initialData?.ticket_url_template && (
+            <a
+              href={initialData.ticket_url_template.replace('{TICKET_ID}', String(subtask.ticket_id))}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-400 hover:text-indigo-600 transition-colors shrink-0 p-0.5"
+              title={`チケットを開く (#${subtask.ticket_id})`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink size={14} />
+            </a>
           )}
         </div>
         <button

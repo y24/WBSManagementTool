@@ -480,3 +480,66 @@ body {
   width: 18px;
   height: 18px;
 }
+
+/* System Settings Card */
+.master-setting-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.master-setting-info {
+  flex: 1;
+}
+
+.master-setting-label {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.35rem;
+}
+
+.master-setting-desc {
+  font-size: 0.825rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.master-setting-desc code {
+  background: #e2e8f0;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.master-setting-action-full {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.master-save-btn {
+  background: #1e2937;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.master-save-btn:hover:not(:disabled) {
+  background: #111827;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.master-save-btn:active:not(:disabled) {
+  transform: translateY(0);
+}

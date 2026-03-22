@@ -28,6 +28,9 @@ export interface Task {
   id: number;
   project_id: number;
   task_name: string;
+  detail?: string | null;
+  ticket_id?: number | null;
+  memo?: string | null;
   planned_start_date?: string | null;
   planned_end_date?: string | null;
   actual_start_date?: string | null;
@@ -43,6 +46,9 @@ export interface Task {
 export interface Project {
   id: number;
   project_name: string;
+  detail?: string | null;
+  ticket_id?: number | null;
+  memo?: string | null;
   planned_start_date?: string | null;
   planned_end_date?: string | null;
   actual_start_date?: string | null;

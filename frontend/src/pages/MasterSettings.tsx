@@ -66,10 +66,17 @@ export default function MasterSettings() {
   const [showAddSubtaskType, setShowAddSubtaskType] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showAddHoliday, setShowAddHoliday] = useState(false);
+  
+  // System Settings
+  const [ticketUrlTemplate, setTicketUrlTemplate] = useState('');
+  const [isSavingSetting, setIsSavingSetting] = useState(false);
 
   const fetchData = useCallback(() => {
     apiClient.get<InitialData>('/initial-data')
-      .then(res => setData(res.data))
+      .then(res => {
+        setData(res.data);
+        setTicketUrlTemplate(res.data.ticket_url_template || '');
+      })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
@@ -161,6 +168,20 @@ export default function MasterSettings() {
       setShowAddHoliday(false);
       fetchData();
     } catch (err) { console.error(err); }
+  };
+
+  const saveTicketUrlTemplate = async () => {
+    try {
+      setIsSavingSetting(true);
+      await apiClient.put('/settings/ticket-url', { setting_value: ticketUrlTemplate });
+      fetchData();
+      alert('システム設定を保存しました。');
+    } catch (err) {
+      console.error(err);
+      alert('保存に失敗しました。');
+    } finally {
+      setIsSavingSetting(false);
+    }
   };
 
   // ─── Render helpers ───
@@ -464,6 +485,44 @@ export default function MasterSettings() {
                 )}
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ═══════════ システム設定 ═══════════ */}
+        <section className="master-section">
+          <div className="master-section-header">
+            <h3 className="master-section-title">
+              <span className="master-section-icon" style={{ background: 'linear-gradient(135deg, #4b5563, #1f2937)' }}>⚙️</span>
+              システム設定
+            </h3>
+          </div>
+
+          <div className="master-setting-card">
+            <div className="master-setting-info">
+              <label className="master-setting-label">チケットURLテンプレート</label>
+              <p className="master-setting-desc">
+                チケットIDを置換するURLの形式を指定します。<code>{"{TICKET_ID}"}</code> が実際のIDに置き換わります。
+              </p>
+              <p className="master-setting-desc text-xs text-blue-500 mt-1">
+                例: <code>https://dev.azure.com/Organization/Project/_workitems/edit/{"{TICKET_ID}"}</code>
+              </p>
+            </div>
+            <div className="master-setting-action-full mt-4 flex gap-2">
+              <input
+                type="text"
+                className="master-input flex-1"
+                placeholder="https://..."
+                value={ticketUrlTemplate}
+                onChange={e => setTicketUrlTemplate(e.target.value)}
+              />
+              <button 
+                className={`master-save-btn ${isSavingSetting ? 'opacity-50' : ''}`}
+                onClick={saveTicketUrlTemplate}
+                disabled={isSavingSetting}
+              >
+                {isSavingSetting ? '保存中...' : '保存'}
+              </button>
+            </div>
           </div>
         </section>
       </div>

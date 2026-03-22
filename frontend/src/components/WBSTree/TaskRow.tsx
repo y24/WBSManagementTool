@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
-import { ChevronRight, ChevronDown, Plus, GripVertical, AlertTriangle } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, GripVertical, AlertTriangle, Pencil, ExternalLink } from 'lucide-react';
 import { Task } from '../../types/wbs';
+import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
 import { getWarning } from './utils';
 import { commonRowClasses, commonCellClasses, dateCellClasses } from './constants';
@@ -14,6 +15,8 @@ interface TaskRowProps {
   expanded: boolean;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
   onAddSubtask: () => void;
+  onEditDetail: () => void;
+  initialData: InitialData | null;
   provided: any;
 }
 
@@ -26,6 +29,8 @@ const TaskRow = memo(({
   expanded, 
   onUpdateField, 
   onAddSubtask, 
+  onEditDetail,
+  initialData,
   provided 
 }: TaskRowProps) => {
   const warning = getWarning(task);
@@ -55,6 +60,25 @@ const TaskRow = memo(({
             <AlertTriangle size={14} className="text-amber-500 shrink-0" />
           </span>
         )}
+        {task.ticket_id && initialData?.ticket_url_template && (
+          <a
+            href={initialData.ticket_url_template.replace('{TICKET_ID}', String(task.ticket_id))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-400 hover:text-indigo-600 transition-colors shrink-0 p-0.5"
+            title={`チケットを開く (#${task.ticket_id})`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink size={14} />
+          </a>
+        )}
+        <button
+          onClick={onEditDetail}
+          className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
+          title="詳細・メモを編集"
+        >
+          <Pencil size={14} />
+        </button>
         <button
           onClick={onAddSubtask}
           className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"

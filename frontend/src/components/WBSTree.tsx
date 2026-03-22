@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, forwardRef } from 'react';
+import { List, Layers, ChevronsDown } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Project, Task, Subtask } from '../types/wbs';
 import { InitialData } from '../types';
@@ -8,7 +9,7 @@ import { wbsOps } from '../api/wbsOperations';
 import ProjectRow from './WBSTree/ProjectRow';
 import TaskRow from './WBSTree/TaskRow';
 import SubtaskRow from './WBSTree/SubtaskRow';
-import DetailModal from './WBSTree/DetailModal';
+import DetailModal, { EditingType } from './WBSTree/DetailModal';
 import FloatingMenu from './WBSTree/FloatingMenu';
 import ConfirmModal from './WBSTree/ConfirmModal';
 import { commonHeaderClasses } from './WBSTree/constants';
@@ -35,8 +36,15 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   onScroll
 }, ref) => {
   const [saving, setSaving] = useState(false);
-  const [editingSubtask, setEditingSubtask] = useState<Subtask | null>(null);
+  // 詳細編集モーダルの状態（project/task/subtask 共通）
+  const [editingItem, setEditingItem] = useState<{
+    type: EditingType;
+    id: number;
+    name: string;
+  } | null>(null);
   const [detailValue, setDetailValue] = useState('');
+  const [ticketIdValue, setTicketIdValue] = useState('');
+  const [memoValue, setMemoValue] = useState('');
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
   const [menuRendered, setMenuRendered] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -191,6 +199,41 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const toggleProject = useCallback((id: number) => setExpandedProjects(p => ({ ...p, [id]: !(p[id] !== false) })), [setExpandedProjects]);
   const toggleTask = useCallback((id: number) => setExpandedTasks(t => ({ ...t, [id]: !(t[id] !== false) })), [setExpandedTasks]);
 
+  const handleProjectLevel = useCallback(() => {
+    const newExpandedProjects: Record<number, boolean> = {};
+    projects.forEach(p => {
+      newExpandedProjects[p.id] = false;
+    });
+    setExpandedProjects(newExpandedProjects);
+    setExpandedTasks({});
+  }, [projects, setExpandedProjects, setExpandedTasks]);
+
+  const handleTaskLevel = useCallback(() => {
+    const newExpandedProjects: Record<number, boolean> = {};
+    const newExpandedTasks: Record<number, boolean> = {};
+    projects.forEach(p => {
+      newExpandedProjects[p.id] = true;
+      p.tasks.forEach(t => {
+        newExpandedTasks[t.id] = false;
+      });
+    });
+    setExpandedProjects(newExpandedProjects);
+    setExpandedTasks(newExpandedTasks);
+  }, [projects, setExpandedProjects, setExpandedTasks]);
+
+  const handleSubtaskLevel = useCallback(() => {
+    const newExpandedProjects: Record<number, boolean> = {};
+    const newExpandedTasks: Record<number, boolean> = {};
+    projects.forEach(p => {
+      newExpandedProjects[p.id] = true;
+      p.tasks.forEach(t => {
+        newExpandedTasks[t.id] = true;
+      });
+    });
+    setExpandedProjects(newExpandedProjects);
+    setExpandedTasks(newExpandedTasks);
+  }, [projects, setExpandedProjects, setExpandedTasks]);
+
   const handleAddProject = useCallback(async () => {
     await wbsOps.createProject('新しいプロジェクト');
     onUpdate();
@@ -301,6 +344,29 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
             className={`sticky left-0 z-40 flex items-center bg-gray-50 ${commonHeaderClasses}`}
             style={{ width: nameWidth, minWidth: nameWidth }}
           >
+            <div className="flex items-center gap-1 mr-2 no-drag ml-1">
+              <button
+                onClick={handleProjectLevel}
+                className="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-blue-600 transition-colors"
+                title="プロジェクトレベルで表示 (全プロジェクトを折りたたむ)"
+              >
+                <List size={16} />
+              </button>
+              <button
+                onClick={handleTaskLevel}
+                className="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-blue-600 transition-colors"
+                title="タスクレベルで表示 (プロジェクトを展開、タスクを折りたたむ)"
+              >
+                <Layers size={16} />
+              </button>
+              <button
+                onClick={handleSubtaskLevel}
+                className="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-blue-600 transition-colors"
+                title="サブタスクレベルで表示 (すべて展開)"
+              >
+                <ChevronsDown size={16} />
+              </button>
+            </div>
             名称
             <div
               className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 z-10 transition-colors"
@@ -334,8 +400,15 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                           expanded={expandedProjects[project.id] !== false}
                           onUpdateField={handleUpdate}
                           onAddTask={() => handleAddTask(project.id)}
-                          provided={provided}
-                        />
+                            onEditDetail={() => {
+                              setEditingItem({ type: 'project', id: project.id, name: project.project_name });
+                              setDetailValue(project.detail || '');
+                              setTicketIdValue(project.ticket_id != null ? String(project.ticket_id) : '');
+                              setMemoValue(project.memo || '');
+                            }}
+                            initialData={initialData}
+                            provided={provided}
+                          />
 
                         {expandedProjects[project.id] !== false && (
                           <Droppable droppableId={`project-${project.id}`} type="TASK">
@@ -354,8 +427,15 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                           expanded={expandedTasks[task.id] !== false}
                                           onUpdateField={handleUpdate}
                                           onAddSubtask={() => handleAddSubtask(task.id)}
-                                          provided={provided}
-                                        />
+                                            onEditDetail={() => {
+                                              setEditingItem({ type: 'task', id: task.id, name: task.task_name });
+                                              setDetailValue(task.detail || '');
+                                              setTicketIdValue(task.ticket_id != null ? String(task.ticket_id) : '');
+                                              setMemoValue(task.memo || '');
+                                            }}
+                                            initialData={initialData}
+                                            provided={provided}
+                                          />
 
                                         {expandedTasks[task.id] !== false && (
                                           <Droppable droppableId={`task-${task.id}`} type="SUBTASK">
@@ -373,7 +453,15 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                             onToggleCheck={() => toggleCheckSubtask(subtask.id)}
                                                             initialData={initialData}
                                                             onUpdateField={handleUpdate}
-                                                            onEditDetail={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
+                                                            onEditDetail={() => {
+                                                              // initialDataからサブタスク種別名を取得
+                                                              const typeName = initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || '未設定';
+                                                              const displayName = subtask.subtask_detail ? `${typeName}(${subtask.subtask_detail})` : typeName;
+                                                              setEditingItem({ type: 'subtask', id: subtask.id, name: displayName });
+                                                              setDetailValue(subtask.subtask_detail || '');
+                                                              setTicketIdValue(subtask.ticket_id != null ? String(subtask.ticket_id) : '');
+                                                              setMemoValue(subtask.memo || '');
+                                                            }}
                                                             provided={provided}
                                                           />
                                                         </div>
@@ -412,15 +500,42 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         )}
       </div>
 
-      {editingSubtask && (
-        <DetailModal 
-          editingSubtask={editingSubtask}
+      {editingItem && (
+        <DetailModal
+          editingType={editingItem.type}
+          editingName={editingItem.name}
           detailValue={detailValue}
           setDetailValue={setDetailValue}
-          onClose={() => setEditingSubtask(null)}
+          ticketIdValue={ticketIdValue}
+          setTicketIdValue={setTicketIdValue}
+          memoValue={memoValue}
+          setMemoValue={setMemoValue}
+          ticketUrlTemplate={initialData?.ticket_url_template}
+          onClose={() => setEditingItem(null)}
           onSave={async () => {
-             await handleUpdate('subtask', editingSubtask.id, 'subtask_detail', detailValue);
-             setEditingSubtask(null);
+            const updates: Record<string, any> = {
+              ticket_id: ticketIdValue !== '' ? parseInt(ticketIdValue, 10) : null,
+              memo: memoValue || null,
+            };
+            // subtask_detail は subtask のみ、project/task は detail フィールド
+            if (editingItem.type === 'subtask') {
+              updates.subtask_detail = detailValue || null;
+            } else {
+              updates.detail = detailValue || null;
+            }
+            try {
+              setSaving(true);
+              if (editingItem.type === 'project') await wbsOps.updateProject(editingItem.id, updates);
+              else if (editingItem.type === 'task') await wbsOps.updateTask(editingItem.id, updates);
+              else await wbsOps.updateSubtask(editingItem.id, updates);
+              setEditingItem(null);
+              onUpdate();
+            } catch (err) {
+              console.error(err);
+              alert('保存に失敗しました');
+            } finally {
+              setSaving(false);
+            }
           }}
         />
       )}

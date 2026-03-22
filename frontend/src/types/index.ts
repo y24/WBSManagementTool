@@ -29,4 +29,5 @@ export interface InitialData {
   subtask_types: MstSubtaskType[];
   members: MstMember[];
   holidays: MstHoliday[];
+  ticket_url_template?: string | null;
 }

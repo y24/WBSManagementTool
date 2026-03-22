@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
-import { ChevronRight, ChevronDown, Plus, GripVertical, AlertTriangle } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, GripVertical, AlertTriangle, Pencil, ExternalLink } from 'lucide-react';
 import { Project } from '../../types/wbs';
+import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
 import { getWarning } from './utils';
 import { commonRowClasses, commonCellClasses, dateCellClasses } from './constants';
@@ -14,6 +15,8 @@ interface ProjectRowProps {
   expanded: boolean;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
   onAddTask: () => void;
+  onEditDetail: () => void;
+  initialData: InitialData | null;
   provided: any;
 }
 
@@ -26,6 +29,8 @@ const ProjectRow = memo(({
   expanded, 
   onUpdateField, 
   onAddTask, 
+  onEditDetail,
+  initialData,
   provided 
 }: ProjectRowProps) => {
   const warning = getWarning(project);
@@ -55,6 +60,25 @@ const ProjectRow = memo(({
             <AlertTriangle size={14} className="text-amber-500 shrink-0" />
           </span>
         )}
+        {project.ticket_id && initialData?.ticket_url_template && (
+          <a
+            href={initialData.ticket_url_template.replace('{TICKET_ID}', String(project.ticket_id))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-400 hover:text-indigo-600 transition-colors shrink-0 p-0.5"
+            title={`チケットを開く (#${project.ticket_id})`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink size={14} />
+          </a>
+        )}
+        <button
+          onClick={onEditDetail}
+          className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
+          title="詳細・メモを編集"
+        >
+          <Pencil size={14} />
+        </button>
         <button
           onClick={onAddTask}
           className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"

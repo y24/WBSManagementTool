@@ -2,6 +2,23 @@ from sqlalchemy.orm import Session
 from datetime import date
 from . import models, schemas
 
+# --- System Settings ---
+SETTING_TICKET_URL = "ticket_url_template"
+
+def get_system_setting(db: Session, key: str):
+    return db.query(models.SystemSetting).filter(models.SystemSetting.setting_key == key).first()
+
+def set_system_setting(db: Session, key: str, value: str, description: str = None):
+    db_setting = db.query(models.SystemSetting).filter(models.SystemSetting.setting_key == key).first()
+    if db_setting:
+        db_setting.setting_value = value
+    else:
+        db_setting = models.SystemSetting(setting_key=key, setting_value=value, description=description)
+        db.add(db_setting)
+    db.commit()
+    db.refresh(db_setting)
+    return db_setting
+
 # --- Masters ---
 def get_statuses(db: Session, include_inactive: bool = False):
     query = db.query(models.MstStatus)

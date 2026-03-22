@@ -117,15 +117,28 @@ def reorder_subtasks(req: schemas.ReorderRequest, db: Session = Depends(get_db))
     crud.reorder_subtasks(db, req.ordered_ids)
     return {"status": "ok"}
 
-# --- Masters ---
 @router.get("/initial-data", response_model=schemas.InitialData)
 def get_initial_data(db: Session = Depends(get_db)):
+    ticket_setting = crud.get_system_setting(db, crud.SETTING_TICKET_URL)
     return {
         "statuses": crud.get_statuses(db),
         "subtask_types": crud.get_subtask_types(db),
         "members": crud.get_members(db),
-        "holidays": crud.get_holidays(db)
+        "holidays": crud.get_holidays(db),
+        "ticket_url_template": ticket_setting.setting_value if ticket_setting else None
     }
+
+# --- System Settings ---
+@router.get("/settings/ticket-url", response_model=schemas.SystemSetting)
+def get_ticket_url(db: Session = Depends(get_db)):
+    setting = crud.get_system_setting(db, crud.SETTING_TICKET_URL)
+    if not setting:
+        raise HTTPException(status_code=404, detail="Setting not found")
+    return setting
+
+@router.put("/settings/ticket-url", response_model=schemas.SystemSetting)
+def set_ticket_url(req: schemas.SystemSettingUpdate, db: Session = Depends(get_db)):
+    return crud.set_system_setting(db, crud.SETTING_TICKET_URL, req.setting_value, "チケットURLテンプレート")
 
 # --- Status Master ---
 @router.post("/masters/statuses", response_model=schemas.Status)

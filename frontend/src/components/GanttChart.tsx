@@ -93,12 +93,12 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
         {pStart !== undefined && pWidth !== undefined && (
           <>
             <div
-              className={`absolute top-[6px] rounded-t-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 opacity-60`}
+              className={`absolute top-[6px] rounded-t-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 opacity-85`}
               style={{ left: `${pStart}px`, width: `${pWidth}px` }}
             />
             {rStart !== undefined && rWidth !== undefined && (
               <div
-                className="absolute top-[6px] rounded-tr-sm h-1.5 bg-purple-400 opacity-70"
+                className="absolute top-[6px] rounded-tr-sm h-1.5 bg-gray-400 opacity-60"
                 style={{ left: `${rStart}px`, width: `${rWidth}px` }}
                 title={`レビュー期間: ${item.review_days}日`}
               />

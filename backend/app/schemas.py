@@ -135,6 +135,9 @@ class Subtask(SubtaskBase):
 # --- Tasks ---
 class TaskBase(BaseModel):
     task_name: str
+    detail: Optional[str] = None
+    ticket_id: Optional[int] = None
+    memo: Optional[str] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
@@ -148,6 +151,9 @@ class TaskCreate(TaskBase):
 
 class TaskUpdate(BaseModel):
     task_name: Optional[str] = None
+    detail: Optional[str] = None
+    ticket_id: Optional[int] = None
+    memo: Optional[str] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
@@ -173,6 +179,9 @@ class TaskWBS(Task):
 # --- Projects ---
 class ProjectBase(BaseModel):
     project_name: str
+    detail: Optional[str] = None
+    ticket_id: Optional[int] = None
+    memo: Optional[str] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
@@ -186,6 +195,9 @@ class ProjectCreate(ProjectBase):
 
 class ProjectUpdate(BaseModel):
     project_name: Optional[str] = None
+    detail: Optional[str] = None
+    ticket_id: Optional[int] = None
+    memo: Optional[str] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
@@ -226,8 +238,19 @@ class WBSResponse(BaseModel):
     gantt_range: GanttRange
     projects: List[ProjectWBS]
 
+# --- System Settings ---
+class SystemSettingUpdate(BaseModel):
+    setting_value: str
+
+class SystemSetting(BaseModel):
+    setting_key: str
+    setting_value: str
+    description: Optional[str] = None
+    model_config = { "from_attributes": True }
+
 class InitialData(BaseModel):
     statuses: List[Status]
     subtask_types: List[SubtaskType]
     members: List[Member]
     holidays: List[Holiday]
+    ticket_url_template: Optional[str] = None
