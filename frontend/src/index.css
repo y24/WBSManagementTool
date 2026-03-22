@@ -338,8 +338,8 @@ body {
 
 .master-item-name {
   font-size: 0.875rem;
-  color: #334155;
-  font-weight: 500;
+  color: #111827; /* Gray 900 */
+  font-weight: 400;
 }
 
 .master-holiday-date {
