@@ -9,7 +9,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50 font-sans text-gray-900">
       <Header />
-      <main className="flex-1 flex flex-col relative w-full h-full min-h-0 bg-white overflow-hidden">
+      <main className="flex-1 flex flex-col relative w-full h-full min-h-0 bg-slate-50 overflow-hidden">
         {children}
       </main>
     </div>

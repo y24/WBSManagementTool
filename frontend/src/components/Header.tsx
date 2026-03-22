@@ -3,39 +3,39 @@ import { Settings, ListTree, Plus } from 'lucide-react';
 
 export default function Header() {
   return (
-    <header className="bg-white border-b border-gray-200 h-14 flex items-center px-4 justify-between shrink-0 shadow-sm">
-      <div className="flex items-center gap-6">
-        <h1 className="text-xl font-semibold text-gray-800 tracking-tight">
+    <header className="bg-slate-900 border-b border-slate-800 h-14 flex items-center px-6 justify-between shrink-0 shadow-md z-50">
+      <div className="flex items-center gap-10">
+        <h1 className="text-xl font-bold text-white tracking-widest uppercase">
           WBS Manager
         </h1>
-        <nav className="flex gap-2">
+        <nav className="flex gap-4">
           <Link
             to="/"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-100 text-gray-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-medium"
           >
             <ListTree size={18} />
-            <span className="text-sm font-medium">メインボード</span>
+            <span className="text-sm">メインボード</span>
           </Link>
           <Link
             to="/masters"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-100 text-gray-600 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-medium"
           >
             <Settings size={18} />
-            <span className="text-sm font-medium">マスタ管理</span>
+            <span className="text-sm">マスタ管理</span>
           </Link>
         </nav>
 
       </div>
-      <div className="flex items-center gap-4">
-        {/* 自動保存等ステータス表示用プレースホルダー */}
-        <span className="text-xs text-gray-400 font-medium px-2 py-1 bg-gray-50 rounded border border-gray-100">
-          Saved
+      <div className="flex items-center gap-6">
+        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest px-2.5 py-1 bg-slate-800/50 rounded-full border border-slate-700">
+          Sync Status: Online
         </span>
         <button 
           onClick={() => window.dispatchEvent(new CustomEvent('add-project'))} 
-          className="ml-auto flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm font-medium"
+          className="ml-auto flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] font-bold group"
         >
-          <Plus size={16} /> 新規プロジェクト
+          <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />
+          <span>新規追加</span>
         </button>
       </div>
     </header>

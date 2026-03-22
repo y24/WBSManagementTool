@@ -135,7 +135,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       <div ref={ref} className="h-full overflow-auto relative gantt-body" onScroll={onScroll}>
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           {/* ヘッダー領域 (垂直スクロールに追従するためsticky) */}
-          <div className="flex border-b-[1px] border-[#f1f5f9] shadow-sm sticky top-0 z-30 bg-gray-50 flex-shrink-0" style={{ height: '33px' }}>
+          <div className="flex border-b-[1px] border-slate-200 shadow-sm sticky top-0 z-30 bg-slate-100 flex-shrink-0" style={{ height: '33px' }}>
             {days.map(d => {
               const isWeekend = getDay(d) === 0 || getDay(d) === 6;
               const holidayFlag = isHoliday(d);

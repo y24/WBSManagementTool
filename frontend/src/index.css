@@ -22,6 +22,11 @@ body {
   /* Subtask Color */
   --wbs-subtask-bg: #ffffff;
   --wbs-subtask-hover: #f8fafc;
+
+  /* Header/Slicer Color */
+  --wbs-header-bg: #f1f5f9; /* Slate 100 */
+  --wbs-slicer-bg: #f8fafc; /* Slate 50 */
+
   /* Border Color */
   --wbs-border-color: #e2e8f0; /* Slate 200 - vertical lines */
   --wbs-row-border-color: #cbd5e1; /* Slate 200 - horizontal lines (Project/Task) */
