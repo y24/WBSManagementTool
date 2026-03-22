@@ -39,7 +39,13 @@ def update_status(db: Session, status_id: int, status: schemas.StatusUpdate):
     db_status = db.query(models.MstStatus).filter(models.MstStatus.id == status_id).first()
     if not db_status:
         return None
-    for key, value in status.dict(exclude_unset=True).items():
+    
+    update_data = status.dict(exclude_unset=True)
+    # Prevent changing status_name if it is system reserved
+    if db_status.is_system_reserved and "status_name" in update_data:
+        del update_data["status_name"]
+        
+    for key, value in update_data.items():
         setattr(db_status, key, value)
     db.commit()
     db.refresh(db_status)

@@ -296,13 +296,15 @@ export default function MasterSettings() {
                   {isEditing(s.id, 'status') ? (
                     <div className="master-edit-inline">
                       <input
-                        className="master-input master-input-sm"
+                        className={`master-input master-input-sm ${s.is_system_reserved ? 'cursor-not-allowed opacity-75' : ''}`}
                         value={editValue}
                         onChange={e => setEditValue(e.target.value)}
                         onKeyDown={e => {
                           if (e.key === 'Enter') saveEdit('/masters/statuses', s.id, { status_name: editValue, color_code: editColorValue });
                           if (e.key === 'Escape') cancelEdit();
                         }}
+                        disabled={s.is_system_reserved}
+                        title={s.is_system_reserved ? "システム予約ステータスの名称は変更できません" : ""}
                         autoFocus
                       />
                       <input
