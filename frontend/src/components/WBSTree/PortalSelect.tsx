@@ -65,7 +65,11 @@ const PortalSelect = memo(({
         className={`flex items-center gap-1.5 px-1.5 py-1 rounded hover:bg-gray-100/80 transition-colors text-left outline-none group/pselect ${className}`}
       >
         <span className="truncate flex-1 leading-none">
-          {selectedOption ? selectedOption.name : <span className="text-gray-400">{placeholder}</span>}
+          {selectedOption && selectedOption.id !== null ? (
+            selectedOption.name
+          ) : (
+            <span className="text-gray-400">{selectedOption?.name || placeholder}</span>
+          )}
         </span>
         <ChevronDown size={14} className="text-gray-300 group-hover/pselect:text-gray-500 transition-colors shrink-0" />
       </button>
