@@ -60,11 +60,21 @@ export default function MainBoard() {
 
   const getInitialTreeWidth = (): number => {
     const saved = localStorage.getItem('wbs_tree_width');
+    let width = 1000;
     if (saved) {
       const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed)) return parsed;
+      if (!isNaN(parsed)) width = parsed;
     }
-    return 1000;
+
+    // アプリ起動時に画面幅を超えていないかチェック
+    // リサイズバーとガントチャートが最低限（100px程度）見えるように調整
+    if (typeof window !== 'undefined') {
+      const maxWidth = window.innerWidth - 100;
+      if (width > maxWidth) {
+        return Math.max(300, maxWidth);
+      }
+    }
+    return width;
   };
 
   const getInitialGanttScrollLeft = (): number => {
