@@ -37,6 +37,7 @@ const DetailModal = ({ editingSubtask, detailValue, setDetailValue, onClose, onS
             className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 font-medium"
             value={detailValue}
             autoFocus
+            onFocus={(e) => e.target.select()}
             onChange={(e) => setDetailValue(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {

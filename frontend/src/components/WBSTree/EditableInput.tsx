@@ -85,6 +85,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "" }: 
             className="flex-1 bg-transparent h-full border-none outline-none px-2 text-sm font-bold text-gray-800"
             value={val}
             autoFocus
+            onFocus={(e) => e.target.select()}
             onChange={(e) => setVal(e.target.value)}
             onBlur={(e) => handleCommit(e.target.value)}
             onKeyDown={(e) => {
@@ -102,6 +103,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "" }: 
           className={`bg-transparent h-full border-none outline-blue-400 px-1 focus:bg-white/50 w-full ${className}`}
           value={val}
           autoFocus={isEditing}
+          onFocus={(e) => e.target.select()}
           onChange={(e) => setVal(e.target.value)}
           onBlur={(e) => handleCommit(e.target.value)}
           onKeyDown={(e) => {
