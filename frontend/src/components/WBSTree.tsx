@@ -33,6 +33,96 @@ export default function WBSTree({
   const [saving, setSaving] = useState(false);
   const [editingSubtask, setEditingSubtask] = useState<Subtask | null>(null);
   const [detailValue, setDetailValue] = useState('');
+  const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
+  const [menuRendered, setMenuRendered] = useState(false);
+
+  useEffect(() => {
+    if (Object.values(checkedIds).some(Boolean)) {
+      setMenuRendered(true);
+    } else {
+      const timer = setTimeout(() => setMenuRendered(false), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [checkedIds]);
+
+  const toggleCheckProject = (project: Project) => {
+    const isChecked = !checkedIds[`p-${project.id}`];
+    const newChecked = { ...checkedIds };
+    newChecked[`p-${project.id}`] = isChecked;
+    project.tasks.forEach(task => {
+      newChecked[`t-${task.id}`] = isChecked;
+      task.subtasks.forEach(subtask => {
+        newChecked[`s-${subtask.id}`] = isChecked;
+      });
+    });
+    setCheckedIds(newChecked);
+  };
+
+  const toggleCheckTask = (task: Task) => {
+    const isChecked = !checkedIds[`t-${task.id}`];
+    const newChecked = { ...checkedIds };
+    newChecked[`t-${task.id}`] = isChecked;
+    task.subtasks.forEach(subtask => {
+      newChecked[`s-${subtask.id}`] = isChecked;
+    });
+    setCheckedIds(newChecked);
+  };
+
+  const toggleCheckSubtask = (subtaskId: number) => {
+    setCheckedIds(prev => ({
+      ...prev,
+      [`s-${subtaskId}`]: !prev[`s-${subtaskId}`]
+    }));
+  };
+
+  const totalSelectedCount = Object.values(checkedIds).filter(Boolean).length;
+
+  const handleDeleteSelected = async () => {
+    if (!window.confirm(`${totalSelectedCount}件の項目を削除してもよろしいですか？`)) return;
+    
+    setSaving(true);
+    try {
+      // 削除対象の特定
+      const projectsToDelete = projects.filter(p => checkedIds[`p-${p.id}`]);
+      const projectIdsToDelete = projectsToDelete.map(p => p.id);
+      
+      const tasksToDelete: number[] = [];
+      projects.forEach(p => {
+        if (projectIdsToDelete.includes(p.id)) return;
+        p.tasks.forEach(t => {
+          if (checkedIds[`t-${t.id}`]) tasksToDelete.push(t.id);
+        });
+      });
+      
+      const subtasksToDelete: number[] = [];
+      projects.forEach(p => {
+        if (projectIdsToDelete.includes(p.id)) return;
+        p.tasks.forEach(t => {
+          if (tasksToDelete.includes(t.id)) return;
+          t.subtasks.forEach(s => {
+            if (checkedIds[`s-${s.id}`]) subtasksToDelete.push(s.id);
+          });
+        });
+      });
+
+      // 並列実行
+      const promises = [
+        ...projectIdsToDelete.map(id => wbsOps.deleteProject(id)),
+        ...tasksToDelete.map(id => wbsOps.deleteTask(id)),
+        ...subtasksToDelete.map(id => wbsOps.deleteSubtask(id))
+      ];
+      
+      await Promise.all(promises);
+      
+      setCheckedIds({});
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('削除に失敗しました');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const [nameWidth, setNameWidth] = useState(320);
   const [isResizingName, setIsResizingName] = useState(false);
@@ -287,7 +377,6 @@ export default function WBSTree({
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>実績開始</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>実績終了</div>
           <div className={`w-16 flex items-center ${commonHeaderClasses}`}>進捗</div>
-          <div className={`w-20 flex items-center justify-center ${commonHeaderClasses}`}>操作</div>
         </div>
 
         <DragDropContext onDragEnd={onDragEnd}>
@@ -303,6 +392,12 @@ export default function WBSTree({
                             className={`sticky left-0 z-20 flex items-center gap-1 font-semibold text-gray-800 wbs-cell-project transition-colors ${commonCellClasses}`}
                             style={{ width: nameWidth, minWidth: nameWidth }}
                           >
+                            <input 
+                              type="checkbox" 
+                              checked={!!checkedIds[`p-${project.id}`]} 
+                              onChange={() => toggleCheckProject(project)}
+                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
+                            />
                             <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
                               <GripVertical size={14} />
                             </div>
@@ -354,9 +449,6 @@ export default function WBSTree({
                             <EditableInput type="date" value={project.actual_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_end_date', v)} />
                           </div>
                           <div className={`w-16 ${commonCellClasses}`}></div>
-                          <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
-                            <button onClick={() => handleDelete('project', project.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
-                          </div>
                         </div>
 
                         {expandedProjects[project.id] !== false && (
@@ -372,6 +464,12 @@ export default function WBSTree({
                                             className={`sticky left-0 z-20 flex items-center gap-1 font-medium pl-6 text-gray-700 wbs-cell-task transition-colors ${commonCellClasses}`}
                                             style={{ width: nameWidth, minWidth: nameWidth }}
                                           >
+                                            <input 
+                                              type="checkbox" 
+                                              checked={!!checkedIds[`t-${task.id}`]} 
+                                              onChange={() => toggleCheckTask(task)}
+                                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
+                                            />
                                             <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
                                               <GripVertical size={14} />
                                             </div>
@@ -423,9 +521,6 @@ export default function WBSTree({
                                             <EditableInput type="date" value={task.actual_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_end_date', v)} />
                                           </div>
                                           <div className={`w-16 ${commonCellClasses}`}></div>
-                                          <div className={`w-20 flex gap-1 items-center justify-center ${commonCellClasses}`}>
-                                            <button onClick={() => handleDelete('task', task.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
-                                          </div>
                                         </div>
 
                                         {expandedTasks[task.id] !== false && (
@@ -442,6 +537,12 @@ export default function WBSTree({
                                                             className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 wbs-cell-subtask transition-colors ${commonCellClasses}`}
                                                             style={{ width: nameWidth, minWidth: nameWidth }}
                                                           >
+                                                            <input 
+                                                              type="checkbox" 
+                                                              checked={!!checkedIds[`s-${subtask.id}`]} 
+                                                              onChange={() => toggleCheckSubtask(subtask.id)}
+                                                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
+                                                            />
                                                             <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
                                                               <GripVertical size={14} />
                                                             </div>
@@ -493,18 +594,6 @@ export default function WBSTree({
                                                           <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'actual_end_date', v)} /></div>
                                                           <div className={`w-16 ${commonCellClasses}`}>
                                                             <EditableInput type="number" value={subtask.progress_percent} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'progress_percent', v ? Number(v) : null)} />
-                                                          </div>
-                                                          <div className={`w-20 flex items-center justify-center ${commonCellClasses}`}>
-                                                            <div className="flex gap-1 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity px-2">
-                                                              <button
-                                                                onClick={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
-                                                                className="text-gray-400 hover:text-blue-500"
-                                                                title="詳細を編集"
-                                                              >
-                                                                <FileText size={14} />
-                                                              </button>
-                                                              <button onClick={() => handleDelete('subtask', subtask.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
-                                                            </div>
                                                           </div>
                                                         </div>
                                                       )}
@@ -598,6 +687,36 @@ export default function WBSTree({
               >
                 <Check size={16} />
                 保存する
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {menuRendered && createPortal(
+        <div className={`fixed bottom-8 left-1/2 z-[100] floating-menu-container ${totalSelectedCount === 0 ? 'floating-menu-hide' : ''}`}>
+          <div className="bg-white/90 backdrop-blur-md border border-gray-200 rounded-full shadow-2xl px-6 py-3 flex items-center gap-6 ring-1 ring-black/5">
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                {totalSelectedCount}
+              </span>
+              <span className="text-sm font-semibold text-gray-700">選択中</span>
+            </div>
+            <div className="h-4 w-px bg-gray-300" />
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={handleDeleteSelected}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 font-bold text-sm transition-all hover:scale-105 active:scale-95"
+              >
+                <Trash2 size={18} />
+                一括削除
+              </button>
+              <button 
+                onClick={() => setCheckedIds({})}
+                className="text-gray-400 hover:text-gray-600 text-sm font-medium transition-colors px-2"
+              >
+                選択解除
               </button>
             </div>
           </div>
