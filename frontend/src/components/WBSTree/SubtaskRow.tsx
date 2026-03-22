@@ -4,6 +4,7 @@ import { Subtask } from '../../types/wbs';
 import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
 import StatusSelect from './StatusSelect';
+import PortalSelect from './PortalSelect';
 import { getWarning } from './utils';
 import { commonRowClasses, commonCellClasses, dateCellClasses } from './constants';
 
@@ -45,13 +46,13 @@ const SubtaskRow = memo(({
           <GripVertical size={14} />
         </div>
         <div className="flex items-center gap-1 flex-1 min-w-0">
-          <select
-            className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer hover:bg-gray-100/50 rounded px-1 -ml-1 transition-colors shrink-0"
+          <PortalSelect
             value={subtask.subtask_type_id}
-            onChange={e => onUpdateField('subtask', subtask.id, 'subtask_type_id', Number(e.target.value))}
-          >
-            {initialData?.subtask_types.map((t: any) => <option key={t.id} value={t.id}>{t.type_name}</option>)}
-          </select>
+            options={initialData?.subtask_types.map(t => ({ id: t.id, name: t.type_name })) || []}
+            onChange={v => onUpdateField('subtask', subtask.id, 'subtask_type_id', v)}
+            className="font-semibold text-gray-700 -ml-1"
+            dropdownTitle="種別を変更"
+          />
           <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail || undefined}>
             {subtask.subtask_detail}
           </span>
@@ -77,14 +78,14 @@ const SubtaskRow = memo(({
         />
       </div>
       <div className={`w-28 flex items-center ${commonCellClasses}`}>
-        <select
-          className="bg-transparent w-full outline-none text-sm"
-          value={subtask.assignee_id || ''}
-          onChange={e => onUpdateField('subtask', subtask.id, 'assignee_id', e.target.value ? Number(e.target.value) : null)}
-        >
-          <option value="">未設定</option>
-          {initialData?.members.map((m: any) => <option key={m.id} value={m.id}>{m.member_name}</option>)}
-        </select>
+        <PortalSelect
+          value={subtask.assignee_id}
+          options={initialData?.members.map(m => ({ id: m.id, name: m.member_name })) || []}
+          onChange={v => onUpdateField('subtask', subtask.id, 'assignee_id', v)}
+          className="w-full text-sm"
+          placeholder="未設定"
+          dropdownTitle="担当者を変更"
+        />
       </div>
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v) } /></div>
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v) } /></div>

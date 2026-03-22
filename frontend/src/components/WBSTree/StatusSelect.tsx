@@ -59,7 +59,7 @@ const StatusSelect = memo(({ subtask, initialData, onUpdateField }: StatusSelect
 
       {isOpen && createPortal(
         <div 
-          className="fixed z-[9999] bg-white border border-gray-200 shadow-2xl rounded-lg py-1.5 animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
+          className="fixed z-[9999] bg-white border border-gray-200 shadow-2xl rounded-lg py-1.5 overflow-hidden"
           style={{ 
             top: coords.top + 4, 
             left: coords.left, 

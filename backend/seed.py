@@ -28,17 +28,29 @@ def seed_data():
 
         # Seed subtask types
         types = [
-            {"id": 1, "type_name": "設計", "sort_order": 1, "is_active": True},
-            {"id": 2, "type_name": "実装", "sort_order": 2, "is_active": True},
-            {"id": 3, "type_name": "テスト", "sort_order": 3, "is_active": True},
-            {"id": 4, "type_name": "レビュー対応", "sort_order": 4, "is_active": True},
-            {"id": 5, "type_name": "ドキュメント修正", "sort_order": 5, "is_active": True},
+            {"id": 1, "type_name": "テスト計画", "sort_order": 1, "is_active": True},
+            {"id": 2, "type_name": "テスト設計", "sort_order": 2, "is_active": True},
+            {"id": 3, "type_name": "テスト実施", "sort_order": 3, "is_active": True},
+            {"id": 4, "type_name": "テスト終了作業", "sort_order": 4, "is_active": True},
+            {"id": 5, "type_name": "テスト準備", "sort_order": 5, "is_active": True},
+            {"id": 6, "type_name": "テスト環境構築", "sort_order": 6, "is_active": True},
+            {"id": 7, "type_name": "データ作成", "sort_order": 7, "is_active": True},
+            {"id": 8, "type_name": "データ投入", "sort_order": 8, "is_active": True},
         ]
+
+        target_ids = [ty["id"] for ty in types]
 
         for ty in types:
             existing = db.query(MstSubtaskType).filter(MstSubtaskType.id == ty["id"]).first()
             if not existing:
                 db.add(MstSubtaskType(**ty))
+            else:
+                existing.type_name = ty["type_name"]
+                existing.sort_order = ty["sort_order"]
+                existing.is_active = ty["is_active"]
+
+        # Deactivate types not in the seed list
+        db.query(MstSubtaskType).filter(MstSubtaskType.id.notin_(target_ids)).update({"is_active": False}, synchronize_session=False)
 
         db.commit()
         print("Initial seed data inserted successfully.")
