@@ -79,13 +79,13 @@ export default function WBSTree({
 
   const handleDeleteSelected = async () => {
     if (!window.confirm(`${totalSelectedCount}件の項目を削除してもよろしいですか？`)) return;
-    
+
     setSaving(true);
     try {
       // 削除対象の特定
       const projectsToDelete = projects.filter(p => checkedIds[`p-${p.id}`]);
       const projectIdsToDelete = projectsToDelete.map(p => p.id);
-      
+
       const tasksToDelete: number[] = [];
       projects.forEach(p => {
         if (projectIdsToDelete.includes(p.id)) return;
@@ -93,7 +93,7 @@ export default function WBSTree({
           if (checkedIds[`t-${t.id}`]) tasksToDelete.push(t.id);
         });
       });
-      
+
       const subtasksToDelete: number[] = [];
       projects.forEach(p => {
         if (projectIdsToDelete.includes(p.id)) return;
@@ -111,9 +111,9 @@ export default function WBSTree({
         ...tasksToDelete.map(id => wbsOps.deleteTask(id)),
         ...subtasksToDelete.map(id => wbsOps.deleteSubtask(id))
       ];
-      
+
       await Promise.all(promises);
-      
+
       setCheckedIds({});
       onUpdate();
     } catch (err) {
@@ -261,33 +261,73 @@ export default function WBSTree({
   const getStatus = (id: number) => initialData?.statuses.find(s => s.id === id);
 
   const EditableInput = ({ value, onChange, type = "text", className = "" }: any) => {
-    const [val, setVal] = useState(value || '');
+    const formatDateForInput = (d: string) => {
+      if (!d) return '';
+      return d.replace(/-/g, '/');
+    };
+
+    const parseDateFromInput = (s: string) => {
+      if (!s) return null;
+      // YYYY/MM/DD, YYYY-MM-DD, YYYY.MM.DD, YYYYMMDD を許容
+      let cleaned = s.replace(/[\/\-\.]/g, '');
+      if (cleaned.length === 8) {
+        const year = cleaned.slice(0, 4);
+        const month = cleaned.slice(4, 6);
+        const day = cleaned.slice(6, 8);
+        return `${year}-${month}-${day}`;
+      }
+      // すでに YYYY-MM-DD の場合
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      // YYYY/MM/DD の場合
+      if (/^\d{4}\/\d{2}\/\d{2}$/.test(s)) return s.replace(/\//g, '-');
+      return null;
+    };
+
+    const [val, setVal] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const isCommittingRef = useRef(false);
+    const datePickerRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-      setVal(value || '');
       if (!isEditing) {
+        setVal(type === 'date' ? formatDateForInput(value) : (value || ''));
         isCommittingRef.current = false;
       }
-    }, [value, isEditing]);
+    }, [value, isEditing, type]);
 
     const handleCommit = useCallback((newVal: string) => {
       if (!isEditing || isCommittingRef.current) return;
 
-      const hasChanged = newVal !== (value || '');
+      let valueToSave = newVal;
+      if (type === 'date') {
+        if (newVal === '') {
+          valueToSave = '';
+        } else {
+          const parsed = parseDateFromInput(newVal);
+          if (parsed) {
+            valueToSave = parsed;
+          } else {
+            // 不正な形式の場合は元の値に戻す
+            setVal(formatDateForInput(value));
+            setIsEditing(false);
+            return;
+          }
+        }
+      }
+
+      const hasChanged = valueToSave !== (value || '');
       if (hasChanged) {
         isCommittingRef.current = true;
-        onChange(newVal);
+        onChange(valueToSave);
       }
       setIsEditing(false);
-    }, [isEditing, value, onChange]);
+    }, [isEditing, value, onChange, type]);
 
     const formatDisplayDate = (dateStr: string) => {
       if (!dateStr || type !== 'date') return dateStr;
       const parts = dateStr.split('-');
       if (parts.length === 3) {
-        return `${parts[1]}/${parts[2]}`; // MM/DD
+        return `${parts[1]}/${parts[2]}`; // MM/DD for display
       }
       return dateStr;
     };
@@ -300,43 +340,105 @@ export default function WBSTree({
             setIsEditing(true);
             isCommittingRef.current = false;
           }}
-          title={val}
+          title={value ? formatDateForInput(value) : "未入力"}
         >
-          {val ? formatDisplayDate(val) : <span className="text-gray-300 text-[10px]">--/--</span>}
+          {value ? formatDisplayDate(value) : <span className="text-gray-300 text-[10px]">--/--</span>}
         </div>
       );
     }
 
     return (
-      <div className={type === 'date' ? "relative w-full h-full" : "w-full h-full"}>
-        <input
-          type={type}
-          className={`
-            bg-transparent h-full border-none outline-blue-400 px-1 focus:bg-white/50
-            ${type === 'date'
-              ? 'absolute left-0 top-0 z-50 !w-[120px] !min-w-[120px] shadow-xl border-2 border-blue-500 rounded-md !bg-white'
-              : 'w-full'
-            }
-            ${className}
-          `}
-          value={val}
-          autoFocus={isEditing}
-          onChange={(e) => {
-            const newValue = e.target.value;
-            setVal(newValue);
-            if (type === 'date' && newValue !== (value || '')) {
-              handleCommit(newValue);
-            }
-          }}
-          onBlur={(e) => {
-            handleCommit(e.target.value);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              handleCommit((e.target as HTMLInputElement).value);
-            }
-          }}
-        />
+      <div
+        className={type === 'date' ? "relative w-full h-full" : "w-full h-full"}
+        style={type === 'date' && isEditing ? { zIndex: 1000, overflow: 'visible' } : {}}
+      >
+        {type === 'date' && isEditing ? (
+          <div
+            className="absolute left-0 top-0 z-[1000] flex items-center bg-white shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10"
+            style={{ width: '135px', height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
+          >
+            <button
+              type="button"
+              className="flex items-center justify-center w-9 h-full border-r border-blue-100 text-blue-600 hover:bg-blue-50 transition-colors"
+              onMouseDown={(e) => {
+                e.preventDefault();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                try {
+                  (datePickerRef.current as any)?.showPicker();
+                } catch (err) {
+                  datePickerRef.current?.click();
+                }
+              }}
+              title="カレンダーから選択"
+            >
+              <Calendar size={19} />
+            </button>
+            <input
+              type="text"
+              placeholder="YYYY/MM/DD"
+              className="flex-1 bg-transparent h-full border-none outline-none px-2 text-sm font-bold text-gray-800"
+              value={val}
+              autoFocus
+              onChange={(e) => setVal(e.target.value)}
+              onBlur={(e) => {
+                handleCommit(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleCommit((e.target as HTMLInputElement).value);
+                } else if (e.key === 'Escape') {
+                  setVal(formatDateForInput(value));
+                  setIsEditing(false);
+                }
+              }}
+            />
+          </div>
+        ) : (
+          <input
+            type={type === 'date' ? "text" : type}
+            placeholder={type === 'date' ? "YYYY/MM/DD" : ""}
+            className={`
+              bg-transparent h-full border-none outline-blue-400 px-1 focus:bg-white/50 w-full
+              ${className}
+            `}
+            value={val}
+            autoFocus={isEditing}
+            onChange={(e) => setVal(e.target.value)}
+            onBlur={(e) => {
+              handleCommit(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleCommit((e.target as HTMLInputElement).value);
+              } else if (e.key === 'Escape') {
+                if (type === 'date') {
+                  setVal(formatDateForInput(value));
+                  setIsEditing(false);
+                }
+              }
+            }}
+          />
+        )}
+
+        {type === 'date' && (
+          <input
+            type="date"
+            ref={datePickerRef}
+            className="absolute opacity-0 pointer-events-none w-0 h-0"
+            style={{ left: 0, bottom: 0 }}
+            value={value || ''}
+            onChange={(e) => {
+              const picked = e.target.value;
+              if (picked) {
+                setVal(formatDateForInput(picked));
+                onChange(picked);
+                setIsEditing(false);
+              }
+            }}
+          />
+        )}
       </div>
     );
   };
@@ -347,8 +449,8 @@ export default function WBSTree({
   const commonRowClasses = "transition-colors h-[37px]";
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="flex-1 w-full overflow-auto bg-white border-r relative"
       onScroll={onScroll}
     >
@@ -360,12 +462,12 @@ export default function WBSTree({
         )}
 
         <div className="sticky top-0 z-30 flex border-b border-[var(--wbs-row-border-color)] bg-gray-50 shadow-sm whitespace-nowrap h-[33px]">
-          <div 
-            className={`sticky left-0 z-40 flex items-center bg-gray-50 ${commonHeaderClasses}`} 
+          <div
+            className={`sticky left-0 z-40 flex items-center bg-gray-50 ${commonHeaderClasses}`}
             style={{ width: nameWidth, minWidth: nameWidth }}
           >
             名称
-            <div 
+            <div
               className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 z-10 transition-colors"
               onMouseDown={startResizing}
             />
@@ -388,13 +490,13 @@ export default function WBSTree({
                     {(provided) => (
                       <div ref={provided.innerRef} {...provided.draggableProps}>
                         <div className={`flex group wbs-row-project ${commonRowClasses}`}>
-                          <div 
+                          <div
                             className={`sticky left-0 z-20 flex items-center gap-1 font-semibold text-gray-800 wbs-cell-project transition-colors ${commonCellClasses}`}
                             style={{ width: nameWidth, minWidth: nameWidth }}
                           >
-                            <input 
-                              type="checkbox" 
-                              checked={!!checkedIds[`p-${project.id}`]} 
+                            <input
+                              type="checkbox"
+                              checked={!!checkedIds[`p-${project.id}`]}
                               onChange={() => toggleCheckProject(project)}
                               className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
                             />
@@ -408,9 +510,9 @@ export default function WBSTree({
                               <EditableInput value={project.project_name} onChange={(v: string) => handleUpdate('project', project.id, 'project_name', v)} className="font-semibold" />
                             </div>
                             {project.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
-                            <button 
-                              onClick={() => handleAddTask(project.id)} 
-                              className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0" 
+                            <button
+                              onClick={() => handleAddTask(project.id)}
+                              className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
                               title="タスクを追加"
                             >
                               <Plus size={14} />
@@ -421,13 +523,6 @@ export default function WBSTree({
                           <div className={`w-20 ${dateCellClasses}`}>
                             <div className="flex items-center gap-1 group/date h-full">
                               <EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_start_date', v)} />
-                              <button
-                                onClick={() => handleUpdate('project', project.id, 'is_auto_planned_date', !project.is_auto_planned_date)}
-                                className={`p-0.5 rounded transition-colors ${project.is_auto_planned_date ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
-                                title="下位要素から自動計算"
-                              >
-                                <Calendar size={12} />
-                              </button>
                             </div>
                           </div>
                           <div className={`w-20 ${dateCellClasses}`}>
@@ -436,13 +531,6 @@ export default function WBSTree({
                           <div className={`w-20 ${dateCellClasses}`}>
                             <div className="flex items-center gap-1 group/date h-full">
                               <EditableInput type="date" value={project.actual_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_start_date', v)} />
-                              <button
-                                onClick={() => handleUpdate('project', project.id, 'is_auto_actual_date', !project.is_auto_actual_date)}
-                                className={`p-0.5 rounded transition-colors ${project.is_auto_actual_date ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
-                                title="下位要素から自動計算"
-                              >
-                                <Calendar size={12} />
-                              </button>
                             </div>
                           </div>
                           <div className={`w-20 ${dateCellClasses}`}>
@@ -460,13 +548,13 @@ export default function WBSTree({
                                     {(provided) => (
                                       <div ref={provided.innerRef} {...provided.draggableProps}>
                                         <div className={`flex group wbs-row-task ${commonRowClasses}`}>
-                                          <div 
+                                          <div
                                             className={`sticky left-0 z-20 flex items-center gap-1 font-medium pl-6 text-gray-700 wbs-cell-task transition-colors ${commonCellClasses}`}
                                             style={{ width: nameWidth, minWidth: nameWidth }}
                                           >
-                                            <input 
-                                              type="checkbox" 
-                                              checked={!!checkedIds[`t-${task.id}`]} 
+                                            <input
+                                              type="checkbox"
+                                              checked={!!checkedIds[`t-${task.id}`]}
                                               onChange={() => toggleCheckTask(task)}
                                               className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
                                             />
@@ -480,9 +568,9 @@ export default function WBSTree({
                                               <EditableInput value={task.task_name} onChange={(v: string) => handleUpdate('task', task.id, 'task_name', v)} className="font-medium" />
                                             </div>
                                             {task.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
-                                            <button 
-                                              onClick={() => handleAddSubtask(task.id)} 
-                                              className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0" 
+                                            <button
+                                              onClick={() => handleAddSubtask(task.id)}
+                                              className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
                                               title="サブタスクを追加"
                                             >
                                               <Plus size={14} />
@@ -493,13 +581,6 @@ export default function WBSTree({
                                           <div className={`w-20 ${dateCellClasses}`}>
                                             <div className="flex items-center gap-1 group/date h-full">
                                               <EditableInput type="date" value={task.planned_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_start_date', v)} />
-                                              <button
-                                                onClick={() => handleUpdate('task', task.id, 'is_auto_planned_date', !task.is_auto_planned_date)}
-                                                className={`p-0.5 rounded transition-colors ${task.is_auto_planned_date ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
-                                                title="下位要素から自動計算"
-                                              >
-                                                <Calendar size={12} />
-                                              </button>
                                             </div>
                                           </div>
                                           <div className={`w-20 ${dateCellClasses}`}>
@@ -508,13 +589,6 @@ export default function WBSTree({
                                           <div className={`w-20 ${dateCellClasses}`}>
                                             <div className="flex items-center gap-1 group/date h-full">
                                               <EditableInput type="date" value={task.actual_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_start_date', v)} />
-                                              <button
-                                                onClick={() => handleUpdate('task', task.id, 'is_auto_actual_date', !task.is_auto_actual_date)}
-                                                className={`p-0.5 rounded transition-colors ${task.is_auto_actual_date ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:bg-gray-100 group-hover/date:opacity-100 opacity-0'}`}
-                                                title="下位要素から自動計算"
-                                              >
-                                                <Calendar size={12} />
-                                              </button>
                                             </div>
                                           </div>
                                           <div className={`w-20 ${dateCellClasses}`}>
@@ -533,13 +607,13 @@ export default function WBSTree({
                                                     <Draggable key={`s-${subtask.id}`} draggableId={`s-${subtask.id}`} index={sIndex}>
                                                       {(provided) => (
                                                         <div ref={provided.innerRef} {...provided.draggableProps} className={`flex group wbs-row-subtask ${commonRowClasses}`}>
-                                                          <div 
+                                                          <div
                                                             className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 wbs-cell-subtask transition-colors ${commonCellClasses}`}
                                                             style={{ width: nameWidth, minWidth: nameWidth }}
                                                           >
-                                                            <input 
-                                                              type="checkbox" 
-                                                              checked={!!checkedIds[`s-${subtask.id}`]} 
+                                                            <input
+                                                              type="checkbox"
+                                                              checked={!!checkedIds[`s-${subtask.id}`]}
                                                               onChange={() => toggleCheckSubtask(subtask.id)}
                                                               className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
                                                             />
@@ -705,14 +779,14 @@ export default function WBSTree({
             </div>
             <div className="h-4 w-px bg-gray-300" />
             <div className="flex items-center gap-4">
-              <button 
+              <button
                 onClick={handleDeleteSelected}
                 className="flex items-center gap-2 text-red-600 hover:text-red-700 font-bold text-sm transition-all hover:scale-105 active:scale-95"
               >
                 <Trash2 size={18} />
                 一括削除
               </button>
-              <button 
+              <button
                 onClick={() => setCheckedIds({})}
                 className="text-gray-400 hover:text-gray-600 text-sm font-medium transition-colors px-2"
               >
