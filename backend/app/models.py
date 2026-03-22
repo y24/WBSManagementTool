@@ -94,7 +94,7 @@ class Project(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    tasks = relationship("Task", back_populates="project")
+    tasks = relationship("Task", back_populates="project", order_by="Task.sort_order, Task.id")
 
     __table_args__ = (
         CheckConstraint("project_name <> ''", name="check_project_name_empty"),
@@ -121,7 +121,7 @@ class Task(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     project = relationship("Project", back_populates="tasks")
-    subtasks = relationship("Subtask", back_populates="task")
+    subtasks = relationship("Subtask", back_populates="task", order_by="Subtask.sort_order, Subtask.id")
 
     __table_args__ = (
         CheckConstraint("task_name <> ''", name="check_task_name_empty"),

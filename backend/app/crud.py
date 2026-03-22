@@ -7,19 +7,19 @@ def get_statuses(db: Session, include_inactive: bool = False):
     query = db.query(models.MstStatus)
     if not include_inactive:
         query = query.filter(models.MstStatus.is_active == True)
-    return query.order_by(models.MstStatus.sort_order).all()
+    return query.order_by(models.MstStatus.sort_order, models.MstStatus.id).all()
 
 def get_subtask_types(db: Session, include_inactive: bool = False):
     query = db.query(models.MstSubtaskType)
     if not include_inactive:
         query = query.filter(models.MstSubtaskType.is_active == True)
-    return query.order_by(models.MstSubtaskType.sort_order).all()
+    return query.order_by(models.MstSubtaskType.sort_order, models.MstSubtaskType.id).all()
 
 def get_members(db: Session, include_inactive: bool = False):
     query = db.query(models.MstMember)
     if not include_inactive:
         query = query.filter(models.MstMember.is_active == True)
-    return query.order_by(models.MstMember.sort_order).all()
+    return query.order_by(models.MstMember.sort_order, models.MstMember.id).all()
 
 def get_holidays(db: Session, include_inactive: bool = False):
     query = db.query(models.MstHoliday)
@@ -257,7 +257,7 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_removed: bo
             .selectinload(models.Task.subtasks)
         )
         
-    projects = query.order_by(models.Project.sort_order).all()
+    projects = query.order_by(models.Project.sort_order, models.Project.id).all()
     
     # Map to schema with calculated fields
     result = []
