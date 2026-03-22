@@ -28,8 +28,13 @@ body {
 }
 
 /* WBS Styles */
-/* 基本はすべての主要行が 1px の下線を持つ */
-.wbs-row-project, .wbs-row-task,
+/* 基本はすべての主要行の子要素（セル）が 1px の下線を持つ。
+   sticky カラムの背景色で隠れないよう、行(row)ではなく子要素(div)に線を引く。
+   また、二重線を防ぐため行自体には線を引かない。 */
+.wbs-row-project, .wbs-row-task {
+  border-bottom: none !important;
+}
+
 .wbs-row-project > div, .wbs-row-task > div {
   border-bottom: 1px solid var(--wbs-row-border-color) !important;
   border-top: none !important;
@@ -65,11 +70,10 @@ body {
 }
 
 /* サブタスクは基本線なしだが、一番最後だけは次の項目との区切りとして線を引く */
-.wbs-row-subtask {
+.wbs-row-subtask, .wbs-row-subtask > div {
   background-color: var(--wbs-subtask-bg) !important;
   border-bottom: none !important;
 }
-.wbs-row-subtask:last-child,
 .wbs-row-subtask:last-child > div {
   border-bottom: 1px solid var(--wbs-row-border-color) !important;
 }

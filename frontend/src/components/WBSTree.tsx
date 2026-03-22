@@ -699,7 +699,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           </div>
         )}
 
-        <div className="sticky top-0 z-30 flex border-b border-[var(--wbs-row-border-color)] bg-gray-50 shadow-sm whitespace-nowrap h-[33px]">
+        <div className="sticky top-0 z-30 flex border-b border-[#f1f5f9] bg-gray-50 shadow-sm whitespace-nowrap h-[33px]">
           <div
             className={`sticky left-0 z-40 flex items-center bg-gray-50 ${commonHeaderClasses}`}
             style={{ width: nameWidth, minWidth: nameWidth }}
