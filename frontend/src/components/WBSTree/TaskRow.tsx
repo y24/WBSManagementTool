@@ -116,6 +116,7 @@ const TaskRow = memo(({
         <EditableInput 
           type="date" 
           value={task.planned_start_date} 
+          max={task.planned_end_date}
           onChange={(v: string) => onUpdateField('task', task.id, 'planned_start_date', v)} 
           isAuto={task.is_auto_planned_date}
           onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_planned_date', v)}
@@ -125,6 +126,7 @@ const TaskRow = memo(({
         <EditableInput 
           type="date" 
           value={task.planned_end_date} 
+          min={task.planned_start_date}
           onChange={(v: string) => onUpdateField('task', task.id, 'planned_end_date', v)} 
           isAuto={task.is_auto_planned_date}
           onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_planned_date', v)}
@@ -134,6 +136,7 @@ const TaskRow = memo(({
         <EditableInput 
           type="date" 
           value={task.actual_start_date} 
+          max={task.actual_end_date}
           onChange={(v: string) => onUpdateField('task', task.id, 'actual_start_date', v)} 
           isAuto={task.is_auto_actual_date}
           onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_actual_date', v)}
@@ -143,6 +146,7 @@ const TaskRow = memo(({
         <EditableInput 
           type="date" 
           value={task.actual_end_date} 
+          min={task.actual_start_date}
           onChange={(v: string) => onUpdateField('task', task.id, 'actual_end_date', v)} 
           isAuto={task.is_auto_actual_date}
           onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_actual_date', v)}

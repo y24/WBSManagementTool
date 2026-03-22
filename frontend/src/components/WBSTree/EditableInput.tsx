@@ -206,6 +206,8 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
           className="absolute opacity-0 w-0 h-0"
           style={{ left: 0, bottom: 0 }}
           value={value || ''}
+          min={min}
+          max={max}
           onChange={(e) => {
             const picked = e.target.value;
             setVal(formatDateForInput(picked));

@@ -246,6 +246,44 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   }, [handleAddProject]);
 
   const handleUpdate = useCallback(async (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => {
+    // Date range validation
+    if (['planned_start_date', 'planned_end_date', 'actual_start_date', 'actual_end_date'].includes(field)) {
+      let item: any = null;
+      if (type === 'project') item = projects.find(p => p.id === id);
+      else if (type === 'task') {
+        for (const p of projects) {
+          item = p.tasks.find(t => t.id === id);
+          if (item) break;
+        }
+      } else {
+        for (const p of projects) {
+          for (const t of p.tasks) {
+            item = t.subtasks.find(s => s.id === id);
+            if (item) break;
+          }
+          if (item) break;
+        }
+      }
+
+      if (item) {
+        const isPlanned = field.startsWith('planned');
+        const isStart = field.endsWith('start_date');
+        const otherField = isStart 
+          ? (isPlanned ? 'planned_end_date' : 'actual_end_date')
+          : (isPlanned ? 'planned_start_date' : 'actual_start_date');
+        
+        const startVal = isStart ? value : item[otherField];
+        const endVal = isStart ? item[otherField] : value;
+
+        if (startVal && endVal && startVal > endVal) {
+          alert('開始日より後の日付を終了日に設定してください。');
+          onUpdate(); // Revert local state by refreshing
+          setSaving(false);
+          return;
+        }
+      }
+    }
+
     try {
       setSaving(true);
       const updates: any = { [field]: value };
@@ -264,11 +302,11 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('保存に失敗しました');
+      alert('保存に失敗しました。開始日より後の日付を設定してください。');
     } finally {
       setSaving(false);
     }
-  }, [onUpdate, initialData]);
+  }, [onUpdate, initialData, projects]);
 
   const handleAddTask = useCallback(async (projectId: number) => {
     await wbsOps.createTask(projectId, '新しいタスク');

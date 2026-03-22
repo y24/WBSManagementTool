@@ -105,10 +105,10 @@ const SubtaskRow = memo(({
           dropdownTitle="担当者を変更"
         />
       </div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v) } /></div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v) } /></div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v) } /></div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v) } /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} max={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v) } /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} min={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v) } /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v) } /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} min={subtask.actual_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v) } /></div>
       <div className={`w-20 ${commonCellClasses}`}>
         <EditableInput 
           type="number" 

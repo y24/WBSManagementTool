@@ -116,6 +116,7 @@ const ProjectRow = memo(({
         <EditableInput 
           type="date" 
           value={project.planned_start_date} 
+          max={project.planned_end_date}
           onChange={(v: string) => onUpdateField('project', project.id, 'planned_start_date', v)} 
           isAuto={project.is_auto_planned_date}
           onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_planned_date', v)}
@@ -125,6 +126,7 @@ const ProjectRow = memo(({
         <EditableInput 
           type="date" 
           value={project.planned_end_date} 
+          min={project.planned_start_date}
           onChange={(v: string) => onUpdateField('project', project.id, 'planned_end_date', v)} 
           isAuto={project.is_auto_planned_date}
           onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_planned_date', v)}
@@ -134,6 +136,7 @@ const ProjectRow = memo(({
         <EditableInput 
           type="date" 
           value={project.actual_start_date} 
+          max={project.actual_end_date}
           onChange={(v: string) => onUpdateField('project', project.id, 'actual_start_date', v)} 
           isAuto={project.is_auto_actual_date}
           onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_actual_date', v)}
@@ -143,6 +146,7 @@ const ProjectRow = memo(({
         <EditableInput 
           type="date" 
           value={project.actual_end_date} 
+          min={project.actual_start_date}
           onChange={(v: string) => onUpdateField('project', project.id, 'actual_end_date', v)} 
           isAuto={project.is_auto_actual_date}
           onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_actual_date', v)}
