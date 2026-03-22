@@ -69,6 +69,9 @@ export default function MasterSettings() {
   
   // System Settings
   const [ticketUrlTemplate, setTicketUrlTemplate] = useState('');
+  const [statusMappingNew, setStatusMappingNew] = useState<number[]>([]);
+  const [statusMappingBlocked, setStatusMappingBlocked] = useState<number[]>([]);
+  const [statusMappingDone, setStatusMappingDone] = useState<number[]>([]);
   const [isSavingSetting, setIsSavingSetting] = useState(false);
 
   const fetchData = useCallback(() => {
@@ -76,6 +79,9 @@ export default function MasterSettings() {
       .then(res => {
         setData(res.data);
         setTicketUrlTemplate(res.data.ticket_url_template || '');
+        setStatusMappingNew((res.data.status_mapping_new || '').split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)));
+        setStatusMappingBlocked((res.data.status_mapping_blocked || '').split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)));
+        setStatusMappingDone((res.data.status_mapping_done || '').split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)));
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
@@ -170,18 +176,31 @@ export default function MasterSettings() {
     } catch (err) { console.error(err); }
   };
 
-  const saveTicketUrlTemplate = async () => {
+  const saveSetting = async (key: string, value: string) => {
     try {
       setIsSavingSetting(true);
-      await apiClient.put('/settings/ticket-url', { setting_value: ticketUrlTemplate });
+      await apiClient.put(`/settings/${key}`, { setting_value: value });
       fetchData();
-      alert('システム設定を保存しました。');
     } catch (err) {
       console.error(err);
-      alert('保存に失敗しました。');
+      alert('設定の保存に失敗しました。');
     } finally {
       setIsSavingSetting(false);
     }
+  };
+
+  const toggleMapping = (category: 'new' | 'blocked' | 'done', statusId: number) => {
+    let current: number[] = [];
+    let key = '';
+    if (category === 'new') { current = statusMappingNew; key = 'status_mapping_new'; }
+    if (category === 'blocked') { current = statusMappingBlocked; key = 'status_mapping_blocked'; }
+    if (category === 'done') { current = statusMappingDone; key = 'status_mapping_done'; }
+
+    const next = current.includes(statusId) 
+      ? current.filter(id => id !== statusId)
+      : [...current, statusId];
+    
+    saveSetting(key, next.join(','));
   };
 
   // ─── Render helpers ───
@@ -268,9 +287,11 @@ export default function MasterSettings() {
                     <button className="master-action-btn master-edit" onClick={() => startEdit(s.id, 'status', s.status_name, s.color_code)} title="編集">
                       <PencilIcon />
                     </button>
-                    <button className="master-action-btn master-delete" onClick={() => deleteItem('/masters/statuses', s.id, s.status_name)} title="削除">
-                      <TrashIcon />
-                    </button>
+                    {!s.is_system_reserved && (
+                      <button className="master-action-btn master-delete" onClick={() => deleteItem('/masters/statuses', s.id, s.status_name)} title="削除">
+                        <TrashIcon />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -517,11 +538,76 @@ export default function MasterSettings() {
               />
               <button 
                 className={`master-save-btn ${isSavingSetting ? 'opacity-50' : ''}`}
-                onClick={saveTicketUrlTemplate}
+                onClick={() => saveSetting('ticket_url_template', ticketUrlTemplate)}
                 disabled={isSavingSetting}
               >
                 {isSavingSetting ? '保存中...' : '保存'}
               </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════ ステータス伝搬ルール設定 ═══════════ */}
+        <section className="master-section">
+          <div className="master-section-header">
+            <h3 className="master-section-title">
+              <span className="master-section-icon" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>⚙️</span>
+              ステータス自動更新条件設定
+            </h3>
+          </div>
+          <div className="master-setting-card">
+            <p className="master-setting-desc mb-6">
+              プロジェクトやタスクのステータスを、子アイテムの状態に合わせて自動更新する際の判定条件（カテゴリー）を指定します。
+            </p>
+            
+            <div className="space-y-8">
+              <div className="mapping-group">
+                <label className="master-setting-label mb-3 block font-bold text-gray-700">「未着手」と判定するステータス</label>
+                <div className="flex flex-wrap gap-2">
+                  {data?.statuses.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => toggleMapping('new', s.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs transition-all border ${statusMappingNew.includes(s.id) ? 'bg-gray-100 border-gray-400 text-gray-900 font-bold shadow-sm' : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'}`}
+                    >
+                      {s.status_name}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2">※ 子がすべてこれらのステータスなら、親も「未着手（New）」を維持します。</p>
+              </div>
+
+              <div className="mapping-group">
+                <label className="master-setting-label mb-3 block font-bold text-red-600">「ブロック」と判定するステータス</label>
+                <div className="flex flex-wrap gap-2">
+                  {data?.statuses.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => toggleMapping('blocked', s.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs transition-all border ${statusMappingBlocked.includes(s.id) ? 'bg-red-50 border-red-400 text-red-700 font-bold shadow-sm' : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'}`}
+                    >
+                      {s.status_name}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2">※ 子に1つでも含まれれば、親を強制的に「ブロック（Blocked）」にします。</p>
+              </div>
+
+              <div className="mapping-group">
+                <label className="master-setting-label mb-3 block font-bold text-green-600">「完了」と判定するステータス</label>
+                <div className="flex flex-wrap gap-2">
+                  {data?.statuses.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => toggleMapping('done', s.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs transition-all border ${statusMappingDone.includes(s.id) ? 'bg-green-50 border-green-400 text-green-700 font-bold shadow-sm' : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'}`}
+                    >
+                      {s.status_name}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2">※ 子がすべてこれらのステータスなら、親を「完了（Done）」にします。</p>
+              </div>
             </div>
           </div>
         </section>

@@ -3,6 +3,8 @@ import { ChevronRight, ChevronDown, Plus, GripVertical, AlertTriangle, Pencil, E
 import { Project } from '../../types/wbs';
 import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
+import StatusSelect from './StatusSelect';
+import PortalSelect from './PortalSelect';
 import { getWarning } from './utils';
 import { commonRowClasses, commonCellClasses, dateCellClasses } from './constants';
 
@@ -87,8 +89,28 @@ const ProjectRow = memo(({
           <Plus size={14} />
         </button>
       </div>
-      <div className={`w-28 ${commonCellClasses}`}></div>
-      <div className={`w-28 ${commonCellClasses}`}></div>
+      <div className={`w-28 flex items-center ${commonCellClasses}`}>
+        <StatusSelect 
+          type="project"
+          id={project.id}
+          statusId={project.status_id}
+          initialData={initialData} 
+          onUpdateField={onUpdateField} 
+        />
+      </div>
+      <div className={`w-28 flex items-center ${commonCellClasses}`}>
+        <PortalSelect
+          value={project.assignee_id}
+          options={[
+            { id: null, name: '未設定' },
+            ...(initialData?.members.map(m => ({ id: m.id, name: m.member_name })) || [])
+          ]}
+          onChange={(v: number | null) => onUpdateField('project', project.id, 'assignee_id', v)}
+          className="w-full text-sm"
+          placeholder="未設定"
+          dropdownTitle="担当者を変更"
+        />
+      </div>
       <div className={`w-20 ${dateCellClasses}`}>
         <EditableInput 
           type="date" 

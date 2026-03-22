@@ -9,6 +9,7 @@ export interface MasterBase {
 export interface MstStatus extends MasterBase {
   status_name: string;
   color_code: string;
+  is_system_reserved: boolean;
 }
 
 export interface MstSubtaskType extends MasterBase {
@@ -30,4 +31,7 @@ export interface InitialData {
   members: MstMember[];
   holidays: MstHoliday[];
   ticket_url_template?: string | null;
+  status_mapping_new?: string | null;
+  status_mapping_blocked?: string | null;
+  status_mapping_done?: string | null;
 }

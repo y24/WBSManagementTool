@@ -5,17 +5,19 @@ import { Subtask } from '../../types/wbs';
 import { InitialData } from '../../types';
 
 interface StatusSelectProps {
-  subtask: Subtask;
+  type: 'project' | 'task' | 'subtask';
+  id: number;
+  statusId: number | null | undefined;
   initialData: InitialData | null;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
 }
 
-const StatusSelect = memo(({ subtask, initialData, onUpdateField }: StatusSelectProps) => {
+const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField }: StatusSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, direction: 'down' as 'up' | 'down' });
-  const statusInfo = initialData?.statuses.find((s: any) => s.id === subtask.status_id);
+  const statusInfo = initialData?.statuses.find((s: any) => s.id === statusId);
 
   const toggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -110,10 +112,10 @@ const StatusSelect = memo(({ subtask, initialData, onUpdateField }: StatusSelect
             {initialData?.statuses.map((s: any) => (
               <button
                 key={s.id}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left ${s.id === subtask.status_id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-900'}`}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left ${s.id === statusId ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-900'}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onUpdateField('subtask', subtask.id, 'status_id', s.id);
+                  onUpdateField(type, id, 'status_id', s.id);
                   setIsOpen(false);
                 }}
               >
@@ -122,7 +124,7 @@ const StatusSelect = memo(({ subtask, initialData, onUpdateField }: StatusSelect
                   style={{ backgroundColor: s.color_code, width: '10px', height: '10px' }}
                 ></span>
                 <span className="text-xs font-normal leading-none">{s.status_name}</span>
-                {s.id === subtask.status_id && <Check size={12} className="ml-auto" />}
+                {s.id === statusId && <Check size={12} className="ml-auto" />}
               </button>
             ))}
           </div>

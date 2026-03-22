@@ -120,12 +120,19 @@ def reorder_subtasks(req: schemas.ReorderRequest, db: Session = Depends(get_db))
 @router.get("/initial-data", response_model=schemas.InitialData)
 def get_initial_data(db: Session = Depends(get_db)):
     ticket_setting = crud.get_system_setting(db, crud.SETTING_TICKET_URL)
+    mapping_new = crud.get_system_setting(db, crud.SETTING_STATUS_NEW)
+    mapping_blocked = crud.get_system_setting(db, crud.SETTING_STATUS_BLOCKED)
+    mapping_done = crud.get_system_setting(db, crud.SETTING_STATUS_DONE)
+    
     return {
         "statuses": crud.get_statuses(db),
         "subtask_types": crud.get_subtask_types(db),
         "members": crud.get_members(db),
         "holidays": crud.get_holidays(db),
-        "ticket_url_template": ticket_setting.setting_value if ticket_setting else None
+        "ticket_url_template": ticket_setting.setting_value if ticket_setting else None,
+        "status_mapping_new": mapping_new.setting_value if mapping_new else None,
+        "status_mapping_blocked": mapping_blocked.setting_value if mapping_blocked else None,
+        "status_mapping_done": mapping_done.setting_value if mapping_done else None,
     }
 
 # --- System Settings ---
@@ -136,9 +143,16 @@ def get_ticket_url(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Setting not found")
     return setting
 
-@router.put("/settings/ticket-url", response_model=schemas.SystemSetting)
-def set_ticket_url(req: schemas.SystemSettingUpdate, db: Session = Depends(get_db)):
-    return crud.set_system_setting(db, crud.SETTING_TICKET_URL, req.setting_value, "チケットURLテンプレート")
+@router.put("/settings/{key}", response_model=schemas.SystemSetting)
+def set_system_setting(key: str, req: schemas.SystemSettingUpdate, db: Session = Depends(get_db)):
+    # Map friendly keys to constants if needed, or just use key directly
+    description = {
+        crud.SETTING_TICKET_URL: "チケットURLテンプレート",
+        crud.SETTING_STATUS_NEW: "ステータス条件: 未着手",
+        crud.SETTING_STATUS_BLOCKED: "ステータス条件: ブロック",
+        crud.SETTING_STATUS_DONE: "ステータス条件: 完了",
+    }.get(key, "システム設定")
+    return crud.set_system_setting(db, key, req.setting_value, description)
 
 # --- Status Master ---
 @router.post("/masters/statuses", response_model=schemas.Status)

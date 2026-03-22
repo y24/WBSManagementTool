@@ -28,6 +28,7 @@ class StatusBase(BaseModel):
     color_code: str
     sort_order: int = 0
     is_active: bool = True
+    is_system_reserved: bool = False
 
 class StatusCreate(StatusBase):
     pass
@@ -37,6 +38,7 @@ class StatusUpdate(BaseModel):
     color_code: Optional[str] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
+    is_system_reserved: Optional[bool] = None
 
 class Status(StatusBase):
     id: int
@@ -145,6 +147,8 @@ class TaskBase(BaseModel):
     is_auto_planned_date: bool = True
     is_auto_actual_date: bool = True
     sort_order: int = 0
+    status_id: Optional[int] = None
+    assignee_id: Optional[int] = None
 
 class TaskCreate(TaskBase):
     project_id: int
@@ -161,11 +165,15 @@ class TaskUpdate(BaseModel):
     is_auto_planned_date: Optional[bool] = None
     is_auto_actual_date: Optional[bool] = None
     sort_order: Optional[int] = None
+    status_id: Optional[int] = None
+    assignee_id: Optional[int] = None
 
 class Task(TaskBase):
     id: int
     project_id: int
     is_deleted: bool
+    status_id: Optional[int]
+    assignee_id: Optional[int]
     created_at: datetime
     updated_at: datetime
     subtasks: List[Subtask] = []
@@ -189,6 +197,8 @@ class ProjectBase(BaseModel):
     is_auto_planned_date: bool = True
     is_auto_actual_date: bool = True
     sort_order: int = 0
+    status_id: Optional[int] = None
+    assignee_id: Optional[int] = None
 
 class ProjectCreate(ProjectBase):
     pass
@@ -205,10 +215,14 @@ class ProjectUpdate(BaseModel):
     is_auto_planned_date: Optional[bool] = None
     is_auto_actual_date: Optional[bool] = None
     sort_order: Optional[int] = None
+    status_id: Optional[int] = None
+    assignee_id: Optional[int] = None
 
 class Project(ProjectBase):
     id: int
     is_deleted: bool
+    status_id: Optional[int]
+    assignee_id: Optional[int]
     created_at: datetime
     updated_at: datetime
     tasks: List[Task] = []
@@ -254,3 +268,6 @@ class InitialData(BaseModel):
     members: List[Member]
     holidays: List[Holiday]
     ticket_url_template: Optional[str] = None
+    status_mapping_new: Optional[str] = None
+    status_mapping_blocked: Optional[str] = None
+    status_mapping_done: Optional[str] = None

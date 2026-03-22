@@ -4,6 +4,30 @@ from . import models, schemas
 
 # --- System Settings ---
 SETTING_TICKET_URL = "ticket_url_template"
+SETTING_STATUS_NEW = "status_mapping_new"
+SETTING_STATUS_BLOCKED = "status_mapping_blocked"
+SETTING_STATUS_DONE = "status_mapping_done"
+
+def get_status_ids_by_category(db: Session, category: str) -> list[int]:
+    key = {
+        "new": SETTING_STATUS_NEW,
+        "blocked": SETTING_STATUS_BLOCKED,
+        "done": SETTING_STATUS_DONE
+    }.get(category)
+    if not key: return []
+    
+    setting = get_system_setting(db, key)
+    if setting and setting.setting_value:
+        try:
+            return [int(sid.strip()) for sid in setting.setting_value.split(",") if sid.strip().isdigit()]
+        except ValueError:
+            pass
+            
+    # Defaults based on seed.py: 1:New, 4:Done, 5:Blocked, 7:Removed
+    if category == "new": return [1, 7]
+    if category == "blocked": return [5]
+    if category == "done": return [4, 7]
+    return []
 
 def get_system_setting(db: Session, key: str):
     return db.query(models.SystemSetting).filter(models.SystemSetting.setting_key == key).first()
@@ -65,6 +89,8 @@ def update_status(db: Session, status_id: int, status: schemas.StatusUpdate):
 def delete_status(db: Session, status_id: int):
     db_status = db.query(models.MstStatus).filter(models.MstStatus.id == status_id).first()
     if db_status:
+        if db_status.is_system_reserved:
+            return None # Cannot delete system reserved status
         db_status.is_active = False
         db.commit()
         db.refresh(db_status)
@@ -166,6 +192,9 @@ def update_project(db: Session, project_id: int, project: schemas.ProjectUpdate)
     # Recalculate if auto-date is enabled
     if db_project.is_auto_planned_date or db_project.is_auto_actual_date:
         recalculate_project_dates(db, project_id)
+    
+    # Always recalculate status (as tasks might have changed independently)
+    recalculate_project_status(db, project_id)
         
     db.refresh(db_project)
     return db_project
@@ -204,6 +233,9 @@ def update_task(db: Session, task_id: int, task: schemas.TaskUpdate):
     else:
         # Even if not auto-date for THIS task, it might affect PROJECT auto-date
         recalculate_project_dates(db, db_task.project_id)
+    
+    # Always recalculate status
+    recalculate_task_status(db, task_id)
         
     db.refresh(db_task)
     return db_task
@@ -226,6 +258,7 @@ def create_subtask(db: Session, subtask: schemas.SubtaskCreate):
     
     # Always trigger recalculation for parent task
     recalculate_task_dates(db, db_subtask.task_id)
+    recalculate_task_status(db, db_subtask.task_id)
     
     return db_subtask
 
@@ -239,6 +272,7 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
     
     # Always trigger recalculation for parent task
     recalculate_task_dates(db, db_subtask.task_id)
+    recalculate_task_status(db, db_subtask.task_id)
     
     db.refresh(db_subtask)
     return db_subtask
@@ -250,6 +284,7 @@ def delete_subtask(db: Session, subtask_id: int):
         db.commit()
         # Always trigger recalculation for parent task
         recalculate_task_dates(db, db_subtask.task_id)
+        recalculate_task_status(db, db_subtask.task_id)
     return db_subtask
 
 # --- WBS Aggregation ---
@@ -401,6 +436,80 @@ def recalculate_project_dates(db: Session, project_id: int):
             changed = True
             
     if changed:
+        db.commit()
+
+def recalculate_task_status(db: Session, task_id: int):
+    """
+    Recalculate Task status based on its Subtasks.
+    Priority: Blocked > Done (All) > New (All) > In Progress
+    """
+    db_task = db.query(models.Task).filter(models.Task.id == task_id).first()
+    if not db_task: return
+    
+    # Get subtasks (filter by is_deleted and not Removed status category if desired, 
+    # but the rule says New/Removed = New, so we include them in count)
+    subtasks = db.query(models.Subtask).filter(
+        models.Subtask.task_id == task_id,
+        models.Subtask.is_deleted == False
+    ).all()
+    
+    if not subtasks: return
+    
+    new_ids = get_status_ids_by_category(db, "new")
+    blocked_ids = get_status_ids_by_category(db, "blocked")
+    done_ids = get_status_ids_by_category(db, "done")
+    
+    sub_status_ids = [s.status_id for s in subtasks]
+    
+    # Priority logic
+    if any(sid in blocked_ids for sid in sub_status_ids):
+        new_status_id = blocked_ids[0] if blocked_ids else 5 # Blocked
+    elif all(sid in done_ids for sid in sub_status_ids):
+        # Pick the first Done ID that is NOT Removed if possible, otherwise use 4
+        new_status_id = next((sid for sid in done_ids if sid != 7), 4)
+    elif all(sid in new_ids for sid in sub_status_ids):
+        new_status_id = next((sid for sid in new_ids if sid != 7), 1)
+    else:
+        new_status_id = 2 # In Progress
+        
+    if db_task.status_id != new_status_id:
+        db_task.status_id = new_status_id
+        db.commit()
+    
+    # Recalculate Project status
+    recalculate_project_status(db, db_task.project_id)
+
+def recalculate_project_status(db: Session, project_id: int):
+    """
+    Recalculate Project status based on its Tasks.
+    """
+    db_project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not db_project: return
+    
+    tasks = db.query(models.Task).filter(
+        models.Task.project_id == project_id,
+        models.Task.is_deleted == False
+    ).all()
+    
+    if not tasks: return
+    
+    new_ids = get_status_ids_by_category(db, "new")
+    blocked_ids = get_status_ids_by_category(db, "blocked")
+    done_ids = get_status_ids_by_category(db, "done")
+    
+    task_status_ids = [t.status_id for t in tasks if t.status_id]
+    
+    if not task_status_ids: return
+    
+    if all(sid in done_ids for sid in task_status_ids):
+        new_status_id = next((sid for sid in done_ids if sid != 7), 4)
+    elif all(sid in new_ids for sid in task_status_ids):
+        new_status_id = next((sid for sid in new_ids if sid != 7), 1)
+    else:
+        new_status_id = 2
+        
+    if db_project.status_id != new_status_id:
+        db_project.status_id = new_status_id
         db.commit()
 
 def check_overlap(periods: list[tuple[date, date]]) -> bool:

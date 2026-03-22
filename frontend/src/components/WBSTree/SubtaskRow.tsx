@@ -85,7 +85,9 @@ const SubtaskRow = memo(({
       </div>
       <div className={`w-28 flex items-center ${commonCellClasses}`}>
         <StatusSelect 
-          subtask={subtask} 
+          type="subtask"
+          id={subtask.id}
+          statusId={subtask.status_id}
           initialData={initialData} 
           onUpdateField={onUpdateField} 
         />
