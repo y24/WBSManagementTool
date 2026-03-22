@@ -94,10 +94,14 @@ class Project(Base):
     is_auto_actual_date = Column(Boolean, nullable=False, default=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_deleted = Column(Boolean, nullable=False, default=False)
+    status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=True, index=True)
+    assignee_id = Column(Integer, ForeignKey("mst_members.id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     tasks = relationship("Task", back_populates="project", order_by="Task.sort_order, Task.id")
+    status = relationship("MstStatus")
+    assignee = relationship("MstMember")
 
     __table_args__ = (
         CheckConstraint("project_name <> ''", name="check_project_name_empty"),
@@ -123,11 +127,15 @@ class Task(Base):
     is_auto_actual_date = Column(Boolean, nullable=False, default=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_deleted = Column(Boolean, nullable=False, default=False)
+    status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=True, index=True)
+    assignee_id = Column(Integer, ForeignKey("mst_members.id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     project = relationship("Project", back_populates="tasks")
     subtasks = relationship("Subtask", back_populates="task", order_by="Subtask.sort_order, Subtask.id")
+    status = relationship("MstStatus")
+    assignee = relationship("MstMember")
 
     __table_args__ = (
         CheckConstraint("task_name <> ''", name="check_task_name_empty"),

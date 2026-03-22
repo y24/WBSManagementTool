@@ -29,7 +29,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
     let valueToSave: any = newVal;
     if (type === 'date') {
       if (newVal === '') {
-        valueToSave = '';
+        valueToSave = null;
       } else {
         const parsed = parseDateFromInput(newVal);
         if (parsed) {
@@ -119,12 +119,12 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
 
   return (
     <div
+      ref={containerRef}
       className={type === 'date' ? "relative w-full h-full" : "w-full h-full"}
       style={type === 'date' && isEditing ? { zIndex: 1000, overflow: 'visible' } : {}}
     >
       {type === 'date' && isEditing ? (
         <div
-          ref={containerRef}
           className="absolute left-0 top-0 z-[1000] flex items-center bg-white shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10 whitespace-nowrap overflow-hidden"
           style={{ width: onToggleAuto ? '195px' : '135px', height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
         >
@@ -180,7 +180,6 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
         </div>
       ) : (
         <input
-          ref={containerRef}
           type={type === 'date' ? "text" : type}
           className={`bg-white h-full border-2 border-blue-400 outline-none px-1 w-full shadow-sm rounded ${className}`}
           value={val}
@@ -204,16 +203,13 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
         <input
           type="date"
           ref={datePickerRef}
-          className="absolute opacity-0 pointer-events-none w-0 h-0"
+          className="absolute opacity-0 w-0 h-0"
           style={{ left: 0, bottom: 0 }}
           value={value || ''}
           onChange={(e) => {
             const picked = e.target.value;
-            if (picked) {
-              setVal(formatDateForInput(picked));
-              onChange(picked);
-              setIsEditing(false);
-            }
+            setVal(formatDateForInput(picked));
+            onChange(picked || null);
           }}
         />
       )}
