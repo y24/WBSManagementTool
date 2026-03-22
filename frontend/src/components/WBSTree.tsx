@@ -1,10 +1,378 @@
-import { ChevronRight, ChevronDown, Plus, Trash2, Copy, FileText, AlertTriangle, Calendar, Pencil, X, Check, GripVertical } from 'lucide-react';
-import { useRef, useEffect, useState, useCallback, forwardRef } from 'react';
+import React, { useRef, useEffect, useState, useCallback, forwardRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { ChevronRight, ChevronDown, Plus, Trash2, Calendar, Pencil, X, Check, GripVertical, AlertTriangle } from 'lucide-react';
 import { Project, Task, Subtask } from '../types/wbs';
 import { InitialData } from '../types';
 import { wbsOps } from '../api/wbsOperations';
+
+const commonCellClasses = "px-2 py-1 text-sm wbs-cell-border truncate";
+const dateCellClasses = "px-2 py-1 text-sm wbs-cell-border relative";
+const commonHeaderClasses = "px-2 py-2 text-xs font-semibold text-gray-600 wbs-cell-border bg-gray-50 uppercase tracking-wide";
+const commonRowClasses = "transition-colors h-[37px]";
+
+const getStatus = (id: number, initialData: InitialData | null) => 
+  initialData?.statuses.find(s => s.id === id);
+
+const getWarning = (item: any) => {
+  const warnings = [];
+  if (item.planned_start_date && item.planned_end_date && item.planned_start_date > item.planned_end_date) {
+    warnings.push("計画期間の開始日が終了日より後になっています。");
+  }
+  if (item.actual_start_date && item.actual_end_date && item.actual_start_date > item.actual_end_date) {
+    warnings.push("実績期間の開始日が終了日より後になっています。");
+  }
+  return warnings.length > 0 ? warnings.join("\n") : null;
+};
+
+const formatDateForInput = (d: string) => {
+  if (!d) return '';
+  return d.replace(/-/g, '/');
+};
+
+const parseDateFromInput = (s: string) => {
+  if (!s) return null;
+  let cleaned = s.replace(/[\/\-\.]/g, '');
+  if (cleaned.length === 8) {
+    const year = cleaned.slice(0, 4);
+    const month = cleaned.slice(4, 6);
+    const day = cleaned.slice(6, 8);
+    return `${year}-${month}-${day}`;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if (/^\d{4}\/\d{2}\/\d{2}$/.test(s)) return s.replace(/\//g, '-');
+  return null;
+};
+
+const formatDisplayDate = (dateStr: string, type: string) => {
+  if (!dateStr || type !== 'date') return dateStr;
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[1]}/${parts[2]}`;
+  }
+  return dateStr;
+};
+
+// --- Memoized UI Components ---
+
+const EditableInput = memo(({ value, onChange, type = "text", className = "" }: any) => {
+  const [val, setVal] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const isCommittingRef = useRef(false);
+  const datePickerRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setVal(type === 'date' ? formatDateForInput(value) : (value || ''));
+      isCommittingRef.current = false;
+    }
+  }, [value, isEditing, type]);
+
+  const handleCommit = useCallback((newVal: string) => {
+    if (!isEditing || isCommittingRef.current) return;
+
+    let valueToSave = newVal;
+    if (type === 'date') {
+      if (newVal === '') {
+        valueToSave = '';
+      } else {
+        const parsed = parseDateFromInput(newVal);
+        if (parsed) {
+          valueToSave = parsed;
+        } else {
+          setVal(formatDateForInput(value));
+          setIsEditing(false);
+          return;
+        }
+      }
+    }
+
+    const hasChanged = valueToSave !== (value || '');
+    if (hasChanged) {
+      isCommittingRef.current = true;
+      onChange(valueToSave);
+    }
+    setIsEditing(false);
+  }, [isEditing, value, onChange, type]);
+
+  if (type === 'date' && !isEditing) {
+    return (
+      <div
+        className={`w-full h-full flex items-center cursor-pointer hover:bg-black/5 transition-colors ${className}`}
+        onClick={() => {
+          setIsEditing(true);
+          isCommittingRef.current = false;
+        }}
+        title={value ? formatDateForInput(value) : "未入力"}
+      >
+        {value ? formatDisplayDate(value, type) : <span className="text-gray-300 text-[10px]">--/--</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={type === 'date' ? "relative w-full h-full" : "w-full h-full"}
+      style={type === 'date' && isEditing ? { zIndex: 1000, overflow: 'visible' } : {}}
+    >
+      {type === 'date' && isEditing ? (
+        <div
+          className="absolute left-0 top-0 z-[1000] flex items-center bg-white shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10"
+          style={{ width: '135px', height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
+        >
+          <button
+            type="button"
+            className="flex items-center justify-center w-9 h-full border-r border-blue-100 text-blue-600 hover:bg-blue-50 transition-colors"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={(e) => {
+              e.stopPropagation();
+              try { (datePickerRef.current as any)?.showPicker(); } catch (err) { datePickerRef.current?.click(); }
+            }}
+            title="カレンダーから選択"
+          >
+            <Calendar size={19} />
+          </button>
+          <input
+            type="text"
+            placeholder="YYYY/MM/DD"
+            className="flex-1 bg-transparent h-full border-none outline-none px-2 text-sm font-bold text-gray-800"
+            value={val}
+            autoFocus
+            onChange={(e) => setVal(e.target.value)}
+            onBlur={(e) => handleCommit(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCommit((e.target as HTMLInputElement).value);
+              else if (e.key === 'Escape') {
+                setVal(formatDateForInput(value));
+                setIsEditing(false);
+              }
+            }}
+          />
+        </div>
+      ) : (
+        <input
+          type={type === 'date' ? "text" : type}
+          className={`bg-transparent h-full border-none outline-blue-400 px-1 focus:bg-white/50 w-full ${className}`}
+          value={val}
+          autoFocus={isEditing}
+          onChange={(e) => setVal(e.target.value)}
+          onBlur={(e) => handleCommit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleCommit((e.target as HTMLInputElement).value);
+            else if (e.key === 'Escape' && type === 'date') {
+              setVal(formatDateForInput(value));
+              setIsEditing(false);
+            }
+          }}
+        />
+      )}
+
+      {type === 'date' && (
+        <input
+          type="date"
+          ref={datePickerRef}
+          className="absolute opacity-0 pointer-events-none w-0 h-0"
+          style={{ left: 0, bottom: 0 }}
+          value={value || ''}
+          onChange={(e) => {
+            const picked = e.target.value;
+            if (picked) {
+              setVal(formatDateForInput(picked));
+              onChange(picked);
+              setIsEditing(false);
+            }
+          }}
+        />
+      )}
+    </div>
+  );
+});
+
+const ProjectRowContent = memo(({ project, nameWidth, checked, onToggleCheck, onToggleExpand, expanded, onUpdateField, onAddTask, provided }: any) => {
+  const warning = getWarning(project);
+  return (
+    <div className={`flex group wbs-row-project ${commonRowClasses}`}>
+      <div
+        className={`sticky left-0 z-20 flex items-center gap-1 font-semibold text-gray-800 wbs-cell-project transition-colors ${commonCellClasses}`}
+        style={{ width: nameWidth, minWidth: nameWidth }}
+      >
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggleCheck}
+          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
+        />
+        <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+          <GripVertical size={14} />
+        </div>
+        <button onClick={onToggleExpand} className="p-0.5 hover:bg-gray-200 rounded">
+          {expanded === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+        </button>
+        <div className="flex-1 min-w-0">
+          <EditableInput value={project.project_name} onChange={(v: string) => onUpdateField('project', project.id, 'project_name', v)} className="font-semibold" />
+        </div>
+        {warning && (
+          <span title={warning} className="cursor-help inline-flex">
+            <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+          </span>
+        )}
+        <button
+          onClick={onAddTask}
+          className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
+          title="タスクを追加"
+        >
+          <Plus size={14} />
+        </button>
+      </div>
+      <div className={`w-28 ${commonCellClasses}`}></div>
+      <div className={`w-28 ${commonCellClasses}`}></div>
+      <div className={`w-20 ${dateCellClasses}`}>
+        <EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => onUpdateField('project', project.id, 'planned_start_date', v)} />
+      </div>
+      <div className={`w-20 ${dateCellClasses}`}>
+        <EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => onUpdateField('project', project.id, 'planned_end_date', v)} />
+      </div>
+      <div className={`w-20 ${dateCellClasses}`}>
+        <EditableInput type="date" value={project.actual_start_date} onChange={(v: string) => onUpdateField('project', project.id, 'actual_start_date', v)} />
+      </div>
+      <div className={`w-20 ${dateCellClasses}`}>
+        <EditableInput type="date" value={project.actual_end_date} onChange={(v: string) => onUpdateField('project', project.id, 'actual_end_date', v)} />
+      </div>
+      <div className={`w-16 ${commonCellClasses}`}></div>
+    </div>
+  );
+});
+
+const TaskRowContent = memo(({ task, nameWidth, checked, onToggleCheck, onToggleExpand, expanded, onUpdateField, onAddSubtask, provided }: any) => {
+  const warning = getWarning(task);
+  return (
+    <div className={`flex group wbs-row-task ${commonRowClasses}`}>
+      <div
+        className={`sticky left-0 z-20 flex items-center gap-1 font-medium pl-6 text-gray-700 wbs-cell-task transition-colors ${commonCellClasses}`}
+        style={{ width: nameWidth, minWidth: nameWidth }}
+      >
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggleCheck}
+          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
+        />
+        <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
+          <GripVertical size={14} />
+        </div>
+        <button onClick={onToggleExpand} className="p-0.5 hover:bg-gray-200 rounded">
+          {expanded === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+        </button>
+        <div className="flex-1 min-w-0">
+          <EditableInput value={task.task_name} onChange={(v: string) => onUpdateField('task', task.id, 'task_name', v)} className="font-medium" />
+        </div>
+        {warning && (
+          <span title={warning} className="cursor-help inline-flex">
+            <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+          </span>
+        )}
+        <button
+          onClick={onAddSubtask}
+          className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
+          title="サブタスクを追加"
+        >
+          <Plus size={14} />
+        </button>
+      </div>
+      <div className={`w-28 ${commonCellClasses}`}></div>
+      <div className={`w-28 ${commonCellClasses}`}></div>
+      <div className={`w-20 ${dateCellClasses}`}>
+        <EditableInput type="date" value={task.planned_start_date} onChange={(v: string) => onUpdateField('task', task.id, 'planned_start_date', v)} />
+      </div>
+      <div className={`w-20 ${dateCellClasses}`}>
+        <EditableInput type="date" value={task.planned_end_date} onChange={(v: string) => onUpdateField('task', task.id, 'planned_end_date', v)} />
+      </div>
+      <div className={`w-20 ${dateCellClasses}`}>
+        <EditableInput type="date" value={task.actual_start_date} onChange={(v: string) => onUpdateField('task', task.id, 'actual_start_date', v)} />
+      </div>
+      <div className={`w-20 ${dateCellClasses}`}>
+        <EditableInput type="date" value={task.actual_end_date} onChange={(v: string) => onUpdateField('task', task.id, 'actual_end_date', v)} />
+      </div>
+      <div className={`w-16 ${commonCellClasses}`}></div>
+    </div>
+  );
+});
+
+const SubtaskRowContent = memo(({ subtask, nameWidth, checked, onToggleCheck, initialData, onUpdateField, onEditDetail, provided }: any) => {
+  const statusInfo = getStatus(subtask.status_id, initialData);
+  const warning = getWarning(subtask);
+  return (
+    <div className={`flex group wbs-row-subtask ${commonRowClasses}`}>
+      <div
+        className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 wbs-cell-subtask transition-colors ${commonCellClasses}`}
+        style={{ width: nameWidth, minWidth: nameWidth }}
+      >
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggleCheck}
+          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
+        />
+        <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
+          <GripVertical size={14} />
+        </div>
+        <div className="flex items-center gap-1 flex-1 min-w-0">
+          <select
+            className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer hover:bg-gray-100/50 rounded px-1 -ml-1 transition-colors shrink-0"
+            value={subtask.subtask_type_id}
+            onChange={e => onUpdateField('subtask', subtask.id, 'subtask_type_id', Number(e.target.value))}
+          >
+            {initialData?.subtask_types.map((t: any) => <option key={t.id} value={t.id}>{t.type_name}</option>)}
+          </select>
+          <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail || undefined}>
+            {subtask.subtask_detail}
+          </span>
+          {warning && (
+            <span title={warning} className="cursor-help inline-flex">
+              <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+            </span>
+          )}
+        </div>
+        <button
+          onClick={onEditDetail}
+          className="text-gray-300 hover:text-blue-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+          title="詳細を編集"
+        >
+          <Pencil size={14} />
+        </button>
+      </div>
+      <div className={`w-28 flex items-center ${commonCellClasses}`}>
+        <select
+          className="bg-transparent w-full outline-none text-xs font-semibold"
+          style={{ color: statusInfo?.color_code }}
+          value={subtask.status_id}
+          onChange={e => onUpdateField('subtask', subtask.id, 'status_id', Number(e.target.value))}
+        >
+          {initialData?.statuses.map((s: any) => <option key={s.id} value={s.id}>{s.status_name}</option>)}
+        </select>
+      </div>
+      <div className={`w-28 flex items-center ${commonCellClasses}`}>
+        <select
+          className="bg-transparent w-full outline-none text-sm"
+          value={subtask.assignee_id || ''}
+          onChange={e => onUpdateField('subtask', subtask.id, 'assignee_id', e.target.value ? Number(e.target.value) : null)}
+        >
+          <option value="">未設定</option>
+          {initialData?.members.map((m: any) => <option key={m.id} value={m.id}>{m.member_name}</option>)}
+        </select>
+      </div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v) } /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v) } /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v) } /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v) } /></div>
+      <div className={`w-16 ${commonCellClasses}`}>
+        <EditableInput type="number" value={subtask.progress_percent} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'progress_percent', v ? Number(v) : null)} />
+      </div>
+    </div>
+  );
+});
+
+// --- Main Tree Component ---
 
 interface WBSTreeProps {
   projects: Project[];
@@ -42,7 +410,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     }
   }, [checkedIds]);
 
-  const toggleCheckProject = (project: Project) => {
+  const toggleCheckProject = useCallback((project: Project) => {
     const isChecked = !checkedIds[`p-${project.id}`];
     const newChecked = { ...checkedIds };
     newChecked[`p-${project.id}`] = isChecked;
@@ -53,9 +421,9 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       });
     });
     setCheckedIds(newChecked);
-  };
+  }, [checkedIds]);
 
-  const toggleCheckTask = (task: Task) => {
+  const toggleCheckTask = useCallback((task: Task) => {
     const isChecked = !checkedIds[`t-${task.id}`];
     const newChecked = { ...checkedIds };
     newChecked[`t-${task.id}`] = isChecked;
@@ -63,14 +431,14 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       newChecked[`s-${subtask.id}`] = isChecked;
     });
     setCheckedIds(newChecked);
-  };
+  }, [checkedIds]);
 
-  const toggleCheckSubtask = (subtaskId: number) => {
+  const toggleCheckSubtask = useCallback((subtaskId: number) => {
     setCheckedIds(prev => ({
       ...prev,
       [`s-${subtaskId}`]: !prev[`s-${subtaskId}`]
     }));
-  };
+  }, []);
 
   const totalSelectedCount = Object.values(checkedIds).filter(Boolean).length;
 
@@ -79,10 +447,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
     setSaving(true);
     try {
-      // 削除対象の特定
       const projectsToDelete = projects.filter(p => checkedIds[`p-${p.id}`]);
       const projectIdsToDelete = projectsToDelete.map(p => p.id);
-
       const tasksToDelete: number[] = [];
       projects.forEach(p => {
         if (projectIdsToDelete.includes(p.id)) return;
@@ -90,7 +456,6 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           if (checkedIds[`t-${t.id}`]) tasksToDelete.push(t.id);
         });
       });
-
       const subtasksToDelete: number[] = [];
       projects.forEach(p => {
         if (projectIdsToDelete.includes(p.id)) return;
@@ -101,16 +466,12 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           });
         });
       });
-
-      // 並列実行
       const promises = [
         ...projectIdsToDelete.map(id => wbsOps.deleteProject(id)),
         ...tasksToDelete.map(id => wbsOps.deleteTask(id)),
         ...subtasksToDelete.map(id => wbsOps.deleteSubtask(id))
       ];
-
       await Promise.all(promises);
-
       setCheckedIds({});
       onUpdate();
     } catch (err) {
@@ -136,16 +497,13 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
   useEffect(() => {
     if (!isResizingName) return;
-
     const handleMouseMove = (e: MouseEvent) => {
       const delta = e.pageX - resizeStartX.current;
       setNameWidth(Math.max(150, resizeStartWidth.current + delta));
     };
-
     const handleMouseUp = () => {
       setIsResizingName(false);
     };
-
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     return () => {
@@ -154,8 +512,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     };
   }, [isResizingName]);
 
-  const toggleProject = (id: number) => setExpandedProjects(p => ({ ...p, [id]: !p[id] }));
-  const toggleTask = (id: number) => setExpandedTasks(t => ({ ...t, [id]: !t[id] }));
+  const toggleProject = useCallback((id: number) => setExpandedProjects(p => ({ ...p, [id]: !p[id] })), [setExpandedProjects]);
+  const toggleTask = useCallback((id: number) => setExpandedTasks(t => ({ ...t, [id]: !t[id] })), [setExpandedTasks]);
 
   const handleAddProject = useCallback(async () => {
     await wbsOps.createProject('新しいプロジェクト');
@@ -168,8 +526,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     return () => window.removeEventListener('add-project', handler);
   }, [handleAddProject]);
 
-  // --- CRUD Operations ---
-  const handleUpdate = async (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => {
+  const handleUpdate = useCallback(async (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => {
     try {
       setSaving(true);
       if (type === 'project') await wbsOps.updateProject(id, { [field]: value });
@@ -182,36 +539,27 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     } finally {
       setSaving(false);
     }
-  };
+  }, [onUpdate]);
 
-  const handleAddTask = async (projectId: number) => {
+  const handleAddTask = useCallback(async (projectId: number) => {
     await wbsOps.createTask(projectId, '新しいタスク');
     setExpandedProjects(p => ({ ...p, [projectId]: true }));
     onUpdate();
-  };
+  }, [onUpdate, setExpandedProjects]);
 
-  const handleAddSubtask = async (taskId: number) => {
+  const handleAddSubtask = useCallback(async (taskId: number) => {
     if (!initialData) return;
     const typeId = initialData.subtask_types[0]?.id || 1;
     const statusId = initialData.statuses[0]?.id || 1;
     await wbsOps.createSubtask(taskId, typeId, statusId);
     setExpandedTasks(t => ({ ...t, [taskId]: true }));
     onUpdate();
-  };
-
-  const handleDelete = async (type: 'project' | 'task' | 'subtask', id: number) => {
-    if (!window.confirm('削除してもよろしいですか？')) return;
-    if (type === 'project') await wbsOps.deleteProject(id);
-    else if (type === 'task') await wbsOps.deleteTask(id);
-    else await wbsOps.deleteSubtask(id);
-    onUpdate();
-  };
+  }, [onUpdate, initialData, setExpandedTasks]);
 
   const onDragEnd = async (result: DropResult) => {
     const { destination, source, type } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
-
     try {
       setSaving(true);
       if (type === 'PROJECT') {
@@ -248,208 +596,6 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       setSaving(false);
     }
   };
-
-  const getStatus = (id: number) => initialData?.statuses.find(s => s.id === id);
-
-  const getWarning = (item: any) => {
-    const warnings = [];
-    // if (item.is_overlapping) warnings.push("スケジュールに重複した期間があります。");
-    if (item.planned_start_date && item.planned_end_date && item.planned_start_date > item.planned_end_date) {
-      warnings.push("計画期間の開始日が終了日より後になっています。");
-    }
-    if (item.actual_start_date && item.actual_end_date && item.actual_start_date > item.actual_end_date) {
-      warnings.push("実績期間の開始日が終了日より後になっています。");
-    }
-    return warnings.length > 0 ? warnings.join("\n") : null;
-  };
-
-  const EditableInput = ({ value, onChange, type = "text", className = "" }: any) => {
-    const formatDateForInput = (d: string) => {
-      if (!d) return '';
-      return d.replace(/-/g, '/');
-    };
-
-    const parseDateFromInput = (s: string) => {
-      if (!s) return null;
-      // YYYY/MM/DD, YYYY-MM-DD, YYYY.MM.DD, YYYYMMDD を許容
-      let cleaned = s.replace(/[\/\-\.]/g, '');
-      if (cleaned.length === 8) {
-        const year = cleaned.slice(0, 4);
-        const month = cleaned.slice(4, 6);
-        const day = cleaned.slice(6, 8);
-        return `${year}-${month}-${day}`;
-      }
-      // すでに YYYY-MM-DD の場合
-      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-      // YYYY/MM/DD の場合
-      if (/^\d{4}\/\d{2}\/\d{2}$/.test(s)) return s.replace(/\//g, '-');
-      return null;
-    };
-
-    const [val, setVal] = useState('');
-    const [isEditing, setIsEditing] = useState(false);
-    const isCommittingRef = useRef(false);
-    const datePickerRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-      if (!isEditing) {
-        setVal(type === 'date' ? formatDateForInput(value) : (value || ''));
-        isCommittingRef.current = false;
-      }
-    }, [value, isEditing, type]);
-
-    const handleCommit = useCallback((newVal: string) => {
-      if (!isEditing || isCommittingRef.current) return;
-
-      let valueToSave = newVal;
-      if (type === 'date') {
-        if (newVal === '') {
-          valueToSave = '';
-        } else {
-          const parsed = parseDateFromInput(newVal);
-          if (parsed) {
-            valueToSave = parsed;
-          } else {
-            // 不正な形式の場合は元の値に戻す
-            setVal(formatDateForInput(value));
-            setIsEditing(false);
-            return;
-          }
-        }
-      }
-
-      const hasChanged = valueToSave !== (value || '');
-      if (hasChanged) {
-        isCommittingRef.current = true;
-        onChange(valueToSave);
-      }
-      setIsEditing(false);
-    }, [isEditing, value, onChange, type]);
-
-    const formatDisplayDate = (dateStr: string) => {
-      if (!dateStr || type !== 'date') return dateStr;
-      const parts = dateStr.split('-');
-      if (parts.length === 3) {
-        return `${parts[1]}/${parts[2]}`; // MM/DD for display
-      }
-      return dateStr;
-    };
-
-    if (type === 'date' && !isEditing) {
-      return (
-        <div
-          className={`w-full h-full flex items-center cursor-pointer hover:bg-black/5 transition-colors ${className}`}
-          onClick={() => {
-            setIsEditing(true);
-            isCommittingRef.current = false;
-          }}
-          title={value ? formatDateForInput(value) : "未入力"}
-        >
-          {value ? formatDisplayDate(value) : <span className="text-gray-300 text-[10px]">--/--</span>}
-        </div>
-      );
-    }
-
-    return (
-      <div
-        className={type === 'date' ? "relative w-full h-full" : "w-full h-full"}
-        style={type === 'date' && isEditing ? { zIndex: 1000, overflow: 'visible' } : {}}
-      >
-        {type === 'date' && isEditing ? (
-          <div
-            className="absolute left-0 top-0 z-[1000] flex items-center bg-white shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10"
-            style={{ width: '135px', height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
-          >
-            <button
-              type="button"
-              className="flex items-center justify-center w-9 h-full border-r border-blue-100 text-blue-600 hover:bg-blue-50 transition-colors"
-              onMouseDown={(e) => {
-                e.preventDefault();
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                try {
-                  (datePickerRef.current as any)?.showPicker();
-                } catch (err) {
-                  datePickerRef.current?.click();
-                }
-              }}
-              title="カレンダーから選択"
-            >
-              <Calendar size={19} />
-            </button>
-            <input
-              type="text"
-              placeholder="YYYY/MM/DD"
-              className="flex-1 bg-transparent h-full border-none outline-none px-2 text-sm font-bold text-gray-800"
-              value={val}
-              autoFocus
-              onChange={(e) => setVal(e.target.value)}
-              onBlur={(e) => {
-                handleCommit(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleCommit((e.target as HTMLInputElement).value);
-                } else if (e.key === 'Escape') {
-                  setVal(formatDateForInput(value));
-                  setIsEditing(false);
-                }
-              }}
-            />
-          </div>
-        ) : (
-          <input
-            type={type === 'date' ? "text" : type}
-            placeholder={type === 'date' ? "YYYY/MM/DD" : ""}
-            className={`
-              bg-transparent h-full border-none outline-blue-400 px-1 focus:bg-white/50 w-full
-              ${className}
-            `}
-            value={val}
-            autoFocus={isEditing}
-            onChange={(e) => setVal(e.target.value)}
-            onBlur={(e) => {
-              handleCommit(e.target.value);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleCommit((e.target as HTMLInputElement).value);
-              } else if (e.key === 'Escape') {
-                if (type === 'date') {
-                  setVal(formatDateForInput(value));
-                  setIsEditing(false);
-                }
-              }
-            }}
-          />
-        )}
-
-        {type === 'date' && (
-          <input
-            type="date"
-            ref={datePickerRef}
-            className="absolute opacity-0 pointer-events-none w-0 h-0"
-            style={{ left: 0, bottom: 0 }}
-            value={value || ''}
-            onChange={(e) => {
-              const picked = e.target.value;
-              if (picked) {
-                setVal(formatDateForInput(picked));
-                onChange(picked);
-                setIsEditing(false);
-              }
-            }}
-          />
-        )}
-      </div>
-    );
-  };
-
-  const commonCellClasses = "px-2 py-1 text-sm wbs-cell-border truncate";
-  const dateCellClasses = "px-2 py-1 text-sm wbs-cell-border relative";
-  const commonHeaderClasses = "px-2 py-2 text-xs font-semibold text-gray-600 wbs-cell-border bg-gray-50 uppercase tracking-wide";
-  const commonRowClasses = "transition-colors h-[37px]";
 
   return (
     <div
@@ -492,59 +638,17 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                   <Draggable key={`p-${project.id}`} draggableId={`p-${project.id}`} index={pIndex}>
                     {(provided) => (
                       <div ref={provided.innerRef} {...provided.draggableProps}>
-                        <div className={`flex group wbs-row-project ${commonRowClasses}`}>
-                          <div
-                            className={`sticky left-0 z-20 flex items-center gap-1 font-semibold text-gray-800 wbs-cell-project transition-colors ${commonCellClasses}`}
-                            style={{ width: nameWidth, minWidth: nameWidth }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={!!checkedIds[`p-${project.id}`]}
-                              onChange={() => toggleCheckProject(project)}
-                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
-                            />
-                            <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
-                              <GripVertical size={14} />
-                            </div>
-                            <button onClick={() => toggleProject(project.id)} className="p-0.5 hover:bg-gray-200 rounded">
-                              {expandedProjects[project.id] === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                            </button>
-                            <div className="flex-1 min-w-0">
-                              <EditableInput value={project.project_name} onChange={(v: string) => handleUpdate('project', project.id, 'project_name', v)} className="font-semibold" />
-                            </div>
-                            {getWarning(project) && (
-                              <span title={getWarning(project) || undefined} className="cursor-help inline-flex">
-                                <AlertTriangle size={14} className="text-amber-500 shrink-0" />
-                              </span>
-                            )}
-                            <button
-                              onClick={() => handleAddTask(project.id)}
-                              className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
-                              title="タスクを追加"
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
-                          <div className={`w-28 ${commonCellClasses}`}></div>
-                          <div className={`w-28 ${commonCellClasses}`}></div>
-                          <div className={`w-20 ${dateCellClasses}`}>
-                            <div className="flex items-center gap-1 group/date h-full">
-                              <EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_start_date', v)} />
-                            </div>
-                          </div>
-                          <div className={`w-20 ${dateCellClasses}`}>
-                            <EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'planned_end_date', v)} />
-                          </div>
-                          <div className={`w-20 ${dateCellClasses}`}>
-                            <div className="flex items-center gap-1 group/date h-full">
-                              <EditableInput type="date" value={project.actual_start_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_start_date', v)} />
-                            </div>
-                          </div>
-                          <div className={`w-20 ${dateCellClasses}`}>
-                            <EditableInput type="date" value={project.actual_end_date} onChange={(v: string) => handleUpdate('project', project.id, 'actual_end_date', v)} />
-                          </div>
-                          <div className={`w-16 ${commonCellClasses}`}></div>
-                        </div>
+                        <ProjectRowContent 
+                          project={project}
+                          nameWidth={nameWidth}
+                          checked={!!checkedIds[`p-${project.id}`]}
+                          onToggleCheck={() => toggleCheckProject(project)}
+                          onToggleExpand={() => toggleProject(project.id)}
+                          expanded={expandedProjects[project.id] !== false}
+                          onUpdateField={handleUpdate}
+                          onAddTask={() => handleAddTask(project.id)}
+                          provided={provided}
+                        />
 
                         {expandedProjects[project.id] !== false && (
                           <Droppable droppableId={`project-${project.id}`} type="TASK">
@@ -554,135 +658,37 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                   <Draggable key={`t-${task.id}`} draggableId={`t-${task.id}`} index={tIndex}>
                                     {(provided) => (
                                       <div ref={provided.innerRef} {...provided.draggableProps}>
-                                        <div className={`flex group wbs-row-task ${commonRowClasses}`}>
-                                          <div
-                                            className={`sticky left-0 z-20 flex items-center gap-1 font-medium pl-6 text-gray-700 wbs-cell-task transition-colors ${commonCellClasses}`}
-                                            style={{ width: nameWidth, minWidth: nameWidth }}
-                                          >
-                                            <input
-                                              type="checkbox"
-                                              checked={!!checkedIds[`t-${task.id}`]}
-                                              onChange={() => toggleCheckTask(task)}
-                                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
-                                            />
-                                            <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
-                                              <GripVertical size={14} />
-                                            </div>
-                                            <button onClick={() => toggleTask(task.id)} className="p-0.5 hover:bg-gray-200 rounded">
-                                              {expandedTasks[task.id] === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                                            </button>
-                                            <div className="flex-1 min-w-0">
-                                              <EditableInput value={task.task_name} onChange={(v: string) => handleUpdate('task', task.id, 'task_name', v)} className="font-medium" />
-                                            </div>
-                                            {getWarning(task) && (
-                                              <span title={getWarning(task) || undefined} className="cursor-help inline-flex">
-                                                <AlertTriangle size={14} className="text-amber-500 shrink-0" />
-                                              </span>
-                                            )}
-                                            <button
-                                              onClick={() => handleAddSubtask(task.id)}
-                                              className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
-                                              title="サブタスクを追加"
-                                            >
-                                              <Plus size={14} />
-                                            </button>
-                                          </div>
-                                          <div className={`w-28 ${commonCellClasses}`}></div>
-                                          <div className={`w-28 ${commonCellClasses}`}></div>
-                                          <div className={`w-20 ${dateCellClasses}`}>
-                                            <div className="flex items-center gap-1 group/date h-full">
-                                              <EditableInput type="date" value={task.planned_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_start_date', v)} />
-                                            </div>
-                                          </div>
-                                          <div className={`w-20 ${dateCellClasses}`}>
-                                            <EditableInput type="date" value={task.planned_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'planned_end_date', v)} />
-                                          </div>
-                                          <div className={`w-20 ${dateCellClasses}`}>
-                                            <div className="flex items-center gap-1 group/date h-full">
-                                              <EditableInput type="date" value={task.actual_start_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_start_date', v)} />
-                                            </div>
-                                          </div>
-                                          <div className={`w-20 ${dateCellClasses}`}>
-                                            <EditableInput type="date" value={task.actual_end_date} onChange={(v: string) => handleUpdate('task', task.id, 'actual_end_date', v)} />
-                                          </div>
-                                          <div className={`w-16 ${commonCellClasses}`}></div>
-                                        </div>
+                                        <TaskRowContent 
+                                          task={task}
+                                          nameWidth={nameWidth}
+                                          checked={!!checkedIds[`t-${task.id}`]}
+                                          onToggleCheck={() => toggleCheckTask(task)}
+                                          onToggleExpand={() => toggleTask(task.id)}
+                                          expanded={expandedTasks[task.id] !== false}
+                                          onUpdateField={handleUpdate}
+                                          onAddSubtask={() => handleAddSubtask(task.id)}
+                                          provided={provided}
+                                        />
 
                                         {expandedTasks[task.id] !== false && (
                                           <Droppable droppableId={`task-${task.id}`} type="SUBTASK">
                                             {(provided) => (
                                               <div {...provided.droppableProps} ref={provided.innerRef}>
                                                 {task.subtasks.map((subtask, sIndex) => {
-                                                  const statusInfo = getStatus(subtask.status_id);
                                                   return (
                                                     <Draggable key={`s-${subtask.id}`} draggableId={`s-${subtask.id}`} index={sIndex}>
                                                       {(provided) => (
-                                                        <div ref={provided.innerRef} {...provided.draggableProps} className={`flex group wbs-row-subtask ${commonRowClasses}`}>
-                                                          <div
-                                                            className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 wbs-cell-subtask transition-colors ${commonCellClasses}`}
-                                                            style={{ width: nameWidth, minWidth: nameWidth }}
-                                                          >
-                                                            <input
-                                                              type="checkbox"
-                                                              checked={!!checkedIds[`s-${subtask.id}`]}
-                                                              onChange={() => toggleCheckSubtask(subtask.id)}
-                                                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
-                                                            />
-                                                            <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
-                                                              <GripVertical size={14} />
-                                                            </div>
-                                                            <div className="flex items-center gap-1 flex-1 min-w-0">
-                                                              <select
-                                                                className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer hover:bg-gray-100/50 rounded px-1 -ml-1 transition-colors shrink-0"
-                                                                value={subtask.subtask_type_id}
-                                                                onChange={e => handleUpdate('subtask', subtask.id, 'subtask_type_id', Number(e.target.value))}
-                                                              >
-                                                                {initialData?.subtask_types.map(t => <option key={t.id} value={t.id}>{t.type_name}</option>)}
-                                                              </select>
-                                                              <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail || undefined}>
-                                                                {subtask.subtask_detail}
-                                                              </span>
-                                                              {getWarning(subtask) && (
-                                                                <span title={getWarning(subtask) || undefined} className="cursor-help inline-flex">
-                                                                  <AlertTriangle size={14} className="text-amber-500 shrink-0" />
-                                                                </span>
-                                                              )}
-                                                            </div>
-                                                            <button
-                                                              onClick={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
-                                                              className="text-gray-300 hover:text-blue-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                                                              title="詳細を編集"
-                                                            >
-                                                              <Pencil size={14} />
-                                                            </button>
-                                                          </div>
-                                                          <div className={`w-28 flex items-center ${commonCellClasses}`}>
-                                                            <select
-                                                              className="bg-transparent w-full outline-none text-xs font-semibold"
-                                                              style={{ color: statusInfo?.color_code }}
-                                                              value={subtask.status_id}
-                                                              onChange={e => handleUpdate('subtask', subtask.id, 'status_id', Number(e.target.value))}
-                                                            >
-                                                              {initialData?.statuses.map(s => <option key={s.id} value={s.id}>{s.status_name}</option>)}
-                                                            </select>
-                                                          </div>
-                                                          <div className={`w-28 flex items-center ${commonCellClasses}`}>
-                                                            <select
-                                                              className="bg-transparent w-full outline-none text-sm"
-                                                              value={subtask.assignee_id || ''}
-                                                              onChange={e => handleUpdate('subtask', subtask.id, 'assignee_id', e.target.value ? Number(e.target.value) : null)}
-                                                            >
-                                                              <option value="">未設定</option>
-                                                              {initialData?.members.map(m => <option key={m.id} value={m.id}>{m.member_name}</option>)}
-                                                            </select>
-                                                          </div>
-                                                          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'planned_start_date', v)} /></div>
-                                                          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'planned_end_date', v)} /></div>
-                                                          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'actual_start_date', v)} /></div>
-                                                          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'actual_end_date', v)} /></div>
-                                                          <div className={`w-16 ${commonCellClasses}`}>
-                                                            <EditableInput type="number" value={subtask.progress_percent} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'progress_percent', v ? Number(v) : null)} />
-                                                          </div>
+                                                        <div ref={provided.innerRef} {...provided.draggableProps}>
+                                                          <SubtaskRowContent 
+                                                            subtask={subtask}
+                                                            nameWidth={nameWidth}
+                                                            checked={!!checkedIds[`s-${subtask.id}`]}
+                                                            onToggleCheck={() => toggleCheckSubtask(subtask.id)}
+                                                            initialData={initialData}
+                                                            onUpdateField={handleUpdate}
+                                                            onEditDetail={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
+                                                            provided={provided}
+                                                          />
                                                         </div>
                                                       )}
                                                     </Draggable>

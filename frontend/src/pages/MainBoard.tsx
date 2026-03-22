@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../api/client';
 import { Project, WBSResponse } from '../types/wbs';
 import { InitialData } from '../types';
@@ -23,7 +23,7 @@ export default function MainBoard() {
   const treeRef = useRef<HTMLDivElement>(null);
   const ganttRef = useRef<HTMLDivElement>(null);
 
-  const fetchData = async (isInitial = false) => {
+  const fetchData = useCallback(async (isInitial = false) => {
     try {
       if (isInitial || !data) setLoading(true);
       
@@ -40,7 +40,7 @@ export default function MainBoard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [data, initialData]);
 
   useEffect(() => {
     fetchData(true);
