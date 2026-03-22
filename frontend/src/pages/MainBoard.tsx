@@ -67,6 +67,15 @@ export default function MainBoard() {
     return 1000;
   };
 
+  const getInitialGanttScrollLeft = (): number => {
+    const saved = localStorage.getItem('wbs_gantt_scroll_left');
+    if (saved) {
+      const parsed = parseFloat(saved);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 0;
+  };
+
   // フィルター状態
   const [filters, setFilters] = useState<FilterState>(getInitialFilters);
 
@@ -287,6 +296,22 @@ export default function MainBoard() {
     };
   }, [data, filteredProjects]);
 
+  // ガントチャートの初期スクロール位置の復元
+  useEffect(() => {
+    if (!loading && data && ganttRef.current) {
+      const initialScrollLeft = getInitialGanttScrollLeft();
+      if (initialScrollLeft > 0) {
+        // レンダリングが完了するのを少し待ってからスクロールを適用
+        const timer = setTimeout(() => {
+          if (ganttRef.current) {
+            ganttRef.current.scrollLeft = initialScrollLeft;
+          }
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [loading, !!data, !!dynamicGanttRange]); // dataとdynamicGanttRangeの存在を監視
+
   // マウス関連のリサイズイベント制御
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -317,9 +342,15 @@ export default function MainBoard() {
   };
 
   const handleGanttScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (treeRef.current && Math.abs(treeRef.current.scrollTop - e.currentTarget.scrollTop) > 0.5) {
-      treeRef.current.scrollTop = e.currentTarget.scrollTop;
+    const { scrollTop, scrollLeft } = e.currentTarget;
+    
+    // 垂直スクロールの同期
+    if (treeRef.current && Math.abs(treeRef.current.scrollTop - scrollTop) > 0.5) {
+      treeRef.current.scrollTop = scrollTop;
     }
+    
+    // 水平スクロール位置の保存
+    localStorage.setItem('wbs_gantt_scroll_left', scrollLeft.toString());
   };
 
   if (loading && !data) return <div className="p-4 text-gray-500 font-medium">Loading WBS...</div>;
