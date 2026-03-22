@@ -1,7 +1,9 @@
 import { useMemo, forwardRef } from 'react';
 import { format, differenceInDays, addDays, getDay, isToday } from 'date-fns';
+import { AlertTriangle } from 'lucide-react';
 import { Project, Task, Subtask, GanttRange } from '../types/wbs';
 import { InitialData } from '../types';
+import { getWarning } from './WBSTree/utils';
 
 interface GanttChartProps {
   projects: Project[];
@@ -78,21 +80,13 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       rStart = pStart! + calcPWidth - rWidth;
     }
 
-    const isDelayed = (() => {
-      if (!isSubtask || !item.planned_end_date || !initialData) return false;
-      const status = initialData.statuses.find(s => s.id === item.status_id);
-      if (!status || status.status_name === 'Done' || status.status_name === 'Removed') return false;
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const pEnd = new Date(item.planned_end_date);
-      if (today > pEnd) return true;
-      if (item.review_days > 0 && status.status_name !== 'In Review') {
-        const rStart = new Date(pEnd);
-        rStart.setDate(rStart.getDate() - Math.ceil(item.review_days));
-        if (today >= rStart) return true;
-      }
-      return false;
-    })();
+    const warningText = getWarning(item, initialData);
+    const isDelayed = !!warningText;
+
+    const rightEdge = Math.max(
+      pStart !== undefined && pWidth !== undefined ? pStart + pWidth : 0,
+      aStart !== undefined && aWidth !== undefined ? aStart + aWidth : 0
+    );
 
     return (
       <div className="relative w-full h-full min-h-[30px] flex flex-col justify-start">
@@ -104,26 +98,28 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
             />
             {rStart !== undefined && rWidth !== undefined && (
               <div
-                className="absolute top-[6px] rounded-tr-sm h-1.5 bg-yellow-400 opacity-70"
+                className="absolute top-[6px] rounded-tr-sm h-1.5 bg-purple-400 opacity-70"
                 style={{ left: `${rStart}px`, width: `${rWidth}px` }}
                 title={`レビュー期間: ${item.review_days}日`}
               />
-            )}
-            {isDelayed && (
-               <div
-                  className="absolute top-[6px] right-0 translate-x-1/2 -mt-1 w-2 h-2 rounded-full bg-red-500 animate-pulse z-20"
-                  style={{ left: `${pStart + pWidth}px` }}
-                  title="遅延しています"
-               />
             )}
           </>
         )}
         {aStart !== undefined && aWidth !== undefined && (
           <div
-            className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm ${isDelayed ? 'ring-2 ring-red-500 ring-offset-1 z-20 bg-red-400 opacity-90' : ''}`}
-            style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: isDelayed ? '#ef4444' : typeColor }}
-            title={`${item.progress_percent ? item.progress_percent + '%' : ''} ${isDelayed ? '(遅延)' : ''}`}
+            className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm`}
+            style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
+            title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
           />
+        )}
+        {isDelayed && warningText && (
+          <div
+            className="absolute flex items-center z-20 pointer-events-auto cursor-help"
+            style={{ top: '10px', left: `${rightEdge + 4}px` }}
+            title={warningText}
+          >
+            <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+          </div>
         )}
       </div>
     );
