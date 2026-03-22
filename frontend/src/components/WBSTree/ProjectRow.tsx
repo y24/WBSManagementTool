@@ -90,16 +90,40 @@ const ProjectRow = memo(({
       <div className={`w-28 ${commonCellClasses}`}></div>
       <div className={`w-28 ${commonCellClasses}`}></div>
       <div className={`w-20 ${dateCellClasses}`}>
-        <EditableInput type="date" value={project.planned_start_date} onChange={(v: string) => onUpdateField('project', project.id, 'planned_start_date', v)} />
+        <EditableInput 
+          type="date" 
+          value={project.planned_start_date} 
+          onChange={(v: string) => onUpdateField('project', project.id, 'planned_start_date', v)} 
+          isAuto={project.is_auto_planned_date}
+          onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_planned_date', v)}
+        />
       </div>
       <div className={`w-20 ${dateCellClasses}`}>
-        <EditableInput type="date" value={project.planned_end_date} onChange={(v: string) => onUpdateField('project', project.id, 'planned_end_date', v)} />
+        <EditableInput 
+          type="date" 
+          value={project.planned_end_date} 
+          onChange={(v: string) => onUpdateField('project', project.id, 'planned_end_date', v)} 
+          isAuto={project.is_auto_planned_date}
+          onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_planned_date', v)}
+        />
       </div>
       <div className={`w-20 ${dateCellClasses}`}>
-        <EditableInput type="date" value={project.actual_start_date} onChange={(v: string) => onUpdateField('project', project.id, 'actual_start_date', v)} />
+        <EditableInput 
+          type="date" 
+          value={project.actual_start_date} 
+          onChange={(v: string) => onUpdateField('project', project.id, 'actual_start_date', v)} 
+          isAuto={project.is_auto_actual_date}
+          onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_actual_date', v)}
+        />
       </div>
       <div className={`w-20 ${dateCellClasses}`}>
-        <EditableInput type="date" value={project.actual_end_date} onChange={(v: string) => onUpdateField('project', project.id, 'actual_end_date', v)} />
+        <EditableInput 
+          type="date" 
+          value={project.actual_end_date} 
+          onChange={(v: string) => onUpdateField('project', project.id, 'actual_end_date', v)} 
+          isAuto={project.is_auto_actual_date}
+          onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_actual_date', v)}
+        />
       </div>
       <div className={`w-20 ${commonCellClasses}`}></div>
       <div className={`w-16 ${commonCellClasses}`}></div>

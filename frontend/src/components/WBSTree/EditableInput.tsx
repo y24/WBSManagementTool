@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Calendar } from 'lucide-react';
 import { formatDateForInput, parseDateFromInput, formatDisplayDate } from './utils';
 
-const EditableInput = memo(({ value, onChange, type = "text", className = "", min, max, step, precision, suffix }: any) => {
+const EditableInput = memo(({ value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto }: any) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const isCommittingRef = useRef(false);
-  const datePickerRef = useRef<HTMLInputElement>(null);
+  const datePickerRef = useRef<any>(null);
+  const containerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!isEditing) {
@@ -68,6 +69,21 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
     setIsEditing(false);
   }, [isEditing, value, onChange, type, min, max]);
 
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        handleCommit(val);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isEditing, val, handleCommit]);
+
   const displayValue = () => {
     if (type === 'date') {
       return value ? formatDisplayDate(value, type) : <span className="text-gray-300 text-[10px]">--/--</span>;
@@ -84,15 +100,17 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
     return `${formattedValue}${suffix || ''}`;
   };
 
+  const isActuallyReadOnly = readOnly || isAuto;
+
   if (!isEditing) {
     return (
       <div
-        className={`w-full h-full flex items-center cursor-pointer hover:bg-black/5 transition-colors overflow-hidden truncate px-1 ${className}`}
+        className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 cursor-pointer hover:bg-black/5 ${isActuallyReadOnly ? 'bg-gray-50/50 grayscale-[0.3]' : ''} ${className}`}
         onClick={() => {
           setIsEditing(true);
           isCommittingRef.current = false;
         }}
-        title={type === 'date' && value ? formatDateForInput(value) : String(value || "未入力")}
+        title={isActuallyReadOnly ? "自動集計中 (クリックで設定変更可能)" : (type === 'date' && value ? formatDateForInput(value) : String(value || "未入力"))}
       >
         {displayValue()}
       </div>
@@ -106,30 +124,32 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
     >
       {type === 'date' && isEditing ? (
         <div
-          className="absolute left-0 top-0 z-[1000] flex items-center bg-white shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10"
-          style={{ width: '135px', height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
+          ref={containerRef}
+          className="absolute left-0 top-0 z-[1000] flex items-center bg-white shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10 whitespace-nowrap overflow-hidden"
+          style={{ width: onToggleAuto ? '195px' : '135px', height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
         >
           <button
             type="button"
-            className="flex items-center justify-center w-9 h-full border-r border-blue-100 text-blue-600 hover:bg-blue-50 transition-colors"
+            className="flex items-center justify-center w-9 h-full border-r border-blue-100 text-blue-600 hover:bg-blue-50 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             onMouseDown={(e) => e.preventDefault()}
+            disabled={isAuto}
             onClick={(e) => {
               e.stopPropagation();
               try { (datePickerRef.current as any)?.showPicker(); } catch (err) { datePickerRef.current?.click(); }
             }}
-            title="カレンダーから選択"
+            title={isAuto ? "自動設定中は変更できません" : "カレンダーから選択"}
           >
             <Calendar size={19} />
           </button>
           <input
             type="text"
             placeholder="YYYY/MM/DD"
-            className="flex-1 bg-transparent h-full border-none outline-none px-2 text-sm font-bold text-gray-800"
+            className="flex-1 bg-transparent min-w-0 h-full border-none outline-none px-2 text-sm font-bold text-gray-800 disabled:text-gray-400 disabled:cursor-not-allowed"
             value={val}
             autoFocus
+            disabled={isAuto}
             onFocus={(e) => e.target.select()}
             onChange={(e) => setVal(e.target.value)}
-            onBlur={(e) => handleCommit(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleCommit((e.target as HTMLInputElement).value);
               else if (e.key === 'Escape') {
@@ -138,16 +158,35 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
               }
             }}
           />
+          {onToggleAuto && (
+            <div 
+              className="flex items-center gap-1.5 px-2.5 border-l border-blue-100 h-full bg-blue-50/50 hover:bg-blue-100/50 cursor-pointer select-none shrink-0"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleAuto(!isAuto);
+              }}
+            >
+              <input 
+                type="checkbox" 
+                checked={isAuto} 
+                onChange={() => {}} // onClick handles it
+                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer pointer-events-none"
+              />
+              <span className="text-[11px] text-blue-700 font-bold">自動</span>
+            </div>
+          )}
         </div>
       ) : (
         <input
+          ref={containerRef}
           type={type === 'date' ? "text" : type}
           className={`bg-white h-full border-2 border-blue-400 outline-none px-1 w-full shadow-sm rounded ${className}`}
           value={val}
           autoFocus={isEditing}
           onFocus={(e) => e.target.select()}
           onChange={(e) => setVal(e.target.value)}
-          onBlur={(e) => handleCommit(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleCommit((e.target as HTMLInputElement).value);
             else if (e.key === 'Escape') {

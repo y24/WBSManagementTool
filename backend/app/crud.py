@@ -326,7 +326,12 @@ def recalculate_task_dates(db: Session, task_id: int):
     if not db_task:
         return
     
-    subtasks = [s for s in db_task.subtasks if not s.is_deleted]
+    from .models import Subtask, MstStatus
+    subtasks = db.query(Subtask).join(MstStatus).filter(
+        Subtask.task_id == task_id,
+        Subtask.is_deleted == False,
+        MstStatus.status_name != "Removed"
+    ).all()
     
     changed = False
     if db_task.is_auto_planned_date:
@@ -367,7 +372,8 @@ def recalculate_project_dates(db: Session, project_id: int):
     if not db_project:
         return
     
-    tasks = [t for t in db_project.tasks if not t.is_deleted]
+    # Query tasks explicitly to ensure latest values after potential updates in recalculate_task_dates
+    tasks = db.query(models.Task).filter(models.Task.project_id == project_id, models.Task.is_deleted == False).all()
     
     changed = False
     if db_project.is_auto_planned_date:

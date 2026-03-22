@@ -142,8 +142,8 @@ class TaskBase(BaseModel):
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
     actual_end_date: Optional[date] = None
-    is_auto_planned_date: bool = False
-    is_auto_actual_date: bool = False
+    is_auto_planned_date: bool = True
+    is_auto_actual_date: bool = True
     sort_order: int = 0
 
 class TaskCreate(TaskBase):
@@ -186,8 +186,8 @@ class ProjectBase(BaseModel):
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
     actual_end_date: Optional[date] = None
-    is_auto_planned_date: bool = False
-    is_auto_actual_date: bool = False
+    is_auto_planned_date: bool = True
+    is_auto_actual_date: bool = True
     sort_order: int = 0
 
 class ProjectCreate(ProjectBase):
