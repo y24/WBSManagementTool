@@ -11,24 +11,70 @@ export default function MainBoard() {
   const [initialData, setInitialData] = useState<InitialData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 1. 各種UI状態の初期値をlocalStorageから読み込み
+  const getInitialFilters = (): FilterState => {
+    const saved = localStorage.getItem('wbs_filters');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse saved filters', e);
+      }
+    }
+    return {
+      projectIds: [],
+      statusIds: [],
+      assigneeIds: [],
+      subtaskTypeIds: [],
+      onlyDelayed: false,
+      searchTerm: '',
+      showRemoved: false,
+      showDoneProjects: false,
+    };
+  };
+
+  const getInitialExpandedProjects = (): Record<number, boolean> => {
+    const saved = localStorage.getItem('wbs_expanded_projects');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse saved expanded projects', e);
+      }
+    }
+    return {};
+  };
+
+  const getInitialExpandedTasks = (): Record<number, boolean> => {
+    const saved = localStorage.getItem('wbs_expanded_tasks');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse saved expanded tasks', e);
+      }
+    }
+    return {};
+  };
+
+  const getInitialTreeWidth = (): number => {
+    const saved = localStorage.getItem('wbs_tree_width');
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 1000;
+  };
+
   // フィルター状態
-  const [filters, setFilters] = useState<FilterState>({
-    projectIds: [],
-    statusIds: [],
-    assigneeIds: [],
-    subtaskTypeIds: [],
-    onlyDelayed: false,
-    searchTerm: '',
-    showRemoved: false,
-    showDoneProjects: false,
-  });
+  const [filters, setFilters] = useState<FilterState>(getInitialFilters);
 
   // ツリー展開ステートのリフトアップ
-  const [expandedProjects, setExpandedProjects] = useState<Record<number, boolean>>({});
-  const [expandedTasks, setExpandedTasks] = useState<Record<number, boolean>>({});
+  const [expandedProjects, setExpandedProjects] = useState<Record<number, boolean>>(getInitialExpandedProjects);
+  const [expandedTasks, setExpandedTasks] = useState<Record<number, boolean>>(getInitialExpandedTasks);
 
   // レイアウトの幅調整
-  const [treeWidth, setTreeWidth] = useState(1000);
+  const [treeWidth, setTreeWidth] = useState(getInitialTreeWidth);
   const [isResizing, setIsResizing] = useState(false);
 
   // ガントとツリーのスクロール同期（DOM直接操作用Ref）
@@ -53,6 +99,23 @@ export default function MainBoard() {
       setLoading(false);
     }
   }, [data, initialData]);
+
+  // 状態の保存用Effect
+  useEffect(() => {
+    localStorage.setItem('wbs_filters', JSON.stringify(filters));
+  }, [filters]);
+
+  useEffect(() => {
+    localStorage.setItem('wbs_expanded_projects', JSON.stringify(expandedProjects));
+  }, [expandedProjects]);
+
+  useEffect(() => {
+    localStorage.setItem('wbs_expanded_tasks', JSON.stringify(expandedTasks));
+  }, [expandedTasks]);
+
+  useEffect(() => {
+    localStorage.setItem('wbs_tree_width', treeWidth.toString());
+  }, [treeWidth]);
 
   useEffect(() => {
     fetchData(true);

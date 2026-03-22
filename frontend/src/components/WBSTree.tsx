@@ -166,7 +166,22 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     }
   };
 
-  const [nameWidth, setNameWidth] = useState(320);
+  const getInitialNameWidth = (): number => {
+    const saved = localStorage.getItem('wbs_name_width');
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 320;
+  };
+
+  const [nameWidth, setNameWidth] = useState(getInitialNameWidth);
+
+  // 状態の保存用Effect
+  useEffect(() => {
+    localStorage.setItem('wbs_name_width', nameWidth.toString());
+  }, [nameWidth]);
+
   const [isResizingName, setIsResizingName] = useState(false);
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(0);
