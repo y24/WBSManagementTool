@@ -77,6 +77,7 @@ const ProjectRow = memo(({
       <div className={`w-20 ${dateCellClasses}`}>
         <EditableInput type="date" value={project.actual_end_date} onChange={(v: string) => onUpdateField('project', project.id, 'actual_end_date', v)} />
       </div>
+      <div className={`w-20 ${commonCellClasses}`}></div>
       <div className={`w-16 ${commonCellClasses}`}></div>
     </div>
   );

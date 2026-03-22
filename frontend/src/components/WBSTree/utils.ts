@@ -3,7 +3,7 @@ import { InitialData } from '../../types';
 export const getStatus = (id: number, initialData: InitialData | null) => 
   initialData?.statuses.find(s => s.id === id);
 
-export const getWarning = (item: any) => {
+export const getWarning = (item: any, initialData?: InitialData | null) => {
   const warnings = [];
   if (item.planned_start_date && item.planned_end_date && item.planned_start_date > item.planned_end_date) {
     warnings.push("計画期間の開始日が終了日より後になっています。");
@@ -11,6 +11,29 @@ export const getWarning = (item: any) => {
   if (item.actual_start_date && item.actual_end_date && item.actual_start_date > item.actual_end_date) {
     warnings.push("実績期間の開始日が終了日より後になっています。");
   }
+
+  // 遅延判定
+  if (initialData && item.status_id) {
+    const status = initialData.statuses.find(s => s.id === item.status_id);
+    if (status && status.status_name !== 'Done' && status.status_name !== 'Removed' && item.planned_end_date) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const plannedEnd = new Date(item.planned_end_date);
+      
+      if (today > plannedEnd) {
+        warnings.push("完了予定日を過ぎていますが未完了です。");
+      } else if (item.review_days && item.review_days > 0) {
+        if (status.status_name !== 'In Review') {
+          const reviewStartDeadline = new Date(plannedEnd);
+          reviewStartDeadline.setDate(reviewStartDeadline.getDate() - Math.ceil(item.review_days));
+          if (today >= reviewStartDeadline) {
+            warnings.push("レビュー開始期限を過ぎていますがレビュー中になっていません。");
+          }
+        }
+      }
+    }
+  }
+
   return warnings.length > 0 ? warnings.join("\n") : null;
 };
 

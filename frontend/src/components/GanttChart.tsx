@@ -70,19 +70,59 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
     const typeColor = isSubtask ? getStatusColor(item.status_id) : '#cbd5e1';
 
+    let rStart, rWidth;
+    if (isSubtask && item.planned_start_date && item.planned_end_date && item.review_days && item.review_days > 0) {
+      rWidth = item.review_days * CELL_WIDTH;
+      const calcPWidth = (differenceInDays(new Date(item.planned_end_date), new Date(item.planned_start_date)) + 1) * CELL_WIDTH;
+      if (rWidth > calcPWidth) rWidth = calcPWidth;
+      rStart = pStart! + calcPWidth - rWidth;
+    }
+
+    const isDelayed = (() => {
+      if (!isSubtask || !item.planned_end_date || !initialData) return false;
+      const status = initialData.statuses.find(s => s.id === item.status_id);
+      if (!status || status.status_name === 'Done' || status.status_name === 'Removed') return false;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const pEnd = new Date(item.planned_end_date);
+      if (today > pEnd) return true;
+      if (item.review_days > 0 && status.status_name !== 'In Review') {
+        const rStart = new Date(pEnd);
+        rStart.setDate(rStart.getDate() - Math.ceil(item.review_days));
+        if (today >= rStart) return true;
+      }
+      return false;
+    })();
+
     return (
       <div className="relative w-full h-full min-h-[30px] flex flex-col justify-start">
         {pStart !== undefined && pWidth !== undefined && (
-          <div
-            className={`absolute top-[6px] rounded-t-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 opacity-60`}
-            style={{ left: `${pStart}px`, width: `${pWidth}px` }}
-          />
+          <>
+            <div
+              className={`absolute top-[6px] rounded-t-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 opacity-60`}
+              style={{ left: `${pStart}px`, width: `${pWidth}px` }}
+            />
+            {rStart !== undefined && rWidth !== undefined && (
+              <div
+                className="absolute top-[6px] rounded-tr-sm h-1.5 bg-yellow-400 opacity-70"
+                style={{ left: `${rStart}px`, width: `${rWidth}px` }}
+                title={`レビュー期間: ${item.review_days}日`}
+              />
+            )}
+            {isDelayed && (
+               <div
+                  className="absolute top-[6px] right-0 translate-x-1/2 -mt-1 w-2 h-2 rounded-full bg-red-500 animate-pulse z-20"
+                  style={{ left: `${pStart + pWidth}px` }}
+                  title="遅延しています"
+               />
+            )}
+          </>
         )}
         {aStart !== undefined && aWidth !== undefined && (
           <div
-            className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm`}
-            style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
-            title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
+            className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm ${isDelayed ? 'ring-2 ring-red-500 ring-offset-1 z-20 bg-red-400 opacity-90' : ''}`}
+            style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: isDelayed ? '#ef4444' : typeColor }}
+            title={`${item.progress_percent ? item.progress_percent + '%' : ''} ${isDelayed ? '(遅延)' : ''}`}
           />
         )}
       </div>

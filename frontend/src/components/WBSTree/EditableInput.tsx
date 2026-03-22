@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Calendar } from 'lucide-react';
 import { formatDateForInput, parseDateFromInput, formatDisplayDate } from './utils';
 
-const EditableInput = memo(({ value, onChange, type = "text", className = "", min, max, suffix }: any) => {
+const EditableInput = memo(({ value, onChange, type = "text", className = "", min, max, step, precision, suffix }: any) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const isCommittingRef = useRef(false);
@@ -10,10 +10,17 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
 
   useEffect(() => {
     if (!isEditing) {
-      setVal(type === 'date' ? formatDateForInput(value) : (value != null ? String(value) : ''));
+      let initVal = value != null ? String(value) : '';
+      if (type === 'date') {
+        initVal = formatDateForInput(value);
+      } else if (type === 'number' && precision !== undefined && value !== '' && value != null) {
+        const num = Number(value);
+        if (!isNaN(num)) initVal = num.toFixed(precision);
+      }
+      setVal(initVal);
       isCommittingRef.current = false;
     }
-  }, [value, isEditing, type]);
+  }, [value, isEditing, type, precision]);
 
   const handleCommit = useCallback((newVal: string) => {
     if (!isEditing || isCommittingRef.current) return;
@@ -68,7 +75,13 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
     if (value == null || value === '') {
       return <span className="text-gray-300 text-[10px]">-</span>;
     }
-    return `${value}${suffix || ''}`;
+    
+    let formattedValue = value;
+    if (type === 'number' && precision !== undefined && value !== '' && value != null) {
+      const num = Number(value);
+      if (!isNaN(num)) formattedValue = num.toFixed(precision);
+    }
+    return `${formattedValue}${suffix || ''}`;
   };
 
   if (!isEditing) {
@@ -144,6 +157,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
           }}
           min={min}
           max={max}
+          step={step}
         />
       )}
 

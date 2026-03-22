@@ -29,7 +29,7 @@ const SubtaskRow = memo(({
   onEditDetail, 
   provided 
 }: SubtaskRowProps) => {
-  const warning = getWarning(subtask);
+  const warning = getWarning(subtask, initialData);
   return (
     <div className={`flex group wbs-row-subtask ${commonRowClasses}`}>
       <div
@@ -95,6 +95,17 @@ const SubtaskRow = memo(({
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v) } /></div>
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v) } /></div>
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v) } /></div>
+      <div className={`w-20 ${commonCellClasses}`}>
+        <EditableInput 
+          type="number" 
+          value={subtask.review_days} 
+          onChange={(v: number | null) => onUpdateField('subtask', subtask.id, 'review_days', v)} 
+          min={0} 
+          step={0.5}
+          precision={1}
+          suffix="日"
+        />
+      </div>
       <div className={`w-16 ${commonCellClasses}`}>
         <EditableInput 
           type="number" 

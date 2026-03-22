@@ -77,6 +77,7 @@ const TaskRow = memo(({
       <div className={`w-20 ${dateCellClasses}`}>
         <EditableInput type="date" value={task.actual_end_date} onChange={(v: string) => onUpdateField('task', task.id, 'actual_end_date', v)} />
       </div>
+      <div className={`w-20 ${commonCellClasses}`}></div>
       <div className={`w-16 ${commonCellClasses}`}></div>
     </div>
   );
