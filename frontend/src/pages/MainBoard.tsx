@@ -18,6 +18,7 @@ export default function MainBoard() {
     assigneeIds: [],
     onlyDelayed: false,
     searchTerm: '',
+    showRemoved: false,
   });
 
   // ツリー展開ステートのリフトアップ
@@ -61,6 +62,7 @@ export default function MainBoard() {
 
     const todayStr = data.gantt_range?.today || new Date().toISOString().split('T')[0];
     const doneStatusId = initialData?.status_mapping_done ? parseInt(initialData.status_mapping_done) : null;
+    const removedStatusId = initialData?.statuses.find(s => s.status_name === 'Removed')?.id || 7; // Default 7 if not found
     
     const hasConditions = filters.statusIds.length > 0 || 
                           filters.assigneeIds.length > 0 || 
@@ -71,12 +73,26 @@ export default function MainBoard() {
       .filter(project => {
         // 1. プロジェクトIDによる抽出
         if (filters.projectIds.length > 0 && !filters.projectIds.includes(project.id)) return false;
+
+        // 2. Removed項目の除外
+        if (!filters.showRemoved && project.status_id === removedStatusId) return false;
+
         return true;
       })
       .map(project => {
-        // 2. タスク・サブタスクの絞り込み
+        const isProjectRemoved = project.status_id === removedStatusId;
+
+        // タスク・サブタスクの絞り込み
         const filteredTasks = project.tasks.map(task => {
+          const isTaskRemoved = task.status_id === removedStatusId;
+          
+          // 親がRemovedなら、!showRemovedのときは表示されないはずだが、念のためここでもチェック
+          if (!filters.showRemoved && (isProjectRemoved || isTaskRemoved)) return null;
+
           const filteredSubtasks = task.subtasks.filter(subtask => {
+            // 親(Project or Task)がRemoved、または自身がRemovedな場合、!showRemovedなら非表示
+            if (!filters.showRemoved && (isProjectRemoved || isTaskRemoved || subtask.status_id === removedStatusId)) return false;
+
             // ステータス
             if (filters.statusIds.length > 0 && !filters.statusIds.includes(subtask.status_id)) return false;
             // 担当者
@@ -121,7 +137,7 @@ export default function MainBoard() {
             }
             return null;
           }
-          return task;
+          return { ...task, subtasks: filteredSubtasks };
         }).filter(Boolean) as Task[];
 
         // プロジェクト自体の判定（検索語句など）
@@ -197,6 +213,7 @@ export default function MainBoard() {
           assigneeIds: [],
           onlyDelayed: false,
           searchTerm: '',
+          showRemoved: false,
         })}
       />
 

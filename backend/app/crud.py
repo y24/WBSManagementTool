@@ -300,13 +300,15 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_removed: bo
     
     if not include_removed:
         query = query.options(
-            selectinload(models.Project.tasks.and_(models.Task.is_deleted == False))
-            .selectinload(models.Task.subtasks.and_(models.Subtask.is_deleted == False))
+            selectinload(models.Project.tasks.and_(models.Task.is_deleted == False)).selectinload(models.Task.status),
+            selectinload(models.Project.tasks.and_(models.Task.is_deleted == False)).selectinload(models.Task.subtasks.and_(models.Subtask.is_deleted == False)).selectinload(models.Subtask.status),
+            selectinload(models.Project.status)
         )
     else:
         query = query.options(
-            selectinload(models.Project.tasks)
-            .selectinload(models.Task.subtasks)
+            selectinload(models.Project.tasks).selectinload(models.Task.status),
+            selectinload(models.Project.tasks).selectinload(models.Task.subtasks).selectinload(models.Subtask.status),
+            selectinload(models.Project.status)
         )
         
     projects = query.order_by(models.Project.sort_order, models.Project.id).all()
@@ -324,18 +326,23 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_removed: bo
         for t in p.tasks:
             if t.is_deleted: continue
             
+            # Exclude Removed tasks from Project totals/overlap if not explicitly asked?
+            # Actually the rule says "Always exclude Removed from aggregation"
+            is_task_removed = t.status and t.status.status_name == "Removed"
+            
             t_wbs = schemas.TaskWBS.from_orm(t)
-            t_wbs.planned_effort_total = sum((s.planned_effort_days or 0) for s in t.subtasks if not s.is_deleted)
-            t_wbs.actual_effort_total = sum((s.actual_effort_days or 0) for s in t.subtasks if not s.is_deleted)
+            t_wbs.planned_effort_total = sum((s.planned_effort_days or 0) for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed"))
+            t_wbs.actual_effort_total = sum((s.actual_effort_days or 0) for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed"))
             
-            p_planned_effort += t_wbs.planned_effort_total
-            p_actual_effort += t_wbs.actual_effort_total
+            if not is_task_removed:
+                p_planned_effort += t_wbs.planned_effort_total
+                p_actual_effort += t_wbs.actual_effort_total
             
-            # Subtask overlap check
-            subtask_periods = [(s.planned_start_date, s.planned_end_date) for s in t.subtasks if not s.is_deleted]
+            # Subtask overlap check (exclude Removed)
+            subtask_periods = [(s.planned_start_date, s.planned_end_date) for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed")]
             t_wbs.is_overlapping = check_overlap(subtask_periods)
             
-            if t_wbs.planned_start_date and t_wbs.planned_end_date:
+            if not is_task_removed and t_wbs.planned_start_date and t_wbs.planned_end_date:
                 task_periods.append((t_wbs.planned_start_date, t_wbs.planned_end_date))
                 
             tasks_wbs.append(t_wbs)
@@ -408,7 +415,12 @@ def recalculate_project_dates(db: Session, project_id: int):
         return
     
     # Query tasks explicitly to ensure latest values after potential updates in recalculate_task_dates
-    tasks = db.query(models.Task).filter(models.Task.project_id == project_id, models.Task.is_deleted == False).all()
+    # Exclude tasks with "Removed" status
+    tasks = db.query(models.Task).join(models.MstStatus).filter(
+        models.Task.project_id == project_id,
+        models.Task.is_deleted == False,
+        models.MstStatus.status_name != "Removed"
+    ).all()
     
     changed = False
     if db_project.is_auto_planned_date:

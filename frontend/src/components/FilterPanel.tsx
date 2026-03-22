@@ -10,6 +10,7 @@ export interface FilterState {
   assigneeIds: number[];
   onlyDelayed: boolean;
   searchTerm: string;
+  showRemoved: boolean;
 }
 
 interface FilterPanelProps {
@@ -33,7 +34,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     filters.statusIds.length > 0 ||
     filters.assigneeIds.length > 0 ||
     filters.onlyDelayed ||
-    filters.searchTerm !== '';
+    filters.searchTerm !== '' ||
+    filters.showRemoved;
 
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-4 shrink-0 shadow-sm z-40">
@@ -94,6 +96,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         >
           <Calendar size={14} className={filters.onlyDelayed ? 'animate-pulse' : ''} />
           遅延タスクのみ
+        </button>
+
+        {/* Removed Toggle */}
+        <button
+          onClick={() => setFilters(prev => ({ ...prev, showRemoved: !prev.showRemoved }))}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.showRemoved
+              ? 'bg-slate-100 border-slate-400 text-slate-700 ring-slate-500/10 ring-2 shadow-inner'
+              : 'bg-white border-gray-200 text-gray-400 hover:border-slate-400 hover:text-slate-600'
+            }`}
+        >
+          <X size={14} className={filters.showRemoved ? 'rotate-45 transition-transform' : ''} />
+          Removedを表示
         </button>
       </div>
 
