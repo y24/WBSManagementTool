@@ -5,3 +5,85 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background-color: #f9fafb;
 }
+
+:root {
+  /* Project Color */
+  --wbs-project-bg: #e3f0ff;
+  --wbs-project-row-bg: rgba(219, 234, 254, 0.6);
+  --wbs-project-hover: #d2e7ff;
+  --wbs-project-row-hover: rgba(191, 219, 254, 0.5);
+
+  /* Task Color */
+  --wbs-task-bg: #f1f5f9;
+  --wbs-task-row-bg: rgba(241, 245, 249, 0.6);
+  --wbs-task-hover: #e2e8f0;
+  --wbs-task-row-hover: rgba(226, 232, 240, 0.5);
+
+  /* Subtask Color */
+  --wbs-subtask-bg: #ffffff;
+  /* Border Color */
+  --wbs-border-color: #f1f5f9; /* Slate 100 - vertical lines */
+  --wbs-row-border-color: #cbd5e1; /* Slate 200 - horizontal lines (Project/Task) */
+}
+
+/* WBS Styles */
+/* 基本はすべての主要行が 1px の下線を持つ */
+.wbs-row-project, .wbs-row-task,
+.wbs-row-project > div, .wbs-row-task > div {
+  border-bottom: 1px solid var(--wbs-row-border-color) !important;
+  border-top: none !important;
+  box-shadow: none !important;
+}
+
+.wbs-row-project {
+  background-color: var(--wbs-project-row-bg) !important;
+}
+.wbs-row-project:hover {
+  background-color: var(--wbs-project-row-hover) !important;
+}
+.wbs-cell-project {
+  background-color: var(--wbs-project-bg) !important;
+  border-right: 1px solid var(--wbs-border-color) !important;
+}
+.group:hover .wbs-cell-project {
+  background-color: var(--wbs-project-hover) !important;
+}
+
+.wbs-row-task {
+  background-color: var(--wbs-task-row-bg) !important;
+}
+.wbs-row-task:hover {
+  background-color: var(--wbs-task-row-hover) !important;
+}
+.wbs-cell-task {
+  background-color: var(--wbs-task-bg) !important;
+  border-right: 1px solid var(--wbs-border-color) !important;
+}
+.group:hover .wbs-cell-task {
+  background-color: var(--wbs-task-hover) !important;
+}
+
+/* サブタスクは基本線なしだが、一番最後だけは次の項目との区切りとして線を引く */
+.wbs-row-subtask {
+  background-color: var(--wbs-subtask-bg) !important;
+  border-bottom: none !important;
+}
+.wbs-row-subtask:last-child,
+.wbs-row-subtask:last-child > div {
+  border-bottom: 1px solid var(--wbs-row-border-color) !important;
+}
+.wbs-row-subtask:hover {
+  background-color: var(--wbs-subtask-hover) !important;
+}
+.wbs-cell-subtask {
+  background-color: var(--wbs-subtask-bg) !important;
+  border-right: 1px solid var(--wbs-border-color) !important;
+}
+.group:hover .wbs-cell-subtask {
+  background-color: var(--wbs-subtask-hover) !important;
+}
+
+/* Common Table utility classes */
+.wbs-cell-border {
+  border-right: 1px solid var(--wbs-border-color) !important;
+}

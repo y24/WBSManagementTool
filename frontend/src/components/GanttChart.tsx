@@ -91,7 +91,7 @@ export default function GanttChart({ projects, initialData, range, expandedProje
     );
   };
 
-  const commonRowClasses = "border-b h-[37px]"; // border-bを含めて、ツリー側の行高(約37px)に合わせる
+  const commonRowClasses = "transition-colors h-[37px]"; // ボーダーはCSS側の wbs-row-* クラスで制御
 
   const totalWidth = useMemo(() => days.length * CELL_WIDTH, [days]);
 
@@ -101,7 +101,7 @@ export default function GanttChart({ projects, initialData, range, expandedProje
       <div ref={containerRef} className="h-full overflow-auto relative">
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           {/* ヘッダー領域 (垂直スクロールに追従するためsticky) */}
-          <div className="flex border-b shadow-sm sticky top-0 z-30 bg-gray-50 flex-shrink-0" style={{ height: '33px' }}>
+          <div className="flex border-b-[1px] border-[#f1f5f9] shadow-sm sticky top-0 z-30 bg-gray-50 flex-shrink-0" style={{ height: '33px' }}>
             {days.map(d => {
               const isWeekend = getDay(d) === 0 || getDay(d) === 6;
               const holidayFlag = isHoliday(d);
@@ -129,7 +129,7 @@ export default function GanttChart({ projects, initialData, range, expandedProje
               return (
                 <div 
                   key={`bg-${d.toISOString()}`} 
-                  className={`flex-shrink-0 border-r border-gray-100 ${isWeekend || holidayFlag ? 'bg-red-50/20' : ''} ${today ? 'border-r-red-400 border-r-2' : ''}`}
+                  className={`flex-shrink-0 wbs-cell-border ${isWeekend || holidayFlag ? 'bg-red-50/20' : ''} ${today ? 'border-r-red-400 border-r-2' : ''}`}
                   style={{ width: `${CELL_WIDTH}px` }}
                 />
               );
@@ -141,15 +141,15 @@ export default function GanttChart({ projects, initialData, range, expandedProje
             {projects.map(project => (
               <div key={`p-${project.id}`}>
                 {/* Project Row */}
-                <div className={commonRowClasses}>{renderBar(project, false)}</div>
+                <div className={`${commonRowClasses} wbs-row-project`}>{renderBar(project, false)}</div>
 
                 {expandedProjects[project.id] !== false && project.tasks.map(task => (
                   <div key={`t-${task.id}`}>
                     {/* Task Row */}
-                    <div className={commonRowClasses}>{renderBar(task, false)}</div>
+                    <div className={`${commonRowClasses} wbs-row-task`}>{renderBar(task, false)}</div>
 
                     {expandedTasks[task.id] !== false && task.subtasks.map(subtask => (
-                      <div key={`s-${subtask.id}`} className={`${commonRowClasses} bg-white/0 hover:bg-black/5`}>
+                      <div key={`s-${subtask.id}`} className={`${commonRowClasses} wbs-row-subtask`}>
                         {renderBar(subtask, true)}
                       </div>
                     ))}

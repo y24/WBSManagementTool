@@ -34,6 +34,39 @@ export default function WBSTree({
   const [editingSubtask, setEditingSubtask] = useState<Subtask | null>(null);
   const [detailValue, setDetailValue] = useState('');
 
+  const [nameWidth, setNameWidth] = useState(320);
+  const [isResizingName, setIsResizingName] = useState(false);
+  const resizeStartX = useRef(0);
+  const resizeStartWidth = useRef(0);
+
+  const startResizing = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizingName(true);
+    resizeStartX.current = e.pageX;
+    resizeStartWidth.current = nameWidth;
+  };
+
+  useEffect(() => {
+    if (!isResizingName) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const delta = e.pageX - resizeStartX.current;
+      setNameWidth(Math.max(150, resizeStartWidth.current + delta));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingName(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizingName]);
+
   useEffect(() => {
     if (containerRef.current && syncScrollTop !== undefined) {
       containerRef.current.scrollTop = syncScrollTop;
@@ -172,7 +205,7 @@ export default function WBSTree({
     if (type === 'date' && !isEditing) {
       return (
         <div
-          className={`w-full h-full flex items-center cursor-pointer hover:bg-gray-50 transition-colors ${className}`}
+          className={`w-full h-full flex items-center cursor-pointer hover:bg-black/5 transition-colors ${className}`}
           onClick={() => {
             setIsEditing(true);
             isCommittingRef.current = false;
@@ -189,9 +222,9 @@ export default function WBSTree({
         <input
           type={type}
           className={`
-            bg-white h-full border-none outline-blue-400 px-1 
+            bg-transparent h-full border-none outline-blue-400 px-1 focus:bg-white/50
             ${type === 'date'
-              ? 'absolute left-0 top-0 z-50 !w-[120px] !min-w-[120px] shadow-xl border-2 border-blue-500 rounded-md'
+              ? 'absolute left-0 top-0 z-50 !w-[120px] !min-w-[120px] shadow-xl border-2 border-blue-500 rounded-md !bg-white'
               : 'w-full'
             }
             ${className}
@@ -218,32 +251,45 @@ export default function WBSTree({
     );
   };
 
-  const commonCellClasses = "px-2 py-1 text-sm border-r border-gray-200 truncate";
-  const dateCellClasses = "px-2 py-1 text-sm border-r border-gray-200 relative";
-  const commonHeaderClasses = "px-2 py-2 text-xs font-semibold text-gray-600 border-r border-gray-200 bg-gray-50 uppercase tracking-wide";
-  const commonRowClasses = "border-b hover:bg-gray-50 bg-white h-[37px]";
+  const commonCellClasses = "px-2 py-1 text-sm wbs-cell-border truncate";
+  const dateCellClasses = "px-2 py-1 text-sm wbs-cell-border relative";
+  const commonHeaderClasses = "px-2 py-2 text-xs font-semibold text-gray-600 wbs-cell-border bg-gray-50 uppercase tracking-wide";
+  const commonRowClasses = "transition-colors h-[37px]";
 
   return (
-    <div className="flex flex-col h-full w-full bg-white border-r relative">
-      {saving && (
-        <div className="absolute top-0 right-4 z-50">
-          <span className="text-xs text-blue-500 font-medium">Saving...</span>
+    <div 
+      ref={containerRef} 
+      className="flex-1 w-full overflow-auto bg-white border-r relative"
+      onScroll={onScroll}
+    >
+      <div className="min-w-max pb-32">
+        {saving && (
+          <div className="absolute top-0 right-4 z-50">
+            <span className="text-xs text-blue-500 font-medium">Saving...</span>
+          </div>
+        )}
+
+        <div className="sticky top-0 z-30 flex border-b border-[var(--wbs-row-border-color)] bg-gray-50 shadow-sm whitespace-nowrap h-[33px]">
+          <div 
+            className={`sticky left-0 z-40 flex items-center bg-gray-50 ${commonHeaderClasses}`} 
+            style={{ width: nameWidth, minWidth: nameWidth }}
+          >
+            名称
+            <div 
+              className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 z-10 transition-colors"
+              onMouseDown={startResizing}
+            />
+          </div>
+          <div className={`w-28 flex items-center ${commonHeaderClasses}`}>ステータス</div>
+          <div className={`w-28 flex items-center ${commonHeaderClasses}`}>担当者</div>
+          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>計画開始</div>
+          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>計画終了</div>
+          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>実績開始</div>
+          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>実績終了</div>
+          <div className={`w-16 flex items-center ${commonHeaderClasses}`}>進捗</div>
+          <div className={`w-20 flex items-center justify-center ${commonHeaderClasses}`}>操作</div>
         </div>
-      )}
 
-      <div className="sticky top-0 z-10 flex border-b bg-gray-50 shadow-sm whitespace-nowrap min-w-max h-[33px]">
-        <div className={`w-80 flex items-center ${commonHeaderClasses}`}>名称</div>
-        <div className={`w-28 flex items-center ${commonHeaderClasses}`}>ステータス</div>
-        <div className={`w-28 flex items-center ${commonHeaderClasses}`}>担当者</div>
-        <div className={`w-20 flex items-center ${commonHeaderClasses}`}>計画開始</div>
-        <div className={`w-20 flex items-center ${commonHeaderClasses}`}>計画終了</div>
-        <div className={`w-20 flex items-center ${commonHeaderClasses}`}>実績開始</div>
-        <div className={`w-20 flex items-center ${commonHeaderClasses}`}>実績終了</div>
-        <div className={`w-16 flex items-center ${commonHeaderClasses}`}>進捗</div>
-        <div className={`w-20 flex items-center justify-center ${commonHeaderClasses}`}>操作</div>
-      </div>
-
-      <div ref={containerRef} className="flex-1 w-full overflow-y-auto overflow-x-auto pb-32" onScroll={onScroll}>
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="projects-root" type="PROJECT">
             {(provided) => (
@@ -252,8 +298,11 @@ export default function WBSTree({
                   <Draggable key={`p-${project.id}`} draggableId={`p-${project.id}`} index={pIndex}>
                     {(provided) => (
                       <div ref={provided.innerRef} {...provided.draggableProps}>
-                        <div className={`flex bg-gray-100/50 ${commonRowClasses}`}>
-                          <div className={`w-80 flex items-center gap-1 font-semibold text-gray-800 ${commonCellClasses}`}>
+                        <div className={`flex group wbs-row-project ${commonRowClasses}`}>
+                          <div 
+                            className={`sticky left-0 z-20 flex items-center gap-1 font-semibold text-gray-800 wbs-cell-project transition-colors ${commonCellClasses}`}
+                            style={{ width: nameWidth, minWidth: nameWidth }}
+                          >
                             <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
                               <GripVertical size={14} />
                             </div>
@@ -310,8 +359,11 @@ export default function WBSTree({
                                   <Draggable key={`t-${task.id}`} draggableId={`t-${task.id}`} index={tIndex}>
                                     {(provided) => (
                                       <div ref={provided.innerRef} {...provided.draggableProps}>
-                                        <div className={`flex ${commonRowClasses}`}>
-                                          <div className={`w-80 flex items-center gap-1 font-medium pl-6 text-gray-700 ${commonCellClasses}`}>
+                                        <div className={`flex group wbs-row-task ${commonRowClasses}`}>
+                                          <div 
+                                            className={`sticky left-0 z-20 flex items-center gap-1 font-medium pl-6 text-gray-700 wbs-cell-task transition-colors ${commonCellClasses}`}
+                                            style={{ width: nameWidth, minWidth: nameWidth }}
+                                          >
                                             <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
                                               <GripVertical size={14} />
                                             </div>
@@ -369,8 +421,11 @@ export default function WBSTree({
                                                   return (
                                                     <Draggable key={`s-${subtask.id}`} draggableId={`s-${subtask.id}`} index={sIndex}>
                                                       {(provided) => (
-                                                        <div ref={provided.innerRef} {...provided.draggableProps} className={`flex group hover:bg-blue-50/30 ${commonRowClasses}`}>
-                                                          <div className={`w-80 flex items-center gap-1 pl-12 text-gray-600 ${commonCellClasses}`}>
+                                                        <div ref={provided.innerRef} {...provided.draggableProps} className={`flex group wbs-row-subtask ${commonRowClasses}`}>
+                                                          <div 
+                                                            className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 wbs-cell-subtask transition-colors ${commonCellClasses}`}
+                                                            style={{ width: nameWidth, minWidth: nameWidth }}
+                                                          >
                                                             <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
                                                               <GripVertical size={14} />
                                                             </div>
@@ -423,15 +478,17 @@ export default function WBSTree({
                                                           <div className={`w-16 ${commonCellClasses}`}>
                                                             <EditableInput type="number" value={subtask.progress_percent} onChange={(v: string) => handleUpdate('subtask', subtask.id, 'progress_percent', v ? Number(v) : null)} />
                                                           </div>
-                                                          <div className={`w-20 flex gap-1 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${commonCellClasses}`}>
-                                                            <button
-                                                              onClick={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
-                                                              className="text-gray-400 hover:text-blue-500"
-                                                              title="詳細を編集"
-                                                            >
-                                                              <FileText size={14} />
-                                                            </button>
-                                                            <button onClick={() => handleDelete('subtask', subtask.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
+                                                          <div className={`w-20 flex items-center justify-center ${commonCellClasses}`}>
+                                                            <div className="flex gap-1 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity px-2">
+                                                              <button
+                                                                onClick={() => { setEditingSubtask(subtask); setDetailValue(subtask.subtask_detail || ''); }}
+                                                                className="text-gray-400 hover:text-blue-500"
+                                                                title="詳細を編集"
+                                                              >
+                                                                <FileText size={14} />
+                                                              </button>
+                                                              <button onClick={() => handleDelete('subtask', subtask.id)} className="text-gray-400 hover:text-red-500" title="削除"><Trash2 size={14} /></button>
+                                                            </div>
                                                           </div>
                                                         </div>
                                                       )}
