@@ -13,17 +13,33 @@ interface StatusSelectProps {
 const StatusSelect = memo(({ subtask, initialData, onUpdateField }: StatusSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, direction: 'down' as 'up' | 'down' });
   const statusInfo = initialData?.statuses.find((s: any) => s.id === subtask.status_id);
 
   const toggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+
+      const dropdownMinWidth = Math.max(rect.width, 140);
+      const estimatedHeight = 280;
+
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const direction = (spaceBelow < estimatedHeight && spaceAbove > spaceBelow) ? 'up' : 'down';
+
+      let left = rect.left + window.scrollX;
+      if (rect.left + dropdownMinWidth > viewportWidth - 20) {
+        left = Math.max(10, rect.right + window.scrollX - dropdownMinWidth);
+      }
+
       setCoords({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: Math.max(rect.width, 140)
+        top: direction === 'down' ? rect.bottom + window.scrollY : rect.top + window.scrollY,
+        left: left,
+        width: dropdownMinWidth,
+        direction
       });
     }
     setIsOpen(!isOpen);
@@ -59,34 +75,37 @@ const StatusSelect = memo(({ subtask, initialData, onUpdateField }: StatusSelect
 
       {isOpen && createPortal(
         <div 
-          className="fixed z-[9999] bg-white border border-gray-200 shadow-2xl rounded-lg py-1.5 overflow-hidden"
+          className="absolute z-[9999] bg-white border border-gray-200 shadow-2xl rounded-lg py-1.5 overflow-hidden"
           style={{ 
-            top: coords.top + 4, 
+            top: coords.direction === 'down' ? coords.top + 4 : coords.top - 4, 
             left: coords.left, 
             minWidth: coords.width,
+            transform: coords.direction === 'up' ? 'translateY(-100%)' : 'none'
           }}
         >
           <div className="px-2 pb-1.5 mb-1.5 border-b border-gray-100 mx-1">
             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">ステータスを変更</span>
           </div>
-          {initialData?.statuses.map((s: any) => (
-            <button
-              key={s.id}
-              className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left ${s.id === subtask.status_id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-900'}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onUpdateField('subtask', subtask.id, 'status_id', s.id);
-                setIsOpen(false);
-              }}
-            >
-              <span 
-                className="master-color-dot shrink-0" 
-                style={{ backgroundColor: s.color_code, width: '10px', height: '10px' }}
-              ></span>
-              <span className="text-xs font-normal leading-none">{s.status_name}</span>
-              {s.id === subtask.status_id && <Check size={12} className="ml-auto" />}
-            </button>
-          ))}
+          <div className="max-h-60 overflow-y-auto overscroll-contain">
+            {initialData?.statuses.map((s: any) => (
+              <button
+                key={s.id}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left ${s.id === subtask.status_id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-900'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdateField('subtask', subtask.id, 'status_id', s.id);
+                  setIsOpen(false);
+                }}
+              >
+                <span 
+                  className="master-color-dot shrink-0" 
+                  style={{ backgroundColor: s.color_code, width: '10px', height: '10px' }}
+                ></span>
+                <span className="text-xs font-normal leading-none">{s.status_name}</span>
+                {s.id === subtask.status_id && <Check size={12} className="ml-auto" />}
+              </button>
+            ))}
+          </div>
         </div>,
         document.body
       )}

@@ -22,17 +22,35 @@ const PortalSelect = memo(({
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, direction: 'down' as 'up' | 'down' });
   const selectedOption = options.find(o => o.id === value);
 
   const toggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      
+      const dropdownMinWidth = Math.max(rect.width, 160);
+      const estimatedHeight = 280; // max-h-60 + space for header/padding
+
+      // 垂直方向の判定: 下側に十分なスペースがなく、上側の方が広い場合は上側に表示
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const direction = (spaceBelow < estimatedHeight && spaceAbove > spaceBelow) ? 'up' : 'down';
+
+      // 水平方向の判定: 右側にはみ出す場合は左に寄せる
+      let left = rect.left + window.scrollX;
+      if (rect.left + dropdownMinWidth > viewportWidth - 20) {
+        left = Math.max(10, rect.right + window.scrollX - dropdownMinWidth);
+      }
+
       setCoords({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: Math.max(rect.width, 160)
+        top: direction === 'down' ? rect.bottom + window.scrollY : rect.top + window.scrollY,
+        left: left,
+        width: dropdownMinWidth,
+        direction
       });
     }
     setIsOpen(!isOpen);
@@ -79,9 +97,10 @@ const PortalSelect = memo(({
           ref={dropdownRef}
           className="absolute z-[9999] bg-white border border-gray-200 shadow-2xl rounded-lg py-1.5 overflow-hidden ring-1 ring-black/5"
           style={{ 
-            top: coords.top + 4, 
+            top: coords.direction === 'down' ? coords.top + 4 : coords.top - 4, 
             left: coords.left, 
             minWidth: coords.width,
+            transform: coords.direction === 'up' ? 'translateY(-100%)' : 'none'
           }}
         >
           {dropdownTitle && (
