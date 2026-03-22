@@ -1,68 +1,470 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '../api/client';
-import { MstStatus, MstSubtaskType, MstMember, InitialData } from '../types';
+import { MstStatus, MstSubtaskType, MstMember, MstHoliday, InitialData } from '../types';
 
+// ─────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────
+type EditingItem = { id: number; field: string } | null;
+
+interface NewStatus { status_name: string; color_code: string; }
+interface NewSubtaskType { type_name: string; }
+interface NewMember { member_name: string; }
+interface NewHoliday { holiday_date: string; holiday_name: string; }
+
+// ─────────────────────────────────────────────────
+// Icons (inline SVG for minimal dep)
+// ─────────────────────────────────────────────────
+const PencilIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="master-icon" viewBox="0 0 20 20" fill="currentColor">
+    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="master-icon" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="master-icon-lg" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="master-icon" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+  </svg>
+);
+
+const XIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="master-icon" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+  </svg>
+);
+
+// ─────────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────────
 export default function MasterSettings() {
   const [data, setData] = useState<InitialData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<EditingItem>(null);
+  const [editValue, setEditValue] = useState('');
+  const [editColorValue, setEditColorValue] = useState('#000000');
 
-  useEffect(() => {
+  // New item forms
+  const [newStatus, setNewStatus] = useState<NewStatus>({ status_name: '', color_code: '#3b82f6' });
+  const [newSubtaskType, setNewSubtaskType] = useState<NewSubtaskType>({ type_name: '' });
+  const [newMember, setNewMember] = useState<NewMember>({ member_name: '' });
+  const [newHoliday, setNewHoliday] = useState<NewHoliday>({ holiday_date: '', holiday_name: '' });
+
+  // Show/hide add forms
+  const [showAddStatus, setShowAddStatus] = useState(false);
+  const [showAddSubtaskType, setShowAddSubtaskType] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [showAddHoliday, setShowAddHoliday] = useState(false);
+
+  const fetchData = useCallback(() => {
     apiClient.get<InitialData>('/initial-data')
       .then(res => setData(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-4 text-gray-500">Loading masters...</div>;
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // ─── Inline Editing ───
+  const startEdit = (id: number, field: string, currentValue: string, colorValue?: string) => {
+    setEditing({ id, field });
+    setEditValue(currentValue);
+    if (colorValue) setEditColorValue(colorValue);
+  };
+
+  const cancelEdit = () => {
+    setEditing(null);
+    setEditValue('');
+  };
+
+  const saveEdit = async (endpoint: string, id: number, payload: Record<string, unknown>) => {
+    try {
+      await apiClient.patch(`${endpoint}/${id}`, payload);
+      fetchData();
+      cancelEdit();
+    } catch (err) {
+      console.error('Update failed', err);
+    }
+  };
+
+  // ─── Delete ───
+  const deleteItem = async (endpoint: string, id: number, name: string) => {
+    if (!confirm(`「${name}」を削除しますか？`)) return;
+    try {
+      await apiClient.delete(`${endpoint}/${id}`);
+      fetchData();
+    } catch (err) {
+      console.error('Delete failed', err);
+    }
+  };
+
+  // ─── Create ───
+  const createStatus = async () => {
+    if (!newStatus.status_name.trim()) return;
+    try {
+      await apiClient.post('/masters/statuses', {
+        status_name: newStatus.status_name.trim(),
+        color_code: newStatus.color_code,
+        sort_order: (data?.statuses.length ?? 0),
+      });
+      setNewStatus({ status_name: '', color_code: '#3b82f6' });
+      setShowAddStatus(false);
+      fetchData();
+    } catch (err) { console.error(err); }
+  };
+
+  const createSubtaskType = async () => {
+    if (!newSubtaskType.type_name.trim()) return;
+    try {
+      await apiClient.post('/masters/subtask-types', {
+        type_name: newSubtaskType.type_name.trim(),
+        sort_order: (data?.subtask_types.length ?? 0),
+      });
+      setNewSubtaskType({ type_name: '' });
+      setShowAddSubtaskType(false);
+      fetchData();
+    } catch (err) { console.error(err); }
+  };
+
+  const createMember = async () => {
+    if (!newMember.member_name.trim()) return;
+    try {
+      await apiClient.post('/masters/members', {
+        member_name: newMember.member_name.trim(),
+        sort_order: (data?.members.length ?? 0),
+      });
+      setNewMember({ member_name: '' });
+      setShowAddMember(false);
+      fetchData();
+    } catch (err) { console.error(err); }
+  };
+
+  const createHoliday = async () => {
+    if (!newHoliday.holiday_date || !newHoliday.holiday_name.trim()) return;
+    try {
+      await apiClient.post('/masters/holidays', {
+        holiday_date: newHoliday.holiday_date,
+        holiday_name: newHoliday.holiday_name.trim(),
+      });
+      setNewHoliday({ holiday_date: '', holiday_name: '' });
+      setShowAddHoliday(false);
+      fetchData();
+    } catch (err) { console.error(err); }
+  };
+
+  // ─── Render helpers ───
+  const isEditing = (id: number, field: string) =>
+    editing?.id === id && editing?.field === field;
+
+  if (loading) return <div className="master-loading">マスタデータを読み込み中...</div>;
 
   return (
-    <div className="flex w-full h-full p-6">
-      <div className="max-w-4xl mx-auto w-full space-y-8 bg-white rounded-lg shadow-sm border border-gray-100 p-8">
-        <h2 className="text-2xl font-bold border-b pb-2">マスタ管理 (設定プレビュー)</h2>
-        
-        <section>
-          <h3 className="text-lg font-semibold mb-4 bg-gray-50 px-3 py-2 rounded">ステータス一覧</h3>
-          <ul className="grid grid-cols-2 gap-2 text-sm text-gray-700">
-            {data?.statuses.map(s => (
-              <li key={s.id} className="flex items-center gap-3 p-2 border rounded shadow-sm bg-white">
-                <span className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: s.color_code }}></span>
-                <span className="font-medium">{s.status_name}</span>
-              </li>
+    <div className="master-page">
+      <div className="master-container">
+        <h2 className="master-title">マスタ管理</h2>
+
+        {/* ═══════════ ステータス一覧 ═══════════ */}
+        <section className="master-section">
+          <div className="master-section-header">
+            <h3 className="master-section-title">
+              <span className="master-section-icon" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>S</span>
+              ステータス一覧
+            </h3>
+            <button className="master-add-btn" onClick={() => setShowAddStatus(!showAddStatus)} title="新規追加">
+              <PlusIcon />
+            </button>
+          </div>
+
+          {showAddStatus && (
+            <div className="master-add-form">
+              <div className="master-add-form-row">
+                <input
+                  type="text"
+                  className="master-input"
+                  placeholder="ステータス名"
+                  value={newStatus.status_name}
+                  onChange={e => setNewStatus({ ...newStatus, status_name: e.target.value })}
+                  onKeyDown={e => e.key === 'Enter' && createStatus()}
+                  autoFocus
+                />
+                <input
+                  type="color"
+                  className="master-color-input"
+                  value={newStatus.color_code}
+                  onChange={e => setNewStatus({ ...newStatus, color_code: e.target.value })}
+                />
+                <button className="master-confirm-btn" onClick={createStatus}><CheckIcon /></button>
+                <button className="master-cancel-btn" onClick={() => setShowAddStatus(false)}><XIcon /></button>
+              </div>
+            </div>
+          )}
+
+          <div className="master-list">
+            {data?.statuses.map((s: MstStatus) => (
+              <div key={s.id} className="master-list-item">
+                <div className="master-list-item-content">
+                  <span className="master-color-dot" style={{ backgroundColor: s.color_code }}></span>
+                  {isEditing(s.id, 'status') ? (
+                    <div className="master-edit-inline">
+                      <input
+                        className="master-input master-input-sm"
+                        value={editValue}
+                        onChange={e => setEditValue(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') saveEdit('/masters/statuses', s.id, { status_name: editValue, color_code: editColorValue });
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
+                        autoFocus
+                      />
+                      <input
+                        type="color"
+                        className="master-color-input"
+                        value={editColorValue}
+                        onChange={e => setEditColorValue(e.target.value)}
+                      />
+                      <button className="master-confirm-btn" onClick={() => saveEdit('/masters/statuses', s.id, { status_name: editValue, color_code: editColorValue })}>
+                        <CheckIcon />
+                      </button>
+                      <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
+                    </div>
+                  ) : (
+                    <span className="master-item-name">{s.status_name}</span>
+                  )}
+                </div>
+                {!isEditing(s.id, 'status') && (
+                  <div className="master-actions">
+                    <button className="master-action-btn master-edit" onClick={() => startEdit(s.id, 'status', s.status_name, s.color_code)} title="編集">
+                      <PencilIcon />
+                    </button>
+                    <button className="master-action-btn master-delete" onClick={() => deleteItem('/masters/statuses', s.id, s.status_name)} title="削除">
+                      <TrashIcon />
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
-          </ul>
-        </section>
-        
-        <section>
-          <h3 className="text-lg font-semibold mb-4 bg-gray-50 px-3 py-2 rounded">サブタスク種別一覧</h3>
-          <ul className="flex flex-wrap gap-2 text-sm text-gray-700">
-            {data?.subtask_types.map(t => (
-              <li key={t.id} className="px-3 py-1.5 border rounded-full bg-blue-50 text-blue-800 font-medium">
-                {t.type_name}
-              </li>
-            ))}
-          </ul>
-        </section>
-        
-        <section>
-          <h3 className="text-lg font-semibold mb-4 bg-gray-50 px-3 py-2 rounded">担当者一覧</h3>
-          <ul className="flex flex-wrap gap-2 text-sm text-gray-700">
-            {data?.members.map(m => (
-              <li key={m.id} className="px-3 py-1.5 border rounded-full bg-emerald-50 text-emerald-800 font-medium">
-                {m.member_name}
-              </li>
-            ))}
-          </ul>
+          </div>
         </section>
 
-        <section>
-          <h3 className="text-lg font-semibold mb-4 bg-gray-50 px-3 py-2 rounded">祝日一覧</h3>
-          <ul className="flex flex-wrap gap-2 text-sm text-gray-700">
-            {data?.holidays.map(h => (
-              <li key={h.id} className="px-3 py-1.5 border rounded-lg bg-orange-50 text-orange-800 font-medium">
-                {h.holiday_date}: {h.holiday_name}
-              </li>
+        {/* ═══════════ サブタスク種別一覧 ═══════════ */}
+        <section className="master-section">
+          <div className="master-section-header">
+            <h3 className="master-section-title">
+              <span className="master-section-icon" style={{ background: 'linear-gradient(135deg, #3b82f6, #06b6d4)' }}>T</span>
+              サブタスク種別一覧
+            </h3>
+            <button className="master-add-btn" onClick={() => setShowAddSubtaskType(!showAddSubtaskType)} title="新規追加">
+              <PlusIcon />
+            </button>
+          </div>
+
+          {showAddSubtaskType && (
+            <div className="master-add-form">
+              <div className="master-add-form-row">
+                <input
+                  type="text"
+                  className="master-input"
+                  placeholder="種別名"
+                  value={newSubtaskType.type_name}
+                  onChange={e => setNewSubtaskType({ type_name: e.target.value })}
+                  onKeyDown={e => e.key === 'Enter' && createSubtaskType()}
+                  autoFocus
+                />
+                <button className="master-confirm-btn" onClick={createSubtaskType}><CheckIcon /></button>
+                <button className="master-cancel-btn" onClick={() => setShowAddSubtaskType(false)}><XIcon /></button>
+              </div>
+            </div>
+          )}
+
+          <div className="master-list master-list-chips">
+            {data?.subtask_types.map((t: MstSubtaskType) => (
+              <div key={t.id} className="master-chip master-chip-blue">
+                {isEditing(t.id, 'subtask_type') ? (
+                  <div className="master-edit-inline">
+                    <input
+                      className="master-input master-input-sm"
+                      value={editValue}
+                      onChange={e => setEditValue(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') saveEdit('/masters/subtask-types', t.id, { type_name: editValue });
+                        if (e.key === 'Escape') cancelEdit();
+                      }}
+                      autoFocus
+                    />
+                    <button className="master-confirm-btn" onClick={() => saveEdit('/masters/subtask-types', t.id, { type_name: editValue })}>
+                      <CheckIcon />
+                    </button>
+                    <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="master-chip-text">{t.type_name}</span>
+                    <div className="master-chip-actions">
+                      <button className="master-chip-btn" onClick={() => startEdit(t.id, 'subtask_type', t.type_name)} title="編集"><PencilIcon /></button>
+                      <button className="master-chip-btn master-chip-btn-del" onClick={() => deleteItem('/masters/subtask-types', t.id, t.type_name)} title="削除"><TrashIcon /></button>
+                    </div>
+                  </>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
+        </section>
+
+        {/* ═══════════ 担当者一覧 ═══════════ */}
+        <section className="master-section">
+          <div className="master-section-header">
+            <h3 className="master-section-title">
+              <span className="master-section-icon" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>M</span>
+              担当者一覧
+            </h3>
+            <button className="master-add-btn" onClick={() => setShowAddMember(!showAddMember)} title="新規追加">
+              <PlusIcon />
+            </button>
+          </div>
+
+          {showAddMember && (
+            <div className="master-add-form">
+              <div className="master-add-form-row">
+                <input
+                  type="text"
+                  className="master-input"
+                  placeholder="担当者名"
+                  value={newMember.member_name}
+                  onChange={e => setNewMember({ member_name: e.target.value })}
+                  onKeyDown={e => e.key === 'Enter' && createMember()}
+                  autoFocus
+                />
+                <button className="master-confirm-btn" onClick={createMember}><CheckIcon /></button>
+                <button className="master-cancel-btn" onClick={() => setShowAddMember(false)}><XIcon /></button>
+              </div>
+            </div>
+          )}
+
+          <div className="master-list master-list-chips">
+            {data?.members.map((m: MstMember) => (
+              <div key={m.id} className="master-chip master-chip-green">
+                {isEditing(m.id, 'member') ? (
+                  <div className="master-edit-inline">
+                    <input
+                      className="master-input master-input-sm"
+                      value={editValue}
+                      onChange={e => setEditValue(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') saveEdit('/masters/members', m.id, { member_name: editValue });
+                        if (e.key === 'Escape') cancelEdit();
+                      }}
+                      autoFocus
+                    />
+                    <button className="master-confirm-btn" onClick={() => saveEdit('/masters/members', m.id, { member_name: editValue })}>
+                      <CheckIcon />
+                    </button>
+                    <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="master-chip-text">{m.member_name}</span>
+                    <div className="master-chip-actions">
+                      <button className="master-chip-btn" onClick={() => startEdit(m.id, 'member', m.member_name)} title="編集"><PencilIcon /></button>
+                      <button className="master-chip-btn master-chip-btn-del" onClick={() => deleteItem('/masters/members', m.id, m.member_name)} title="削除"><TrashIcon /></button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ═══════════ 祝日一覧 ═══════════ */}
+        <section className="master-section">
+          <div className="master-section-header">
+            <h3 className="master-section-title">
+              <span className="master-section-icon" style={{ background: 'linear-gradient(135deg, #f97316, #ef4444)' }}>H</span>
+              祝日一覧
+            </h3>
+            <button className="master-add-btn" onClick={() => setShowAddHoliday(!showAddHoliday)} title="新規追加">
+              <PlusIcon />
+            </button>
+          </div>
+
+          {showAddHoliday && (
+            <div className="master-add-form">
+              <div className="master-add-form-row">
+                <input
+                  type="date"
+                  className="master-input master-input-date"
+                  value={newHoliday.holiday_date}
+                  onChange={e => setNewHoliday({ ...newHoliday, holiday_date: e.target.value })}
+                />
+                <input
+                  type="text"
+                  className="master-input"
+                  placeholder="祝日名"
+                  value={newHoliday.holiday_name}
+                  onChange={e => setNewHoliday({ ...newHoliday, holiday_name: e.target.value })}
+                  onKeyDown={e => e.key === 'Enter' && createHoliday()}
+                />
+                <button className="master-confirm-btn" onClick={createHoliday}><CheckIcon /></button>
+                <button className="master-cancel-btn" onClick={() => setShowAddHoliday(false)}><XIcon /></button>
+              </div>
+            </div>
+          )}
+
+          <div className="master-list">
+            {data?.holidays.map((h: MstHoliday) => (
+              <div key={h.id} className="master-list-item master-list-item-holiday">
+                <div className="master-list-item-content">
+                  <span className="master-holiday-date">{h.holiday_date}</span>
+                  {isEditing(h.id, 'holiday') ? (
+                    <div className="master-edit-inline">
+                      <input
+                        type="date"
+                        className="master-input master-input-date master-input-sm"
+                        value={editColorValue}
+                        onChange={e => setEditColorValue(e.target.value)}
+                      />
+                      <input
+                        className="master-input master-input-sm"
+                        value={editValue}
+                        onChange={e => setEditValue(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') saveEdit('/masters/holidays', h.id, { holiday_name: editValue, holiday_date: editColorValue });
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
+                        autoFocus
+                      />
+                      <button className="master-confirm-btn" onClick={() => saveEdit('/masters/holidays', h.id, { holiday_name: editValue, holiday_date: editColorValue })}>
+                        <CheckIcon />
+                      </button>
+                      <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
+                    </div>
+                  ) : (
+                    <span className="master-item-name">{h.holiday_name}</span>
+                  )}
+                </div>
+                {!isEditing(h.id, 'holiday') && (
+                  <div className="master-actions">
+                    <button className="master-action-btn master-edit" onClick={() => startEdit(h.id, 'holiday', h.holiday_name, h.holiday_date)} title="編集">
+                      <PencilIcon />
+                    </button>
+                    <button className="master-action-btn master-delete" onClick={() => deleteItem('/masters/holidays', h.id, h.holiday_name)} title="削除">
+                      <TrashIcon />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </section>
       </div>
     </div>

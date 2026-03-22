@@ -72,6 +72,11 @@ class HolidayBase(BaseModel):
 class HolidayCreate(HolidayBase):
     pass
 
+class HolidayUpdate(BaseModel):
+    holiday_date: Optional[date] = None
+    holiday_name: Optional[str] = None
+    is_active: Optional[bool] = None
+
 class Holiday(HolidayBase):
     id: int
     created_at: datetime

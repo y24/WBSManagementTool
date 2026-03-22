@@ -19,21 +19,22 @@ export default function MainBoard() {
   const [treeWidth, setTreeWidth] = useState(1000);
   const [isResizing, setIsResizing] = useState(false);
 
-  // ガントとツリーのスクロール同期
-  const [treeScrollTop, setTreeScrollTop] = useState(0);
-  const [ganttScrollTop, setGanttScrollTop] = useState(0);
+  // ガントとツリーのスクロール同期（DOM直接操作用Ref）
   const treeRef = useRef<HTMLDivElement>(null);
   const ganttRef = useRef<HTMLDivElement>(null);
 
-  const fetchData = async () => {
+  const fetchData = async (isInitial = false) => {
     try {
-      setLoading(true);
-      const [wbsRes, initRes] = await Promise.all([
-        apiClient.get<WBSResponse>('/wbs'),
-        apiClient.get<InitialData>('/initial-data')
-      ]);
+      if (isInitial || !data) setLoading(true);
+      
+      const wbsRes = await apiClient.get<WBSResponse>('/wbs');
       setData(wbsRes.data);
-      setInitialData(initRes.data);
+
+      // マスタデータは初回または未取得時のみ取得
+      if (isInitial || !initialData) {
+        const initRes = await apiClient.get<InitialData>('/initial-data');
+        setInitialData(initRes.data);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -42,7 +43,7 @@ export default function MainBoard() {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(true);
   }, []);
 
   // マウス関連のリサイズイベント制御
@@ -69,14 +70,18 @@ export default function MainBoard() {
   }, [isResizing]);
 
   const handleTreeScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    setTreeScrollTop(e.currentTarget.scrollTop);
+    if (ganttRef.current && Math.abs(ganttRef.current.scrollTop - e.currentTarget.scrollTop) > 0.5) {
+      ganttRef.current.scrollTop = e.currentTarget.scrollTop;
+    }
   };
 
   const handleGanttScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    setGanttScrollTop(e.currentTarget.scrollTop);
+    if (treeRef.current && Math.abs(treeRef.current.scrollTop - e.currentTarget.scrollTop) > 0.5) {
+      treeRef.current.scrollTop = e.currentTarget.scrollTop;
+    }
   };
 
-  if (loading) return <div className="p-4 text-gray-500">Loading WBS...</div>;
+  if (loading && !data) return <div className="p-4 text-gray-500 font-medium">Loading WBS...</div>;
 
   return (
     <div className="flex w-full h-full bg-white relative overflow-hidden select-none">
@@ -86,6 +91,7 @@ export default function MainBoard() {
         style={{ width: `${treeWidth}px` }}
       >
         <WBSTree 
+          ref={treeRef}
           projects={data?.projects || []} 
           initialData={initialData} 
           onUpdate={fetchData} 
@@ -94,7 +100,6 @@ export default function MainBoard() {
           expandedTasks={expandedTasks}
           setExpandedTasks={setExpandedTasks}
           onScroll={handleTreeScroll}
-          syncScrollTop={ganttScrollTop}
         />
       </div>
 
@@ -112,12 +117,13 @@ export default function MainBoard() {
       <div className="flex-1 bg-slate-50 relative overflow-hidden flex flex-col z-10 w-0">
         {data?.gantt_range && (
           <GanttChart 
+            ref={ganttRef}
             projects={data.projects} 
             initialData={initialData}
             range={data.gantt_range}
             expandedProjects={expandedProjects}
             expandedTasks={expandedTasks}
-            scrollTop={treeScrollTop}
+            onScroll={handleGanttScroll}
           />
         )}
       </div>

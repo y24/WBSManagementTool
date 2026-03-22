@@ -126,3 +126,71 @@ def get_initial_data(db: Session = Depends(get_db)):
         "members": crud.get_members(db),
         "holidays": crud.get_holidays(db)
     }
+
+# --- Status Master ---
+@router.post("/masters/statuses", response_model=schemas.Status)
+def create_status(status: schemas.StatusCreate, db: Session = Depends(get_db)):
+    return crud.create_status(db=db, status=status)
+
+@router.patch("/masters/statuses/{status_id}", response_model=schemas.Status)
+def update_status(status_id: int, status: schemas.StatusUpdate, db: Session = Depends(get_db)):
+    db_status = crud.update_status(db, status_id, status)
+    if not db_status: raise HTTPException(status_code=404, detail="Status not found")
+    return db_status
+
+@router.delete("/masters/statuses/{status_id}", response_model=schemas.Status)
+def delete_status(status_id: int, db: Session = Depends(get_db)):
+    db_status = crud.delete_status(db, status_id)
+    if not db_status: raise HTTPException(status_code=404, detail="Status not found")
+    return db_status
+
+# --- SubtaskType Master ---
+@router.post("/masters/subtask-types", response_model=schemas.SubtaskType)
+def create_subtask_type(subtask_type: schemas.SubtaskTypeCreate, db: Session = Depends(get_db)):
+    return crud.create_subtask_type(db=db, subtask_type=subtask_type)
+
+@router.patch("/masters/subtask-types/{type_id}", response_model=schemas.SubtaskType)
+def update_subtask_type(type_id: int, subtask_type: schemas.SubtaskTypeUpdate, db: Session = Depends(get_db)):
+    db_type = crud.update_subtask_type(db, type_id, subtask_type)
+    if not db_type: raise HTTPException(status_code=404, detail="SubtaskType not found")
+    return db_type
+
+@router.delete("/masters/subtask-types/{type_id}", response_model=schemas.SubtaskType)
+def delete_subtask_type(type_id: int, db: Session = Depends(get_db)):
+    db_type = crud.delete_subtask_type(db, type_id)
+    if not db_type: raise HTTPException(status_code=404, detail="SubtaskType not found")
+    return db_type
+
+# --- Member Master ---
+@router.post("/masters/members", response_model=schemas.Member)
+def create_member(member: schemas.MemberCreate, db: Session = Depends(get_db)):
+    return crud.create_member(db=db, member=member)
+
+@router.patch("/masters/members/{member_id}", response_model=schemas.Member)
+def update_member(member_id: int, member: schemas.MemberUpdate, db: Session = Depends(get_db)):
+    db_member = crud.update_member(db, member_id, member)
+    if not db_member: raise HTTPException(status_code=404, detail="Member not found")
+    return db_member
+
+@router.delete("/masters/members/{member_id}", response_model=schemas.Member)
+def delete_member(member_id: int, db: Session = Depends(get_db)):
+    db_member = crud.delete_member(db, member_id)
+    if not db_member: raise HTTPException(status_code=404, detail="Member not found")
+    return db_member
+
+# --- Holiday Master ---
+@router.post("/masters/holidays", response_model=schemas.Holiday)
+def create_holiday(holiday: schemas.HolidayCreate, db: Session = Depends(get_db)):
+    return crud.create_holiday(db=db, holiday=holiday)
+
+@router.patch("/masters/holidays/{holiday_id}", response_model=schemas.Holiday)
+def update_holiday(holiday_id: int, holiday: schemas.HolidayUpdate, db: Session = Depends(get_db)):
+    db_holiday = crud.update_holiday(db, holiday_id, holiday)
+    if not db_holiday: raise HTTPException(status_code=404, detail="Holiday not found")
+    return db_holiday
+
+@router.delete("/masters/holidays/{holiday_id}", response_model=schemas.Holiday)
+def delete_holiday(holiday_id: int, db: Session = Depends(get_db)):
+    db_holiday = crud.delete_holiday(db, holiday_id)
+    if not db_holiday: raise HTTPException(status_code=404, detail="Holiday not found")
+    return db_holiday

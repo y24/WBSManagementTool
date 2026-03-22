@@ -99,3 +99,365 @@ body {
   opacity: 0;
   pointer-events: none;
 }
+
+/* ═══════════════════════════════════════════
+   Master Settings Page Styles
+   ═══════════════════════════════════════════ */
+.master-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.master-page {
+  display: block; /* flex だと padding-bottom が無視される場合があるため block に変更 */
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.master-container {
+  max-width: 56rem;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem 1.5rem 10rem; /* 下部にかなり広めの余白（160px）を確保 */
+}
+
+.master-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+  margin: 0;
+}
+
+/* Section */
+.master-section {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  padding: 1.25rem;
+  transition: box-shadow 0.2s;
+}
+.master-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.master-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.master-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+
+.master-section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.master-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.master-add-btn:hover {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+  transform: scale(1.05);
+}
+
+/* Add form */
+.master-add-form {
+  margin-bottom: 0.75rem;
+  animation: masterSlideIn 0.2s ease-out;
+}
+@keyframes masterSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.master-add-form-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+/* Inputs */
+.master-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #334155;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.master-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+.master-input-sm {
+  flex: 0 1 auto;
+  min-width: 80px;
+}
+.master-input-date {
+  max-width: 160px;
+}
+
+.master-color-input {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px;
+  background: #fff;
+}
+
+.master-confirm-btn, .master-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.master-confirm-btn {
+  background: #10b981;
+  color: #fff;
+}
+.master-confirm-btn:hover {
+  background: #059669;
+  transform: scale(1.08);
+}
+.master-cancel-btn {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.master-cancel-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+/* List items */
+.master-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.master-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  transition: background-color 0.15s;
+  min-height: 40px;
+}
+.master-list-item:hover {
+  background: #f8fafc;
+}
+.master-list-item:hover .master-actions {
+  opacity: 1;
+}
+
+.master-list-item-content {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.master-color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.master-item-name {
+  font-size: 0.875rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+.master-holiday-date {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 600;
+  background: #f1f5f9;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* Actions */
+.master-actions {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.master-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: transparent;
+}
+.master-action-btn.master-edit {
+  color: #64748b;
+}
+.master-action-btn.master-edit:hover {
+  background: #ede9fe;
+  color: #6366f1;
+}
+.master-action-btn.master-delete {
+  color: #94a3b8;
+}
+.master-action-btn.master-delete:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* Inline editing */
+.master-edit-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Chip-style lists */
+.master-list-chips {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.master-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.master-chip:hover .master-chip-actions {
+  opacity: 1;
+  width: auto;
+  margin-left: 0.25rem;
+}
+.master-chip-blue {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+.master-chip-green {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.master-chip-text {
+  white-space: nowrap;
+}
+
+.master-chip-actions {
+  display: flex;
+  gap: 0.15rem;
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+.master-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.06);
+  color: inherit;
+  transition: all 0.15s;
+  padding: 0;
+}
+.master-chip-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+.master-chip-btn-del:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* Icon sizing */
+.master-icon {
+  width: 14px;
+  height: 14px;
+}
+.master-icon-lg {
+  width: 18px;
+  height: 18px;
+}

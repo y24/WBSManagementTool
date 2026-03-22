@@ -1,5 +1,5 @@
 import { ChevronRight, ChevronDown, Plus, Trash2, Copy, FileText, AlertTriangle, Calendar, Pencil, X, Check, GripVertical } from 'lucide-react';
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, forwardRef } from 'react';
 import { createPortal } from 'react-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Project, Task, Subtask } from '../types/wbs';
@@ -15,10 +15,9 @@ interface WBSTreeProps {
   expandedTasks: Record<number, boolean>;
   setExpandedTasks: React.Dispatch<React.SetStateAction<Record<number, boolean>>>;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
-  syncScrollTop?: number;
 }
 
-export default function WBSTree({
+const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   projects,
   initialData,
   onUpdate,
@@ -26,10 +25,8 @@ export default function WBSTree({
   setExpandedProjects,
   expandedTasks,
   setExpandedTasks,
-  onScroll,
-  syncScrollTop
-}: WBSTreeProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  onScroll
+}, ref) => {
   const [saving, setSaving] = useState(false);
   const [editingSubtask, setEditingSubtask] = useState<Subtask | null>(null);
   const [detailValue, setDetailValue] = useState('');
@@ -156,12 +153,6 @@ export default function WBSTree({
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isResizingName]);
-
-  useEffect(() => {
-    if (containerRef.current && syncScrollTop !== undefined) {
-      containerRef.current.scrollTop = syncScrollTop;
-    }
-  }, [syncScrollTop]);
 
   const toggleProject = (id: number) => setExpandedProjects(p => ({ ...p, [id]: !p[id] }));
   const toggleTask = (id: number) => setExpandedTasks(t => ({ ...t, [id]: !t[id] }));
@@ -462,14 +453,14 @@ export default function WBSTree({
 
   return (
     <div
-      ref={containerRef}
-      className="flex-1 w-full overflow-auto bg-white border-r relative"
+      ref={ref}
+      className="flex-1 w-full overflow-auto bg-white border-r relative no-scrollbar"
       onScroll={onScroll}
     >
-      <div className="min-w-max pb-32">
+      <div className="min-w-max">
         {saving && (
-          <div className="absolute top-0 right-4 z-50">
-            <span className="text-xs text-blue-500 font-medium">Saving...</span>
+          <div className="absolute top-1 right-2 z-50">
+            <span className="text-[10px] text-blue-500 font-medium">Saving...</span>
           </div>
         )}
 
@@ -496,7 +487,7 @@ export default function WBSTree({
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="projects-root" type="PROJECT">
             {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef} className="min-w-max pb-16">
+              <div {...provided.droppableProps} ref={provided.innerRef} className="min-w-max">
                 {projects.map((project, pIndex) => (
                   <Draggable key={`p-${project.id}`} draggableId={`p-${project.id}`} index={pIndex}>
                     {(provided) => (
@@ -822,4 +813,6 @@ export default function WBSTree({
       )}
     </div>
   );
-}
+});
+
+export default WBSTree;

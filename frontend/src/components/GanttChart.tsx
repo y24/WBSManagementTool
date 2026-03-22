@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, UIEvent } from 'react';
+import { useMemo, forwardRef } from 'react';
 import { format, differenceInDays, addDays, getDay, isToday } from 'date-fns';
 import { Project, Task, Subtask, GanttRange } from '../types/wbs';
 import { InitialData } from '../types';
@@ -9,21 +9,19 @@ interface GanttChartProps {
   range: GanttRange;
   expandedProjects: Record<number, boolean>;
   expandedTasks: Record<number, boolean>;
-  scrollTop: number;
+  onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
 const CELL_WIDTH = 24; // 1日あたりのピクセル幅
 
-export default function GanttChart({ projects, initialData, range, expandedProjects, expandedTasks, scrollTop }: GanttChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // ツリー側からのscrollTop同期
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = scrollTop;
-    }
-  }, [scrollTop]);
-
+const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({ 
+  projects, 
+  initialData, 
+  range, 
+  expandedProjects, 
+  expandedTasks, 
+  onScroll 
+}, ref) => {
   // 休日判定ロジック
   const isHoliday = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -98,7 +96,7 @@ export default function GanttChart({ projects, initialData, range, expandedProje
   return (
     <div className="h-full w-full overflow-hidden bg-white">
       {/* スクロール領域 (Ganttバー & ヘッダー) */}
-      <div ref={containerRef} className="h-full overflow-auto relative">
+      <div ref={ref} className="h-full overflow-auto relative" onScroll={onScroll}>
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           {/* ヘッダー領域 (垂直スクロールに追従するためsticky) */}
           <div className="flex border-b-[1px] border-[#f1f5f9] shadow-sm sticky top-0 z-30 bg-gray-50 flex-shrink-0" style={{ height: '33px' }}>
@@ -162,4 +160,6 @@ export default function GanttChart({ projects, initialData, range, expandedProje
       </div>
     </div>
   );
-}
+});
+
+export default GanttChart;
