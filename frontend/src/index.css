@@ -21,8 +21,9 @@ body {
 
   /* Subtask Color */
   --wbs-subtask-bg: #ffffff;
+  --wbs-subtask-hover: #f8fafc;
   /* Border Color */
-  --wbs-border-color: #f1f5f9; /* Slate 100 - vertical lines */
+  --wbs-border-color: #e2e8f0; /* Slate 200 - vertical lines */
   --wbs-row-border-color: #cbd5e1; /* Slate 200 - horizontal lines (Project/Task) */
 }
 
@@ -85,7 +86,7 @@ body {
 
 /* Common Table utility classes */
 .wbs-cell-border {
-  border-right: 1px solid var(--wbs-border-color) !important;
+  border-right: 1px solid var(--wbs-border-color);
 }
 /* Floating Menu Animation */
 .floating-menu-container {
@@ -98,6 +99,17 @@ body {
   transform: translateX(-50%) translateY(100px);
   opacity: 0;
   pointer-events: none;
+}
+
+/* ガントチャート領域のオーバーライド - 背面の線を透過させる */
+.gantt-body .wbs-row-project {
+  background-color: rgba(219, 234, 254, 0.45) !important;
+}
+.gantt-body .wbs-row-task {
+  background-color: rgba(241, 245, 249, 0.45) !important;
+}
+.gantt-body .wbs-row-subtask {
+  background-color: rgba(255, 255, 255, 0.45) !important;
 }
 
 /* ═══════════════════════════════════════════

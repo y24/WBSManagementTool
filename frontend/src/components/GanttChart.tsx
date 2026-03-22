@@ -14,13 +14,13 @@ interface GanttChartProps {
 
 const CELL_WIDTH = 24; // 1日あたりのピクセル幅
 
-const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({ 
-  projects, 
-  initialData, 
-  range, 
-  expandedProjects, 
-  expandedTasks, 
-  onScroll 
+const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
+  projects,
+  initialData,
+  range,
+  expandedProjects,
+  expandedTasks,
+  onScroll
 }, ref) => {
   // 休日判定ロジック
   const isHoliday = (date: Date) => {
@@ -63,7 +63,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     if (item.actual_start_date) {
       const aS = new Date(item.actual_start_date);
       // 終了日がない(現在進行中)場合は表示範囲の末尾か今日を終わりの目安としたりするが、今回はシンプルに
-      const aE = item.actual_end_date ? new Date(item.actual_end_date) : aS; 
+      const aE = item.actual_end_date ? new Date(item.actual_end_date) : aS;
       aStart = differenceInDays(aS, baseDate) * CELL_WIDTH;
       aWidth = (differenceInDays(aE, aS) + 1) * CELL_WIDTH;
     }
@@ -71,16 +71,16 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     const typeColor = isSubtask ? getStatusColor(item.status_id) : '#cbd5e1';
 
     return (
-      <div className="relative w-full h-full min-h-[30px] flex flex-col justify-center py-1">
+      <div className="relative w-full h-full min-h-[30px] flex flex-col justify-start">
         {pStart !== undefined && pWidth !== undefined && (
-          <div 
-            className={`absolute top-1 rounded-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 opacity-60`}
+          <div
+            className={`absolute top-[6px] rounded-t-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 opacity-60`}
             style={{ left: `${pStart}px`, width: `${pWidth}px` }}
           />
         )}
         {aStart !== undefined && aWidth !== undefined && (
-          <div 
-            className={`absolute bottom-1 rounded-sm ${isSubtask ? 'h-3' : 'h-2'} shadow-sm`}
+          <div
+            className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm`}
             style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
             title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
           />
@@ -96,7 +96,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   return (
     <div className="h-full w-full overflow-hidden bg-white">
       {/* スクロール領域 (Ganttバー & ヘッダー) */}
-      <div ref={ref} className="h-full overflow-auto relative" onScroll={onScroll}>
+      <div ref={ref} className="h-full overflow-auto relative gantt-body" onScroll={onScroll}>
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           {/* ヘッダー領域 (垂直スクロールに追従するためsticky) */}
           <div className="flex border-b-[1px] border-[#f1f5f9] shadow-sm sticky top-0 z-30 bg-gray-50 flex-shrink-0" style={{ height: '33px' }}>
@@ -104,10 +104,10 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
               const isWeekend = getDay(d) === 0 || getDay(d) === 6;
               const holidayFlag = isHoliday(d);
               const holidayInfo = initialData?.holidays.find(h => h.holiday_date === format(d, 'yyyy-MM-dd'));
-              
+
               return (
-                <div 
-                  key={d.toISOString()} 
+                <div
+                  key={d.toISOString()}
                   className={`flex-shrink-0 border-r border-gray-200 flex items-center justify-center text-[10px] ${isWeekend || holidayFlag ? 'bg-red-50 text-red-500' : 'text-gray-500'}`}
                   style={{ width: `${CELL_WIDTH}px` }}
                   title={holidayInfo?.holiday_name}
@@ -118,16 +118,16 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
             })}
           </div>
 
-          {/* 背景の縦線 ＆ 今日線 (z-0) */}
+          {/* 背景の縦線 ＆ 今日線 (z-0) - バーより後ろに配置 */}
           <div className="absolute inset-0 flex pointer-events-none z-0">
             {days.map(d => {
               const isWeekend = getDay(d) === 0 || getDay(d) === 6;
               const holidayFlag = isHoliday(d);
               const today = isToday(d);
               return (
-                <div 
-                  key={`bg-${d.toISOString()}`} 
-                  className={`flex-shrink-0 wbs-cell-border ${isWeekend || holidayFlag ? 'bg-red-50/20' : ''} ${today ? 'border-r-red-400 border-r-2' : ''}`}
+                <div
+                  key={`bg-${d.toISOString()}`}
+                  className={`flex-shrink-0 wbs-cell-border ${isWeekend || holidayFlag ? 'bg-red-50/30' : ''} ${today ? 'border-r-red-400 border-r-2' : ''}`}
                   style={{ width: `${CELL_WIDTH}px` }}
                 />
               );
