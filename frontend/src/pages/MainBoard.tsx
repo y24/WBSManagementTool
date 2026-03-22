@@ -19,6 +19,7 @@ export default function MainBoard() {
     onlyDelayed: false,
     searchTerm: '',
     showRemoved: false,
+    showDoneProjects: false,
   });
 
   // ツリー展開ステートのリフトアップ
@@ -76,6 +77,9 @@ export default function MainBoard() {
 
         // 2. Removed項目の除外
         if (!filters.showRemoved && project.status_id === removedStatusId) return false;
+
+        // 3. 完了済項目の非表示（デフォルト）
+        if (!filters.showDoneProjects && doneStatusId !== null && project.status_id === doneStatusId) return false;
 
         return true;
       })
@@ -214,6 +218,7 @@ export default function MainBoard() {
           onlyDelayed: false,
           searchTerm: '',
           showRemoved: false,
+          showDoneProjects: false,
         })}
       />
 

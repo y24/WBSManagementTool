@@ -11,6 +11,7 @@ export interface FilterState {
   onlyDelayed: boolean;
   searchTerm: string;
   showRemoved: boolean;
+  showDoneProjects: boolean;
 }
 
 interface FilterPanelProps {
@@ -35,7 +36,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     filters.assigneeIds.length > 0 ||
     filters.onlyDelayed ||
     filters.searchTerm !== '' ||
-    filters.showRemoved;
+    filters.showRemoved ||
+    filters.showDoneProjects;
 
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-4 shrink-0 shadow-sm z-40">
@@ -90,24 +92,36 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         <button
           onClick={() => setFilters(prev => ({ ...prev, onlyDelayed: !prev.onlyDelayed }))}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.onlyDelayed
-              ? 'bg-rose-50 border-rose-200 text-rose-600 ring-rose-500/10 ring-2'
-              : 'bg-white border-gray-200 text-gray-600 hover:border-rose-400 hover:text-rose-500'
+            ? 'bg-rose-50 border-rose-200 text-rose-600 ring-rose-500/10 ring-2'
+            : 'bg-white border-gray-200 text-gray-600 hover:border-rose-400 hover:text-rose-500'
             }`}
         >
           <Calendar size={14} className={filters.onlyDelayed ? 'animate-pulse' : ''} />
-          遅延タスクのみ
+          遅延タスク
         </button>
 
         {/* Removed Toggle */}
         <button
           onClick={() => setFilters(prev => ({ ...prev, showRemoved: !prev.showRemoved }))}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.showRemoved
-              ? 'bg-slate-100 border-slate-400 text-slate-700 ring-slate-500/10 ring-2 shadow-inner'
-              : 'bg-white border-gray-200 text-gray-400 hover:border-slate-400 hover:text-slate-600'
+            ? 'bg-slate-100 border-slate-400 text-slate-700 ring-slate-500/10 ring-2 shadow-inner'
+            : 'bg-white border-gray-200 text-gray-400 hover:border-slate-400 hover:text-slate-600'
             }`}
         >
           <X size={14} className={filters.showRemoved ? 'rotate-45 transition-transform' : ''} />
-          Removedを表示
+          削除済アイテムを表示
+        </button>
+
+        {/* Done Projects Toggle */}
+        <button
+          onClick={() => setFilters(prev => ({ ...prev, showDoneProjects: !prev.showDoneProjects }))}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.showDoneProjects
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-600 ring-emerald-500/10 ring-2'
+            : 'bg-white border-gray-200 text-gray-400 hover:border-emerald-400 hover:text-emerald-500'
+            }`}
+        >
+          <Check size={14} className={filters.showDoneProjects ? 'scale-110 transition-transform' : ''} />
+          完了済プロジェクトを表示
         </button>
       </div>
 
@@ -115,8 +129,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         onClick={onClear}
         disabled={!isFiltered}
         className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-all rounded-lg border font-bold uppercase tracking-tight ${isFiltered
-            ? 'text-gray-600 bg-white border-gray-200 hover:border-blue-400 hover:text-blue-600 shadow-sm'
-            : 'text-gray-300 bg-gray-50 border-gray-100 cursor-not-allowed'
+          ? 'text-gray-600 bg-white border-gray-200 hover:border-blue-400 hover:text-blue-600 shadow-sm'
+          : 'text-gray-300 bg-gray-50 border-gray-100 cursor-not-allowed'
           }`}
         title="すべて解除"
       >
