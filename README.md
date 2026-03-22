@@ -74,6 +74,14 @@ npm run dev
 * `frontend/` : React + Vite + Tailwind CSS によるフロントエンドアプリのソースコード
 * `docs/` : 要件定義書、UI設計書、API仕様書などのドキュメント群
 
+## Windows Server / IIS へのデプロイ
+Windows Server および IIS を利用した社内公開・常時稼働の手順は、[IIS セットアップガイド](IIS_Setup_Guide.md) に詳細をまとめています。
+
+### クイックセットアップ（サーバー用）
+1.  管理者権限で `server_setup.bat` を実行します。
+2.  スクリプトがビルドと環境構築を自動で行います。
+3.  詳細はガイドに従って IIS のサイトを作成してください。
+
 ## 今後の拡張（未実装機能）
 * Azure DevOps等の外部チケットシステム連携
 * Active Directory/SSOによる認証連携の追加やユーザ別・グループ別の閲覧制御
