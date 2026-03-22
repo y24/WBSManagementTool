@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { format, addDays, subDays } from 'date-fns';
 import { apiClient } from '../api/client';
 import { Project, Task, WBSResponse } from '../types/wbs';
 import { InitialData } from '../types';
@@ -237,6 +238,55 @@ export default function MainBoard() {
       .filter(Boolean) as Project[];
   }, [data, filters, initialData]);
 
+  // フィルタ後のガントチャート表示期間の再計算
+  const dynamicGanttRange = useMemo(() => {
+    if (!data || !data.gantt_range || !filteredProjects.length) return data?.gantt_range;
+
+    const todayStr = data.gantt_range.today;
+    const today = new Date(todayStr);
+    
+    let allDates: Date[] = [];
+
+    const collectDates = (item: any) => {
+      if (item.planned_start_date) allDates.push(new Date(item.planned_start_date));
+      if (item.planned_end_date) allDates.push(new Date(item.planned_end_date));
+      if (item.actual_start_date) allDates.push(new Date(item.actual_start_date));
+      if (item.actual_end_date) allDates.push(new Date(item.actual_end_date));
+    };
+
+    filteredProjects.forEach(p => {
+      collectDates(p);
+      p.tasks.forEach(t => {
+        collectDates(t);
+        t.subtasks.forEach(s => {
+          collectDates(s);
+        });
+      });
+    });
+
+    if (allDates.length === 0) return data.gantt_range;
+
+    const minDateTs = Math.min(...allDates.map(d => d.getTime()));
+    const maxDateTs = Math.max(...allDates.map(d => d.getTime()));
+    
+    const minDate = new Date(minDateTs);
+    const maxDate = new Date(maxDateTs);
+
+    const startDate = subDays(new Date(Math.min(minDate.getTime(), today.getTime())), 7);
+    
+    const weeks = 8;
+    const targetEndDate = new Date(Math.max(
+      addDays(maxDate, 14).getTime(),
+      addDays(today, weeks * 7).getTime()
+    ));
+
+    return {
+      start_date: format(startDate, 'yyyy-MM-dd'),
+      end_date: format(targetEndDate, 'yyyy-MM-dd'),
+      today: todayStr
+    };
+  }, [data, filteredProjects]);
+
   // マウス関連のリサイズイベント制御
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -327,12 +377,12 @@ export default function MainBoard() {
 
         {/* 右ペイン: ガントチャート */}
         <div className="flex-1 bg-slate-50 relative overflow-hidden flex flex-col z-10 w-0">
-          {data?.gantt_range && (
+          {dynamicGanttRange && (
             <GanttChart 
               ref={ganttRef}
               projects={filteredProjects} 
               initialData={initialData}
-              range={data.gantt_range}
+              range={dynamicGanttRange}
               expandedProjects={expandedProjects}
               expandedTasks={expandedTasks}
               onScroll={handleGanttScroll}
