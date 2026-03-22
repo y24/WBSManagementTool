@@ -260,6 +260,18 @@ export default function WBSTree({
 
   const getStatus = (id: number) => initialData?.statuses.find(s => s.id === id);
 
+  const getWarning = (item: any) => {
+    const warnings = [];
+    // if (item.is_overlapping) warnings.push("スケジュールに重複した期間があります。");
+    if (item.planned_start_date && item.planned_end_date && item.planned_start_date > item.planned_end_date) {
+      warnings.push("計画期間の開始日が終了日より後になっています。");
+    }
+    if (item.actual_start_date && item.actual_end_date && item.actual_start_date > item.actual_end_date) {
+      warnings.push("実績期間の開始日が終了日より後になっています。");
+    }
+    return warnings.length > 0 ? warnings.join("\n") : null;
+  };
+
   const EditableInput = ({ value, onChange, type = "text", className = "" }: any) => {
     const formatDateForInput = (d: string) => {
       if (!d) return '';
@@ -509,7 +521,11 @@ export default function WBSTree({
                             <div className="flex-1 min-w-0">
                               <EditableInput value={project.project_name} onChange={(v: string) => handleUpdate('project', project.id, 'project_name', v)} className="font-semibold" />
                             </div>
-                            {project.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
+                            {getWarning(project) && (
+                              <span title={getWarning(project) || undefined} className="cursor-help inline-flex">
+                                <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+                              </span>
+                            )}
                             <button
                               onClick={() => handleAddTask(project.id)}
                               className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
@@ -567,7 +583,11 @@ export default function WBSTree({
                                             <div className="flex-1 min-w-0">
                                               <EditableInput value={task.task_name} onChange={(v: string) => handleUpdate('task', task.id, 'task_name', v)} className="font-medium" />
                                             </div>
-                                            {task.is_overlapping && <span title="スケジュールに重複があります"><AlertTriangle size={14} className="text-amber-500 shrink-0" /></span>}
+                                            {getWarning(task) && (
+                                              <span title={getWarning(task) || undefined} className="cursor-help inline-flex">
+                                                <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+                                              </span>
+                                            )}
                                             <button
                                               onClick={() => handleAddSubtask(task.id)}
                                               className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
@@ -628,9 +648,12 @@ export default function WBSTree({
                                                               >
                                                                 {initialData?.subtask_types.map(t => <option key={t.id} value={t.id}>{t.type_name}</option>)}
                                                               </select>
-                                                              {subtask.subtask_detail && (
-                                                                <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail}>
-                                                                  {subtask.subtask_detail}
+                                                              <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail || undefined}>
+                                                                {subtask.subtask_detail}
+                                                              </span>
+                                                              {getWarning(subtask) && (
+                                                                <span title={getWarning(subtask) || undefined} className="cursor-help inline-flex">
+                                                                  <AlertTriangle size={14} className="text-amber-500 shrink-0" />
                                                                 </span>
                                                               )}
                                                             </div>
