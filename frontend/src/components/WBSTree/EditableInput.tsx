@@ -105,7 +105,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
   if (!isEditing) {
     return (
       <div
-        className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 cursor-pointer hover:bg-black/5 ${isActuallyReadOnly ? 'bg-gray-50/50 grayscale-[0.3]' : ''} ${className}`}
+        className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 cursor-pointer hover:bg-black/5 ${isActuallyReadOnly ? 'bg-gray-50/30' : ''} ${isAuto ? 'text-blue-600 font-medium' : ''} ${className}`}
         onClick={() => {
           setIsEditing(true);
           isCommittingRef.current = false;
