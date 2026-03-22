@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { GripVertical, AlertTriangle, Pencil, ExternalLink } from 'lucide-react';
+import { GripVertical, AlertTriangle, Pencil, ExternalLink, MessageSquare } from 'lucide-react';
 import { Subtask } from '../../types/wbs';
 import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
@@ -58,8 +58,13 @@ const SubtaskRow = memo(({
             {subtask.subtask_detail}
           </span>
           {warning && (
-            <span title={warning} className="cursor-help inline-flex">
-              <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+            <span title={warning} className="cursor-help inline-flex shrink-0">
+              <AlertTriangle size={14} className="text-amber-500" />
+            </span>
+          )}
+          {subtask.memo && (
+            <span title={subtask.memo} className="cursor-help inline-flex items-center text-blue-400 hover:text-blue-600 shrink-0 mx-0.5" onClick={onEditDetail}>
+              <MessageSquare size={14} />
             </span>
           )}
           {subtask.ticket_id && initialData?.ticket_url_template && (

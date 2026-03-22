@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, X, Check, Hash, StickyNote, ExternalLink, FolderKanban, ListTodo, AlignLeft } from 'lucide-react';
+import { FileText, X, Check, Hash, MessageSquare, ExternalLink, FolderKanban, ListTodo, AlignLeft } from 'lucide-react';
 
 export type EditingType = 'project' | 'task' | 'subtask';
 
@@ -131,12 +131,12 @@ const DetailModal = ({
           {/* memo */}
           <div>
             <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
-              <StickyNote size={12} className="text-amber-500" />
+              <MessageSquare size={12} className="text-blue-500" />
               メモ <span className="text-gray-400 font-normal normal-case">(複数行)</span>
             </label>
             <textarea
               id="modal-memo-input"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none text-sm transition-all shadow-inner bg-gray-50/50 font-medium resize-none"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none text-sm transition-all shadow-inner bg-gray-50/50 font-medium resize-none"
               value={memoValue}
               onChange={(e) => setMemoValue(e.target.value)}
               placeholder="メモを入力してください..."

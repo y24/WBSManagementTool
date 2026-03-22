@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { ChevronRight, ChevronDown, Plus, GripVertical, AlertTriangle, Pencil, ExternalLink } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, GripVertical, AlertTriangle, Pencil, ExternalLink, MessageSquare } from 'lucide-react';
 import { Project } from '../../types/wbs';
 import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
@@ -58,8 +58,13 @@ const ProjectRow = memo(({
           <EditableInput value={project.project_name} onChange={(v: string) => onUpdateField('project', project.id, 'project_name', v)} className="font-semibold" />
         </div>
         {warning && (
-          <span title={warning} className="cursor-help inline-flex">
-            <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+          <span title={warning} className="cursor-help inline-flex shrink-0">
+            <AlertTriangle size={14} className="text-amber-500" />
+          </span>
+        )}
+        {project.memo && (
+          <span title={project.memo} className="cursor-help inline-flex items-center text-blue-400 hover:text-blue-600 shrink-0 mx-0.5" onClick={onEditDetail}>
+            <MessageSquare size={14} />
           </span>
         )}
         {project.ticket_id && initialData?.ticket_url_template && (
