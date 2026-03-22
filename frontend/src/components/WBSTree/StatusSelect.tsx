@@ -13,6 +13,7 @@ interface StatusSelectProps {
 const StatusSelect = memo(({ subtask, initialData, onUpdateField }: StatusSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, direction: 'down' as 'up' | 'down' });
   const statusInfo = initialData?.statuses.find((s: any) => s.id === subtask.status_id);
 
@@ -47,10 +48,28 @@ const StatusSelect = memo(({ subtask, initialData, onUpdateField }: StatusSelect
 
   useEffect(() => {
     if (!isOpen) return;
-    const handleEvents = () => setIsOpen(false);
+    
+    const handleEvents = (e: Event) => {
+      // ドロップダウン内や、そのボタン内でのクリックであれば閉じない
+      if (e.type === 'mousedown' && e.target instanceof Node) {
+        if (dropdownRef.current?.contains(e.target) || buttonRef.current?.contains(e.target)) {
+          return;
+        }
+      }
+      
+      // スクロールイベントがドロップダウンメニュー内の場合は閉じない
+      if (e.type === 'scroll' && dropdownRef.current?.contains(e.target as Node)) {
+        return;
+      }
+      
+      setIsOpen(false);
+    };
+
+    window.addEventListener('mousedown', handleEvents, true);
     window.addEventListener('scroll', handleEvents, true);
     window.addEventListener('resize', handleEvents);
     return () => {
+      window.removeEventListener('mousedown', handleEvents, true);
       window.removeEventListener('scroll', handleEvents, true);
       window.removeEventListener('resize', handleEvents);
     };
@@ -75,6 +94,7 @@ const StatusSelect = memo(({ subtask, initialData, onUpdateField }: StatusSelect
 
       {isOpen && createPortal(
         <div 
+          ref={dropdownRef}
           className="absolute z-[9999] bg-white border border-gray-200 shadow-2xl rounded-lg py-1.5 overflow-hidden"
           style={{ 
             top: coords.direction === 'down' ? coords.top + 4 : coords.top - 4, 
@@ -108,13 +128,6 @@ const StatusSelect = memo(({ subtask, initialData, onUpdateField }: StatusSelect
           </div>
         </div>,
         document.body
-      )}
-
-      {isOpen && (
-        <div 
-          className="fixed inset-0 z-[9998]" 
-          onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
-        />
       )}
     </>
   );

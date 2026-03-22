@@ -60,6 +60,13 @@ const PortalSelect = memo(({
     if (!isOpen) return;
     
     const handleEvents = (e: Event) => {
+      // ドロップダウン内や、そのボタン内でのクリックであれば閉じない
+      if (e.type === 'mousedown' && e.target instanceof Node) {
+        if (dropdownRef.current?.contains(e.target) || buttonRef.current?.contains(e.target)) {
+          return;
+        }
+      }
+      
       // スクロールイベントがドロップダウンメニュー内の場合は閉じない
       if (e.type === 'scroll' && dropdownRef.current?.contains(e.target as Node)) {
         return;
@@ -67,9 +74,11 @@ const PortalSelect = memo(({
       setIsOpen(false);
     };
 
+    window.addEventListener('mousedown', handleEvents, true);
     window.addEventListener('scroll', handleEvents, true);
     window.addEventListener('resize', handleEvents);
     return () => {
+      window.removeEventListener('mousedown', handleEvents, true);
       window.removeEventListener('scroll', handleEvents, true);
       window.removeEventListener('resize', handleEvents);
     };
@@ -126,13 +135,6 @@ const PortalSelect = memo(({
           </div>
         </div>,
         document.body
-      )}
-
-      {isOpen && (
-        <div 
-          className="fixed inset-0 z-[9998]" 
-          onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
-        />
       )}
     </>
   );
