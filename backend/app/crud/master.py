@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from datetime import date
 from .. import models, schemas
 
 # --- Masters ---
@@ -128,3 +129,35 @@ def delete_holiday(db: Session, holiday_id: int):
         db.commit()
         db.refresh(db_holiday)
     return db_holiday
+
+def sync_holidays(db: Session, holiday_data: list[dict]):
+    """
+    Sync holidays from a list of dicts: {"date": "YYYY-MM-DD", "name": "Name"}
+    Upsert logic: update if date exists, otherwise create.
+    """
+    updated_count: int = 0
+    added_count: int = 0
+    
+    for item in holiday_data:
+        h_date_str = item["date"]
+        h_name = item["name"]
+        h_date = date.fromisoformat(h_date_str)
+        
+        # Check if already exists
+        db_holiday = db.query(models.MstHoliday).filter(models.MstHoliday.holiday_date == h_date).first()
+        
+        if db_holiday:
+            db_holiday.holiday_name = h_name
+            db_holiday.is_active = True # Re-activate if it was inactive
+            updated_count += 1
+        else:
+            new_holiday = models.MstHoliday(
+                holiday_date=h_date,
+                holiday_name=h_name,
+                is_active=True
+            )
+            db.add(new_holiday)
+            added_count += 1
+            
+    db.commit()
+    return {"updated": updated_count, "added": added_count}

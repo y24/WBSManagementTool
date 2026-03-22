@@ -45,6 +45,27 @@ const XIcon = () => (
   </svg>
 );
 
+const SyncIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="master-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+    <path d="M3 3v5h5" />
+    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+    <path d="M16 16h5v5" />
+  </svg>
+);
+
+const ChevronDownIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="master-icon" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+  </svg>
+);
+
+const ChevronUpIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="master-icon" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+  </svg>
+);
+
 // ─────────────────────────────────────────────────
 // Main Component
 // ─────────────────────────────────────────────────
@@ -66,13 +87,15 @@ export default function MasterSettings() {
   const [showAddSubtaskType, setShowAddSubtaskType] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showAddHoliday, setShowAddHoliday] = useState(false);
-  
+
   // System Settings
   const [ticketUrlTemplate, setTicketUrlTemplate] = useState('');
   const [statusMappingNew, setStatusMappingNew] = useState<number[]>([]);
   const [statusMappingBlocked, setStatusMappingBlocked] = useState<number[]>([]);
   const [statusMappingDone, setStatusMappingDone] = useState<number[]>([]);
   const [isSavingSetting, setIsSavingSetting] = useState(false);
+  const [isSyncingHolidays, setIsSyncingHolidays] = useState(false);
+  const [isHolidayListExpanded, setIsHolidayListExpanded] = useState(false);
 
   const fetchData = useCallback(() => {
     apiClient.get<InitialData>('/initial-data')
@@ -176,6 +199,21 @@ export default function MasterSettings() {
     } catch (err) { console.error(err); }
   };
 
+  const syncHolidays = async () => {
+    if (!confirm('日本の祝日を外部APIから取得して更新しますか？\n(既に存在する日は上書きされ、新しい日は追加されます)')) return;
+    try {
+      setIsSyncingHolidays(true);
+      const res = await apiClient.post<{ message: string }>('/masters/holidays/sync');
+      alert(res.data.message);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('祝日の同期に失敗しました。');
+    } finally {
+      setIsSyncingHolidays(false);
+    }
+  };
+
   const saveSetting = async (key: string, value: string) => {
     try {
       setIsSavingSetting(true);
@@ -196,10 +234,10 @@ export default function MasterSettings() {
     if (category === 'blocked') { current = statusMappingBlocked; key = 'status_mapping_blocked'; }
     if (category === 'done') { current = statusMappingDone; key = 'status_mapping_done'; }
 
-    const next = current.includes(statusId) 
+    const next = current.includes(statusId)
       ? current.filter(id => id !== statusId)
       : [...current, statusId];
-    
+
     saveSetting(key, next.join(','));
   };
 
@@ -212,7 +250,7 @@ export default function MasterSettings() {
   return (
     <div className="master-page">
       <div className="master-container">
-        <h2 className="master-title">マスタ管理</h2>
+        <h2 className="master-title">マスタ・設定</h2>
 
         {/* ═══════════ ステータス一覧 ═══════════ */}
         <section className="master-section">
@@ -434,9 +472,19 @@ export default function MasterSettings() {
               <span className="master-section-icon" style={{ background: 'linear-gradient(135deg, #f97316, #ef4444)' }}>H</span>
               祝日一覧
             </h3>
-            <button className="master-add-btn" onClick={() => setShowAddHoliday(!showAddHoliday)} title="新規追加">
-              <PlusIcon />
-            </button>
+            <div className="flex gap-2">
+              <button 
+                className={`master-sync-btn ${isSyncingHolidays ? 'animate-spin-slow' : ''}`} 
+                onClick={syncHolidays} 
+                disabled={isSyncingHolidays}
+                title="APIから更新"
+              >
+                <SyncIcon />
+              </button>
+              <button className="master-add-btn" onClick={() => setShowAddHoliday(!showAddHoliday)} title="新規追加">
+                <PlusIcon />
+              </button>
+            </div>
           </div>
 
           {showAddHoliday && (
@@ -463,7 +511,7 @@ export default function MasterSettings() {
           )}
 
           <div className="master-list">
-            {data?.holidays.map((h: MstHoliday) => (
+            {(isHolidayListExpanded ? data?.holidays : data?.holidays.slice(0, 8))?.map((h: MstHoliday) => (
               <div key={h.id} className="master-list-item master-list-item-holiday">
                 <div className="master-list-item-content">
                   <span className="master-holiday-date">{h.holiday_date}</span>
@@ -507,6 +555,25 @@ export default function MasterSettings() {
               </div>
             ))}
           </div>
+
+          {(data?.holidays.length ?? 0) > 8 && (
+            <button 
+              className="master-list-expand-btn" 
+              onClick={() => setIsHolidayListExpanded(!isHolidayListExpanded)}
+            >
+              {isHolidayListExpanded ? (
+                <>
+                  <ChevronUpIcon />
+                  閉じる
+                </>
+              ) : (
+                <>
+                  <ChevronDownIcon />
+                  すべての祝日を表示 ({data?.holidays.length}件)
+                </>
+              )}
+            </button>
+          )}
         </section>
 
         {/* ═══════════ システム設定 ═══════════ */}
@@ -536,7 +603,7 @@ export default function MasterSettings() {
                 value={ticketUrlTemplate}
                 onChange={e => setTicketUrlTemplate(e.target.value)}
               />
-              <button 
+              <button
                 className={`master-save-btn ${isSavingSetting ? 'opacity-50' : ''}`}
                 onClick={() => saveSetting('ticket_url_template', ticketUrlTemplate)}
                 disabled={isSavingSetting}
@@ -559,7 +626,7 @@ export default function MasterSettings() {
             <p className="master-setting-desc mb-6">
               プロジェクトやタスクのステータスを、子アイテムの状態に合わせて自動更新する際の判定条件（カテゴリー）を指定します。
             </p>
-            
+
             <div className="space-y-8">
               <div className="mapping-group">
                 <label className="master-setting-label mb-3 block font-bold text-gray-700">「未着手」と判定するステータス</label>

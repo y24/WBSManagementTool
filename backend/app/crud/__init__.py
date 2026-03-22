@@ -25,7 +25,8 @@ from .master import (
     delete_member,
     create_holiday,
     update_holiday,
-    delete_holiday
+    delete_holiday,
+    sync_holidays
 )
 
 from .project import (

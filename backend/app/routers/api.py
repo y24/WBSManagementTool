@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+import httpx
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -221,3 +222,29 @@ def delete_holiday(holiday_id: int, db: Session = Depends(get_db)):
     db_holiday = crud.delete_holiday(db, holiday_id)
     if not db_holiday: raise HTTPException(status_code=404, detail="Holiday not found")
     return db_holiday
+
+@router.post("/masters/holidays/sync")
+async def sync_holidays(db: Session = Depends(get_db)):
+    """
+    Fetch Japanese holidays from holidays-jp API and sync with local DB.
+    """
+    url = "https://holidays-jp.github.io/api/v1/date.json"
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            data = response.json()
+            
+            # Transfer data into list of dicts: [{"date": "...", "name": "..."}]
+            holiday_list = []
+            for h_date, h_name in data.items():
+                holiday_list.append({"date": h_date, "name": h_name})
+            
+            result = crud.sync_holidays(db, holiday_list)
+            return {
+                "status": "success",
+                "message": f"Holidays synced: {result['added']} added, {result['updated']} updated.",
+                "details": result
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch holidays: {str(e)}")

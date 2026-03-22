@@ -21,7 +21,7 @@ export default function Header() {
             className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-medium"
           >
             <Settings size={18} />
-            <span className="text-sm">マスタ管理</span>
+            <span className="text-sm">マスタ・設定</span>
           </Link>
         </nav>
 
@@ -30,8 +30,8 @@ export default function Header() {
         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest px-2.5 py-1 bg-slate-800/50 rounded-full border border-slate-700">
           Sync Status: Online
         </span>
-        <button 
-          onClick={() => window.dispatchEvent(new CustomEvent('add-project'))} 
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('add-project'))}
           className="ml-auto flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] font-bold group"
         >
           <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />

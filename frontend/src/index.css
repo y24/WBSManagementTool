@@ -226,6 +226,38 @@ body {
   transform: scale(1.05);
 }
 
+.master-sync-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.master-sync-btn:hover:not(:disabled) {
+  background: #f97316;
+  color: #fff;
+  border-color: #f97316;
+  transform: scale(1.05);
+}
+.master-sync-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Add form */
 .master-add-form {
   margin-bottom: 0.75rem;
@@ -363,6 +395,30 @@ body {
   border-radius: 4px;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
+}
+
+.master-list-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.6rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.master-list-expand-btn:hover {
+  background: #f1f5f9;
+  color: #334155;
+  border-style: solid;
+  border-color: #94a3b8;
 }
 
 /* Actions */
