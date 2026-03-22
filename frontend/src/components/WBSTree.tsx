@@ -10,6 +10,7 @@ import TaskRow from './WBSTree/TaskRow';
 import SubtaskRow from './WBSTree/SubtaskRow';
 import DetailModal from './WBSTree/DetailModal';
 import FloatingMenu from './WBSTree/FloatingMenu';
+import ConfirmModal from './WBSTree/ConfirmModal';
 import { commonHeaderClasses } from './WBSTree/constants';
 
 interface WBSTreeProps {
@@ -38,6 +39,9 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const [detailValue, setDetailValue] = useState('');
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
   const [menuRendered, setMenuRendered] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [confirmData, setConfirmData] = useState({ total: 0, detail: '' });
+  const isConfirming = useRef(false);
 
   useEffect(() => {
     if (Object.values(checkedIds).some(Boolean)) {
@@ -80,13 +84,42 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
   const totalSelectedCount = Object.values(checkedIds).filter(Boolean).length;
 
-  const handleDeleteSelected = async () => {
-    if (!window.confirm(`${totalSelectedCount}件の項目を削除してもよろしいですか？`)) return;
+  const handleDeleteSelected = () => {
+    if (saving || isConfirmModalOpen) return;
 
+    if (totalSelectedCount === 0) return;
+
+    // 削除対象を算出
+    const projectIdsToDelete = projects.filter(p => checkedIds[`p-${p.id}`]).map(p => p.id);
+    const tasksToDelete: number[] = [];
+    projects.forEach(p => {
+      if (projectIdsToDelete.includes(p.id)) return;
+      p.tasks.forEach(t => {
+        if (checkedIds[`t-${t.id}`]) tasksToDelete.push(t.id);
+      });
+    });
+    const subtasksToDelete: number[] = [];
+    projects.forEach(p => {
+      if (projectIdsToDelete.includes(p.id)) return;
+      p.tasks.forEach(t => {
+        if (tasksToDelete.includes(t.id)) return;
+        t.subtasks.forEach(s => {
+          if (checkedIds[`s-${s.id}`]) subtasksToDelete.push(s.id);
+        });
+      });
+    });
+
+    const detailMsg = `削除対象の内訳: プロジェクト:${projectIdsToDelete.length}, タスク:${tasksToDelete.length}, サブタスク:${subtasksToDelete.length}`;
+    setConfirmData({ total: totalSelectedCount, detail: detailMsg });
+    setIsConfirmModalOpen(true);
+  };
+
+  const executeDelete = async () => {
+    setIsConfirmModalOpen(false);
     setSaving(true);
+    
     try {
-      const projectsToDelete = projects.filter(p => checkedIds[`p-${p.id}`]);
-      const projectIdsToDelete = projectsToDelete.map(p => p.id);
+      const projectIdsToDelete = projects.filter(p => checkedIds[`p-${p.id}`]).map(p => p.id);
       const tasksToDelete: number[] = [];
       projects.forEach(p => {
         if (projectIdsToDelete.includes(p.id)) return;
@@ -104,17 +137,22 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           });
         });
       });
+
       const promises = [
         ...projectIdsToDelete.map(id => wbsOps.deleteProject(id)),
         ...tasksToDelete.map(id => wbsOps.deleteTask(id)),
         ...subtasksToDelete.map(id => wbsOps.deleteSubtask(id))
       ];
-      await Promise.all(promises);
+
+      if (promises.length > 0) {
+        await Promise.all(promises);
+      }
+
       setCheckedIds({});
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('削除に失敗しました');
+      alert('削除中にエラーが発生しました。');
     } finally {
       setSaving(false);
     }
@@ -391,6 +429,15 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         onDelete={handleDeleteSelected}
         onClear={() => setCheckedIds({})}
         menuRendered={menuRendered}
+        loading={saving}
+      />
+
+      <ConfirmModal 
+        isOpen={isConfirmModalOpen}
+        totalCount={confirmData.total}
+        detailMsg={confirmData.detail}
+        onConfirm={executeDelete}
+        onCancel={() => setIsConfirmModalOpen(false)}
       />
     </div>
   );

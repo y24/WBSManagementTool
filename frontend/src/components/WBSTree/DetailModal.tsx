@@ -13,7 +13,7 @@ interface DetailModalProps {
 
 const DetailModal = ({ editingSubtask, detailValue, setDetailValue, onClose, onSave }: DetailModalProps) => {
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50/50">
           <h3 className="font-bold text-gray-800 flex items-center gap-2">
