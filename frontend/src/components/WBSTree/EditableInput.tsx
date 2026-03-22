@@ -126,7 +126,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
       {type === 'date' && isEditing ? (
         <div
           className="absolute left-0 top-0 z-[1000] flex items-center bg-white shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10 whitespace-nowrap overflow-hidden"
-          style={{ width: onToggleAuto ? '195px' : '135px', height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
+          style={{ width: onToggleAuto ? '220px' : '160px', height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
         >
           <button
             type="button"
