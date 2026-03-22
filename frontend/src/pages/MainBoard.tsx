@@ -1,15 +1,24 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { apiClient } from '../api/client';
-import { Project, WBSResponse } from '../types/wbs';
+import { Project, Task, WBSResponse } from '../types/wbs';
 import { InitialData } from '../types';
 import WBSTree from '../components/WBSTree';
 import GanttChart from '../components/GanttChart';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import FilterPanel, { FilterState } from '../components/FilterPanel';
 
 export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
   const [initialData, setInitialData] = useState<InitialData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // フィルター状態
+  const [filters, setFilters] = useState<FilterState>({
+    projectIds: [],
+    statusIds: [],
+    assigneeIds: [],
+    onlyDelayed: false,
+    searchTerm: '',
+  });
 
   // ツリー展開ステートのリフトアップ
   const [expandedProjects, setExpandedProjects] = useState<Record<number, boolean>>({});
@@ -45,6 +54,96 @@ export default function MainBoard() {
   useEffect(() => {
     fetchData(true);
   }, []);
+
+  // フィルタリングロジック
+  const filteredProjects = useMemo(() => {
+    if (!data || !data.projects) return [];
+
+    const todayStr = data.gantt_range?.today || new Date().toISOString().split('T')[0];
+    const doneStatusId = initialData?.status_mapping_done ? parseInt(initialData.status_mapping_done) : null;
+    
+    const hasConditions = filters.statusIds.length > 0 || 
+                          filters.assigneeIds.length > 0 || 
+                          filters.onlyDelayed || 
+                          filters.searchTerm !== '';
+
+    return data.projects
+      .filter(project => {
+        // 1. プロジェクトIDによる抽出
+        if (filters.projectIds.length > 0 && !filters.projectIds.includes(project.id)) return false;
+        return true;
+      })
+      .map(project => {
+        // 2. タスク・サブタスクの絞り込み
+        const filteredTasks = project.tasks.map(task => {
+          const filteredSubtasks = task.subtasks.filter(subtask => {
+            // ステータス
+            if (filters.statusIds.length > 0 && !filters.statusIds.includes(subtask.status_id)) return false;
+            // 担当者
+            if (filters.assigneeIds.length > 0 && (!subtask.assignee_id || !filters.assigneeIds.includes(subtask.assignee_id))) return false;
+            // 遅延
+            if (filters.onlyDelayed) {
+              const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
+              const isDelayed = !isDone && subtask.planned_end_date && subtask.planned_end_date < todayStr;
+              if (!isDelayed) return false;
+            }
+            // 検索
+            if (filters.searchTerm) {
+              const term = filters.searchTerm.toLowerCase();
+              const detailMatch = (subtask.subtask_detail || '').toLowerCase().includes(term);
+              const typeName = initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || '';
+              const typeMatch = typeName.toLowerCase().includes(term);
+              if (!detailMatch && !typeMatch) return false;
+            }
+            return true;
+          });
+
+          // タスク自体の判定
+          const taskMatches = (() => {
+            if (filters.statusIds.length > 0 && task.status_id && !filters.statusIds.includes(task.status_id)) return false;
+            if (filters.assigneeIds.length > 0 && task.assignee_id && !filters.assigneeIds.includes(task.assignee_id)) return false;
+            if (filters.onlyDelayed) {
+              const isDone = doneStatusId !== null && task.status_id === doneStatusId;
+              const isDelayed = !isDone && task.planned_end_date && task.planned_end_date < todayStr;
+              if (!isDelayed) return false;
+            }
+            if (filters.searchTerm) {
+              const term = filters.searchTerm.toLowerCase();
+              if (!task.task_name.toLowerCase().includes(term)) return false;
+            }
+            return true;
+          })();
+
+          // 条件がある場合、マッチするか、マッチするサブタスクがある場合のみ表示
+          if (hasConditions) {
+            if (taskMatches || filteredSubtasks.length > 0) {
+              return { ...task, subtasks: filteredSubtasks };
+            }
+            return null;
+          }
+          return task;
+        }).filter(Boolean) as Task[];
+
+        // プロジェクト自体の判定（検索語句など）
+        const projectMatches = (() => {
+          if (filters.searchTerm) {
+            const term = filters.searchTerm.toLowerCase();
+            if (project.project_name.toLowerCase().includes(term)) return true;
+          }
+          return false;
+        })();
+
+        if (hasConditions) {
+          if (projectMatches || filteredTasks.length > 0) {
+            return { ...project, tasks: filteredTasks };
+          }
+          return null;
+        }
+
+        return { ...project, tasks: filteredTasks };
+      })
+      .filter(Boolean) as Project[];
+  }, [data, filters, initialData]);
 
   // マウス関連のリサイズイベント制御
   useEffect(() => {
@@ -84,48 +183,66 @@ export default function MainBoard() {
   if (loading && !data) return <div className="p-4 text-gray-500 font-medium">Loading WBS...</div>;
 
   return (
-    <div className="flex w-full h-full bg-white relative overflow-hidden select-none">
-      {/* 左ペイン: WBSツリー */}
-      <div 
-        className="flex-shrink-0 flex flex-col relative z-20 overflow-hidden" 
-        style={{ width: `${treeWidth}px` }}
-      >
-        <WBSTree 
-          ref={treeRef}
-          projects={data?.projects || []} 
-          initialData={initialData} 
-          onUpdate={fetchData} 
-          expandedProjects={expandedProjects}
-          setExpandedProjects={setExpandedProjects}
-          expandedTasks={expandedTasks}
-          setExpandedTasks={setExpandedTasks}
-          onScroll={handleTreeScroll}
-        />
-      </div>
+    <div className="flex flex-col w-full h-full bg-slate-50 overflow-hidden">
+      {/* フィルターパネル */}
+      <FilterPanel 
+        filters={filters}
+        setFilters={setFilters}
+        projects={data?.projects || []}
+        statuses={initialData?.statuses || []}
+        members={initialData?.members || []}
+        onClear={() => setFilters({
+          projectIds: [],
+          statusIds: [],
+          assigneeIds: [],
+          onlyDelayed: false,
+          searchTerm: '',
+        })}
+      />
 
-      {/* リサイズバー */}
-      <div 
-        className="w-1.5 bg-gray-200 cursor-col-resize hover:bg-blue-400 transition-colors z-30 flex items-center justify-center shrink-0"
-        onMouseDown={(e) => {
-          e.preventDefault();
-          setIsResizing(true);
-        }}
-      >
-      </div>
-
-      {/* 右ペイン: ガントチャート */}
-      <div className="flex-1 bg-slate-50 relative overflow-hidden flex flex-col z-10 w-0">
-        {data?.gantt_range && (
-          <GanttChart 
-            ref={ganttRef}
-            projects={data.projects} 
-            initialData={initialData}
-            range={data.gantt_range}
+      <div className="flex flex-1 w-full bg-white relative overflow-hidden select-none">
+        {/* 左ペイン: WBSツリー */}
+        <div 
+          className="flex-shrink-0 flex flex-col relative z-20 overflow-hidden" 
+          style={{ width: `${treeWidth}px` }}
+        >
+          <WBSTree 
+            ref={treeRef}
+            projects={filteredProjects} 
+            initialData={initialData} 
+            onUpdate={fetchData} 
             expandedProjects={expandedProjects}
+            setExpandedProjects={setExpandedProjects}
             expandedTasks={expandedTasks}
-            onScroll={handleGanttScroll}
+            setExpandedTasks={setExpandedTasks}
+            onScroll={handleTreeScroll}
           />
-        )}
+        </div>
+
+        {/* リサイズバー */}
+        <div 
+          className="w-1.5 bg-gray-200 cursor-col-resize hover:bg-blue-400 transition-colors z-30 flex items-center justify-center shrink-0"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setIsResizing(true);
+          }}
+        >
+        </div>
+
+        {/* 右ペイン: ガントチャート */}
+        <div className="flex-1 bg-slate-50 relative overflow-hidden flex flex-col z-10 w-0">
+          {data?.gantt_range && (
+            <GanttChart 
+              ref={ganttRef}
+              projects={filteredProjects} 
+              initialData={initialData}
+              range={data.gantt_range}
+              expandedProjects={expandedProjects}
+              expandedTasks={expandedTasks}
+              onScroll={handleGanttScroll}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
