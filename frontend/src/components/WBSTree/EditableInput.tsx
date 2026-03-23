@@ -10,7 +10,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
   const containerRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!isEditing) {
+    if (!isEditing || isAuto) {
       let initVal = value != null ? String(value) : '';
       if (type === 'date') {
         initVal = formatDateForInput(value);
@@ -19,12 +19,17 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
         if (!isNaN(num)) initVal = num.toFixed(precision);
       }
       setVal(initVal);
-      isCommittingRef.current = false;
+      if (!isAuto) isCommittingRef.current = false;
     }
-  }, [value, isEditing, type, precision]);
+  }, [value, isEditing, type, precision, isAuto]);
 
   const handleCommit = useCallback((newVal: string) => {
     if (!isEditing || isCommittingRef.current) return;
+
+    if (isAuto) {
+      setIsEditing(false);
+      return;
+    }
 
     let valueToSave: any = newVal;
     if (type === 'date') {
@@ -67,7 +72,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
       onChange(valueToSave);
     }
     setIsEditing(false);
-  }, [isEditing, value, onChange, type, min, max]);
+  }, [isEditing, value, onChange, type, min, max, isAuto]);
 
   useEffect(() => {
     if (!isEditing) return;

@@ -5,7 +5,12 @@ from ..utils import date_utils
 from .master import get_holidays
 
 def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_data: dict = None):
-    if not db_subtask.is_auto_effort:
+    # Check if auto_effort is already set or being set to True
+    is_auto = db_subtask.is_auto_effort
+    if update_data and "is_auto_effort" in update_data:
+        is_auto = update_data["is_auto_effort"]
+        
+    if not is_auto:
         return
 
     holidays = [h.holiday_date for h in get_holidays(db)]
@@ -22,26 +27,28 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
     a_start = get_val("actual_start_date")
     a_end = get_val("actual_end_date")
 
+    # Check if auto_effort is being turned ON
+    is_turning_on = False
+    if update_data and "is_auto_effort" in update_data and update_data["is_auto_effort"] and not db_subtask.is_auto_effort:
+        is_turning_on = True
+
     # logic for planned
     if p_start:
-        # If dates are updated, prioritize calculating effort
-        if update_data and ("planned_start_date" in update_data or "planned_end_date" in update_data):
+        # If dates are updated OR auto_effort is being turned on, prioritize calculating effort
+        if not update_data or "planned_start_date" in update_data or "planned_end_date" in update_data or is_turning_on:
             if p_end:
                 db_subtask.planned_effort_days = date_utils.get_business_days_count(p_start, p_end, holidays)
-        # If only effort is updated (and not dates), calculate end date
+            elif is_turning_on and p_effort is not None:
+                # If turning on and end date is missing but effort is present, calculate end date
+                db_subtask.planned_end_date = date_utils.add_business_days(p_start, p_effort, holidays)
+        # If only effort is updated (and not dates and NOT just turning on), calculate end date
         elif update_data and "planned_effort_days" in update_data:
             if p_effort is not None:
-                db_subtask.planned_end_date = date_utils.add_business_days(p_start, p_effort, holidays)
-        # For initial creation
-        elif not update_data:
-            if p_end:
-                db_subtask.planned_effort_days = date_utils.get_business_days_count(p_start, p_end, holidays)
-            elif p_effort is not None:
                 db_subtask.planned_end_date = date_utils.add_business_days(p_start, p_effort, holidays)
 
     # logic for actual
     if a_start and a_end:
-        if not update_data or "actual_start_date" in update_data or "actual_end_date" in update_data:
+        if not update_data or "actual_start_date" in update_data or "actual_end_date" in update_data or is_turning_on:
             db_subtask.actual_effort_days = date_utils.get_business_days_count(a_start, a_end, holidays)
 
 # --- Subtasks ---
