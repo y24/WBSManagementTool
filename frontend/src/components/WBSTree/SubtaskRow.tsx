@@ -19,19 +19,20 @@ interface SubtaskRowProps {
   provided: any;
 }
 
-const SubtaskRow = memo(({ 
-  subtask, 
-  nameWidth, 
-  checked, 
-  onToggleCheck, 
-  initialData, 
-  onUpdateField, 
-  onEditDetail, 
-  provided 
+const SubtaskRow = memo(({
+  subtask,
+  nameWidth,
+  checked,
+  onToggleCheck,
+  initialData,
+  onUpdateField,
+  onEditDetail,
+  provided
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData);
+  const isInProgress = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name === 'In Progress';
 
-  const getHighlight = (field: string, value: any) => 
+  const getHighlight = (field: string, value: any) =>
     shouldHighlightField('subtask', field, value, subtask, initialData);
 
   return (
@@ -94,12 +95,12 @@ const SubtaskRow = memo(({
         </button>
       </div>
       <div className={`w-28 flex items-center ${commonCellClasses}`}>
-        <StatusSelect 
+        <StatusSelect
           type="subtask"
           id={subtask.id}
           statusId={subtask.status_id}
-          initialData={initialData} 
-          onUpdateField={onUpdateField} 
+          initialData={initialData}
+          onUpdateField={onUpdateField}
         />
       </div>
       <div className={`w-28 flex items-center ${commonCellClasses}`}>
@@ -117,25 +118,25 @@ const SubtaskRow = memo(({
         />
       </div>
       <div className={`w-20 ${commonCellClasses}`}>
-        <EditableInput 
-          type="number" 
-          value={subtask.review_days} 
-          onChange={(v: number | null) => onUpdateField('subtask', subtask.id, 'review_days', v)} 
-          min={0} 
+        <EditableInput
+          type="number"
+          value={subtask.review_days}
+          onChange={(v: number | null) => onUpdateField('subtask', subtask.id, 'review_days', v)}
+          min={0}
           step={0.5}
           precision={1}
           suffix="日"
           highlight={getHighlight('review_days', subtask.review_days)}
         />
       </div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} max={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v) } highlight={getHighlight('planned_start_date', subtask.planned_start_date)} /></div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} min={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v) } highlight={getHighlight('planned_end_date', subtask.planned_end_date)} /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} max={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v)} highlight={getHighlight('planned_start_date', subtask.planned_start_date)} /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} min={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v)} highlight={getHighlight('planned_end_date', subtask.planned_end_date)} /></div>
       <div className={`w-16 ${dateCellClasses}`}>
-        <EditableInput 
-          type="number" 
-          value={subtask.planned_effort_days} 
-          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'planned_effort_days', v)} 
-          min={0} 
+        <EditableInput
+          type="number"
+          value={subtask.planned_effort_days}
+          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'planned_effort_days', v)}
+          min={0}
           step={0.1}
           precision={1}
           isAuto={subtask.is_auto_effort}
@@ -143,15 +144,24 @@ const SubtaskRow = memo(({
           highlight={getHighlight('planned_effort_days', subtask.planned_effort_days)}
         />
       </div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v) } highlight={getHighlight('actual_start_date', subtask.actual_start_date)} /></div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.review_start_date} min={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v) } highlight={getHighlight('review_start_date', subtask.review_start_date)} /></div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} min={subtask.actual_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v) } highlight={getHighlight('actual_end_date', subtask.actual_end_date)} /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v)} highlight={getHighlight('actual_start_date', subtask.actual_start_date)} /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.review_start_date} min={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v)} highlight={getHighlight('review_start_date', subtask.review_start_date)} /></div>
+      <div className={`w-20 ${dateCellClasses}`}>
+        <EditableInput
+          type="date"
+          value={subtask.actual_end_date}
+          min={subtask.actual_start_date}
+          onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v)}
+          highlight={getHighlight('actual_end_date', subtask.actual_end_date)}
+          className={isInProgress ? "bg-yellow-100/90" : ""}
+        />
+      </div>
       <div className={`w-16 ${dateCellClasses}`}>
-        <EditableInput 
-          type="number" 
-          value={subtask.actual_effort_days} 
-          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'actual_effort_days', v)} 
-          min={0} 
+        <EditableInput
+          type="number"
+          value={subtask.actual_effort_days}
+          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'actual_effort_days', v)}
+          min={0}
           step={0.1}
           precision={1}
           isAuto={subtask.is_auto_effort}
@@ -160,12 +170,12 @@ const SubtaskRow = memo(({
         />
       </div>
       <div className={`w-16 ${commonCellClasses}`}>
-        <EditableInput 
-          type="number" 
-          value={subtask.progress_percent} 
-          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'progress_percent', v)} 
-          min={0} 
-          max={100} 
+        <EditableInput
+          type="number"
+          value={subtask.progress_percent}
+          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'progress_percent', v)}
+          min={0}
+          max={100}
           suffix="%"
         />
       </div>
