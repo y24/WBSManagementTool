@@ -169,6 +169,7 @@ class Subtask(Base):
     memo = Column(Text, nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_auto_effort = Column(Boolean, nullable=False, default=True)
+    workload_percent = Column(Integer, nullable=False, default=100)
     is_deleted = Column(Boolean, nullable=False, default=False)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -181,6 +182,7 @@ class Subtask(Base):
 
     __table_args__ = (
         CheckConstraint("progress_percent IS NULL OR (progress_percent BETWEEN 0 AND 100)", name="check_subtask_progress"),
+        CheckConstraint("workload_percent >= 0", name="check_subtask_workload_percent"),
         CheckConstraint("planned_effort_days IS NULL OR planned_effort_days >= 0", name="check_subtask_planned_effort"),
         CheckConstraint("actual_effort_days IS NULL OR actual_effort_days >= 0", name="check_subtask_actual_effort"),
         CheckConstraint("review_days IS NULL OR review_days >= 0", name="check_subtask_review_days"),

@@ -19,6 +19,7 @@ export interface Subtask {
   memo?: string | null;
   sort_order: number;
   is_auto_effort: boolean;
+  workload_percent?: number | null;
   is_deleted: boolean;
   
   // Relations mapped by backend (if needed, otherwise manually mapped from initial-data)

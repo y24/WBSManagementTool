@@ -45,6 +45,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const [detailValue, setDetailValue] = useState('');
   const [ticketIdValue, setTicketIdValue] = useState('');
   const [memoValue, setMemoValue] = useState('');
+  const [workloadPercentValue, setWorkloadPercentValue] = useState('100');
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
   const [menuRendered, setMenuRendered] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -458,9 +459,10 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                             onEditDetail={() => {
                               setEditingItem({ type: 'project', id: project.id, name: project.project_name });
                               setDetailValue(project.detail || '');
-                              setTicketIdValue(project.ticket_id != null ? String(project.ticket_id) : '');
-                              setMemoValue(project.memo || '');
-                            }}
+                               setTicketIdValue(project.ticket_id != null ? String(project.ticket_id) : '');
+                               setMemoValue(project.memo || '');
+                               setWorkloadPercentValue('100');
+                             }}
                             initialData={initialData}
                             provided={provided}
                           />
@@ -485,9 +487,10 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                             onEditDetail={() => {
                                               setEditingItem({ type: 'task', id: task.id, name: task.task_name });
                                               setDetailValue(task.detail || '');
-                                              setTicketIdValue(task.ticket_id != null ? String(task.ticket_id) : '');
-                                              setMemoValue(task.memo || '');
-                                            }}
+                                               setTicketIdValue(task.ticket_id != null ? String(task.ticket_id) : '');
+                                               setMemoValue(task.memo || '');
+                                               setWorkloadPercentValue('100');
+                                             }}
                                             initialData={initialData}
                                             provided={provided}
                                           />
@@ -516,6 +519,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                               setDetailValue(subtask.subtask_detail || '');
                                                               setTicketIdValue(subtask.ticket_id != null ? String(subtask.ticket_id) : '');
                                                               setMemoValue(subtask.memo || '');
+                                                              setWorkloadPercentValue(subtask.workload_percent != null ? String(subtask.workload_percent) : '100');
                                                             }}
                                                             provided={provided}
                                                           />
@@ -564,8 +568,10 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           ticketIdValue={ticketIdValue}
           setTicketIdValue={setTicketIdValue}
           memoValue={memoValue}
-          setMemoValue={setMemoValue}
-          ticketUrlTemplate={initialData?.ticket_url_template}
+           setMemoValue={setMemoValue}
+           workloadPercentValue={workloadPercentValue}
+           setWorkloadPercentValue={setWorkloadPercentValue}
+           ticketUrlTemplate={initialData?.ticket_url_template}
           onClose={() => setEditingItem(null)}
           onSave={async () => {
             const updates: Record<string, any> = {
@@ -573,11 +579,12 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
               memo: memoValue || null,
             };
             // subtask_detail は subtask のみ、project/task は detail フィールド
-            if (editingItem.type === 'subtask') {
-              updates.subtask_detail = detailValue || null;
-            } else {
-              updates.detail = detailValue || null;
-            }
+             if (editingItem.type === 'subtask') {
+               updates.subtask_detail = detailValue || null;
+               updates.workload_percent = workloadPercentValue !== '' ? parseInt(workloadPercentValue, 10) : 100;
+             } else {
+               updates.detail = detailValue || null;
+             }
             try {
               setSaving(true);
               if (editingItem.type === 'project') await wbsOps.updateProject(editingItem.id, updates);

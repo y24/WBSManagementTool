@@ -99,6 +99,7 @@ class SubtaskBase(BaseModel):
     ticket_id: Optional[int] = None
     memo: Optional[str] = None
     is_auto_effort: bool = True
+    workload_percent: int = 100
     sort_order: int = 0
 
 class SubtaskCreate(SubtaskBase):
@@ -123,6 +124,7 @@ class SubtaskUpdate(BaseModel):
     ticket_id: Optional[int] = None
     memo: Optional[str] = None
     is_auto_effort: Optional[bool] = None
+    workload_percent: Optional[int] = None
     sort_order: Optional[int] = None
 
 class Subtask(SubtaskBase):
@@ -132,6 +134,7 @@ class Subtask(SubtaskBase):
     status_id: int
     assignee_id: Optional[int]
     is_auto_effort: bool
+    workload_percent: int
     is_deleted: bool
     created_at: datetime
     updated_at: datetime

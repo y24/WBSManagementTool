@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, X, Check, Hash, MessageSquare, ExternalLink, FolderKanban, ListTodo, AlignLeft } from 'lucide-react';
+import { FileText, X, Check, Hash, MessageSquare, ExternalLink, FolderKanban, ListTodo, AlignLeft, Percent } from 'lucide-react';
 
 export type EditingType = 'project' | 'task' | 'subtask';
 
@@ -13,6 +13,8 @@ interface DetailModalProps {
   setTicketIdValue: (v: string) => void;
   memoValue: string;
   setMemoValue: (v: string) => void;
+  workloadPercentValue?: string;
+  setWorkloadPercentValue?: (v: string) => void;
   ticketUrlTemplate?: string | null;
   onClose: () => void;
   onSave: () => void;
@@ -33,6 +35,8 @@ const DetailModal = ({
   setTicketIdValue,
   memoValue,
   setMemoValue,
+  workloadPercentValue,
+  setWorkloadPercentValue,
   ticketUrlTemplate,
   onClose,
   onSave,
@@ -143,6 +147,32 @@ const DetailModal = ({
               rows={4}
             />
           </div>
+
+          {/* workload_percent (Subtask only) */}
+          {editingType === 'subtask' && setWorkloadPercentValue && (
+            <div>
+              <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+                <Percent size={12} className="text-teal-500" />
+                工数比率 (%)
+              </label>
+              <input
+                id="modal-workload-percent-input"
+                type="text"
+                inputMode="numeric"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 font-medium"
+                value={workloadPercentValue}
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/[^0-9]/g, '');
+                  setWorkloadPercentValue(v);
+                }}
+                placeholder="100"
+              />
+              <p className="mt-1 text-xs text-gray-400 px-1">
+                自動工数計算時にこの%を掛けて計算されます (デフォルト: 100%)
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
