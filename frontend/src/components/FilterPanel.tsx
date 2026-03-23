@@ -11,6 +11,10 @@ export interface FilterState {
   subtaskTypeIds: number[];
   onlyDelayed: boolean;
   searchTerm: string;
+}
+
+export interface DisplayOptions {
+  showProjectRange: boolean;
   showRemoved: boolean;
   showDoneProjects: boolean;
 }
@@ -18,8 +22,8 @@ export interface FilterState {
 interface FilterPanelProps {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
-  displayOptions: { showProjectRange: boolean };
-  setDisplayOptions: React.Dispatch<React.SetStateAction<{ showProjectRange: boolean }>>;
+  displayOptions: DisplayOptions;
+  setDisplayOptions: React.Dispatch<React.SetStateAction<DisplayOptions>>;
   projects: Project[];
   initialData: InitialData | null;
   onClear: () => void;
@@ -60,9 +64,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     filters.assigneeIds.length > 0 ||
     filters.subtaskTypeIds.length > 0 ||
     filters.onlyDelayed ||
-    filters.searchTerm !== '' ||
-    filters.showRemoved ||
-    filters.showDoneProjects;
+    filters.searchTerm !== '';
 
   return (
     <div className="bg-gradient-to-b from-slate-50 to-white border-b border-gray-200 px-6 py-3 flex items-center gap-4 shrink-0 shadow-sm z-40">
@@ -82,8 +84,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               // 選択中のプロジェクトは常に表示（非表示にするとボタンのラベルが空になってしまうため）
               if (filters.projectIds.includes(p.id)) return true;
 
-              if (!filters.showRemoved && p.status_id === removedStatusId) return false;
-              if (!filters.showDoneProjects && doneStatusId !== null && p.status_id === doneStatusId) return false;
+              if (!displayOptions.showRemoved && p.status_id === removedStatusId) return false;
+              if (!displayOptions.showDoneProjects && doneStatusId !== null && p.status_id === doneStatusId) return false;
 
               return true;
             })
@@ -195,11 +197,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                     <div className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={filters.showDoneProjects}
-                        onChange={(e) => setFilters(prev => ({ ...prev, showDoneProjects: e.target.checked }))}
+                        checked={displayOptions.showDoneProjects}
+                        onChange={(e) => setDisplayOptions(prev => ({ ...prev, showDoneProjects: e.target.checked }))}
                         className="sr-only peer"
                       />
-                      <div className="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500"></div>
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
                     </div>
                   </label>
 
@@ -210,11 +212,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                     <div className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={filters.showRemoved}
-                        onChange={(e) => setFilters(prev => ({ ...prev, showRemoved: e.target.checked }))}
+                        checked={displayOptions.showRemoved}
+                        onChange={(e) => setDisplayOptions(prev => ({ ...prev, showRemoved: e.target.checked }))}
                         className="sr-only peer"
                       />
-                      <div className="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-slate-500"></div>
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-500 shadow-inner"></div>
                     </div>
                   </label>
                 </div>
@@ -232,10 +234,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                       <input
                         type="checkbox"
                         checked={displayOptions.showProjectRange}
-                        onChange={(e) => setDisplayOptions({ ...displayOptions, showProjectRange: e.target.checked })}
+                        onChange={(e) => setDisplayOptions(prev => ({ ...prev, showProjectRange: e.target.checked }))}
                         className="sr-only peer"
                       />
-                      <div className="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-500"></div>
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500 shadow-inner"></div>
                     </div>
                   </label>
                 </div>

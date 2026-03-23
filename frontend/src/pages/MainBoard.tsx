@@ -5,7 +5,7 @@ import { Project, Task, WBSResponse } from '../types/wbs';
 import { InitialData } from '../types';
 import WBSTree from '../components/WBSTree';
 import GanttChart from '../components/GanttChart';
-import FilterPanel, { FilterState } from '../components/FilterPanel';
+import FilterPanel, { FilterState, DisplayOptions } from '../components/FilterPanel';
 
 export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
@@ -15,23 +15,22 @@ export default function MainBoard() {
   // 1. 各種UI状態の初期値をlocalStorageから読み込み
   const getInitialFilters = (): FilterState => {
     const saved = localStorage.getItem('wbs_filters');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse saved filters', e);
-      }
-    }
-    return {
+    const defaultFilters: FilterState = {
       projectIds: [],
       statusIds: [],
       assigneeIds: [],
       subtaskTypeIds: [],
       onlyDelayed: false,
       searchTerm: '',
-      showRemoved: false,
-      showDoneProjects: false,
     };
+    if (saved) {
+      try {
+        return { ...defaultFilters, ...JSON.parse(saved) };
+      } catch (e) {
+        console.error('Failed to parse saved filters', e);
+      }
+    }
+    return defaultFilters;
   };
 
   const getInitialExpandedProjects = (): Record<number, boolean> => {
@@ -90,14 +89,19 @@ export default function MainBoard() {
   const [filters, setFilters] = useState<FilterState>(getInitialFilters);
   
   // 表示設定
-  const [displayOptions, setDisplayOptions] = useState(() => {
+  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(() => {
     const saved = localStorage.getItem('wbs_display_options');
+    const defaultOptions: DisplayOptions = { 
+      showProjectRange: true,
+      showRemoved: false,
+      showDoneProjects: false
+    };
     if (saved) {
       try {
-        return JSON.parse(saved);
+        return { ...defaultOptions, ...JSON.parse(saved) };
       } catch (e) {}
     }
-    return { showProjectRange: true };
+    return defaultOptions;
   });
 
   // ツリー展開ステートのリフトアップ
@@ -176,10 +180,10 @@ export default function MainBoard() {
         if (filters.projectIds.length > 0 && !filters.projectIds.includes(project.id)) return false;
 
         // 2. Removed項目の除外
-        if (!filters.showRemoved && project.status_id === removedStatusId) return false;
+        if (!displayOptions.showRemoved && project.status_id === removedStatusId) return false;
 
         // 3. 完了済項目の非表示（デフォルト）
-        if (!filters.showDoneProjects && doneStatusId !== null && project.status_id === doneStatusId) return false;
+        if (!displayOptions.showDoneProjects && doneStatusId !== null && project.status_id === doneStatusId) return false;
 
         return true;
       })
@@ -191,11 +195,11 @@ export default function MainBoard() {
           const isTaskRemoved = task.status_id === removedStatusId;
           
           // 親がRemovedなら、!showRemovedのときは表示されないはずだが、念のためここでもチェック
-          if (!filters.showRemoved && (isProjectRemoved || isTaskRemoved)) return null;
+          if (!displayOptions.showRemoved && (isProjectRemoved || isTaskRemoved)) return null;
 
           const filteredSubtasks = task.subtasks.filter(subtask => {
             // 親(Project or Task)がRemoved、または自身がRemovedな場合、!showRemovedなら非表示
-            if (!filters.showRemoved && (isProjectRemoved || isTaskRemoved || subtask.status_id === removedStatusId)) return false;
+            if (!displayOptions.showRemoved && (isProjectRemoved || isTaskRemoved || subtask.status_id === removedStatusId)) return false;
 
             // ステータス
             if (filters.statusIds.length > 0 && !filters.statusIds.includes(subtask.status_id)) return false;
@@ -270,7 +274,7 @@ export default function MainBoard() {
         return { ...project, tasks: filteredTasks };
       })
       .filter(Boolean) as Project[];
-  }, [data, filters, initialData]);
+  }, [data, filters, initialData, displayOptions]);
 
   // フィルタ後のガントチャート表示期間の再計算
   const dynamicGanttRange = useMemo(() => {
@@ -397,8 +401,6 @@ export default function MainBoard() {
           subtaskTypeIds: [],
           onlyDelayed: false,
           searchTerm: '',
-          showRemoved: false,
-          showDoneProjects: false,
         })}
       />
 
