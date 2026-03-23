@@ -206,9 +206,9 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
               let dayClasses = "text-gray-500";
               if (isSundayOrHoliday) {
-                dayClasses = "bg-red-50 text-red-500";
+                dayClasses = "bg-red-100 text-red-600";
               } else if (isSaturday) {
-                dayClasses = "bg-blue-50 text-blue-500";
+                dayClasses = "bg-blue-100 text-blue-600";
               }
 
               return (
@@ -235,9 +235,9 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
               let bgClass = "";
               if (isSundayOrHoliday) {
-                bgClass = "bg-red-50/30";
+                bgClass = "bg-red-100/40";
               } else if (isSaturday) {
-                bgClass = "bg-blue-50/30";
+                bgClass = "bg-blue-100/40";
               }
 
               return (
