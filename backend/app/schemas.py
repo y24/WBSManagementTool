@@ -279,3 +279,26 @@ class InitialData(BaseModel):
     status_mapping_new: Optional[str] = None
     status_mapping_blocked: Optional[str] = None
     status_mapping_done: Optional[str] = None
+
+# --- Import ---
+class ImportPreviewRow(BaseModel):
+    row_index: int
+    level: int  # 0: Project, 1: Task, 2: Subtask
+    name: str   # project_name, task_name, or subtask_detail
+    status: Optional[str] = None
+    assignee: Optional[str] = None
+    type: Optional[str] = None
+    ticket_id: Optional[str] = None
+    planned_start: Optional[date] = None
+    planned_end: Optional[date] = None
+    planned_effort: Optional[Decimal] = None
+    workload: Optional[int] = None
+    memo: Optional[str] = None
+    errors: List[str] = []
+
+class ImportPreviewResponse(BaseModel):
+    rows: List[ImportPreviewRow]
+    can_import: bool
+
+class ImportExecuteRequest(BaseModel):
+    rows: List[ImportPreviewRow]

@@ -42,7 +42,7 @@ python -m venv venv
 .\venv\Scripts\activate
 
 # 必要なライブラリのインストール
-pip install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings httpx python-dotenv
+pip install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings httpx python-dotenv pandas openpyxl python-multipart
 
 # 設定ファイルの準備（.envがない場合）
 if (-not (Test-Path .env)) { copy .env.example .env }

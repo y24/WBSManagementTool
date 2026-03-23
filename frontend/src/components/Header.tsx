@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Settings, ListTree, Plus } from 'lucide-react';
+import { Settings, ListTree, Plus, FileInput } from 'lucide-react';
 
 export default function Header() {
   return (
@@ -15,6 +15,13 @@ export default function Header() {
           >
             <ListTree size={18} />
             <span className="text-sm">メインボード</span>
+          </Link>
+          <Link
+            to="/import"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-medium"
+          >
+            <FileInput size={18} />
+            <span className="text-sm">データインポート</span>
           </Link>
           <Link
             to="/masters"

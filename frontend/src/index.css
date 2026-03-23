@@ -616,3 +616,129 @@ body {
 .master-save-btn:active:not(:disabled) {
   transform: translateY(0);
 }
+
+/* ═══════════════════════════════════════════
+   Data Import Page Styles
+   ═══════════════════════════════════════════ */
+.import-page {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background-color: #f8fafc;
+}
+
+.import-container {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.import-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 2rem;
+}
+
+.import-upload-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.import-upload-zone:hover {
+  border-color: #6366f1;
+  background: #f5f3ff;
+}
+
+.import-upload-zone.dragging {
+  border-color: #6366f1;
+  background: #eef2ff;
+  transform: scale(1.01);
+}
+
+.import-preview-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.import-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.825rem;
+}
+
+.import-preview-table th {
+  background: #f1f5f9;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.import-preview-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.import-preview-row-0 { background-color: rgba(219, 234, 254, 0.3); }
+.import-preview-row-1 { background-color: rgba(241, 245, 249, 0.4); }
+.import-preview-row-error { background-color: #fef2f2; }
+
+.import-error-list {
+  color: #ef4444;
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.75rem;
+}
+
+.import-template-link {
+  color: #6366f1;
+  text-decoration: underline;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.import-template-link:hover {
+  color: #4f46e5;
+}
+
+.import-btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.import-btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+}
+
+.import-btn-primary:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}

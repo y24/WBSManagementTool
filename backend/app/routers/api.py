@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi.responses import StreamingResponse
 import httpx
 from sqlalchemy.orm import Session
 from typing import List
@@ -249,3 +250,28 @@ async def sync_holidays(db: Session = Depends(get_db)):
             }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch holidays: {str(e)}")
+
+# --- Import ---
+@router.get("/import/template")
+def get_import_template():
+    from ..crud import import_data
+    buffer = import_data.generate_template()
+    return StreamingResponse(
+        buffer, 
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=wbs_import_template.xlsx"}
+    )
+
+@router.post("/import/preview", response_model=schemas.ImportPreviewResponse)
+async def preview_import(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    from ..crud import import_data
+    content = await file.read()
+    return import_data.validate_and_preview(db, content)
+
+@router.post("/import/execute")
+def execute_import(req: schemas.ImportExecuteRequest, db: Session = Depends(get_db)):
+    from ..crud import import_data
+    success = import_data.execute_import(db, req.rows)
+    if not success:
+        raise HTTPException(status_code=400, detail="Import failed")
+    return {"status": "ok"}

@@ -36,4 +36,19 @@ export const wbsOps = {
     
   reorderSubtasks: (orderedIds: number[]) =>
     apiClient.post('/subtasks/reorder', { ordered_ids: orderedIds }),
+    
+  // Import
+  getImportTemplate: () => 
+    apiClient.get('/import/template', { responseType: 'blob' }),
+    
+  previewImport: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post('/import/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  
+  executeImport: (rows: any[]) => 
+    apiClient.post('/import/execute', { rows }),
 };
