@@ -38,7 +38,7 @@ const ProjectRow = memo(({
   const warning = getWarning(project);
 
   const getHighlight = (field: string, value: any) => 
-    shouldHighlightField('project', field, value, project.status_id, initialData);
+    shouldHighlightField('project', field, value, project, initialData);
 
   return (
     <div className={`flex group wbs-row-project ${commonRowClasses}`}>

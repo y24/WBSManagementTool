@@ -38,7 +38,7 @@ const TaskRow = memo(({
   const warning = getWarning(task);
 
   const getHighlight = (field: string, value: any) => 
-    shouldHighlightField('task', field, value, task.status_id, initialData);
+    shouldHighlightField('task', field, value, task, initialData);
 
   return (
     <div className={`flex group wbs-row-task ${commonRowClasses}`}>

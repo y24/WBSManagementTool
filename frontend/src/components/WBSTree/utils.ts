@@ -112,12 +112,17 @@ export const shouldHighlightField = (
   type: 'project' | 'task' | 'subtask',
   field: string,
   value: any,
-  statusId: number | null | undefined,
+  item: any,
   initialData: InitialData | null
 ) => {
+  const statusId = item?.status_id;
   if (!statusId || !initialData) return false;
   const status = initialData.statuses.find(s => s.id === statusId);
   if (!status) return false;
+
+  // 自動入力（Auto）設定時はハイライト不要
+  if (item?.is_auto_planned_date && (field === 'planned_start_date' || field === 'planned_end_date')) return false;
+  if (item?.is_auto_actual_date && (field === 'actual_start_date' || field === 'actual_end_date')) return false;
 
   const isUnset = (v: any) => v === null || v === undefined || v === '';
 
@@ -147,9 +152,6 @@ export const shouldHighlightField = (
   } else if (status.status_name === 'Done') {
     if ((isNewRequirement(field) || isInProgressRequirement(field) || isDoneRequirement(field)) && isUnset(value)) return true;
   } else if (status.status_name === 'In Review') {
-    // Treat In Review like In Progress or similar?
-    // User didn't specify In Review, but it's likely closer to In Progress but with more requirements.
-    // Let's stick to user's specified ones first.
     if ((isNewRequirement(field) || isInProgressRequirement(field)) && isUnset(value)) return true;
   }
 

@@ -32,7 +32,7 @@ const SubtaskRow = memo(({
   const warning = getWarning(subtask, initialData);
 
   const getHighlight = (field: string, value: any) => 
-    shouldHighlightField('subtask', field, value, subtask.status_id, initialData);
+    shouldHighlightField('subtask', field, value, subtask, initialData);
 
   return (
     <div className={`flex group wbs-row-subtask ${commonRowClasses}`}>
