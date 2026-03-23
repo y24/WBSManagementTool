@@ -122,6 +122,7 @@ const TaskRow = memo(({
           highlight={getHighlight('assignee_id', task.assignee_id)}
         />
       </div>
+      <div className={`w-20 ${commonCellClasses}`}></div>
       <div className={`w-20 ${dateCellClasses}`}>
         <EditableInput 
           type="date" 
@@ -140,6 +141,15 @@ const TaskRow = memo(({
           onChange={(v: string) => onUpdateField('task', task.id, 'planned_end_date', v)} 
           isAuto={task.is_auto_planned_date}
           onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_planned_date', v)}
+        />
+      </div>
+      <div className={`w-16 ${dateCellClasses}`}>
+        <EditableInput 
+          type="number" 
+          value={task.planned_effort_total} 
+          precision={1} 
+          readOnly={true} 
+          isAuto={true} 
         />
       </div>
       <div className={`w-20 ${dateCellClasses}`}>
@@ -167,22 +177,12 @@ const TaskRow = memo(({
       <div className={`w-16 ${dateCellClasses}`}>
         <EditableInput 
           type="number" 
-          value={task.planned_effort_total} 
-          precision={1} 
-          readOnly={true} 
-          isAuto={true} 
-        />
-      </div>
-      <div className={`w-16 ${dateCellClasses}`}>
-        <EditableInput 
-          type="number" 
           value={task.actual_effort_total} 
           precision={1} 
           readOnly={true} 
           isAuto={true} 
         />
       </div>
-      <div className={`w-20 ${commonCellClasses}`}></div>
       <div className={`w-16 ${commonCellClasses}`}></div>
     </div>
   );
