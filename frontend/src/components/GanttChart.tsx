@@ -3,7 +3,7 @@ import { format, differenceInDays, addDays, getDay, isToday } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
 import { Project, Task, Subtask, GanttRange } from '../types/wbs';
 import { InitialData } from '../types';
-import { getWarning } from './WBSTree/utils';
+import { getWarning, subtractBusinessDays, calculateReviewCalendarDays } from './WBSTree/utils';
 
 interface GanttChartProps {
   projects: Project[];
@@ -74,8 +74,12 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
     let rStart, rWidth;
     if (isSubtask && item.planned_start_date && item.planned_end_date && item.review_days && item.review_days > 0) {
-      rWidth = item.review_days * CELL_WIDTH;
-      const calcPWidth = (differenceInDays(new Date(item.planned_end_date), new Date(item.planned_start_date)) + 1) * CELL_WIDTH;
+      const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
+      const pE = new Date(item.planned_end_date);
+      const r_days_cal = calculateReviewCalendarDays(pE, item.review_days, holidays);
+      rWidth = r_days_cal * CELL_WIDTH;
+      
+      const calcPWidth = (differenceInDays(pE, new Date(item.planned_start_date)) + 1) * CELL_WIDTH;
       if (rWidth > calcPWidth) rWidth = calcPWidth;
       rStart = pStart! + calcPWidth - rWidth;
     }
@@ -137,14 +141,24 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
           {/* ヘッダー領域 (垂直スクロールに追従するためsticky) */}
           <div className="flex border-b-[1px] border-slate-200 shadow-sm sticky top-0 z-30 bg-slate-100 flex-shrink-0" style={{ height: '33px' }}>
             {days.map(d => {
-              const isWeekend = getDay(d) === 0 || getDay(d) === 6;
+              const dow = getDay(d);
+              const isSaturday = dow === 6;
+              const isSunday = dow === 0;
               const holidayFlag = isHoliday(d);
+              const isSundayOrHoliday = isSunday || holidayFlag;
               const holidayInfo = initialData?.holidays.find(h => h.holiday_date === format(d, 'yyyy-MM-dd'));
+
+              let dayClasses = "text-gray-500";
+              if (isSundayOrHoliday) {
+                dayClasses = "bg-red-50 text-red-500";
+              } else if (isSaturday) {
+                dayClasses = "bg-blue-50 text-blue-500";
+              }
 
               return (
                 <div
                   key={d.toISOString()}
-                  className={`flex-shrink-0 border-r border-gray-200 flex items-center justify-center text-[10px] ${isToday(d) ? 'bg-red-100 text-red-600 font-bold' : isWeekend || holidayFlag ? 'bg-red-50 text-red-500' : 'text-gray-500'}`}
+                  className={`flex-shrink-0 border-r border-gray-200 flex items-center justify-center text-[10px] ${dayClasses} ${isToday(d) ? 'font-bold' : ''}`}
                   style={{ width: `${CELL_WIDTH}px` }}
                   title={holidayInfo?.holiday_name}
                 >
@@ -157,12 +171,23 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
           {/* 背景の縦線 (z-0) */}
           <div className="absolute inset-0 flex pointer-events-none z-0">
             {days.map(d => {
-              const isWeekend = getDay(d) === 0 || getDay(d) === 6;
+              const dow = getDay(d);
+              const isSaturday = dow === 6;
+              const isSunday = dow === 0;
               const holidayFlag = isHoliday(d);
+              const isSundayOrHoliday = isSunday || holidayFlag;
+
+              let bgClass = "";
+              if (isSundayOrHoliday) {
+                bgClass = "bg-red-50/30";
+              } else if (isSaturday) {
+                bgClass = "bg-blue-50/30";
+              }
+
               return (
                 <div
                   key={`bg-${d.toISOString()}`}
-                  className={`flex-shrink-0 wbs-cell-border ${isWeekend || holidayFlag ? 'bg-red-50/30' : ''}`}
+                  className={`flex-shrink-0 wbs-cell-border ${bgClass}`}
                   style={{ width: `${CELL_WIDTH}px` }}
                 />
               );
@@ -173,7 +198,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
           {days.map((d, i) => isToday(d) && (
             <div
               key={`today-highlight-${d.toISOString()}`}
-              className="absolute top-0 bottom-0 border-x border-red-400 bg-red-400/10 z-20 pointer-events-none"
+              className="absolute top-0 bottom-0 border-x border-amber-400/50 bg-amber-400/10 z-20 pointer-events-none"
               style={{ left: `${i * CELL_WIDTH}px`, width: `${CELL_WIDTH}px` }}
             />
           ))}

@@ -1,7 +1,64 @@
 import { InitialData } from '../../types';
+import { format, subDays, isWeekend } from 'date-fns';
 
 export const getStatus = (id: number, initialData: InitialData | null) => 
   initialData?.statuses.find(s => s.id === id);
+
+export const isBusinessDay = (date: Date, holidays: string[]) => {
+  if (isWeekend(date)) return false;
+  const dateStr = format(date, 'yyyy-MM-dd');
+  return !holidays.includes(dateStr);
+};
+
+export const subtractBusinessDays = (date: Date, days: number, holidays: string[]) => {
+  let current = new Date(date);
+  current.setHours(0, 0, 0, 0);
+  if (days <= 0) return current;
+
+  let businessDaysFound = 0;
+  if (isBusinessDay(current, holidays)) {
+    businessDaysFound = 1;
+  }
+
+  while (businessDaysFound < days) {
+    current = subDays(current, 1);
+    if (isBusinessDay(current, holidays)) {
+      businessDaysFound++;
+    }
+  }
+  return current;
+};
+
+export const calculateReviewCalendarDays = (endDate: Date, reviewDays: number, holidays: string[]) => {
+  let remaining = reviewDays;
+  let current = new Date(endDate);
+  current.setHours(0, 0, 0, 0);
+  
+  let calendarDays = 0;
+  
+  while (remaining > 0) {
+    const isBiz = isBusinessDay(current, holidays);
+    if (isBiz) {
+      const take = Math.min(remaining, 1);
+      remaining -= take;
+      calendarDays += take;
+    } else {
+      calendarDays += 1;
+    }
+
+    if (remaining > 0) {
+      current = subDays(current, 1);
+      if (!isBiz) {
+        // 非営業日を遡った場合は、すでに calendarDays に 1 足しているので何もしない
+      } else if (remaining > 0) {
+        // 営業日を遡り、まだ残りがある場合は、非営業日チェックへ進む前に
+        // calendarDays には影響しない（次のループのtakeか、非営業日カウントで足される）
+      }
+    }
+  }
+  
+  return calendarDays;
+};
 
 export const getWarning = (item: any, initialData?: InitialData | null) => {
   const warnings = [];
@@ -24,8 +81,9 @@ export const getWarning = (item: any, initialData?: InitialData | null) => {
         warnings.push("完了予定日を過ぎていますが未完了です。");
       } else if (item.review_days && item.review_days > 0) {
         if (status.status_name !== 'In Review') {
-          const reviewStartDeadline = new Date(plannedEnd);
-          reviewStartDeadline.setDate(reviewStartDeadline.getDate() - Math.ceil(item.review_days));
+          const holidays = initialData.holidays.map(h => h.holiday_date);
+          const plannedEnd = new Date(item.planned_end_date);
+          const reviewStartDeadline = subtractBusinessDays(plannedEnd, Math.ceil(item.review_days), holidays);
           if (today >= reviewStartDeadline) {
             warnings.push("レビュー開始期限を過ぎていますがレビュー中になっていません。");
           }
