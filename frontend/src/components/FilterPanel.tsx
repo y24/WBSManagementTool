@@ -15,6 +15,7 @@ export interface FilterState {
 
 export interface DisplayOptions {
   showProjectRange: boolean;
+  showTodayHighlight: boolean;
   showRemoved: boolean;
   showDoneProjects: boolean;
 }
@@ -226,6 +227,21 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               <div>
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 border-t pt-3">ガントチャート</div>
                 <div className="space-y-2">
+                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                      今日の日付をハイライト
+                    </span>
+                    <div className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={displayOptions.showTodayHighlight}
+                        onChange={(e) => setDisplayOptions(prev => ({ ...prev, showTodayHighlight: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500 shadow-inner"></div>
+                    </div>
+                  </label>
+
                   <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 rounded-md transition-colors">
                     <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
                       プロジェクト期間のハイライトを表示

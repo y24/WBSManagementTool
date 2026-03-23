@@ -12,6 +12,7 @@ interface GanttChartProps {
   expandedProjects: Record<number, boolean>;
   expandedTasks: Record<number, boolean>;
   showProjectRange: boolean;
+  showTodayHighlight: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
@@ -24,6 +25,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   expandedProjects,
   expandedTasks,
   showProjectRange,
+  showTodayHighlight,
   onScroll
 }, ref) => {
   // 休日判定ロジック
@@ -249,7 +251,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
           </div>
 
           {/* 今日列のハイライト (z-20) - 左右の細い線と薄いオーバーレイ */}
-          {days.map((d, i) => isToday(d) && (
+          {showTodayHighlight && days.map((d, i) => isToday(d) && (
             <div
               key={`today-highlight-${d.toISOString()}`}
               className="absolute top-0 bottom-0 border-x border-amber-400/50 bg-amber-400/10 z-20 pointer-events-none"

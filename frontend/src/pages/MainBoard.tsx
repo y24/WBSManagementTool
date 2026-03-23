@@ -93,6 +93,7 @@ export default function MainBoard() {
     const saved = localStorage.getItem('wbs_display_options');
     const defaultOptions: DisplayOptions = { 
       showProjectRange: true,
+      showTodayHighlight: true,
       showRemoved: false,
       showDoneProjects: false
     };
@@ -444,6 +445,7 @@ export default function MainBoard() {
               expandedProjects={expandedProjects}
               expandedTasks={expandedTasks}
               showProjectRange={displayOptions.showProjectRange}
+              showTodayHighlight={displayOptions.showTodayHighlight}
               onScroll={handleGanttScroll}
             />
           )}
