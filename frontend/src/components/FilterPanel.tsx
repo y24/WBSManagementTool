@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw } from 'lucide-react';
+import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings } from 'lucide-react';
 import MultiSelect from './MultiSelect';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
@@ -18,6 +18,8 @@ export interface FilterState {
 interface FilterPanelProps {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  displayOptions: { showProjectRange: boolean };
+  setDisplayOptions: React.Dispatch<React.SetStateAction<{ showProjectRange: boolean }>>;
   projects: Project[];
   initialData: InitialData | null;
   onClear: () => void;
@@ -26,10 +28,29 @@ interface FilterPanelProps {
 const FilterPanel: React.FC<FilterPanelProps> = ({
   filters,
   setFilters,
+  displayOptions,
+  setDisplayOptions,
   projects,
   initialData,
   onClear
 }) => {
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const settingsRef = React.useRef<HTMLDivElement>(null);
+
+  // ポップアップの外をクリックしたら閉じる
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+    };
+    if (isSettingsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSettingsOpen]);
   const statuses = initialData?.statuses || [];
   const members = initialData?.members || [];
   const subtaskTypes = initialData?.subtask_types || [];
@@ -57,13 +78,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             .filter(p => {
               const doneStatusId = initialData?.status_mapping_done ? parseInt(initialData.status_mapping_done) : null;
               const removedStatusId = statuses.find(s => s.status_name === 'Removed')?.id || 7;
-              
+
               // 選択中のプロジェクトは常に表示（非表示にするとボタンのラベルが空になってしまうため）
               if (filters.projectIds.includes(p.id)) return true;
 
               if (!filters.showRemoved && p.status_id === removedStatusId) return false;
               if (!filters.showDoneProjects && doneStatusId !== null && p.status_id === doneStatusId) return false;
-              
+
               return true;
             })
             .map(p => ({ id: p.id, name: p.project_name }))}
@@ -127,29 +148,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           遅延タスク
         </button>
 
-        {/* Removed Toggle */}
-        <button
-          onClick={() => setFilters(prev => ({ ...prev, showRemoved: !prev.showRemoved }))}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.showRemoved
-            ? 'bg-slate-100 border-slate-400 text-slate-700 ring-slate-500/10 ring-2 shadow-inner'
-            : 'bg-white border-gray-200 text-gray-400 hover:border-slate-400 hover:text-slate-600'
-            }`}
-        >
-          <X size={14} className={filters.showRemoved ? 'rotate-45 transition-transform' : ''} />
-          削除済アイテムを表示
-        </button>
-
-        {/* Done Projects Toggle */}
-        <button
-          onClick={() => setFilters(prev => ({ ...prev, showDoneProjects: !prev.showDoneProjects }))}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.showDoneProjects
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-600 ring-emerald-500/10 ring-2'
-            : 'bg-white border-gray-200 text-gray-400 hover:border-emerald-400 hover:text-emerald-500'
-            }`}
-        >
-          <Check size={14} className={filters.showDoneProjects ? 'scale-110 transition-transform' : ''} />
-          完了済プロジェクトを表示
-        </button>
+        {/* Done Projects Toggle は設定ポップアップへ移動 */}
       </div>
 
       <button
@@ -164,6 +163,87 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         <RotateCcw size={14} className={isFiltered ? 'animate-in spin-in-180 duration-500' : ''} />
         <span>リセット</span>
       </button>
+
+      <div className="relative" ref={settingsRef}>
+        <button
+          onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+          className={`p-2 rounded-lg border transition-all shadow-sm ${isSettingsOpen
+            ? 'bg-blue-50 border-blue-400 text-blue-600'
+            : 'bg-white border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600'
+            }`}
+          title="表示設定"
+        >
+          <Settings size={18} className={isSettingsOpen ? 'rotate-90 transition-transform duration-300' : 'transition-transform duration-300'} />
+        </button>
+
+        {isSettingsOpen && (
+          <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-sm font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
+              <Settings size={14} />
+              表示オプション
+            </h3>
+
+            <div className="space-y-4">
+              {/*ツリー設定 */}
+              <div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">ツリー</div>
+                <div className="space-y-2">
+                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                      完了済プロジェクトを表示
+                    </span>
+                    <div className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={filters.showDoneProjects}
+                        onChange={(e) => setFilters(prev => ({ ...prev, showDoneProjects: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                      削除済アイテムを表示
+                    </span>
+                    <div className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={filters.showRemoved}
+                        onChange={(e) => setFilters(prev => ({ ...prev, showRemoved: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-slate-500"></div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* ガントチャート設定 */}
+              <div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 border-t pt-3">ガントチャート</div>
+                <div className="space-y-2">
+                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                      プロジェクト期間のハイライトを表示
+                    </span>
+                    <div className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={displayOptions.showProjectRange}
+                        onChange={(e) => setDisplayOptions({ ...displayOptions, showProjectRange: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-500"></div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

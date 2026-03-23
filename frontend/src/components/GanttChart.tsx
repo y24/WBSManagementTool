@@ -11,6 +11,7 @@ interface GanttChartProps {
   range: GanttRange;
   expandedProjects: Record<number, boolean>;
   expandedTasks: Record<number, boolean>;
+  showProjectRange: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
@@ -22,6 +23,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   range,
   expandedProjects,
   expandedTasks,
+  showProjectRange,
   onScroll
 }, ref) => {
   // 休日判定ロジック
@@ -150,6 +152,41 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
   const totalWidth = useMemo(() => days.length * CELL_WIDTH, [days]);
 
+  // プロジェクトごとの期間（背景ハイライト用）を計算
+  const projectDisplayRanges = useMemo(() => {
+    if (!range.start_date || !projects.length) return {};
+    const baseDate = new Date(range.start_date);
+
+    return projects.reduce((acc, project) => {
+      const allDates: number[] = [];
+      const collect = (item: any) => {
+        ['planned_start_date', 'planned_end_date', 'actual_start_date', 'actual_end_date', 'review_start_date'].forEach(k => {
+          if (item[k]) {
+            try {
+              const d = new Date(item[k]);
+              if (!isNaN(d.getTime())) allDates.push(d.getTime());
+            } catch {}
+          }
+        });
+      };
+
+      collect(project);
+      project.tasks.forEach(task => {
+        collect(task);
+        task.subtasks.forEach(subtask => collect(subtask));
+      });
+
+      if (allDates.length > 0) {
+        const minTime = Math.min(...allDates);
+        const maxTime = Math.max(...allDates);
+        const left = differenceInDays(new Date(minTime), baseDate) * CELL_WIDTH;
+        const width = (differenceInDays(new Date(maxTime), new Date(minTime)) + 1) * CELL_WIDTH;
+        acc[project.id] = { left, width };
+      }
+      return acc;
+    }, {} as Record<number, { left: number; width: number }>);
+  }, [projects, range.start_date]);
+
   return (
     <div className="h-full w-full overflow-hidden bg-white">
       {/* スクロール領域 (Ganttバー & ヘッダー) */}
@@ -222,25 +259,40 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
           {/* 要素行の描画 (z-10) */}
           <div className="relative z-10">
-            {projects.map(project => (
-              <div key={`p-${project.id}`}>
-                {/* Project Row */}
-                <div className={`${commonRowClasses} wbs-row-project`}>{renderBar(project, false)}</div>
-
-                {expandedProjects[project.id] !== false && project.tasks.map(task => (
-                  <div key={`t-${task.id}`}>
-                    {/* Task Row */}
-                    <div className={`${commonRowClasses} wbs-row-task`}>{renderBar(task, false)}</div>
-
-                    {expandedTasks[task.id] !== false && task.subtasks.map(subtask => (
-                      <div key={`s-${subtask.id}`} className={`${commonRowClasses} wbs-row-subtask`}>
-                        {renderBar(subtask, true)}
-                      </div>
-                    ))}
+            {projects.map(project => {
+              const pRange = projectDisplayRanges[project.id];
+              return (
+                <div key={`p-wrapper-${project.id}`} className="relative">
+                  {/* プロジェクト全体の期間をハイライト */}
+                  {showProjectRange && pRange && (
+                    <div 
+                      className="wbs-project-range-highlight" 
+                      style={{ left: `${pRange.left}px`, width: `${pRange.width}px` }} 
+                    />
+                  )}
+                  
+                  {/* Project Row */}
+                  <div key={`p-${project.id}`} className={`${commonRowClasses} wbs-row-project`}>
+                    {renderBar(project, false)}
                   </div>
-                ))}
-              </div>
-            ))}
+
+                  {expandedProjects[project.id] !== false && project.tasks.map(task => (
+                    <div key={`t-wrapper-${task.id}`}>
+                      {/* Task Row */}
+                      <div key={`t-${task.id}`} className={`${commonRowClasses} wbs-row-task`}>
+                        {renderBar(task, false)}
+                      </div>
+
+                      {expandedTasks[task.id] !== false && task.subtasks.map(subtask => (
+                        <div key={`s-${subtask.id}`} className={`${commonRowClasses} wbs-row-subtask`}>
+                          {renderBar(subtask, true)}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -88,6 +88,17 @@ export default function MainBoard() {
 
   // フィルター状態
   const [filters, setFilters] = useState<FilterState>(getInitialFilters);
+  
+  // 表示設定
+  const [displayOptions, setDisplayOptions] = useState(() => {
+    const saved = localStorage.getItem('wbs_display_options');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return { showProjectRange: true };
+  });
 
   // ツリー展開ステートのリフトアップ
   const [expandedProjects, setExpandedProjects] = useState<Record<number, boolean>>(getInitialExpandedProjects);
@@ -136,6 +147,10 @@ export default function MainBoard() {
   useEffect(() => {
     localStorage.setItem('wbs_tree_width', treeWidth.toString());
   }, [treeWidth]);
+
+  useEffect(() => {
+    localStorage.setItem('wbs_display_options', JSON.stringify(displayOptions));
+  }, [displayOptions]);
 
   useEffect(() => {
     fetchData(true);
@@ -371,6 +386,8 @@ export default function MainBoard() {
       <FilterPanel 
         filters={filters}
         setFilters={setFilters}
+        displayOptions={displayOptions}
+        setDisplayOptions={setDisplayOptions}
         projects={data?.projects || []}
         initialData={initialData}
         onClear={() => setFilters({
@@ -424,6 +441,7 @@ export default function MainBoard() {
               range={dynamicGanttRange}
               expandedProjects={expandedProjects}
               expandedTasks={expandedTasks}
+              showProjectRange={displayOptions.showProjectRange}
               onScroll={handleGanttScroll}
             />
           )}
