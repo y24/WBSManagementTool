@@ -372,9 +372,7 @@ export default function MainBoard() {
         filters={filters}
         setFilters={setFilters}
         projects={data?.projects || []}
-        statuses={initialData?.statuses || []}
-        members={initialData?.members || []}
-        subtaskTypes={initialData?.subtask_types || []}
+        initialData={initialData}
         onClear={() => setFilters({
           projectIds: [],
           statusIds: [],

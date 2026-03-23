@@ -1,7 +1,7 @@
 import React from 'react';
 import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw } from 'lucide-react';
 import MultiSelect from './MultiSelect';
-import { MstStatus, MstMember, MstSubtaskType } from '../types';
+import { InitialData } from '../types';
 import { Project } from '../types/wbs';
 
 export interface FilterState {
@@ -19,9 +19,7 @@ interface FilterPanelProps {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   projects: Project[];
-  statuses: MstStatus[];
-  members: MstMember[];
-  subtaskTypes: MstSubtaskType[];
+  initialData: InitialData | null;
   onClear: () => void;
 }
 
@@ -29,11 +27,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   filters,
   setFilters,
   projects,
-  statuses,
-  members,
-  subtaskTypes,
+  initialData,
   onClear
 }) => {
+  const statuses = initialData?.statuses || [];
+  const members = initialData?.members || [];
+  const subtaskTypes = initialData?.subtask_types || [];
+
   const isFiltered = filters.projectIds.length > 0 ||
     filters.statusIds.length > 0 ||
     filters.assigneeIds.length > 0 ||
@@ -53,7 +53,20 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         {/* Project Filter */}
         <MultiSelect
           values={filters.projectIds}
-          options={projects.map(p => ({ id: p.id, name: p.project_name }))}
+          options={projects
+            .filter(p => {
+              const doneStatusId = initialData?.status_mapping_done ? parseInt(initialData.status_mapping_done) : null;
+              const removedStatusId = statuses.find(s => s.status_name === 'Removed')?.id || 7;
+              
+              // 選択中のプロジェクトは常に表示（非表示にするとボタンのラベルが空になってしまうため）
+              if (filters.projectIds.includes(p.id)) return true;
+
+              if (!filters.showRemoved && p.status_id === removedStatusId) return false;
+              if (!filters.showDoneProjects && doneStatusId !== null && p.status_id === doneStatusId) return false;
+              
+              return true;
+            })
+            .map(p => ({ id: p.id, name: p.project_name }))}
           onChange={(ids) => setFilters(prev => ({ ...prev, projectIds: ids as number[] }))}
           placeholder="プロジェクトを選択"
           dropdownTitle="プロジェクト"
