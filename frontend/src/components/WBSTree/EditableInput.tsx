@@ -61,7 +61,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
     const newValAsString = type === 'number' && valueToSave != null ? String(valueToSave) : String(valueToSave || '');
 
     const hasChanged = newValAsString !== currentValAsString;
-    
+
     if (hasChanged) {
       isCommittingRef.current = true;
       onChange(valueToSave);
@@ -86,12 +86,14 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
 
   const displayValue = () => {
     if (type === 'date') {
-      return value ? formatDisplayDate(value, type) : <span className="text-gray-300 text-[10px]">--/--</span>;
+      if (value) return formatDisplayDate(value, type);
+      if (isAuto) return <span className="text-gray-400 text-[10px] italic font-bold">(自動)</span>;
+      return <span className="text-gray-300 text-[10px]">--/--</span>;
     }
     if (value == null || value === '') {
       return <span className="text-gray-300 text-[10px]">-</span>;
     }
-    
+
     let formattedValue = value;
     if (type === 'number' && precision !== undefined && value !== '' && value != null) {
       const num = Number(value);
@@ -160,7 +162,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
             }}
           />
           {onToggleAuto && (
-            <div 
+            <div
               className="flex items-center gap-1.5 px-2.5 border-l border-blue-100 h-full bg-blue-50/50 hover:bg-blue-100/50 cursor-pointer select-none shrink-0"
               onMouseDown={(e) => e.preventDefault()}
               onClick={(e) => {
@@ -169,10 +171,10 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
                 onToggleAuto(!isAuto);
               }}
             >
-              <input 
-                type="checkbox" 
-                checked={isAuto} 
-                onChange={() => {}} // onClick handles it
+              <input
+                type="checkbox"
+                checked={isAuto}
+                onChange={() => { }} // onClick handles it
                 className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer pointer-events-none"
               />
               <span className="text-[11px] text-blue-700 font-bold">自動</span>
