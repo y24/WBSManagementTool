@@ -308,3 +308,8 @@ class DuplicateRequest(BaseModel):
     project_ids: List[int] = []
     task_ids: List[int] = []
     subtask_ids: List[int] = []
+
+class ClearActualsRequest(BaseModel):
+    project_ids: List[int] = []
+    task_ids: List[int] = []
+    subtask_ids: List[int] = []

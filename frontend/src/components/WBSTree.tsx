@@ -49,7 +49,14 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
   const [menuRendered, setMenuRendered] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [confirmData, setConfirmData] = useState({ total: 0, detail: '' });
+  const [confirmData, setConfirmData] = useState({ 
+    total: 0, 
+    detail: '', 
+    title: '', 
+    confirmText: '', 
+    variant: 'danger' as 'danger' | 'warning',
+    onConfirm: () => {} 
+  });
   const isConfirming = useRef(false);
 
   useEffect(() => {
@@ -119,7 +126,14 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     });
 
     const detailMsg = `削除対象の内訳: プロジェクト:${projectIdsToDelete.length}, タスク:${tasksToDelete.length}, サブタスク:${subtasksToDelete.length}`;
-    setConfirmData({ total: totalSelectedCount, detail: detailMsg });
+    setConfirmData({ 
+      total: totalSelectedCount, 
+      detail: detailMsg,
+      title: '項目の削除確認',
+      confirmText: '削除を実行する',
+      variant: 'danger',
+      onConfirm: executeDelete
+    });
     setIsConfirmModalOpen(true);
   };
 
@@ -162,6 +176,51 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     } catch (err) {
       console.error(err);
       alert('削除中にエラーが発生しました。');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClearActualsSelected = () => {
+    if (saving || isConfirmModalOpen) return;
+    if (totalSelectedCount === 0) return;
+
+    const pIds: number[] = [];
+    const tIds: number[] = [];
+    const sIds: number[] = [];
+
+    Object.entries(checkedIds).forEach(([key, isChecked]) => {
+      if (!isChecked) return;
+      const [type, idStr] = key.split('-');
+      const id = parseInt(idStr);
+      if (type === 'p') pIds.push(id);
+      else if (type === 't') tIds.push(id);
+      else if (type === 's') sIds.push(id);
+    });
+
+    const detailMsg = `クリア対象の内訳: プロジェクト:${pIds.length}, タスク:${tIds.length}, サブタスク:${sIds.length}\n\n対象の実績開始、レビュー開始、実績終了、実績工数、進捗が消去されます。`;
+    
+    setConfirmData({ 
+      total: totalSelectedCount, 
+      detail: detailMsg,
+      title: '実績値のクリア確認',
+      confirmText: '実績値をクリアする',
+      variant: 'warning',
+      onConfirm: () => executeClearActuals(pIds, tIds, sIds)
+    });
+    setIsConfirmModalOpen(true);
+  };
+
+  const executeClearActuals = async (pIds: number[], tIds: number[], sIds: number[]) => {
+    setIsConfirmModalOpen(false);
+    setSaving(true);
+    try {
+      await wbsOps.clearActuals(pIds, tIds, sIds);
+      setCheckedIds({});
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('クリア中にエラーが発生しました。');
     } finally {
       setSaving(false);
     }
@@ -636,6 +695,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         totalSelectedCount={totalSelectedCount}
         onDelete={handleDeleteSelected}
         onDuplicate={handleDuplicateSelected}
+        onClearActuals={handleClearActualsSelected}
         onClear={() => setCheckedIds({})}
         menuRendered={menuRendered}
         loading={saving}
@@ -644,8 +704,11 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       <ConfirmModal 
         isOpen={isConfirmModalOpen}
         totalCount={confirmData.total}
-        detailMsg={confirmData.detail}
-        onConfirm={executeDelete}
+        title={confirmData.title}
+        description={confirmData.detail}
+        confirmText={confirmData.confirmText}
+        variant={confirmData.variant}
+        onConfirm={confirmData.onConfirm}
         onCancel={() => setIsConfirmModalOpen(false)}
       />
     </div>

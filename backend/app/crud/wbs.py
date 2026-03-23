@@ -1,3 +1,4 @@
+from decimal import Decimal
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 from .. import models, schemas
@@ -32,8 +33,8 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_removed: bo
         p_wbs = schemas.ProjectWBS.from_orm(p)
         
         tasks_wbs = []
-        p_planned_effort = 0
-        p_actual_effort = 0
+        p_planned_effort = Decimal('0')
+        p_actual_effort = Decimal('0')
         task_periods = []
         
         for t in p.tasks:
@@ -42,8 +43,8 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_removed: bo
             is_task_removed = t.status and t.status.status_name == "Removed"
             
             t_wbs = schemas.TaskWBS.from_orm(t)
-            t_wbs.planned_effort_total = sum((s.planned_effort_days or 0) for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed"))
-            t_wbs.actual_effort_total = sum((s.actual_effort_days or 0) for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed"))
+            t_wbs.planned_effort_total = sum((s.planned_effort_days or Decimal('0')) for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed"))
+            t_wbs.actual_effort_total = sum((s.actual_effort_days or Decimal('0')) for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed"))
             
             if not is_task_removed:
                 p_planned_effort += t_wbs.planned_effort_total
@@ -252,4 +253,81 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
         db.add(new_s)
 
     db.commit()
+    return True
+
+def clear_actuals(db: Session, req: schemas.ClearActualsRequest):
+    from .recalc import recalculate_task_dates, recalculate_task_status, recalculate_project_dates, recalculate_project_status
+    
+    # Get all projects, tasks, subtasks to be cleared
+    p_ids = set(req.project_ids)
+    t_ids = set(req.task_ids)
+    s_ids = set(req.subtask_ids)
+
+    affected_task_ids = set()
+    affected_project_ids = set()
+
+    # 1. Clear Projects (and their descendants)
+    for pid in p_ids:
+        project = db.query(models.Project).filter(models.Project.id == pid).first()
+        if not project: continue
+        
+        project.actual_start_date = None
+        project.actual_end_date = None
+        
+        for task in project.tasks:
+            task.actual_start_date = None
+            task.actual_end_date = None
+            for subtask in task.subtasks:
+                subtask.actual_start_date = None
+                subtask.review_start_date = None
+                subtask.actual_end_date = None
+                subtask.actual_effort_days = None
+                subtask.progress_percent = None
+                
+    # 2. Clear Tasks (and their subtasks)
+    for tid in t_ids:
+        # If parent project is already being cleared, skip
+        task = db.query(models.Task).filter(models.Task.id == tid).first()
+        if not task or task.project_id in p_ids: continue
+        
+        task.actual_start_date = None
+        task.actual_end_date = None
+        for subtask in task.subtasks:
+            subtask.actual_start_date = None
+            subtask.review_start_date = None
+            subtask.actual_end_date = None
+            subtask.actual_effort_days = None
+            subtask.progress_percent = None
+        
+        affected_project_ids.add(task.project_id)
+            
+    # 3. Clear Subtasks
+    for sid in s_ids:
+        subtask = db.query(models.Subtask).filter(models.Subtask.id == sid).first()
+        if not subtask: continue
+        
+        # If parent task or project is already being cleared, skip
+        if subtask.task_id in t_ids: continue
+        parent_task = db.query(models.Task).filter(models.Task.id == subtask.task_id).first()
+        if not parent_task or parent_task.project_id in p_ids: continue
+        
+        subtask.actual_start_date = None
+        subtask.review_start_date = None
+        subtask.actual_end_date = None
+        subtask.actual_effort_days = None
+        subtask.progress_percent = None
+        
+        affected_task_ids.add(subtask.task_id)
+
+    db.commit()
+    
+    # Trigger recalculations for items whose children were cleared but themselves weren't
+    for tid in affected_task_ids:
+        recalculate_task_dates(db, tid)
+        recalculate_task_status(db, tid)
+    
+    for pid in affected_project_ids:
+        recalculate_project_dates(db, pid)
+        recalculate_project_status(db, pid)
+
     return True

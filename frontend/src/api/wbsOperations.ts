@@ -54,4 +54,7 @@ export const wbsOps = {
 
   duplicateItems: (projectIds: number[], taskIds: number[], subtaskIds: number[]) =>
     apiClient.post('/items/duplicate', { project_ids: projectIds, task_ids: taskIds, subtask_ids: subtaskIds }),
+
+  clearActuals: (projectIds: number[], taskIds: number[], subtaskIds: number[]) =>
+    apiClient.post('/items/clear-actuals', { project_ids: projectIds, task_ids: taskIds, subtask_ids: subtaskIds }),
 };

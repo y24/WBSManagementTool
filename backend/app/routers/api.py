@@ -281,3 +281,10 @@ def duplicate_items(req: schemas.DuplicateRequest, db: Session = Depends(get_db)
     if not success:
         raise HTTPException(status_code=400, detail="Duplication failed")
     return {"status": "ok"}
+
+@router.post("/items/clear-actuals")
+def clear_actuals(req: schemas.ClearActualsRequest, db: Session = Depends(get_db)):
+    success = crud.clear_actuals(db, req)
+    if not success:
+        raise HTTPException(status_code=400, detail="Clear actuals failed")
+    return {"status": "ok"}
