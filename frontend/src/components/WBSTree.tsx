@@ -167,6 +167,35 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     }
   };
 
+  const handleDuplicateSelected = async () => {
+    if (saving || totalSelectedCount === 0) return;
+
+    setSaving(true);
+    try {
+      const pIds: number[] = [];
+      const tIds: number[] = [];
+      const sIds: number[] = [];
+
+      Object.entries(checkedIds).forEach(([key, isChecked]) => {
+        if (!isChecked) return;
+        const [type, idStr] = key.split('-');
+        const id = parseInt(idStr);
+        if (type === 'p') pIds.push(id);
+        else if (type === 't') tIds.push(id);
+        else if (type === 's') sIds.push(id);
+      });
+
+      await wbsOps.duplicateItems(pIds, tIds, sIds);
+      setCheckedIds({});
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('複製中にエラーが発生しました。');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getInitialNameWidth = (): number => {
     const saved = localStorage.getItem('wbs_name_width');
     if (saved) {
@@ -606,6 +635,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       <FloatingMenu 
         totalSelectedCount={totalSelectedCount}
         onDelete={handleDeleteSelected}
+        onDuplicate={handleDuplicateSelected}
         onClear={() => setCheckedIds({})}
         menuRendered={menuRendered}
         loading={saving}

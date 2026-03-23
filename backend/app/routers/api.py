@@ -275,3 +275,9 @@ def execute_import(req: schemas.ImportExecuteRequest, db: Session = Depends(get_
     if not success:
         raise HTTPException(status_code=400, detail="Import failed")
     return {"status": "ok"}
+@router.post("/items/duplicate")
+def duplicate_items(req: schemas.DuplicateRequest, db: Session = Depends(get_db)):
+    success = crud.duplicate_items(db, req)
+    if not success:
+        raise HTTPException(status_code=400, detail="Duplication failed")
+    return {"status": "ok"}

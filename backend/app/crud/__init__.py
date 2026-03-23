@@ -52,7 +52,8 @@ from .subtask import (
 )
 
 from .wbs import (
-    get_wbs_data
+    get_wbs_data,
+    duplicate_items
 )
 
 from .recalc import (

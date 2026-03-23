@@ -1,16 +1,17 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Copy } from 'lucide-react';
 
 interface FloatingMenuProps {
   totalSelectedCount: number;
   onDelete: () => void;
+  onDuplicate: () => void;
   onClear: () => void;
   menuRendered: boolean;
   loading?: boolean;
 }
 
-const FloatingMenu = ({ totalSelectedCount, onDelete, onClear, menuRendered, loading }: FloatingMenuProps) => {
+const FloatingMenu = ({ totalSelectedCount, onDelete, onDuplicate, onClear, menuRendered, loading }: FloatingMenuProps) => {
   if (!menuRendered) return null;
 
   return createPortal(
@@ -24,6 +25,14 @@ const FloatingMenu = ({ totalSelectedCount, onDelete, onClear, menuRendered, loa
         </div>
         <div className="h-4 w-px bg-gray-300" />
         <div className="flex items-center gap-4">
+          <button
+            onClick={onDuplicate}
+            disabled={loading}
+            className={`flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-sm transition-all hover:scale-105 active:scale-95 ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            <Copy size={18} className={loading ? 'animate-pulse' : ''} />
+            {loading ? '複製中...' : '複製'}
+          </button>
           <button
             onClick={onDelete}
             disabled={loading}

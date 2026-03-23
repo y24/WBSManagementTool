@@ -188,8 +188,8 @@ class Task(TaskBase):
     model_config = { "from_attributes": True }
 
 class TaskWBS(Task):
-    planned_effort_total: float = 0.0
-    actual_effort_total: float = 0.0
+    planned_effort_total: Decimal = Decimal('0.0')
+    actual_effort_total: Decimal = Decimal('0.0')
     is_overlapping: bool = False
 
 # --- Projects ---
@@ -238,8 +238,8 @@ class Project(ProjectBase):
 
 class ProjectWBS(Project):
     tasks: List[TaskWBS] = []
-    planned_effort_total: float = 0.0
-    actual_effort_total: float = 0.0
+    planned_effort_total: Decimal = Decimal('0.0')
+    actual_effort_total: Decimal = Decimal('0.0')
     is_overlapping: bool = False
 
 # --- Response Models ---
@@ -303,3 +303,8 @@ class ImportPreviewResponse(BaseModel):
 
 class ImportExecuteRequest(BaseModel):
     rows: List[ImportPreviewRow]
+
+class DuplicateRequest(BaseModel):
+    project_ids: List[int] = []
+    task_ids: List[int] = []
+    subtask_ids: List[int] = []

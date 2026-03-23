@@ -51,4 +51,7 @@ export const wbsOps = {
   
   executeImport: (rows: any[]) => 
     apiClient.post('/import/execute', { rows }),
+
+  duplicateItems: (projectIds: number[], taskIds: number[], subtaskIds: number[]) =>
+    apiClient.post('/items/duplicate', { project_ids: projectIds, task_ids: taskIds, subtask_ids: subtaskIds }),
 };
