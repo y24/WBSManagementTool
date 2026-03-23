@@ -159,6 +159,7 @@ class Subtask(Base):
     planned_start_date = Column(Date, nullable=True, index=True)
     planned_end_date = Column(Date, nullable=True, index=True)
     actual_start_date = Column(Date, nullable=True, index=True)
+    review_start_date = Column(Date, nullable=True, index=True)
     actual_end_date = Column(Date, nullable=True, index=True)
     
     planned_effort_days = Column(Numeric(8, 2), nullable=True)
@@ -190,4 +191,5 @@ class Subtask(Base):
         CheckConstraint("sort_order >= 0", name="check_subtask_sort"),
         CheckConstraint("planned_start_date IS NULL OR planned_end_date IS NULL OR planned_end_date >= planned_start_date", name="check_subtask_planned_dates"),
         CheckConstraint("actual_start_date IS NULL OR actual_end_date IS NULL OR actual_end_date >= actual_start_date", name="check_subtask_actual_dates"),
+        CheckConstraint("actual_start_date IS NULL OR review_start_date IS NULL OR review_start_date >= actual_start_date", name="check_subtask_review_start_date"),
     )

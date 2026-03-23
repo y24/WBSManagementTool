@@ -144,6 +144,7 @@ const SubtaskRow = memo(({
         />
       </div>
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v) } highlight={getHighlight('actual_start_date', subtask.actual_start_date)} /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.review_start_date} min={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v) } highlight={getHighlight('review_start_date', subtask.review_start_date)} /></div>
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} min={subtask.actual_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v) } highlight={getHighlight('actual_end_date', subtask.actual_end_date)} /></div>
       <div className={`w-16 ${dateCellClasses}`}>
         <EditableInput 

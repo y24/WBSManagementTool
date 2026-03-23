@@ -62,12 +62,20 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
     // 実績バーの計算
     let aStart, aWidth;
+    let arStart, arWidth;
     if (item.actual_start_date) {
       const aS = new Date(item.actual_start_date);
-      // 終了日がない(現在進行中)場合は表示範囲の末尾か今日を終わりの目安としたりするが、今回はシンプルに
       const aE = item.actual_end_date ? new Date(item.actual_end_date) : aS;
       aStart = differenceInDays(aS, baseDate) * CELL_WIDTH;
       aWidth = (differenceInDays(aE, aS) + 1) * CELL_WIDTH;
+
+      if (isSubtask && item.review_start_date) {
+        const rS = new Date(item.review_start_date);
+        const effectiveRS = rS < aS ? aS : rS;
+        const effectiveRE = aE < effectiveRS ? effectiveRS : aE;
+        arStart = differenceInDays(effectiveRS, baseDate) * CELL_WIDTH;
+        arWidth = (differenceInDays(effectiveRE, effectiveRS) + 1) * CELL_WIDTH;
+      }
     }
 
     const typeColor = isSubtask ? getStatusColor(item.status_id) : '#cbd5e1';
@@ -110,11 +118,20 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
           </>
         )}
         {aStart !== undefined && aWidth !== undefined && (
-          <div
-            className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm`}
-            style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
-            title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
-          />
+          <>
+            <div
+              className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm`}
+              style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
+              title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
+            />
+            {arStart !== undefined && arWidth !== undefined && (
+              <div
+                className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm bg-black/20 pointer-events-none`}
+                style={{ left: `${arStart}px`, width: `${arWidth}px` }}
+                title="レビュー中"
+              />
+            )}
+          </>
         )}
         {isDelayed && warningText && (
           <div

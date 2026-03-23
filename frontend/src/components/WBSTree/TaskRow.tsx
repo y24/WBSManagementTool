@@ -163,6 +163,7 @@ const TaskRow = memo(({
           highlight={getHighlight('actual_start_date', task.actual_start_date)}
         />
       </div>
+      <div className={`w-20 ${dateCellClasses}`}></div>
       <div className={`w-20 ${dateCellClasses}`}>
         <EditableInput 
           type="date" 

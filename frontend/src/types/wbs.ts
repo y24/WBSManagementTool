@@ -11,6 +11,7 @@ export interface Subtask {
   planned_start_date?: string | null;
   planned_end_date?: string | null;
   actual_start_date?: string | null;
+  review_start_date?: string | null;
   actual_end_date?: string | null;
   planned_effort_days?: number | null;
   actual_effort_days?: number | null;

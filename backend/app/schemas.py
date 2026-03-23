@@ -92,6 +92,7 @@ class SubtaskBase(BaseModel):
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
+    review_start_date: Optional[date] = None
     actual_end_date: Optional[date] = None
     planned_effort_days: Optional[Decimal] = None
     actual_effort_days: Optional[Decimal] = None
@@ -117,6 +118,7 @@ class SubtaskUpdate(BaseModel):
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
+    review_start_date: Optional[date] = None
     actual_end_date: Optional[date] = None
     planned_effort_days: Optional[Decimal] = None
     actual_effort_days: Optional[Decimal] = None
