@@ -16,6 +16,7 @@ def read_wbs(
     weeks: int = 8,
     db: Session = Depends(get_db)
 ):
+    crud.refresh_subtasks_actual_end_date(db, project_ids)
     projects = crud.get_wbs_data(db, project_ids, include_removed)
     
     # Dynamic gantt range calculation

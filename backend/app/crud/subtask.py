@@ -1,10 +1,12 @@
 from sqlalchemy.orm import Session
+from datetime import date
+from typing import Optional, List, Dict
 from .. import models, schemas
 from .recalc import recalculate_task_dates, recalculate_task_status
 from ..utils import date_utils
 from .master import get_holidays
 
-def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_data: dict = None):
+def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_data: Optional[Dict] = None):
     # Check if auto_effort is already set or being set to True
     is_auto = db_subtask.is_auto_effort
     if update_data and "is_auto_effort" in update_data:
@@ -56,9 +58,62 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
             # 四捨五入
             db_subtask.actual_effort_days = int(raw_days * workload_factor * 10 + 0.5) / 10.0
 
+def refresh_subtasks_actual_end_date(db: Session, project_ids: Optional[List[int]] = None):
+    """
+    Update actual_end_date to today for all subtasks with 'In Progress' status (ID 2).
+    This ensures that for ongoing tasks, the actual end date tracks today.
+    """
+    query = db.query(models.Subtask).join(models.Task).filter(
+        models.Subtask.status_id == 2,
+        models.Subtask.is_deleted == False
+    )
+    if project_ids:
+        query = query.filter(models.Task.project_id.in_(project_ids))
+    
+    subtasks = query.all()
+    today = date.today()
+    
+    affected_task_ids = set()
+    changed = False
+    for s in subtasks:
+        if s.actual_end_date != today:
+            s.actual_end_date = today
+            # Ensure actual_start_date is not the future relative to actual_end_date (today)
+            if s.actual_start_date and s.actual_start_date > today:
+                s.actual_start_date = today
+                
+            _calculate_subtask_effort(db, s)
+            affected_task_ids.add(s.task_id)
+            changed = True
+            
+    if changed:
+        db.commit()
+        for tid in affected_task_ids:
+            recalculate_task_dates(db, tid)
+
 # --- Subtasks ---
 def create_subtask(db: Session, subtask: schemas.SubtaskCreate):
     db_subtask = models.Subtask(**subtask.dict())
+    
+    # Auto-set dates based on status
+    # 1. actual_start_date for In Progress (2) or Done (4)
+    if db_subtask.status_id in [2, 4] and db_subtask.actual_start_date is None:
+        db_subtask.actual_start_date = date.today()
+    
+    # 2. actual_end_date for In Progress (2)
+    if db_subtask.status_id == 2:
+        db_subtask.actual_end_date = date.today()
+        # Guarantee actual_start_date <= actual_end_date
+        if db_subtask.actual_start_date and db_subtask.actual_start_date > db_subtask.actual_end_date:
+            db_subtask.actual_start_date = db_subtask.actual_end_date
+
+    # 3. actual_end_date for Done (4)
+    if db_subtask.status_id == 4 and db_subtask.actual_end_date is None:
+        db_subtask.actual_end_date = date.today()
+    
+    # 3. review_start_date for In Review (3)
+    if db_subtask.status_id == 3 and db_subtask.review_start_date is None:
+        db_subtask.review_start_date = date.today()
     
     # Calculate effort BEFORE adding to session or commit if needed?
     # Actually we need DB to get holidays if we use the helper.
@@ -80,6 +135,40 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
         return None
     
     update_dict = subtask.dict(exclude_unset=True)
+    
+    # Auto-set dates if status is being changed
+    new_status_id = update_dict.get("status_id")
+    if new_status_id is not None and new_status_id != db_subtask.status_id:
+        # 1. actual_start_date for In Progress (2) or Done (4)
+        if new_status_id in [2, 4]:
+            if "actual_start_date" not in update_dict and db_subtask.actual_start_date is None:
+                update_dict["actual_start_date"] = date.today()
+        
+        # 1.5. actual_end_date for In Progress (2)
+        if new_status_id == 2:
+            if "actual_end_date" not in update_dict:
+                update_dict["actual_end_date"] = date.today()
+            
+            # Guarantee actual_start_date <= actual_end_date
+            a_start = update_dict.get("actual_start_date") or db_subtask.actual_start_date
+            a_end = update_dict.get("actual_end_date")
+            if a_start and a_end and a_start > a_end:
+                update_dict["actual_start_date"] = a_end
+
+        # 2. actual_end_date for Done (4)
+        if new_status_id == 4:
+            if "actual_end_date" not in update_dict and db_subtask.actual_end_date is None:
+                update_dict["actual_end_date"] = date.today()
+        
+        # 3. review_start_date for In Review (3)
+        if new_status_id == 3:
+            if "review_start_date" not in update_dict and db_subtask.review_start_date is None:
+                update_dict["review_start_date"] = date.today()
+                
+        # 4. Clear actual_end_date if moving AWAY from Done (4)
+        if db_subtask.status_id == 4 and new_status_id != 4:
+            if "actual_end_date" not in update_dict:
+                update_dict["actual_end_date"] = None
     
     # Calculate effort changes
     _calculate_subtask_effort(db, db_subtask, update_dict)
