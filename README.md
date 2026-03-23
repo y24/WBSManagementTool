@@ -49,8 +49,6 @@ if (-not (Test-Path .env)) { copy .env.example .env }
 
 # DBの作成（wbs_dbを自動作成します）
 python setup_db.py
-```
-
 
 # フェーズ2：モデル情報のDB反映(マイグレーション)と初期データの投入をスクリプトで一括実行
 powershell -ExecutionPolicy Bypass -File .\setup_phase2.ps1

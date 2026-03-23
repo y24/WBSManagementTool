@@ -4,7 +4,13 @@ from .recalc import recalculate_project_dates, recalculate_project_status
 
 # --- Projects ---
 def create_project(db: Session, project: schemas.ProjectCreate):
-    db_project = models.Project(**project.dict())
+    from sqlalchemy import func
+    project_dict = project.model_dump()
+    if project_dict.get("sort_order") == 0:
+        max_order = db.query(func.max(models.Project.sort_order)).filter(models.Project.is_deleted == False).scalar()
+        project_dict["sort_order"] = (max_order + 1) if max_order is not None else 0
+        
+    db_project = models.Project(**project_dict)
     db.add(db_project)
     db.commit()
     db.refresh(db_project)

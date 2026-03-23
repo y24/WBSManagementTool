@@ -4,7 +4,16 @@ from .recalc import recalculate_task_dates, recalculate_task_status, recalculate
 
 # --- Tasks ---
 def create_task(db: Session, task: schemas.TaskCreate):
-    db_task = models.Task(**task.dict())
+    from sqlalchemy import func
+    task_dict = task.model_dump()
+    if task_dict.get("sort_order") == 0:
+        max_order = db.query(func.max(models.Task.sort_order)).filter(
+            models.Task.project_id == task_dict["project_id"],
+            models.Task.is_deleted == False
+        ).scalar()
+        task_dict["sort_order"] = (max_order + 1) if max_order is not None else 0
+        
+    db_task = models.Task(**task_dict)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)

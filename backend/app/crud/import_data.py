@@ -29,12 +29,12 @@ COLUMN_MAPPING = {
 def generate_template() -> io.BytesIO:
     columns = list(COLUMN_MAPPING.keys())
     sample_data = [
-        [0, "新規プロジェクトA", "", "", "", "未着手", "田中", "", "2024-04-01", "2024-04-30", "", "", "プロジェクトのメモ"],
-        [1, "基本設計", "", "", "", "未着手", "田中", "", "2024-04-01", "2024-04-10", "", "", "タスクのメモ"],
-        [2, "", "設計", "画面遷移図作成", "123", "未着手", "佐藤", 1, "2024-04-01", "2024-04-03", 2, 100, "サブタスクのメモ"],
-        [2, "", "設計", "DB設計", "124", "未着手", "佐藤", 0, "2024-04-04", "2024-04-05", 1, 100, ""],
-        [1, "詳細設計", "", "", "", "未着手", "鈴木", "", "", "", "", "", ""],
-        [2, "", "開発", "クラス設計", "", "未着手", "鈴木", 0, "", "", "", 100, "日付未入力は自動計算されます"],
+        [0, "新規プロジェクトA", "", "", "", "New", "山田 太郎", "", "2026-04-01", "2026-04-30", "", "", "プロジェクトのメモ"],
+        [1, "シナリオテスト", "", "", "", "New", "山田 太郎", "", "2026-04-01", "2026-04-10", "", 80, "タスクのメモ"],
+        [2, "", "テスト設計", "データ作成含む", "123456", "New", "佐藤 次郎", 1, "2026-04-01", "2026-04-03", 2, 100, "サブタスクのメモ"],
+        [2, "", "テスト実施", "", "234567", "New", "佐藤 次郎", 0.5, "2026-04-04", "2026-04-05", 1, 100, ""],
+        [1, "性能テスト", "", "", "", "New", "鈴木 一郎", "", "", "", "", "", "階層1,2の日付未入力は自動計算されます"],
+        [2, "", "テスト設計", "", "", "New", "鈴木 一郎", 0.5, "2026-04-06", "2026-04-07", "", 100, ""],
     ]
     df = pd.DataFrame(sample_data, columns=columns)
     output = io.BytesIO()
@@ -93,8 +93,8 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
                 errors.append("名称を入力してください")
         elif level == 2:
             name = str(row.get("subtask_detail", ""))
-            if not name or name == "nan":
-                errors.append("サブタスク詳細を入力してください")
+            if name == "nan":
+                name = ""
 
         # Master data validation
         status_name = str(row.get("status", ""))
@@ -103,8 +103,6 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
             status_id = db_statuses.get(status_name)
             if not status_id:
                 errors.append(f"ステータス '{status_name}' がマスタに存在しません")
-        elif level == 2:
-             errors.append("ステータスを入力してください")
 
         assignee_name = str(row.get("assignee", ""))
         assignee_id = None
@@ -158,11 +156,15 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
         if not pd.isna(ticket_id):
             try: ticket_id = int(ticket_id)
             except: 
-                # Keep as string for now if it's not a numeric ID? 
-                # Let's check models.py: Project/Task/Subtask all have ticket_id as Integer.
                 errors.append("チケットIDは数値(ID)で入力してください")
         else:
             ticket_id = None
+
+        review_days_val = row.get("review_days")
+        review_days = None
+        if not pd.isna(review_days_val):
+            try: review_days = Decimal(str(review_days_val))
+            except: errors.append("レビュー日数は数値で入力してください")
 
         if errors:
             can_import = False
@@ -178,6 +180,7 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
             planned_start=d_start,
             planned_end=d_end,
             planned_effort=effort,
+            review_days=review_days,
             workload=workload,
             memo=str(row.get("memo")) if not pd.isna(row.get("memo")) else None,
             errors=errors
@@ -193,6 +196,11 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
 
     current_project_id = None
     current_task_id = None
+
+    max_proj = db.query(models.Project).order_by(models.Project.sort_order.desc()).first()
+    next_proj_sort = (max_proj.sort_order + 1) if max_proj else 0
+    next_task_sort = 0
+    next_subtask_sort = 0
 
     for r in rows:
         status_id = db_statuses.get(r.status)
@@ -213,11 +221,14 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
                 planned_end_date=r.planned_end,
                 memo=r.memo,
                 is_auto_planned_date=is_auto_planned,
-                ticket_id=int(r.ticket_id) if r.ticket_id else None
+                ticket_id=int(r.ticket_id) if r.ticket_id else None,
+                sort_order=next_proj_sort
             )
             db_project = create_project(db, p_data)
             current_project_id = db_project.id
             current_task_id = None  # Reset task
+            next_task_sort = 0
+            next_proj_sort += 1
             
         elif r.level == 1:
             # Create Task
@@ -230,10 +241,13 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
                 planned_end_date=r.planned_end,
                 memo=r.memo,
                 is_auto_planned_date=is_auto_planned,
-                ticket_id=int(r.ticket_id) if r.ticket_id else None
+                ticket_id=int(r.ticket_id) if r.ticket_id else None,
+                sort_order=next_task_sort
             )
             db_task = create_task(db, t_data)
             current_task_id = db_task.id
+            next_subtask_sort = 0
+            next_task_sort += 1
             
         elif r.level == 2:
             # Create Subtask
@@ -246,16 +260,19 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
                 task_id=current_task_id,
                 subtask_type_id=type_id,
                 subtask_detail=r.name,
-                status_id=status_id or 1, # Default to first status if not provided (though validated)
+                status_id=status_id or 1,
                 assignee_id=assignee_id,
                 planned_start_date=r.planned_start,
                 planned_end_date=r.planned_end,
                 planned_effort_days=r.planned_effort,
+                review_days=r.review_days,
                 workload_percent=r.workload or 100,
                 memo=r.memo,
                 is_auto_effort=is_auto_effort,
-                ticket_id=int(r.ticket_id) if r.ticket_id else None
+                ticket_id=int(r.ticket_id) if r.ticket_id else None,
+                sort_order=next_subtask_sort
             )
             create_subtask(db, s_data)
+            next_subtask_sort += 1
 
     return True

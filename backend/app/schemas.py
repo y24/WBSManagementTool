@@ -292,6 +292,7 @@ class ImportPreviewRow(BaseModel):
     planned_start: Optional[date] = None
     planned_end: Optional[date] = None
     planned_effort: Optional[Decimal] = None
+    review_days: Optional[Decimal] = None
     workload: Optional[int] = None
     memo: Optional[str] = None
     errors: List[str] = []

@@ -93,7 +93,16 @@ def refresh_subtasks_actual_end_date(db: Session, project_ids: Optional[List[int
 
 # --- Subtasks ---
 def create_subtask(db: Session, subtask: schemas.SubtaskCreate):
-    db_subtask = models.Subtask(**subtask.dict())
+    from sqlalchemy import func
+    subtask_dict = subtask.model_dump()
+    if subtask_dict.get("sort_order") == 0:
+        max_order = db.query(func.max(models.Subtask.sort_order)).filter(
+            models.Subtask.task_id == subtask_dict["task_id"],
+            models.Subtask.is_deleted == False
+        ).scalar()
+        subtask_dict["sort_order"] = (max_order + 1) if max_order is not None else 0
+        
+    db_subtask = models.Subtask(**subtask_dict)
     
     # Auto-set dates based on status
     # 1. actual_start_date for In Progress (2) or Done (4)

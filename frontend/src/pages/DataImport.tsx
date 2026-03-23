@@ -14,6 +14,7 @@ interface ImportPreviewRow {
   planned_start?: string;
   planned_end?: string;
   planned_effort?: number;
+  review_days?: number;
   workload?: number;
   memo?: string;
   errors: string[];
@@ -208,8 +209,9 @@ export default function DataImport() {
                     <th>名称 / 詳細</th>
                     <th>ステータス</th>
                     <th>担当者</th>
-                    <th> planned_start </th>
-                    <th> planned_end </th>
+                    <th>計画開始</th>
+                    <th>計画終了</th>
+                    <th>レビュー日数</th>
                     <th>エラー内容</th>
                   </tr>
                 </thead>
@@ -234,6 +236,7 @@ export default function DataImport() {
                       <td>{row.assignee}</td>
                       <td className="font-mono text-[11px]">{row.planned_start || '-'}</td>
                       <td className="font-mono text-[11px]">{row.planned_end || '-'}</td>
+                      <td className="text-center">{row.review_days != null ? row.review_days : '-'}</td>
                       <td>
                         {row.errors.length > 0 && (
                           <ul className="import-error-list">
