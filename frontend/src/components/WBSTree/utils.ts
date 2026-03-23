@@ -29,6 +29,43 @@ export const subtractBusinessDays = (date: Date, days: number, holidays: string[
   return current;
 };
 
+export const getBusinessDaysCount = (startDate: Date, endDate: Date, holidays: string[]) => {
+  if (startDate > endDate) return 0;
+  let count = 0;
+  let current = new Date(startDate);
+  current.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+
+  while (current <= end) {
+    if (isBusinessDay(current, holidays)) {
+      count++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  return count;
+};
+
+export const addBusinessDays = (startDate: Date, days: number, holidays: string[]) => {
+  if (days <= 0) return startDate;
+  let current = new Date(startDate);
+  current.setHours(0, 0, 0, 0);
+  
+  // Find first business day
+  while (!isBusinessDay(current, holidays)) {
+    current.setDate(current.getDate() + 1);
+  }
+
+  let remaining = days;
+  while (remaining > 1) {
+    current.setDate(current.getDate() + 1);
+    if (isBusinessDay(current, holidays)) {
+      remaining--;
+    }
+  }
+  return current;
+};
+
 export const calculateReviewCalendarDays = (endDate: Date, reviewDays: number, holidays: string[]) => {
   let remaining = reviewDays;
   let current = new Date(endDate);
@@ -187,6 +224,7 @@ export const shouldHighlightField = (
   // 自動入力（Auto）設定時はハイライト不要
   if (item?.is_auto_planned_date && (field === 'planned_start_date' || field === 'planned_end_date')) return false;
   if (item?.is_auto_actual_date && (field === 'actual_start_date' || field === 'actual_end_date')) return false;
+  if (item?.is_auto_effort && (field === 'planned_effort_days' || field === 'actual_effort_days' || field === 'planned_end_date')) return false;
 
   const isUnset = (v: any) => v === null || v === undefined || v === '';
 
@@ -206,7 +244,7 @@ export const shouldHighlightField = (
 
   // Done status requirements
   const isDoneRequirement = (field: string) => {
-    return field === 'actual_end_date';
+    return ['actual_end_date', 'planned_effort_days', 'actual_effort_days'].includes(field);
   };
 
   if (status.status_name === 'New') {

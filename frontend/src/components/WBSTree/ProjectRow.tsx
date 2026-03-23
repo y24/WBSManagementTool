@@ -164,6 +164,24 @@ const ProjectRow = memo(({
           highlight={getHighlight('actual_end_date', project.actual_end_date)}
         />
       </div>
+      <div className={`w-16 ${dateCellClasses}`}>
+        <EditableInput 
+          type="number" 
+          value={project.planned_effort_total} 
+          precision={1} 
+          readOnly={true} 
+          isAuto={true} 
+        />
+      </div>
+      <div className={`w-16 ${dateCellClasses}`}>
+        <EditableInput 
+          type="number" 
+          value={project.actual_effort_total} 
+          precision={1} 
+          readOnly={true} 
+          isAuto={true} 
+        />
+      </div>
       <div className={`w-20 ${commonCellClasses}`}></div>
       <div className={`w-16 ${commonCellClasses}`}></div>
     </div>

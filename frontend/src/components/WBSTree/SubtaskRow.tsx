@@ -120,6 +120,32 @@ const SubtaskRow = memo(({
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} min={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v) } highlight={getHighlight('planned_end_date', subtask.planned_end_date)} /></div>
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v) } highlight={getHighlight('actual_start_date', subtask.actual_start_date)} /></div>
       <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} min={subtask.actual_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v) } highlight={getHighlight('actual_end_date', subtask.actual_end_date)} /></div>
+      <div className={`w-16 ${dateCellClasses}`}>
+        <EditableInput 
+          type="number" 
+          value={subtask.planned_effort_days} 
+          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'planned_effort_days', v)} 
+          min={0} 
+          step={0.1}
+          precision={1}
+          isAuto={subtask.is_auto_effort}
+          onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
+          highlight={getHighlight('planned_effort_days', subtask.planned_effort_days)}
+        />
+      </div>
+      <div className={`w-16 ${dateCellClasses}`}>
+        <EditableInput 
+          type="number" 
+          value={subtask.actual_effort_days} 
+          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'actual_effort_days', v)} 
+          min={0} 
+          step={0.1}
+          precision={1}
+          isAuto={subtask.is_auto_effort}
+          onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
+          highlight={getHighlight('actual_effort_days', subtask.actual_effort_days)}
+        />
+      </div>
       <div className={`w-20 ${commonCellClasses}`}>
         <EditableInput 
           type="number" 

@@ -98,6 +98,7 @@ class SubtaskBase(BaseModel):
     review_days: Optional[Decimal] = None
     ticket_id: Optional[int] = None
     memo: Optional[str] = None
+    is_auto_effort: bool = True
     sort_order: int = 0
 
 class SubtaskCreate(SubtaskBase):
@@ -121,6 +122,7 @@ class SubtaskUpdate(BaseModel):
     review_days: Optional[Decimal] = None
     ticket_id: Optional[int] = None
     memo: Optional[str] = None
+    is_auto_effort: Optional[bool] = None
     sort_order: Optional[int] = None
 
 class Subtask(SubtaskBase):
@@ -129,6 +131,7 @@ class Subtask(SubtaskBase):
     subtask_type_id: Optional[int]
     status_id: int
     assignee_id: Optional[int]
+    is_auto_effort: bool
     is_deleted: bool
     created_at: datetime
     updated_at: datetime

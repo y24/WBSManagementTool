@@ -107,12 +107,13 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
   if (!isEditing) {
     return (
       <div
-        className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 cursor-pointer hover:bg-black/5 ${isActuallyReadOnly ? 'bg-gray-50/30' : ''} ${isAuto ? 'text-blue-600 font-medium' : ''} ${highlight ? 'bg-yellow-50 hover:bg-yellow-100/50' : ''} ${className}`}
+        className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 ${!readOnly ? 'cursor-pointer hover:bg-black/5' : 'cursor-default'} ${isActuallyReadOnly ? 'bg-gray-50/30 font-medium' : ''} ${isAuto ? 'text-blue-600' : 'text-gray-700'} ${type === 'number' ? 'border border-gray-200 bg-gray-50/30 rounded' : ''} ${highlight ? 'bg-yellow-50 hover:bg-yellow-100/50' : ''} ${className}`}
         onClick={() => {
+          if (readOnly) return;
           setIsEditing(true);
           isCommittingRef.current = false;
         }}
-        title={isActuallyReadOnly ? "自動集計中 (クリックで設定変更可能)" : (type === 'date' && value ? formatDateForInput(value) : String(value || "未入力"))}
+        title={isActuallyReadOnly ? "自動算出中 (クリックで設定変更可能)" : (type === 'date' && value ? formatDateForInput(value) : String(value || "未入力"))}
       >
         {displayValue()}
       </div>
@@ -123,30 +124,35 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
   return (
     <div
       ref={containerRef}
-      className={type === 'date' ? "relative w-full h-full" : "w-full h-full"}
-      style={type === 'date' && isEditing ? { zIndex: 1000, overflow: 'visible' } : {}}
+      className={(type === 'date' || type === 'number') && isEditing ? "relative w-full h-full" : "w-full h-full"}
+      style={(type === 'date' || type === 'number') && isEditing ? { zIndex: 1000, overflow: 'visible' } : {}}
     >
-      {type === 'date' && isEditing ? (
+      {(type === 'date' || (type === 'number' && onToggleAuto)) && isEditing ? (
         <div
           className="absolute left-0 top-0 z-[1000] flex items-center bg-white shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10 whitespace-nowrap overflow-hidden"
-          style={{ width: onToggleAuto ? '220px' : '160px', height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
+          style={{ width: type === 'date' ? (onToggleAuto ? '220px' : '160px') : (onToggleAuto ? '180px' : '100px'), height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
         >
-          <button
-            type="button"
-            className="flex items-center justify-center w-9 h-full border-r border-blue-100 text-blue-600 hover:bg-blue-50 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-            onMouseDown={(e) => e.preventDefault()}
-            disabled={isAuto}
-            onClick={(e) => {
-              e.stopPropagation();
-              try { (datePickerRef.current as any)?.showPicker(); } catch (err) { datePickerRef.current?.click(); }
-            }}
-            title={isAuto ? "自動設定中は変更できません" : "カレンダーから選択"}
-          >
-            <Calendar size={19} />
-          </button>
+          <div className="flex items-center justify-center w-9 h-full border-r border-blue-100 text-blue-600 shrink-0">
+            {type === 'date' ? (
+              <button
+                type="button"
+                className="w-full h-full flex items-center justify-center hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onMouseDown={(e) => e.preventDefault()}
+                disabled={isAuto}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  try { (datePickerRef.current as any)?.showPicker(); } catch (err) { datePickerRef.current?.click(); }
+                }}
+              >
+                <Calendar size={19} />
+              </button>
+            ) : (
+              <span className="text-gray-400 font-bold italic">#</span>
+            )}
+          </div>
           <input
-            type="text"
-            placeholder="YYYY/MM/DD"
+            type={type === 'date' ? 'text' : 'number'}
+            placeholder={type === 'date' ? "YYYY/MM/DD" : "0.0"}
             className="flex-1 bg-transparent min-w-0 h-full border-none outline-none px-2 text-sm font-bold text-gray-800 disabled:text-gray-400 disabled:cursor-not-allowed"
             value={val}
             autoFocus
@@ -156,10 +162,13 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleCommit((e.target as HTMLInputElement).value);
               else if (e.key === 'Escape') {
-                setVal(formatDateForInput(value));
+                setVal(type === 'date' ? formatDateForInput(value) : (value != null ? String(value) : ''));
                 setIsEditing(false);
               }
             }}
+            min={min}
+            max={max}
+            step={step}
           />
           {onToggleAuto && (
             <div

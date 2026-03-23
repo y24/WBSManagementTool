@@ -18,6 +18,7 @@ export interface Subtask {
   ticket_id?: number | null;
   memo?: string | null;
   sort_order: number;
+  is_auto_effort: boolean;
   is_deleted: boolean;
   
   // Relations mapped by backend (if needed, otherwise manually mapped from initial-data)
@@ -42,6 +43,8 @@ export interface Task {
   status_id?: number | null;
   assignee_id?: number | null;
   is_overlapping?: boolean;
+  planned_effort_total?: number;
+  actual_effort_total?: number;
   subtasks: Subtask[];
 }
 
@@ -62,6 +65,8 @@ export interface Project {
   status_id?: number | null;
   assignee_id?: number | null;
   is_overlapping?: boolean;
+  planned_effort_total?: number;
+  actual_effort_total?: number;
   tasks: Task[];
 }
 

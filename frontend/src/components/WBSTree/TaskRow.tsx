@@ -164,6 +164,24 @@ const TaskRow = memo(({
           highlight={getHighlight('actual_end_date', task.actual_end_date)}
         />
       </div>
+      <div className={`w-16 ${dateCellClasses}`}>
+        <EditableInput 
+          type="number" 
+          value={task.planned_effort_total} 
+          precision={1} 
+          readOnly={true} 
+          isAuto={true} 
+        />
+      </div>
+      <div className={`w-16 ${dateCellClasses}`}>
+        <EditableInput 
+          type="number" 
+          value={task.actual_effort_total} 
+          precision={1} 
+          readOnly={true} 
+          isAuto={true} 
+        />
+      </div>
       <div className={`w-20 ${commonCellClasses}`}></div>
       <div className={`w-16 ${commonCellClasses}`}></div>
     </div>
