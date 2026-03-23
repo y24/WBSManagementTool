@@ -106,7 +106,13 @@ export const getDisabledStatusIds = (type: 'project' | 'task' | 'subtask', item:
     });
   }
 
-  return Array.from(disabled);
+  const result = Array.from(disabled);
+  const removedStatus = initialData.statuses.find(s => s.status_name === 'Removed');
+  if (removedStatus) {
+    return result.filter(id => id !== removedStatus.id);
+  }
+
+  return result;
 };
 export const shouldHighlightField = (
   type: 'project' | 'task' | 'subtask',
