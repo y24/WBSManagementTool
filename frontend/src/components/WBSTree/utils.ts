@@ -108,3 +108,50 @@ export const getDisabledStatusIds = (type: 'project' | 'task' | 'subtask', item:
 
   return Array.from(disabled);
 };
+export const shouldHighlightField = (
+  type: 'project' | 'task' | 'subtask',
+  field: string,
+  value: any,
+  statusId: number | null | undefined,
+  initialData: InitialData | null
+) => {
+  if (!statusId || !initialData) return false;
+  const status = initialData.statuses.find(s => s.id === statusId);
+  if (!status) return false;
+
+  const isUnset = (v: any) => v === null || v === undefined || v === '';
+
+  // New status requirements
+  const isNewRequirement = (field: string) => {
+    if (field === 'assignee_id') return true;
+    if (type === 'subtask') {
+      return ['subtask_type_id', 'planned_start_date', 'planned_end_date'].includes(field);
+    }
+    return false;
+  };
+
+  // In Progress status requirements
+  const isInProgressRequirement = (field: string) => {
+    return field === 'actual_start_date';
+  };
+
+  // Done status requirements
+  const isDoneRequirement = (field: string) => {
+    return field === 'actual_end_date';
+  };
+
+  if (status.status_name === 'New') {
+    if (isNewRequirement(field) && isUnset(value)) return true;
+  } else if (status.status_name === 'In Progress') {
+    if ((isNewRequirement(field) || isInProgressRequirement(field)) && isUnset(value)) return true;
+  } else if (status.status_name === 'Done') {
+    if ((isNewRequirement(field) || isInProgressRequirement(field) || isDoneRequirement(field)) && isUnset(value)) return true;
+  } else if (status.status_name === 'In Review') {
+    // Treat In Review like In Progress or similar?
+    // User didn't specify In Review, but it's likely closer to In Progress but with more requirements.
+    // Let's stick to user's specified ones first.
+    if ((isNewRequirement(field) || isInProgressRequirement(field)) && isUnset(value)) return true;
+  }
+
+  return false;
+};

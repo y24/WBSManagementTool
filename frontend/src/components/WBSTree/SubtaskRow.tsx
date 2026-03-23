@@ -5,7 +5,7 @@ import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
 import StatusSelect from './StatusSelect';
 import PortalSelect from './PortalSelect';
-import { getWarning } from './utils';
+import { getWarning, shouldHighlightField } from './utils';
 import { commonRowClasses, commonCellClasses, dateCellClasses } from './constants';
 
 interface SubtaskRowProps {
@@ -30,6 +30,10 @@ const SubtaskRow = memo(({
   provided 
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData);
+
+  const getHighlight = (field: string, value: any) => 
+    shouldHighlightField('subtask', field, value, subtask.status_id, initialData);
+
   return (
     <div className={`flex group wbs-row-subtask ${commonRowClasses}`}>
       <div
@@ -53,6 +57,7 @@ const SubtaskRow = memo(({
             className="font-semibold text-gray-700 -ml-1"
             placeholder="未設定"
             dropdownTitle="種別を変更"
+            highlight={getHighlight('subtask_type_id', subtask.subtask_type_id)}
           />
           <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail || undefined}>
             {subtask.subtask_detail}
@@ -108,12 +113,13 @@ const SubtaskRow = memo(({
           className="w-full text-sm"
           placeholder="未設定"
           dropdownTitle="担当者を変更"
+          highlight={getHighlight('assignee_id', subtask.assignee_id)}
         />
       </div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} max={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v) } /></div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} min={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v) } /></div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v) } /></div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} min={subtask.actual_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v) } /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} max={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v) } highlight={getHighlight('planned_start_date', subtask.planned_start_date)} /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} min={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v) } highlight={getHighlight('planned_end_date', subtask.planned_end_date)} /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v) } highlight={getHighlight('actual_start_date', subtask.actual_start_date)} /></div>
+      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_end_date} min={subtask.actual_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v) } highlight={getHighlight('actual_end_date', subtask.actual_end_date)} /></div>
       <div className={`w-20 ${commonCellClasses}`}>
         <EditableInput 
           type="number" 
@@ -123,6 +129,7 @@ const SubtaskRow = memo(({
           step={0.5}
           precision={1}
           suffix="日"
+          highlight={getHighlight('review_days', subtask.review_days)}
         />
       </div>
       <div className={`w-16 ${commonCellClasses}`}>
@@ -138,5 +145,6 @@ const SubtaskRow = memo(({
     </div>
   );
 });
+
 
 export default SubtaskRow;

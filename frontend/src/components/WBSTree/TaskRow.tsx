@@ -5,7 +5,7 @@ import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
 import StatusSelect from './StatusSelect';
 import PortalSelect from './PortalSelect';
-import { getWarning, getDisabledStatusIds } from './utils';
+import { getWarning, getDisabledStatusIds, shouldHighlightField } from './utils';
 import { commonRowClasses, commonCellClasses, dateCellClasses } from './constants';
 
 interface TaskRowProps {
@@ -36,6 +36,10 @@ const TaskRow = memo(({
   provided 
 }: TaskRowProps) => {
   const warning = getWarning(task);
+
+  const getHighlight = (field: string, value: any) => 
+    shouldHighlightField('task', field, value, task.status_id, initialData);
+
   return (
     <div className={`flex group wbs-row-task ${commonRowClasses}`}>
       <div
@@ -115,6 +119,7 @@ const TaskRow = memo(({
           className="w-full text-sm"
           placeholder="未設定"
           dropdownTitle="担当者を変更"
+          highlight={getHighlight('assignee_id', task.assignee_id)}
         />
       </div>
       <div className={`w-20 ${dateCellClasses}`}>
@@ -145,6 +150,7 @@ const TaskRow = memo(({
           onChange={(v: string) => onUpdateField('task', task.id, 'actual_start_date', v)} 
           isAuto={task.is_auto_actual_date}
           onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_actual_date', v)}
+          highlight={getHighlight('actual_start_date', task.actual_start_date)}
         />
       </div>
       <div className={`w-20 ${dateCellClasses}`}>
@@ -155,6 +161,7 @@ const TaskRow = memo(({
           onChange={(v: string) => onUpdateField('task', task.id, 'actual_end_date', v)} 
           isAuto={task.is_auto_actual_date}
           onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_actual_date', v)}
+          highlight={getHighlight('actual_end_date', task.actual_end_date)}
         />
       </div>
       <div className={`w-20 ${commonCellClasses}`}></div>
@@ -162,5 +169,6 @@ const TaskRow = memo(({
     </div>
   );
 });
+
 
 export default TaskRow;

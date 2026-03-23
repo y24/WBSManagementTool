@@ -9,6 +9,7 @@ interface PortalSelectProps {
   className?: string;
   placeholder?: string;
   dropdownTitle?: string;
+  highlight?: boolean;
 }
 
 const PortalSelect = memo(({ 
@@ -17,7 +18,8 @@ const PortalSelect = memo(({
   onChange, 
   className = "", 
   placeholder = "未設定",
-  dropdownTitle
+  dropdownTitle,
+  highlight
 }: PortalSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -89,7 +91,7 @@ const PortalSelect = memo(({
       <button
         ref={buttonRef}
         onClick={toggleDropdown}
-        className={`flex items-center gap-1.5 px-1.5 py-1 rounded hover:bg-gray-100/80 transition-colors text-left outline-none group/pselect ${className}`}
+        className={`flex items-center gap-1.5 px-1.5 py-1 rounded transition-colors text-left outline-none group/pselect ${highlight ? 'bg-yellow-50 hover:bg-yellow-100/50' : 'hover:bg-gray-100/80'} ${className}`}
       >
         <span className="truncate flex-1 leading-none">
           {selectedOption && selectedOption.id !== null ? (
@@ -100,6 +102,7 @@ const PortalSelect = memo(({
         </span>
         <ChevronDown size={14} className="text-gray-300 group-hover/pselect:text-gray-500 transition-colors shrink-0" />
       </button>
+
 
       {isOpen && createPortal(
         <div 

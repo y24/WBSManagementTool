@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Calendar } from 'lucide-react';
 import { formatDateForInput, parseDateFromInput, formatDisplayDate } from './utils';
 
-const EditableInput = memo(({ value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto }: any) => {
+const EditableInput = memo(({ value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight }: any) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const isCommittingRef = useRef(false);
@@ -105,7 +105,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
   if (!isEditing) {
     return (
       <div
-        className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 cursor-pointer hover:bg-black/5 ${isActuallyReadOnly ? 'bg-gray-50/30' : ''} ${isAuto ? 'text-blue-600 font-medium' : ''} ${className}`}
+        className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 cursor-pointer hover:bg-black/5 ${isActuallyReadOnly ? 'bg-gray-50/30' : ''} ${isAuto ? 'text-blue-600 font-medium' : ''} ${highlight ? 'bg-yellow-50 hover:bg-yellow-100/50' : ''} ${className}`}
         onClick={() => {
           setIsEditing(true);
           isCommittingRef.current = false;
@@ -116,6 +116,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
       </div>
     );
   }
+
 
   return (
     <div
