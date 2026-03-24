@@ -97,6 +97,7 @@ export default function MainBoard() {
       showRemoved: false,
       showDoneProjects: false,
       hidePlanningColumns: false,
+      showGanttChart: true,
       isDarkMode: false
     };
     if (saved) {
@@ -419,8 +420,8 @@ export default function MainBoard() {
       <div className="flex flex-1 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
         {/* 左ペイン: WBSツリー */}
         <div 
-          className="flex-shrink-0 flex flex-col relative z-20 overflow-hidden" 
-          style={{ width: `${treeWidth}px` }}
+          className={`flex flex-col relative z-20 overflow-hidden ${displayOptions.showGanttChart ? 'flex-shrink-0' : 'flex-1'}`}
+          style={{ width: displayOptions.showGanttChart ? `${treeWidth}px` : '100%' }}
         >
           <WBSTree 
             ref={treeRef}
@@ -437,32 +438,36 @@ export default function MainBoard() {
         </div>
 
         {/* リサイズバー */}
-        <div 
-          className="w-1.5 bg-gray-200 dark:bg-slate-800 cursor-col-resize hover:bg-blue-400 dark:hover:bg-blue-600 transition-colors z-30 flex items-center justify-center shrink-0"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            setIsResizing(true);
-          }}
-        >
-        </div>
+        {displayOptions.showGanttChart && (
+          <>
+            <div 
+              className="w-1.5 bg-gray-200 dark:bg-slate-800 cursor-col-resize hover:bg-blue-400 dark:hover:bg-blue-600 transition-colors z-30 flex items-center justify-center shrink-0"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setIsResizing(true);
+              }}
+            >
+            </div>
 
-        {/* 右ペイン: ガントチャート */}
-        <div className="flex-1 bg-slate-50 dark:bg-slate-950 relative overflow-hidden flex flex-col z-10 w-0 transition-colors">
-          {dynamicGanttRange && (
-            <GanttChart 
-              ref={ganttRef}
-              projects={filteredProjects} 
-              initialData={initialData}
-              range={dynamicGanttRange}
-              expandedProjects={expandedProjects}
-              expandedTasks={expandedTasks}
-              showProjectRange={displayOptions.showProjectRange}
-              showTodayHighlight={displayOptions.showTodayHighlight}
-              isDarkMode={displayOptions.isDarkMode}
-              onScroll={handleGanttScroll}
-            />
-          )}
-        </div>
+            {/* 右ペイン: ガントチャート */}
+            <div className="flex-1 bg-slate-50 dark:bg-slate-950 relative overflow-hidden flex flex-col z-10 w-0 transition-colors">
+              {dynamicGanttRange && (
+                <GanttChart 
+                  ref={ganttRef}
+                  projects={filteredProjects} 
+                  initialData={initialData}
+                  range={dynamicGanttRange}
+                  expandedProjects={expandedProjects}
+                  expandedTasks={expandedTasks}
+                  showProjectRange={displayOptions.showProjectRange}
+                  showTodayHighlight={displayOptions.showTodayHighlight}
+                  isDarkMode={displayOptions.isDarkMode}
+                  onScroll={handleGanttScroll}
+                />
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, Columns3, Columns2 } from 'lucide-react';
+import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, Columns3, Columns2, ChartNoAxesGantt } from 'lucide-react';
 import MultiSelect from './MultiSelect';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
@@ -19,6 +19,7 @@ export interface DisplayOptions {
   showRemoved: boolean;
   showDoneProjects: boolean;
   hidePlanningColumns: boolean;
+  showGanttChart: boolean;
   isDarkMode: boolean;
 }
 
@@ -175,6 +176,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         aria-label={displayOptions.hidePlanningColumns ? '計画列を表示' : '計画列を非表示'}
       >
         {displayOptions.hidePlanningColumns ? <Columns2 size={18} /> : <Columns3 size={18} />}
+      </button>
+
+      <button
+        onClick={() => setDisplayOptions(prev => ({ ...prev, showGanttChart: !prev.showGanttChart }))}
+        className={`p-2 rounded-lg border transition-all shadow-sm ${displayOptions.showGanttChart
+          ? 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:border-blue-400 hover:text-blue-500'
+          : 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400'
+          }`}
+        title={displayOptions.showGanttChart ? 'ガントチャートを非表示' : 'ガントチャートを表示'}
+        aria-label={displayOptions.showGanttChart ? 'ガントチャートを非表示' : 'ガントチャートを表示'}
+      >
+        <ChartNoAxesGantt size={18} />
       </button>
 
       <div className="relative" ref={settingsRef}>
