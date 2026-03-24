@@ -175,16 +175,24 @@ const SubtaskRow = memo(({
           highlight={getHighlight('actual_effort_days', subtask.actual_effort_days)}
         />
       </div>
-      <div className={`w-16 ${commonCellClasses}`}>
-        <EditableInput
-          type="number"
-          value={subtask.progress_percent}
-          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'progress_percent', v)}
-          min={0}
-          max={100}
-          suffix="%"
-          autoPercent={true}
-        />
+      <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
+        {subtask.progress_percent != null && (
+          <div 
+            className="absolute top-0 left-0 h-full bg-green-500/20 dark:bg-green-500/30 transition-all duration-300 pointer-events-none"
+            style={{ width: `${subtask.progress_percent}%` }}
+          />
+        )}
+        <div className="relative z-10 w-full h-full flex items-center">
+          <EditableInput
+            type="number"
+            value={subtask.progress_percent}
+            onChange={(v: any) => onUpdateField('subtask', subtask.id, 'progress_percent', v)}
+            min={0}
+            max={100}
+            suffix="%"
+            autoPercent={true}
+          />
+        </div>
       </div>
     </div>
   );

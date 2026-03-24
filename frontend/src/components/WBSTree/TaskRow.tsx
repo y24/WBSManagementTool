@@ -154,6 +154,7 @@ const TaskRow = memo(({
               precision={1} 
               readOnly={true} 
               isAuto={true} 
+              onChange={() => {}}
             />
           </div>
         </>
@@ -188,9 +189,10 @@ const TaskRow = memo(({
           precision={1} 
           readOnly={true} 
           isAuto={true} 
+          onChange={() => {}}
         />
       </div>
-      <div className={`w-16 ${commonCellClasses}`}></div>
+      <div className={`w-24 ${commonCellClasses}`}></div>
     </div>
   );
 });
