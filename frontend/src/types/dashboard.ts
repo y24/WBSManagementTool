@@ -49,7 +49,7 @@ export interface DashboardData {
   project_progress: ProjectProgressData[];
   assignee_delays: AssigneeDelayData[];
   status_counts: StatusCountData[];
-  review_delays_top5: ReviewDelaySubtask[];
+  review_delays: ReviewDelaySubtask[];
   low_progress_soon_to_finish: SubtaskSummary[];
   assignee_summary: AssigneeSummary[];
 }

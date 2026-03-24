@@ -42,7 +42,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-center h-full bg-slate-50 dark:bg-slate-950">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium animate-pulse">データを読み込み中...</p>
+          <p className="text-slate-500 dark:text-slate-400 text-base font-medium animate-pulse">データを読み込み中...</p>
         </div>
       </div>
     );
@@ -57,9 +57,9 @@ export default function Dashboard() {
   return (
     <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-full text-slate-700 dark:text-slate-200 overflow-y-auto transition-colors duration-300">
       <div>
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
           Dashboard
-          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 uppercase">WBS Analytics</span>
+          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20 uppercase">WBS Analytics</span>
         </h2>
       </div>
 
@@ -100,10 +100,10 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.project_progress} layout="vertical" margin={{ left: 10, right: 30, top: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} />
-                <XAxis type="number" domain={[0, 100]} stroke={chartAxisColor} fontSize={10} />
-                <YAxis dataKey="project_name" type="category" stroke={chartAxisColor} fontSize={10} width={100} />
+                <XAxis type="number" domain={[0, 100]} stroke={chartAxisColor} fontSize={12} />
+                <YAxis dataKey="project_name" type="category" stroke={chartAxisColor} fontSize={12} width={120} />
                 <Tooltip 
-                    contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '12px', color: tooltipText }}
+                    contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '14px', color: tooltipText }}
                     itemStyle={{ color: tooltipText }}
                 />
                 <Bar dataKey="progress_percent" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={16} />
@@ -117,10 +117,10 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.assignee_delays}>
                 <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
-                <XAxis dataKey="member_name" stroke={chartAxisColor} fontSize={10} />
-                <YAxis stroke={chartAxisColor} fontSize={10} />
+                <XAxis dataKey="member_name" stroke={chartAxisColor} fontSize={12} />
+                <YAxis stroke={chartAxisColor} fontSize={12} />
                 <Tooltip 
-                    contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '12px', color: tooltipText }}
+                    contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '14px', color: tooltipText }}
                     itemStyle={{ color: tooltipText }}
                 />
                 <Bar dataKey="delay_count" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={30} />
@@ -148,10 +148,10 @@ export default function Dashboard() {
                     ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '12px', color: tooltipText }}
+                  contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '14px', color: tooltipText }}
                   itemStyle={{ color: tooltipText }}
                 />
-                <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: '10px' }} />
+                <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: '12px' }} />
                 </PieChart>
             </ResponsiveContainer>
           </div>
@@ -161,31 +161,33 @@ export default function Dashboard() {
       {/* Lists Section */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 pb-8">
         <div className="space-y-8">
-          <ListContainer title="レビュー遅延サブタスク TOP5" subtitle="レビュー開始しているが、予定日数を超過">
+          <ListContainer title="レビュー遅延サブタスク" subtitle="レビュー開始の遅延、またはレビュー期間の超過">
             <div className="space-y-3 mt-4">
-              {data.review_delays_top5.length === 0 ? (
-                <div className="text-center py-10 text-slate-400 font-medium italic bg-white dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+              {data.review_delays.length === 0 ? (
+                <div className="text-center py-10 text-slate-400 text-base font-medium italic bg-white dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
                   現在、レビュー遅延サブタスクはありません。
                 </div>
               ) : (
-                data.review_delays_top5.map((s) => (
+                data.review_delays.map((s) => (
                   <div key={s.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none hover:border-amber-500/30 transition-all group relative overflow-hidden">
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500 opacity-50"></div>
                     <div className="space-y-1 ml-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter max-w-[120px] truncate">{s.task_name}</span>
-                        <ChevronRight size={10} className="text-slate-300 dark:text-slate-700" />
-                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{s.subtask_detail}</span>
+                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter max-w-[150px] truncate">{s.task_name}</span>
+                        <ChevronRight size={12} className="text-slate-300 dark:text-slate-700" />
+                        <span className="text-base font-bold text-slate-700 dark:text-slate-200">{s.subtask_detail}</span>
                       </div>
-                      <div className="flex items-center gap-4 text-[10px] text-slate-500 dark:text-slate-400">
-                        <span className="flex items-center gap-1"><Briefcase size={10}/> {s.assignee_name || '-'}</span>
-                        <span className="flex items-center gap-1"><Clock size={10}/> 開始: {s.review_start_date}</span>
+                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                        <span className="flex items-center gap-1"><Briefcase size={12}/> {s.assignee_name || '-'}</span>
+                        <span className="flex items-center gap-1">
+                          <Clock size={12}/> {s.review_start_date ? `開始: ${s.review_start_date}` : <span className="text-amber-600 dark:text-amber-400 font-bold italic">未開始 (開始期限超過)</span>}
+                        </span>
                         <span className="text-slate-400 dark:text-slate-500">枠: {s.review_days}日</span>
                       </div>
                     </div>
                     <div className="text-right flex flex-col items-end">
-                      <div className="text-sm font-black text-amber-600 dark:text-amber-500">+{s.delay_days.toFixed(1)}d</div>
-                      <div className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800/50 px-1.5 py-0.5 rounded">{s.progress_percent}%</div>
+                      <div className="text-base font-black text-amber-600 dark:text-amber-500">+{s.delay_days.toFixed(1)}d</div>
+                      <div className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800/50 px-2 py-0.5 rounded">{s.progress_percent}%</div>
                     </div>
                   </div>
                 ))
@@ -196,7 +198,7 @@ export default function Dashboard() {
           <ListContainer title="今週終了予定・低進捗サブタスク" subtitle="終了予定が今週だが進捗50%未満">
             <div className="space-y-3 mt-4">
               {data.low_progress_soon_to_finish.length === 0 ? (
-                <div className="text-center py-10 text-slate-400 font-medium italic bg-white dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                <div className="text-center py-10 text-slate-400 text-base font-medium italic bg-white dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
                   現在、対象となるサブタスクはありません。
                 </div>
               ) : (
@@ -205,20 +207,20 @@ export default function Dashboard() {
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500 opacity-50"></div>
                     <div className="space-y-1 ml-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter max-w-[120px] truncate">{s.task_name}</span>
-                        <ChevronRight size={10} className="text-slate-300 dark:text-slate-700" />
-                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{s.subtask_detail}</span>
+                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter max-w-[150px] truncate">{s.task_name}</span>
+                        <ChevronRight size={12} className="text-slate-300 dark:text-slate-700" />
+                        <span className="text-base font-bold text-slate-700 dark:text-slate-200">{s.subtask_detail}</span>
                       </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-3">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-3">
                         <span className="text-rose-600 dark:text-rose-400 font-medium italic">Due: {s.planned_end_date}</span>
                         <span>Assignee: {s.assignee_name || '-'}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <div className="w-20 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-20 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div className="h-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" style={{ width: `${s.progress_percent}%` }}></div>
                       </div>
-                      <span className="text-xs font-black text-rose-600 dark:text-rose-400 w-8 text-right tracking-tighter">{s.progress_percent}%</span>
+                      <span className="text-sm font-black text-rose-600 dark:text-rose-400 w-10 text-right tracking-tighter">{s.progress_percent}%</span>
                     </div>
                   </div>
                 ))
@@ -229,9 +231,9 @@ export default function Dashboard() {
 
         <ListContainer title="担当者別 負荷・レベル状況">
           <div className="overflow-x-auto mt-4">
-            <table className="w-full text-sm text-left border-collapse">
+            <table className="w-full text-base text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest">
                   <th className="pb-4 px-2">Member</th>
                   <th className="pb-4 px-2 text-center">Total</th>
                   <th className="pb-4 px-2 text-center">ThisWk</th>
@@ -245,7 +247,7 @@ export default function Dashboard() {
                   <tr key={m.member_name} className="hover:bg-indigo-500/5 transition-colors group">
                     <td className="py-4 px-2">
                         <div className="flex items-center gap-3">
-                            <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-indigo-600 dark:text-indigo-400">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-black text-indigo-600 dark:text-indigo-400">
                                 {m.member_name.substring(0, 1)}
                             </div>
                             <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{m.member_name}</span>
@@ -258,11 +260,11 @@ export default function Dashboard() {
                     <td className="py-4 px-2 text-right">
                        <div className="flex items-center justify-end gap-1">
                           {m.overdue_count > 0 ? (
-                            <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-500 text-[9px] font-black border border-rose-500/20 shadow-sm dark:shadow-[0_0_10px_rgba(244,63,94,0.1)]">OVERLOAD</span>
+                            <span className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-500 text-[11px] font-black border border-rose-500/20 shadow-sm dark:shadow-[0_0_10px_rgba(244,63,94,0.1)]">OVERLOAD</span>
                           ) : m.concurrent_count > 3 ? (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-500 text-[9px] font-black border border-amber-500/20">CAUTION</span>
+                            <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-500 text-[11px] font-black border border-amber-500/20">CAUTION</span>
                           ) : (
-                            <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[9px] font-black border border-emerald-500/20">STABLE</span>
+                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[11px] font-black border border-emerald-500/20">STABLE</span>
                           )}
                        </div>
                     </td>
@@ -289,9 +291,9 @@ function KPICard({ title, value, icon, gradient, highlight = false }: any) {
         </div>
       </div>
       <div className="relative z-10">
-        <p className="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{title}</p>
-        <p className="text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
-          {value}<span className="text-sm font-bold text-slate-400 dark:text-slate-500 ml-2 tracking-normal uppercase">{title.includes('数') || title.includes('件') ? 'items' : ''}</span>
+        <p className="text-slate-500 dark:text-slate-400 text-xs font-black uppercase tracking-[0.2em] mb-2">{title}</p>
+        <p className="text-5xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
+          {value}<span className="text-base font-bold text-slate-400 dark:text-slate-500 ml-2 tracking-normal uppercase">{title.includes('数') || title.includes('件') ? 'items' : ''}</span>
         </p>
       </div>
     </div>
@@ -302,8 +304,8 @@ function ChartContainer({ title, children }: any) {
   return (
     <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 backdrop-blur-sm shadow-sm dark:shadow-2xl relative overflow-hidden group">
       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent"></div>
-      <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 mb-8 uppercase tracking-[0.3em] flex items-center gap-3">
-        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span>
+      <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 mb-8 uppercase tracking-[0.3em] flex items-center gap-3">
+        <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span>
         {title}
       </h3>
       {children}
@@ -316,8 +318,8 @@ function ListContainer({ title, subtitle, children }: any) {
     <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 backdrop-blur-sm shadow-sm dark:shadow-2xl h-full relative group">
       <div className="mb-6 flex justify-between items-end">
         <div>
-            <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">{title}</h3>
-            {subtitle && <p className="text-[9px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.1em] mt-1.5 opacity-80">{subtitle}</p>}
+            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{title}</h3>
+            {subtitle && <p className="text-[11px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.1em] mt-1.5 opacity-80">{subtitle}</p>}
         </div>
         <div className="w-8 h-1 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
       </div>

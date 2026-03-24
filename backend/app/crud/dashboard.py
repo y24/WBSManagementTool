@@ -68,11 +68,13 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
 
     # 2. Project Progress
     projects_wbs = get_wbs_data(db)
+    
+    # Filter: Exclude Done and Removed projects from the progress chart
     project_progress = [
         schemas.ProjectProgressData(
             project_name=p.project_name,
             progress_percent=p.progress_percent
-        ) for p in projects_wbs if not p.is_deleted
+        ) for p in projects_wbs if not p.is_deleted and p.status_id not in [done_id, removed_id]
     ]
     # Sort by progress descending or just name
     project_progress.sort(key=lambda x: x.progress_percent, reverse=True)
@@ -106,26 +108,47 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
         for name, data in status_counts_map.items()
     ]
 
-    # 5. Review Delays TOP5 (Started but exceeding review days)
-    # definition: today - review_start_date > review_days
+    # 5. Review Delays (Started but exceeding review days, or not started but past review start deadline)
     review_delays_list = []
     for s in all_subtasks_base:
-        if s.review_start_date and s.review_days and s.status_id != done_id:
-            actual_review_days = (today - s.review_start_date).days
-            if actual_review_days > float(s.review_days):
-                review_delays_list.append(schemas.ReviewDelaySubtask(
-                    id=s.id,
-                    task_name=s.task.task_name,
-                    subtask_detail=f"{s.subtask_type.type_name}({s.subtask_detail})" if s.subtask_detail else s.subtask_type.type_name,
-                    planned_end_date=s.planned_end_date,
-                    progress_percent=s.progress_percent or 0,
-                    assignee_name=s.assignee.member_name if s.assignee else None,
-                    review_days=float(s.review_days),
-                    review_start_date=s.review_start_date,
-                    delay_days=float(actual_review_days) - float(s.review_days)
-                ))
+        if s.status_id == done_id:
+            continue
+        
+        if s.review_days:
+            # Case A: Review started but exceeding review days
+            if s.review_start_date:
+                actual_review_days = (today - s.review_start_date).days
+                if actual_review_days > float(s.review_days):
+                    review_delays_list.append(schemas.ReviewDelaySubtask(
+                        id=s.id,
+                        task_name=s.task.task_name,
+                        subtask_detail=(f"{s.subtask_type.type_name}({s.subtask_detail})" if s.subtask_detail else s.subtask_type.type_name) if s.subtask_type else (s.subtask_detail or "名称未設定"),
+                        planned_end_date=s.planned_end_date,
+                        progress_percent=s.progress_percent or 0,
+                        assignee_name=s.assignee.member_name if s.assignee else None,
+                        review_days=float(s.review_days),
+                        review_start_date=s.review_start_date,
+                        delay_days=float(actual_review_days) - float(s.review_days)
+                    ))
+            # Case B: Review not started and past review start deadline
+            elif s.status_id != in_review_id and s.planned_end_date:
+                # review_start_deadline = planned_end_date - review_days
+                review_start_deadline = s.planned_end_date - timedelta(days=int(float(s.review_days)))
+                if today > review_start_deadline:
+                    review_delays_list.append(schemas.ReviewDelaySubtask(
+                        id=s.id,
+                        task_name=s.task.task_name,
+                        subtask_detail=(f"{s.subtask_type.type_name}({s.subtask_detail})" if s.subtask_detail else s.subtask_type.type_name) if s.subtask_type else (s.subtask_detail or "名称未設定"),
+                        planned_end_date=s.planned_end_date,
+                        progress_percent=s.progress_percent or 0,
+                        assignee_name=s.assignee.member_name if s.assignee else None,
+                        review_days=float(s.review_days),
+                        review_start_date=None,
+                        delay_days=float((today - review_start_deadline).days)
+                    ))
+
     review_delays_list.sort(key=lambda x: x.delay_days, reverse=True)
-    review_delays_top5 = review_delays_list[:5]
+    review_delays = review_delays_list
 
     # 6. Low Progress Soon-to-Finish
     low_progress_soon = []
@@ -135,7 +158,7 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
                 low_progress_soon.append(schemas.SubtaskSummary(
                     id=s.id,
                     task_name=s.task.task_name,
-                    subtask_detail=f"{s.subtask_type.type_name}({s.subtask_detail})" if s.subtask_detail else s.subtask_type.type_name,
+                    subtask_detail=(f"{s.subtask_type.type_name}({s.subtask_detail})" if s.subtask_detail else s.subtask_type.type_name) if s.subtask_type else (s.subtask_detail or "名称未設定"),
                     planned_end_date=s.planned_end_date,
                     progress_percent=s.progress_percent or 0,
                     assignee_name=s.assignee.member_name if s.assignee else None
@@ -172,7 +195,7 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
         project_progress=project_progress,
         assignee_delays=assignee_delays,
         status_counts=status_counts,
-        review_delays_top5=review_delays_top5,
+        review_delays=review_delays,
         low_progress_soon_to_finish=low_progress_soon,
         assignee_summary=assignee_summary
     )

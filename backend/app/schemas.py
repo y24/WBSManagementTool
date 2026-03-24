@@ -368,7 +368,7 @@ class DashboardData(BaseModel):
     project_progress: List[ProjectProgressData]
     assignee_delays: List[AssigneeDelayData]
     status_counts: List[StatusCountData]
-    review_delays_top5: List[ReviewDelaySubtask]
+    review_delays: List[ReviewDelaySubtask]
     low_progress_soon_to_finish: List[SubtaskSummary]
     assignee_summary: List[AssigneeSummary]
 
