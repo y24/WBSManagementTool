@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 body {
   margin: 0;
@@ -30,6 +31,30 @@ body {
   /* Border Color */
   --wbs-border-color: #e2e8f0; /* Slate 200 - vertical lines */
   --wbs-row-border-color: #cbd5e1; /* Slate 200 - horizontal lines (Project/Task) */
+}
+
+.dark {
+  --wbs-project-bg: #1e293b;
+  --wbs-project-row-bg: rgba(30, 41, 59, 0.7);
+  --wbs-project-hover: #334155;
+  --wbs-project-row-hover: rgba(51, 65, 85, 0.6);
+
+  --wbs-task-bg: #0f172a;
+  --wbs-task-row-bg: rgba(15, 23, 42, 0.7);
+  --wbs-task-hover: #1e293b;
+  --wbs-task-row-hover: rgba(30, 41, 59, 0.6);
+
+  --wbs-subtask-bg: #1e293b;
+  --wbs-subtask-hover: #334155;
+
+  --wbs-header-bg: #0f172a;
+  --wbs-slicer-bg: #020617;
+
+  --wbs-border-color: #334155;
+  --wbs-row-border-color: #475569;
+
+  background-color: #020617;
+  color: #f8fafc;
 }
 
 /* WBS Styles */
@@ -117,11 +142,22 @@ body {
 .gantt-body .wbs-row-project {
   background-color: rgba(219, 234, 254, 0.45) !important;
 }
+:root.dark .gantt-body .wbs-row-project {
+  background-color: rgba(30, 41, 59, 0.45) !important;
+}
+
 .gantt-body .wbs-row-task {
   background-color: rgba(241, 245, 249, 0.45) !important;
 }
+:root.dark .gantt-body .wbs-row-task {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}
+
 .gantt-body .wbs-row-subtask {
   background-color: rgba(255, 255, 255, 0.45) !important;
+}
+:root.dark .gantt-body .wbs-row-subtask {
+  background-color: rgba(30, 41, 59, 0.45) !important;
 }
 
 /* Project range highlight in Gantt chart area */
@@ -182,10 +218,18 @@ body {
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
   padding: 1.25rem;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, background-color 0.2s, border-color 0.2s;
+}
+.dark .master-section {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
 }
 .master-section:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+.dark .master-section:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
 }
 
 .master-section-header {
@@ -231,11 +275,19 @@ body {
   cursor: pointer;
   transition: all 0.15s;
 }
+.dark .master-add-btn {
+  background: #0f172a;
+  border-color: #334155;
+  color: #94a3b8;
+}
 .master-add-btn:hover {
   background: #6366f1;
   color: #fff;
   border-color: #6366f1;
   transform: scale(1.05);
+}
+.dark .master-add-btn:hover {
+  background: #818cf8;
 }
 
 .master-sync-btn {

@@ -83,22 +83,22 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
       <button
         ref={buttonRef}
         onClick={toggleDropdown}
-        className="flex items-center gap-1.5 w-full px-1.5 py-1 rounded hover:bg-gray-100 transition-colors text-left outline-none group/status"
+        className="flex items-center gap-1.5 w-full px-1.5 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left outline-none group/status"
       >
         <span
           className="master-color-dot shrink-0"
           style={{ backgroundColor: statusInfo?.color_code, width: '10px', height: '10px' }}
         ></span>
-        <span className="text-[11px] font-normal text-gray-900 truncate flex-1 leading-none">
+        <span className="text-[11px] font-normal text-gray-900 dark:text-slate-100 truncate flex-1 leading-none">
           {statusInfo?.status_name}
         </span>
-        <ChevronDown size={12} className="text-gray-300 group-hover/status:text-gray-500 transition-colors shrink-0" />
+        <ChevronDown size={12} className="text-gray-300 dark:text-slate-600 group-hover/status:text-gray-500 dark:group-hover/status:text-slate-400 transition-colors shrink-0" />
       </button>
 
       {isOpen && createPortal(
         <div
           ref={dropdownRef}
-          className="absolute z-[9999] bg-white border border-gray-200 shadow-2xl rounded-lg py-1.5 overflow-hidden"
+          className="absolute z-[9999] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-2xl rounded-lg py-1.5 overflow-hidden"
           style={{
             top: coords.direction === 'down' ? coords.top + 4 : coords.top - 4,
             left: coords.left,
@@ -106,8 +106,8 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
             transform: coords.direction === 'up' ? 'translateY(-100%)' : 'none'
           }}
         >
-          <div className="px-2 pb-1.5 mb-1.5 border-b border-gray-100 mx-1">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">ステータスを変更</span>
+          <div className="px-2 pb-1.5 mb-1.5 border-b border-gray-100 dark:border-slate-800 mx-1 text-center">
+            <span className="text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">ステータスを変更</span>
           </div>
           <div className="max-h-60 overflow-y-auto overscroll-contain">
             {initialData?.statuses.map((s: any) => {
@@ -117,7 +117,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
                   key={s.id}
                   disabled={isDisabled}
                   className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left 
-                    ${s.id === statusId ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-900'}
+                    ${s.id === statusId ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-900 dark:text-slate-100'}
                     ${isDisabled ? 'opacity-40 cursor-not-allowed filter grayscale-[0.5]' : ''}
                   `}
                   onClick={(e) => {
@@ -133,7 +133,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
                   ></span>
                   <span className="text-xs font-normal leading-none flex-1">
                     {s.status_name}
-                    {isDisabled && <span className="text-[9px] ml-2 text-gray-400 italic">(自動)</span>}
+                    {isDisabled && <span className="text-[9px] ml-2 text-gray-400 dark:text-slate-500 italic">(自動)</span>}
                   </span>
                   {s.id === statusId && <Check size={12} className="ml-auto" />}
                 </button>

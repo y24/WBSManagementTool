@@ -45,19 +45,19 @@ const TaskRow = memo(({
   return (
     <div className={`flex group wbs-row-task ${commonRowClasses}`}>
       <div
-        className={`sticky left-0 z-20 flex items-center gap-1 font-medium pl-6 text-gray-700 wbs-cell-task transition-colors ${commonCellClasses}`}
+        className={`sticky left-0 z-20 flex items-center gap-1 font-medium pl-6 text-gray-700 dark:text-slate-200 wbs-cell-task transition-colors ${commonCellClasses}`}
         style={{ width: nameWidth, minWidth: nameWidth }}
       >
         <input
           type="checkbox"
           checked={checked}
           onChange={onToggleCheck}
-          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
+          className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-500 mr-1"
         />
-        <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
+        <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400">
           <GripVertical size={14} />
         </div>
-        <button onClick={onToggleExpand} className="p-0.5 hover:bg-gray-200 rounded">
+        <button onClick={onToggleExpand} className="p-0.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded transition-colors">
           {expanded === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
         </button>
         <div className="flex-1 min-w-0">
@@ -94,7 +94,7 @@ const TaskRow = memo(({
         </button>
         <button
           onClick={onAddSubtask}
-          className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
+          className="p-1 text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-black/5 dark:hover:bg-white/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
           title="サブタスクを追加"
         >
           <Plus size={14} />

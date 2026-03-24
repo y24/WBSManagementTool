@@ -190,12 +190,12 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   }, [projects, range.start_date]);
 
   return (
-    <div className="h-full w-full overflow-hidden bg-white">
+    <div className="h-full w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
       {/* スクロール領域 (Ganttバー & ヘッダー) */}
       <div ref={ref} className="h-full overflow-auto relative gantt-body" onScroll={onScroll}>
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           {/* ヘッダー領域 (垂直スクロールに追従するためsticky) */}
-          <div className="flex border-b-[1px] border-slate-200 shadow-sm sticky top-0 z-30 bg-slate-100 flex-shrink-0" style={{ height: '33px' }}>
+          <div className="flex border-b-[1px] border-slate-200 dark:border-slate-700 shadow-sm sticky top-0 z-30 bg-slate-100 dark:bg-slate-900 flex-shrink-0 transition-colors" style={{ height: '33px' }}>
             {days.map(d => {
               const dow = getDay(d);
               const isSaturday = dow === 6;
@@ -204,11 +204,11 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
               const isSundayOrHoliday = isSunday || holidayFlag;
               const holidayInfo = initialData?.holidays.find(h => h.holiday_date === format(d, 'yyyy-MM-dd'));
 
-              let dayClasses = "text-gray-500";
+              let dayClasses = "text-gray-500 dark:text-slate-400";
               if (isSundayOrHoliday) {
-                dayClasses = "bg-red-100 text-red-600";
+                dayClasses = "bg-red-100/80 dark:bg-rose-900/40 text-red-600 dark:text-rose-400";
               } else if (isSaturday) {
-                dayClasses = "bg-blue-100 text-blue-600";
+                dayClasses = "bg-blue-100/80 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400";
               }
 
               return (
@@ -235,9 +235,9 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
               let bgClass = "";
               if (isSundayOrHoliday) {
-                bgClass = "bg-red-100/40";
+                bgClass = "bg-red-100/40 dark:bg-rose-900/10";
               } else if (isSaturday) {
-                bgClass = "bg-blue-100/40";
+                bgClass = "bg-blue-100/40 dark:bg-blue-900/10";
               }
 
               return (

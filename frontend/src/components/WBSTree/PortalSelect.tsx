@@ -91,23 +91,23 @@ const PortalSelect = memo(({
       <button
         ref={buttonRef}
         onClick={toggleDropdown}
-        className={`flex items-center gap-1.5 px-1.5 py-1 rounded transition-colors text-left outline-none group/pselect ${highlight ? 'bg-yellow-50 hover:bg-yellow-100/50' : 'hover:bg-gray-100/80'} ${className}`}
+        className={`flex items-center gap-1.5 px-1.5 py-1 rounded transition-colors text-left outline-none group/pselect ${highlight ? 'bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/50' : 'hover:bg-gray-100/80 dark:hover:bg-slate-800'} ${className}`}
       >
-        <span className="truncate flex-1 leading-none">
+        <span className="truncate flex-1 leading-none text-gray-900 dark:text-slate-100">
           {selectedOption && selectedOption.id !== null ? (
             selectedOption.name
           ) : (
-            <span className="text-gray-400">{selectedOption?.name || placeholder}</span>
+            <span className="text-gray-400 dark:text-slate-500">{selectedOption?.name || placeholder}</span>
           )}
         </span>
-        <ChevronDown size={14} className="text-gray-300 group-hover/pselect:text-gray-500 transition-colors shrink-0" />
+        <ChevronDown size={14} className="text-gray-300 dark:text-slate-600 group-hover/pselect:text-gray-500 dark:group-hover/pselect:text-slate-400 transition-colors shrink-0" />
       </button>
 
 
       {isOpen && createPortal(
         <div 
           ref={dropdownRef}
-          className="absolute z-[9999] bg-white border border-gray-200 shadow-2xl rounded-lg py-1.5 overflow-hidden ring-1 ring-black/5"
+          className="absolute z-[9999] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-2xl rounded-lg py-1.5 overflow-hidden ring-1 ring-black/5 dark:ring-white/10"
           style={{ 
             top: coords.direction === 'down' ? coords.top + 4 : coords.top - 4, 
             left: coords.left, 
@@ -116,15 +116,15 @@ const PortalSelect = memo(({
           }}
         >
           {dropdownTitle && (
-            <div className="px-2 pb-1.5 mb-1.5 border-b border-gray-100 mx-1">
-              <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{dropdownTitle}</span>
+            <div className="px-2 pb-1.5 mb-1.5 border-b border-gray-100 dark:border-slate-800 mx-1 text-center">
+              <span className="text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">{dropdownTitle}</span>
             </div>
           )}
           <div className="max-h-60 overflow-y-auto overscroll-contain">
             {options.map((opt) => (
               <button
                 key={opt.id ?? 'null'}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left ${opt.id === value ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-900'}`}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left ${opt.id === value ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-900 dark:text-slate-100'}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onChange(opt.id);

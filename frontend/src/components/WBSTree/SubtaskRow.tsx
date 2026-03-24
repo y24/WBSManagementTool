@@ -40,16 +40,16 @@ const SubtaskRow = memo(({
   return (
     <div className={`flex group wbs-row-subtask ${commonRowClasses}`}>
       <div
-        className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 wbs-cell-subtask transition-colors ${commonCellClasses}`}
+        className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 dark:text-slate-400 wbs-cell-subtask transition-colors ${commonCellClasses}`}
         style={{ width: nameWidth, minWidth: nameWidth }}
       >
         <input
           type="checkbox"
           checked={checked}
           onChange={onToggleCheck}
-          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-1"
+          className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-500 mr-1"
         />
-        <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
+        <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400">
           <GripVertical size={14} />
         </div>
         <div className="flex items-center gap-1 flex-1 min-w-0">
@@ -57,12 +57,12 @@ const SubtaskRow = memo(({
             value={subtask.subtask_type_id}
             options={initialData?.subtask_types.map(t => ({ id: t.id, name: t.type_name })) || []}
             onChange={v => onUpdateField('subtask', subtask.id, 'subtask_type_id', v)}
-            className="font-semibold text-gray-700 -ml-1"
+            className="font-semibold text-gray-700 dark:text-slate-300 -ml-1"
             placeholder="未設定"
             dropdownTitle="種別を変更"
             highlight={getHighlight('subtask_type_id', subtask.subtask_type_id)}
           />
-          <span className="text-gray-400 text-xs truncate" title={subtask.subtask_detail || undefined}>
+          <span className="text-gray-400 dark:text-slate-500 text-xs truncate" title={subtask.subtask_detail || undefined}>
             {subtask.subtask_detail}
           </span>
           {warning && (
@@ -159,7 +159,7 @@ const SubtaskRow = memo(({
           min={subtask.actual_start_date}
           onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v)}
           highlight={getHighlight('actual_end_date', subtask.actual_end_date)}
-          className={isInProgress ? "bg-yellow-100/90" : ""}
+          className={isInProgress ? "bg-yellow-100/90 dark:bg-yellow-900/40" : ""}
         />
       </div>
       <div className={`w-16 ${dateCellClasses}`}>

@@ -556,7 +556,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   return (
     <div
       ref={ref}
-      className="flex-1 w-full overflow-auto bg-white border-r relative no-scrollbar"
+      className="flex-1 w-full overflow-auto bg-white dark:bg-slate-900 border-r dark:border-slate-800 relative no-scrollbar transition-colors"
       onScroll={onScroll}
     >
       <div className="min-w-max">
@@ -566,29 +566,29 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           </div>
         )}
 
-        <div className="sticky top-0 z-30 flex border-b border-slate-200 bg-slate-100 shadow-sm whitespace-nowrap h-[33px]">
+        <div className="sticky top-0 z-30 flex border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-sm whitespace-nowrap h-[33px] transition-colors">
           <div
-            className={`sticky left-0 z-40 flex items-center bg-slate-100 ${commonHeaderClasses}`}
+            className={`sticky left-0 z-40 flex items-center bg-slate-100 dark:bg-slate-800 ${commonHeaderClasses}`}
             style={{ width: nameWidth, minWidth: nameWidth }}
           >
             <div className="flex items-center gap-1 mr-2 no-drag ml-1">
               <button
                 onClick={handleProjectLevel}
-                className="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-blue-600 transition-colors"
+                className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 title="プロジェクトレベルで表示 (全プロジェクトを折りたたむ)"
               >
                 <List size={16} />
               </button>
               <button
                 onClick={handleTaskLevel}
-                className="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-blue-600 transition-colors"
+                className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 title="タスクレベルで表示 (プロジェクトを展開、タスクを折りたたむ)"
               >
                 <Layers size={16} />
               </button>
               <button
                 onClick={handleSubtaskLevel}
-                className="p-1 hover:bg-gray-200 rounded text-gray-500 hover:text-blue-600 transition-colors"
+                className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 title="サブタスクレベルで表示 (すべて展開)"
               >
                 <ChevronsDown size={16} />
@@ -734,7 +734,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         </DragDropContext>
 
         {projects.length === 0 && (
-          <div className="p-8 text-center text-gray-500 w-full col-span-full">
+          <div className="p-8 text-center text-gray-500 dark:text-slate-500 w-full col-span-full">
             上部のボタンからプロジェクトを追加してください。
           </div>
         )}

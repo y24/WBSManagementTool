@@ -7,9 +7,9 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50 font-sans text-gray-900">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-gray-50 dark:bg-slate-950 font-sans text-gray-900 dark:text-slate-100 transition-colors duration-300">
       <Header />
-      <main className="flex-1 flex flex-col relative w-full h-full min-h-0 bg-slate-50 overflow-hidden">
+      <main className="flex-1 flex flex-col relative w-full h-full min-h-0 bg-slate-50 dark:bg-slate-900 overflow-hidden">
         {children}
       </main>
     </div>

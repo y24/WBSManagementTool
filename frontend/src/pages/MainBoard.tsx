@@ -96,7 +96,8 @@ export default function MainBoard() {
       showTodayHighlight: true,
       showRemoved: false,
       showDoneProjects: false,
-      hidePlanningColumns: false
+      hidePlanningColumns: false,
+      isDarkMode: false
     };
     if (saved) {
       try {
@@ -161,6 +162,15 @@ export default function MainBoard() {
   useEffect(() => {
     fetchData(true);
   }, []);
+
+  // ダークモードの切り替えを適用
+  useEffect(() => {
+    if (displayOptions.isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [displayOptions.isDarkMode]);
 
   // フィルタリングロジック
   const filteredProjects = useMemo(() => {
@@ -387,7 +397,7 @@ export default function MainBoard() {
   if (loading && !data) return <div className="p-4 text-gray-500 font-medium">Loading WBS...</div>;
 
   return (
-    <div className="flex flex-col w-full h-full bg-slate-50 overflow-hidden">
+    <div className="flex flex-col w-full h-full bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
       {/* フィルターパネル */}
       <FilterPanel 
         filters={filters}
@@ -406,7 +416,7 @@ export default function MainBoard() {
         })}
       />
 
-      <div className="flex flex-1 w-full bg-white relative overflow-hidden select-none">
+      <div className="flex flex-1 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
         {/* 左ペイン: WBSツリー */}
         <div 
           className="flex-shrink-0 flex flex-col relative z-20 overflow-hidden" 
@@ -428,7 +438,7 @@ export default function MainBoard() {
 
         {/* リサイズバー */}
         <div 
-          className="w-1.5 bg-gray-200 cursor-col-resize hover:bg-blue-400 transition-colors z-30 flex items-center justify-center shrink-0"
+          className="w-1.5 bg-gray-200 dark:bg-slate-800 cursor-col-resize hover:bg-blue-400 dark:hover:bg-blue-600 transition-colors z-30 flex items-center justify-center shrink-0"
           onMouseDown={(e) => {
             e.preventDefault();
             setIsResizing(true);
@@ -437,7 +447,7 @@ export default function MainBoard() {
         </div>
 
         {/* 右ペイン: ガントチャート */}
-        <div className="flex-1 bg-slate-50 relative overflow-hidden flex flex-col z-10 w-0">
+        <div className="flex-1 bg-slate-50 dark:bg-slate-950 relative overflow-hidden flex flex-col z-10 w-0 transition-colors">
           {dynamicGanttRange && (
             <GanttChart 
               ref={ganttRef}

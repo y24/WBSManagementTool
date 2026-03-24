@@ -92,11 +92,11 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
   const displayValue = () => {
     if (type === 'date') {
       if (value) return formatDisplayDate(value, type);
-      if (isAuto) return <span className="text-gray-400 text-[10px] italic font-bold">(自動)</span>;
-      return <span className="text-gray-300 text-[10px]">--/--</span>;
+      if (isAuto) return <span className="text-gray-400 dark:text-slate-500 text-[10px] italic font-bold">(自動)</span>;
+      return <span className="text-gray-300 dark:text-slate-600 text-[10px]">--/--</span>;
     }
     if (value == null || value === '') {
-      return <span className="text-gray-300 text-[10px]">-</span>;
+      return <span className="text-gray-300 dark:text-slate-600 text-[10px]">-</span>;
     }
 
     let formattedValue = value;
@@ -112,7 +112,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
   if (!isEditing) {
     return (
       <div
-        className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 ${!readOnly ? 'cursor-pointer hover:bg-black/5' : 'cursor-default'} ${isActuallyReadOnly ? 'bg-gray-50/30 font-medium' : ''} ${isAuto ? 'text-blue-600' : 'text-gray-700'} ${type === 'number' ? 'border border-gray-200 bg-gray-50/30 rounded' : ''} ${highlight ? 'bg-yellow-50 hover:bg-yellow-100/50' : ''} ${className}`}
+        className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 ${!readOnly ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5' : 'cursor-default'} ${isActuallyReadOnly ? 'bg-gray-50/30 dark:bg-slate-800/30 font-medium' : ''} ${isAuto ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-slate-300'} ${type === 'number' ? 'border border-gray-200 dark:border-slate-700 bg-gray-50/30 dark:bg-slate-800/30 rounded' : ''} ${highlight ? 'bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/50' : ''} ${className}`}
         onClick={() => {
           if (readOnly) return;
           setIsEditing(true);
@@ -134,14 +134,14 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
     >
       {(type === 'date' || (type === 'number' && onToggleAuto)) && isEditing ? (
         <div
-          className="absolute left-0 top-0 z-[1000] flex items-center bg-white shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10 whitespace-nowrap overflow-hidden"
+          className="absolute left-0 top-0 z-[1000] flex items-center bg-white dark:bg-slate-800 shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10 whitespace-nowrap overflow-hidden"
           style={{ width: type === 'date' ? (onToggleAuto ? '220px' : '160px') : (onToggleAuto ? '180px' : '100px'), height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
         >
-          <div className="flex items-center justify-center w-9 h-full border-r border-blue-100 text-blue-600 shrink-0">
+          <div className="flex items-center justify-center w-9 h-full border-r border-blue-100 dark:border-blue-900/50 text-blue-600 dark:text-blue-400 shrink-0">
             {type === 'date' ? (
               <button
                 type="button"
-                className="w-full h-full flex items-center justify-center hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-full flex items-center justify-center hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 onMouseDown={(e) => e.preventDefault()}
                 disabled={isAuto}
                 onClick={(e) => {
@@ -158,7 +158,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
           <input
             type={type === 'date' ? 'text' : 'number'}
             placeholder={type === 'date' ? "YYYY/MM/DD" : "0.0"}
-            className="flex-1 bg-transparent min-w-0 h-full border-none outline-none px-2 text-sm font-bold text-gray-800 disabled:text-gray-400 disabled:cursor-not-allowed"
+            className="flex-1 bg-transparent min-w-0 h-full border-none outline-none px-2 text-sm font-bold text-gray-800 dark:text-slate-100 disabled:text-gray-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed"
             value={val}
             autoFocus
             disabled={isAuto}
@@ -177,7 +177,7 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
           />
           {onToggleAuto && (
             <div
-              className="flex items-center gap-1.5 px-2.5 border-l border-blue-100 h-full bg-blue-50/50 hover:bg-blue-100/50 cursor-pointer select-none shrink-0"
+              className="flex items-center gap-1.5 px-2.5 border-l border-blue-100 dark:border-blue-900/50 h-full bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 cursor-pointer select-none shrink-0"
               onMouseDown={(e) => e.preventDefault()}
               onClick={(e) => {
                 e.preventDefault();
@@ -189,16 +189,16 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
                 type="checkbox"
                 checked={isAuto}
                 onChange={() => { }} // onClick handles it
-                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer pointer-events-none"
+                className="w-3.5 h-3.5 rounded border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-500 cursor-pointer pointer-events-none"
               />
-              <span className="text-[11px] text-blue-700 font-bold">自動</span>
+              <span className="text-[11px] text-blue-700 dark:text-blue-400 font-bold">自動</span>
             </div>
           )}
         </div>
       ) : (
         <input
           type={type === 'date' ? "text" : type}
-          className={`bg-white h-full border-2 border-blue-400 outline-none px-1 w-full shadow-sm rounded ${className}`}
+          className={`bg-white dark:bg-slate-800 h-full border-2 border-blue-400 outline-none px-1 w-full shadow-sm rounded text-gray-800 dark:text-slate-100 ${className}`}
           value={val}
           autoFocus={isEditing}
           onFocus={(e) => e.target.select()}

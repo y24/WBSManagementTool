@@ -19,6 +19,7 @@ export interface DisplayOptions {
   showRemoved: boolean;
   showDoneProjects: boolean;
   hidePlanningColumns: boolean;
+  isDarkMode: boolean;
 }
 
 interface FilterPanelProps {
@@ -69,7 +70,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     filters.searchTerm !== '';
 
   return (
-    <div className="bg-gradient-to-b from-slate-50 to-white border-b border-gray-200 px-6 py-3 flex items-center gap-4 shrink-0 shadow-sm z-40">
+    <div className="bg-slate-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-3 flex items-center gap-4 shrink-0 shadow-sm z-40 transition-colors">
       <div className="flex items-center gap-2 text-blue-600 mr-2">
         <Filter size={18} className="stroke-[2.5px]" />
       </div>
@@ -130,13 +131,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
         {/* Search */}
         <div className="relative flex items-center min-w-[140px] max-w-[200px] h-[34px]">
-          <Search size={14} className="absolute left-3 text-gray-400" />
+          <Search size={14} className="absolute left-3 text-gray-400 dark:text-slate-500" />
           <input
             type="text"
             value={filters.searchTerm}
             onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
             placeholder="名称で検索..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-gray-200 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400 font-medium shadow-sm"
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-sm"
           />
         </div>
 
@@ -144,8 +145,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         <button
           onClick={() => setFilters(prev => ({ ...prev, onlyDelayed: !prev.onlyDelayed }))}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.onlyDelayed
-            ? 'bg-rose-50 border-rose-200 text-rose-600 ring-rose-500/10 ring-2'
-            : 'bg-white border-gray-200 text-gray-600 hover:border-rose-400 hover:text-rose-500'
+            ? 'bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 ring-rose-500/10 ring-2'
+            : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-rose-400 hover:text-rose-500'
             }`}
         >
           <Calendar size={14} className={filters.onlyDelayed ? 'animate-pulse' : ''} />
@@ -157,32 +158,28 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
       <button
         onClick={onClear}
-        disabled={!isFiltered}
-        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-all rounded-lg border font-bold uppercase tracking-tight ${isFiltered
-          ? 'text-gray-600 bg-white border-gray-200 hover:border-blue-400 hover:text-blue-600 shadow-sm'
-          : 'text-gray-300 bg-gray-50 border-gray-100 cursor-not-allowed'
-          }`}
-        title="すべて解除"
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-lg text-xs font-bold transition-all shadow-sm shrink-0 border border-slate-200 dark:border-slate-700 ${!isFiltered ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        title="フィルターをリセット"
       >
-        <RotateCcw size={14} className={isFiltered ? 'animate-in spin-in-180 duration-500' : ''} />
-        <span>リセット</span>
+        <RotateCcw size={14} />
+        リセット
       </button>
 
       <div className="relative" ref={settingsRef}>
         <button
           onClick={() => setIsSettingsOpen(!isSettingsOpen)}
           className={`p-2 rounded-lg border transition-all shadow-sm ${isSettingsOpen
-            ? 'bg-blue-50 border-blue-400 text-blue-600'
-            : 'bg-white border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600'
+              ? 'bg-blue-600 border-blue-600 text-white shadow-blue-200 dark:shadow-blue-900/20'
+              : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-500'
             }`}
           title="表示設定"
         >
-          <Settings size={18} className={isSettingsOpen ? 'rotate-90 transition-transform duration-300' : 'transition-transform duration-300'} />
+          <Settings size={18} className={isSettingsOpen ? 'animate-spin-slow' : ''} />
         </button>
 
         {isSettingsOpen && (
-          <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-sm font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
+          <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-sm font-bold text-gray-800 dark:text-slate-100 mb-4 border-b dark:border-slate-700 pb-2 flex items-center gap-2">
               <Settings size={14} />
               表示オプション
             </h3>
@@ -192,8 +189,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               <div>
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">ツリー</div>
                 <div className="space-y-2">
-                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 rounded-md transition-colors">
-                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-600 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                       完了済プロジェクトを表示
                     </span>
                     <div className="relative inline-flex items-center cursor-pointer">
@@ -207,8 +204,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                     </div>
                   </label>
 
-                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 rounded-md transition-colors">
-                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-600 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                       削除済アイテムを表示
                     </span>
                     <div className="relative inline-flex items-center cursor-pointer">
@@ -222,8 +219,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                     </div>
                   </label>
 
-                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 rounded-md transition-colors">
-                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-600 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                       計画列を非表示
                     </span>
                     <div className="relative inline-flex items-center cursor-pointer">
@@ -243,8 +240,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               <div>
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 border-t pt-3">ガントチャート</div>
                 <div className="space-y-2">
-                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 rounded-md transition-colors">
-                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-600 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                       今日の日付をハイライト
                     </span>
                     <div className="relative inline-flex items-center cursor-pointer">
@@ -258,8 +255,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                     </div>
                   </label>
 
-                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 rounded-md transition-colors">
-                    <span className="text-xs font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-600 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                       プロジェクト期間のハイライトを表示
                     </span>
                     <div className="relative inline-flex items-center cursor-pointer">
@@ -270,6 +267,27 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                         className="sr-only peer"
                       />
                       <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500 shadow-inner"></div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* 全体設定 */}
+              <div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-1 border-t pt-3">全体</div>
+                <div className="space-y-2">
+                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-600 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                      ダークモード
+                    </span>
+                    <div className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={displayOptions.isDarkMode}
+                        onChange={(e) => setDisplayOptions(prev => ({ ...prev, isDarkMode: e.target.checked }))}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-700 shadow-inner"></div>
                     </div>
                   </label>
                 </div>

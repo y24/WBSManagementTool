@@ -48,27 +48,27 @@ const DetailModal = ({
   const { label, icon } = TYPE_LABELS[editingType];
 
   return createPortal(
-    <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50/50">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2">
-            <FileText size={18} className="text-gray-500" />
+        <div className="flex items-center justify-between px-6 py-4 border-b dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50">
+          <h3 className="font-bold text-gray-800 dark:text-slate-100 flex items-center gap-2">
+            <FileText size={18} className="text-gray-500 dark:text-slate-400" />
             詳細情報の編集
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Target label */}
-        <div className="flex items-center gap-2 px-6 py-2.5 bg-gray-50 border-b text-sm text-gray-600">
+        <div className="flex items-center gap-2 px-6 py-2.5 bg-gray-50 dark:bg-slate-800/80 border-b dark:border-slate-800 text-sm text-gray-600 dark:text-slate-300">
           {icon}
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{label}</span>
-          <span className="font-medium text-gray-700 truncate" title={editingName}>{editingName}</span>
+          <span className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{label}</span>
+          <span className="font-medium text-gray-700 dark:text-slate-200 truncate" title={editingName}>{editingName}</span>
         </div>
 
         {/* Body */}
@@ -76,14 +76,14 @@ const DetailModal = ({
 
           {/* detail */}
           <div>
-            <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+            <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <div className="w-1 h-3 bg-blue-500 rounded-full" />
-              詳細 <span className="text-gray-400 font-normal normal-case">(1行テキスト)</span>
+              詳細 <span className="text-gray-400 dark:text-slate-500 font-normal normal-case">(1行テキスト)</span>
             </label>
             <input
               id="modal-detail-input"
               type="text"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 font-medium"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
               value={detailValue}
               autoFocus
               onFocus={(e) => e.target.select()}
@@ -97,7 +97,7 @@ const DetailModal = ({
 
           {/* ticket_id */}
           <div>
-            <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+            <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <Hash size={12} className="text-indigo-500" />
               チケットID
               {ticketUrl && (
@@ -105,7 +105,7 @@ const DetailModal = ({
                   href={ticketUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-auto flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 normal-case tracking-normal transition-colors"
+                  className="ml-auto flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 normal-case tracking-normal transition-colors"
                 >
                   <ExternalLink size={11} />
                   チケットを開く
@@ -116,7 +116,7 @@ const DetailModal = ({
               id="modal-ticket-id-input"
               type="text"
               inputMode="numeric"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 font-medium"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
               value={ticketIdValue}
               onFocus={(e) => e.target.select()}
               onChange={(e) => {
@@ -126,7 +126,7 @@ const DetailModal = ({
               placeholder="チケットIDを入力..."
             />
             {ticketUrl && (
-              <p className="mt-1 text-xs text-gray-400 truncate px-1" title={ticketUrl}>
+              <p className="mt-1 text-xs text-gray-400 dark:text-slate-500 truncate px-1" title={ticketUrl}>
                 🔗 {ticketUrl}
               </p>
             )}
@@ -134,13 +134,13 @@ const DetailModal = ({
 
           {/* memo */}
           <div>
-            <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+            <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <MessageSquare size={12} className="text-blue-500" />
-              メモ <span className="text-gray-400 font-normal normal-case">(複数行)</span>
+              メモ <span className="text-gray-400 dark:text-slate-500 font-normal normal-case">(複数行)</span>
             </label>
             <textarea
               id="modal-memo-input"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none text-sm transition-all shadow-inner bg-gray-50/50 font-medium resize-none"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium resize-none"
               value={memoValue}
               onChange={(e) => setMemoValue(e.target.value)}
               placeholder="メモを入力してください..."
@@ -151,7 +151,7 @@ const DetailModal = ({
           {/* workload_percent (Subtask only) */}
           {editingType === 'subtask' && setWorkloadPercentValue && (
             <div>
-              <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+              <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                 <Percent size={12} className="text-teal-500" />
                 工数比率 (%)
               </label>
@@ -159,7 +159,7 @@ const DetailModal = ({
                 id="modal-workload-percent-input"
                 type="text"
                 inputMode="numeric"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 font-medium"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
                 value={workloadPercentValue}
                 onFocus={(e) => e.target.select()}
                 onChange={(e) => {
@@ -168,7 +168,7 @@ const DetailModal = ({
                 }}
                 placeholder="100"
               />
-              <p className="mt-1 text-xs text-gray-400 px-1">
+              <p className="mt-1 text-xs text-gray-400 dark:text-slate-500 px-1">
                 自動工数計算時にこの%を掛けて計算されます (デフォルト: 100%)
               </p>
             </div>
@@ -176,18 +176,18 @@ const DetailModal = ({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t items-center">
-          <div className="flex-1 text-xs text-gray-400 italic">保存すると即座に反映されます</div>
+        <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-slate-800/50 border-t dark:border-slate-800 items-center">
+          <div className="flex-1 text-xs text-gray-400 dark:text-slate-500 italic">保存すると即座に反映されます</div>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-white hover:border-gray-200 border border-transparent rounded-lg transition-all"
+            className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:border-gray-200 dark:hover:border-slate-700 border border-transparent rounded-lg transition-all"
           >
             キャンセル
           </button>
           <button
             id="modal-save-button"
             onClick={onSave}
-            className="flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-200 transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-200 dark:shadow-blue-900/20 transition-all active:scale-95"
           >
             <Check size={16} />
             保存する
