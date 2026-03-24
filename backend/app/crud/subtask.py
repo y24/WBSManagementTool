@@ -95,6 +95,9 @@ def refresh_subtasks_actual_end_date(db: Session, project_ids: Optional[List[int
 def create_subtask(db: Session, subtask: schemas.SubtaskCreate):
     from sqlalchemy import func
     subtask_dict = subtask.model_dump()
+    if subtask_dict.get("progress_percent") is None:
+        subtask_dict["progress_percent"] = 0
+        
     if subtask_dict.get("sort_order") == 0:
         max_order = db.query(func.max(models.Subtask.sort_order)).filter(
             models.Subtask.task_id == subtask_dict["task_id"],

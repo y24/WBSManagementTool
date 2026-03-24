@@ -88,7 +88,7 @@ class Holiday(HolidayBase):
 # --- Subtasks ---
 class SubtaskBase(BaseModel):
     subtask_detail: Optional[str] = None
-    progress_percent: Optional[int] = Field(None, ge=0, le=100)
+    progress_percent: Optional[int] = Field(0, ge=0, le=100)
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None

@@ -153,7 +153,7 @@ class Subtask(Base):
     subtask_type_id = Column(Integer, ForeignKey("mst_subtask_types.id"), nullable=True)
     subtask_detail = Column(String(300), nullable=True)
     status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=False, index=True)
-    progress_percent = Column(Integer, nullable=True)
+    progress_percent = Column(Integer, nullable=True, default=0)
     assignee_id = Column(Integer, ForeignKey("mst_members.id"), nullable=True, index=True)
     
     planned_start_date = Column(Date, nullable=True, index=True)
