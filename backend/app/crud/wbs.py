@@ -51,11 +51,20 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_removed: bo
             
             # Weighted progress for Task
             if t_wbs.planned_effort_total > 0:
+                # We use planned_effort_days as weight. 
+                # Note: planned_effort_days already includes workload_percent (effort = duration * workload_percent / 100)
                 weighted_sum = sum((Decimal(str(s.progress_percent or 0)) * (s.planned_effort_days or Decimal('0'))) for s in valid_subtasks)
                 t_wbs.progress_percent = int(round(float(weighted_sum) / float(t_wbs.planned_effort_total)))
             elif valid_subtasks:
-                # Fallback to simple average if no planned effort
-                t_wbs.progress_percent = int(round(sum(s.progress_percent or 0 for s in valid_subtasks) / len(valid_subtasks)))
+                # Fallback: if all subtasks have no planned effort (e.g. no dates), 
+                # use workload_percent as the weight for calculating progress.
+                total_workload = sum(s.workload_percent for s in valid_subtasks)
+                if total_workload > 0:
+                    weighted_sum = sum((s.progress_percent or 0) * s.workload_percent for s in valid_subtasks)
+                    t_wbs.progress_percent = int(round(float(weighted_sum) / float(total_workload)))
+                else:
+                    # Final fallback to simple average
+                    t_wbs.progress_percent = int(round(sum(s.progress_percent or 0 for s in valid_subtasks) / len(valid_subtasks)))
             else:
                 t_wbs.progress_percent = 0
 
