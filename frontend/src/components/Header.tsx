@@ -39,10 +39,10 @@ export default function Header() {
         </span>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('add-project'))}
-          className="ml-auto flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] font-bold group"
+          className="ml-auto flex items-center gap-2 px-4 py-1.5 bg-indigo-700/40 text-indigo-100 rounded-lg text-sm border border-indigo-500/30 hover:bg-indigo-600/60 hover:border-indigo-400 hover:text-white hover:scale-105 active:scale-95 transition-all shadow-xl backdrop-blur-md font-bold group"
         >
           <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />
-          <span>新規追加</span>
+          <span>プロジェクト追加</span>
         </button>
       </div>
     </header>
