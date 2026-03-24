@@ -156,8 +156,10 @@ const DetailModal = ({
             </label>
             <input
               id="modal-ticket-id-input"
+              name="ticket-id"
               type="text"
               inputMode="numeric"
+              autoComplete="off"
               className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
               value={ticketIdValue}
               onFocus={(e) => e.target.select()}
