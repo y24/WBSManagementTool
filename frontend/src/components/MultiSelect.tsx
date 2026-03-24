@@ -11,11 +11,11 @@ interface MultiSelectProps {
   dropdownTitle?: string;
 }
 
-const MultiSelect = memo(({ 
-  values, 
-  options, 
-  onChange, 
-  className = "", 
+const MultiSelect = memo(({
+  values,
+  options,
+  onChange,
+  className = "",
   placeholder = "選択してください",
   dropdownTitle
 }: MultiSelectProps) => {
@@ -32,9 +32,9 @@ const MultiSelect = memo(({
       const rect = buttonRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       const viewportWidth = window.innerWidth;
-      
+
       const dropdownMinWidth = Math.max(rect.width, 220);
-      const estimatedHeight = 300; 
+      const estimatedHeight = 300;
 
       const spaceBelow = viewportHeight - rect.bottom;
       const spaceAbove = rect.top;
@@ -57,7 +57,7 @@ const MultiSelect = memo(({
 
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const handleEvents = (e: Event) => {
       if (e.type === 'mousedown' && e.target instanceof Node) {
         if (dropdownRef.current?.contains(e.target) || buttonRef.current?.contains(e.target)) {
@@ -113,26 +113,36 @@ const MultiSelect = memo(({
       </button>
 
       {isOpen && createPortal(
-        <div 
+        <div
           ref={dropdownRef}
           className="absolute z-[9999] bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xl rounded-xl py-2 overflow-hidden ring-1 ring-black/5 dark:ring-white/10 transition-all transform duration-150"
-          style={{ 
-            top: coords.direction === 'down' ? coords.top + 6 : coords.top - 6, 
-            left: coords.left, 
+          style={{
+            top: coords.direction === 'down' ? coords.top + 6 : coords.top - 6,
+            left: coords.left,
             minWidth: coords.width,
             transform: coords.direction === 'up' ? 'translateY(-100%)' : 'none'
           }}
         >
           <div className="flex items-center justify-between px-3 pb-2 mb-2 border-b border-gray-50 dark:border-slate-800">
             <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">{dropdownTitle || '選択'}</span>
-            {values.length > 0 && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); onChange([]); }}
-                className="text-[10px] text-blue-600 hover:text-blue-800 font-bold uppercase tracking-tight"
-              >
-                クリア
-              </button>
-            )}
+            <div className="flex gap-2">
+              {values.length > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onChange([]); }}
+                  className="text-[10px] text-blue-600 hover:text-blue-800 font-bold uppercase tracking-tight"
+                >
+                  クリア
+                </button>
+              )}
+              {values.length < options.length && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onChange(options.map(o => o.id)); }}
+                  className="text-[10px] text-blue-600 hover:text-blue-800 font-bold uppercase tracking-tight"
+                >
+                  全て選択
+                </button>
+              )}
+            </div>
           </div>
           <div className="max-h-64 overflow-y-auto overscroll-contain px-1">
             {options.map((opt) => {
