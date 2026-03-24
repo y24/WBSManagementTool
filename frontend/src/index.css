@@ -36,6 +36,19 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+}
+:root.dark code {
+  background-color: #1e293b;
+  color: #94a3b8;
+}
+
 :root {
   /* Project Color */
   --wbs-project-bg: #e3f0ff;
@@ -79,8 +92,8 @@ body {
   --wbs-header-bg: #0f172a;
   --wbs-slicer-bg: #020617;
 
-  --wbs-border-color: #334155;
-  --wbs-row-border-color: #475569;
+  --wbs-border-color: #1e293b;
+  --wbs-row-border-color: #334155;
 
   background-color: #020617;
   color: #f8fafc;
@@ -298,8 +311,8 @@ body {
   flex-shrink: 0;
 }
 
-.master-add-btn {
-  display: inline-flex;
+.master-add-btn, .master-sync-btn {
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
@@ -309,41 +322,34 @@ body {
   background: #f8fafc;
   color: #64748b;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s;
+  flex-shrink: 0;
 }
-.dark .master-add-btn {
-  background: #0f172a;
+:root.dark .master-add-btn, :root.dark .master-sync-btn {
+  background: #1e293b;
   border-color: #334155;
   color: #94a3b8;
 }
-.master-add-btn:hover {
+.master-add-btn:hover, .master-sync-btn:hover {
   background: #6366f1;
   color: #fff;
   border-color: #6366f1;
   transform: scale(1.05);
 }
-.dark .master-add-btn:hover {
-  background: #818cf8;
-}
-
-.master-sync-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.15s;
+:root.dark .master-add-btn:hover, :root.dark .master-sync-btn:hover {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
 }
 .master-sync-btn:hover:not(:disabled) {
   background: #f97316;
   color: #fff;
   border-color: #f97316;
-  transform: scale(1.05);
+}
+:root.dark .master-sync-btn:hover:not(:disabled) {
+  background: #ea580c;
+  color: #fff;
+  border-color: #ea580c;
 }
 .master-sync-btn:disabled {
   opacity: 0.5;

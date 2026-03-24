@@ -13,6 +13,7 @@ interface GanttChartProps {
   expandedTasks: Record<number, boolean>;
   showProjectRange: boolean;
   showTodayHighlight: boolean;
+  isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
@@ -26,6 +27,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   expandedTasks,
   showProjectRange,
   showTodayHighlight,
+  isDarkMode = false,
   onScroll
 }, ref) => {
   // 休日判定ロジック
@@ -82,8 +84,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       }
     }
 
-    const isDark = document.documentElement.classList.contains('dark');
-    const typeColor = isSubtask ? getStatusColor(item.status_id) : (isDark ? '#475569' : '#cbd5e1');
+    const typeColor = isSubtask ? getStatusColor(item.status_id) : (isDarkMode ? '#334155' : '#cbd5e1');
 
     let rStart, rWidth;
     if (isSubtask && item.planned_start_date && item.planned_end_date && item.review_days && item.review_days > 0) {
@@ -110,12 +111,12 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
         {pStart !== undefined && pWidth !== undefined && (
           <>
             <div
-              className={`absolute top-[6px] rounded-t-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 opacity-85`}
+              className={`absolute top-[6px] rounded-t-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70`}
               style={{ left: `${pStart}px`, width: `${pWidth}px` }}
             />
             {rStart !== undefined && rWidth !== undefined && (
               <div
-                className="absolute top-[6px] rounded-tr-sm h-1.5 bg-gray-400 opacity-60"
+                className="absolute top-[6px] rounded-tr-sm h-1.5 bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50"
                 style={{ left: `${rStart}px`, width: `${rWidth}px` }}
                 title={`レビュー期間: ${item.review_days}日`}
               />
@@ -196,7 +197,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       <div ref={ref} className="h-full overflow-auto relative gantt-body" onScroll={onScroll}>
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           {/* ヘッダー領域 (垂直スクロールに追従するためsticky) */}
-          <div className="flex border-b-[1px] border-slate-200 dark:border-slate-700 shadow-sm sticky top-0 z-30 bg-slate-100 dark:bg-slate-900 flex-shrink-0 transition-colors" style={{ height: '33px' }}>
+          <div className="flex border-b-[1px] border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-30 bg-slate-100 dark:bg-slate-900 flex-shrink-0 transition-colors" style={{ height: '33px' }}>
             {days.map(d => {
               const dow = getDay(d);
               const isSaturday = dow === 6;
@@ -215,7 +216,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
               return (
                 <div
                   key={d.toISOString()}
-                  className={`flex-shrink-0 border-r border-gray-200 dark:border-slate-700 flex items-center justify-center text-[10px] ${dayClasses} ${isToday(d) ? 'font-bold' : ''}`}
+                  className={`flex-shrink-0 border-r border-gray-200 dark:border-slate-800 flex items-center justify-center text-[10px] ${dayClasses} ${isToday(d) ? 'font-bold' : ''}`}
                   style={{ width: `${CELL_WIDTH}px` }}
                   title={holidayInfo?.holiday_name}
                 >

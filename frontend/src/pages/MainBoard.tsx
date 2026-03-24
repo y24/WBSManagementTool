@@ -458,6 +458,7 @@ export default function MainBoard() {
               expandedTasks={expandedTasks}
               showProjectRange={displayOptions.showProjectRange}
               showTodayHighlight={displayOptions.showTodayHighlight}
+              isDarkMode={displayOptions.isDarkMode}
               onScroll={handleGanttScroll}
             />
           )}
