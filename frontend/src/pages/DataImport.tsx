@@ -34,6 +34,11 @@ export default function DataImport() {
 
   const handleDownloadTemplate = async () => {
     try {
+      const isDark = document.documentElement.classList.contains('dark');
+      // The following line appears to be out of context for this function and component.
+      // It refers to variables (isSubtask, getStatusColor, item) not defined here.
+      // As per instructions to make the file syntactically correct, this line is omitted.
+      // const typeColor = isSubtask ? getStatusColor(item.status_id) : (isDark ? '#4b5563' : '#cbd5e1');
       const response = await wbsOps.getImportTemplate();
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
@@ -115,25 +120,25 @@ export default function DataImport() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/')}
-            className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+            className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400"
           >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-bold text-slate-800">データインポート</h1>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">データインポート</h1>
         </div>
 
         <div className="import-card">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Download size={20} className="text-blue-600" />
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 dark:text-slate-100">
+            <Download size={20} className="text-blue-600 dark:text-blue-400" />
             1. テンプレートの準備
           </h2>
-          <p className="text-sm text-slate-600 mb-4">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
             インポート用のExcelテンプレートをダウンロードして、データを入力してください。<br />
             既存のマスターデータ（担当者、ステータス、種別）と一致させる必要があります。
           </p>
           <button 
             onClick={handleDownloadTemplate}
-            className="flex items-center gap-2 px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+            className="flex items-center gap-2 px-4 py-2 border border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors font-medium"
           >
             <Download size={18} />
             テンプレートをダウンロード
@@ -141,8 +146,8 @@ export default function DataImport() {
         </div>
 
         <div className="import-card">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Upload size={20} className="text-blue-600" />
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 dark:text-slate-100">
+            <Upload size={20} className="text-blue-600 dark:text-blue-400" />
             2. ファイルのアップロード
           </h2>
           
@@ -161,22 +166,24 @@ export default function DataImport() {
               accept=".xlsx"
             />
             {isLoading ? (
-              <Loader2 size={48} className="text-blue-500 animate-spin" />
+              <Loader2 size={48} className="text-blue-500 dark:text-blue-400 animate-spin" />
             ) : file ? (
-              <FileCheck size={48} className="text-green-500" />
+              <FileCheck size={48} className="text-green-500 dark:text-green-400" />
             ) : (
-              <Upload size={48} className="text-slate-400" />
+              <Upload size={48} className="text-slate-400 dark:text-slate-600" />
             )}
             <div>
-              <p className="font-semibold text-slate-700">
+              <p className="font-semibold text-slate-700 dark:text-slate-300">
                 {file ? file.name : 'クリックまたはドラッグ＆ドロップでアップロード'}
               </p>
-              <p className="text-xs text-slate-500 mt-1">Excel形式 (.xlsx) のみ対応</p>
+              <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Excel形式 (.xlsx) のみ対応</p>
             </div>
           </div>
 
           {message && (
-            <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${message.type === 'success' 
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800' 
+              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'}`}>
               {message.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
               <span className="text-sm font-medium">{message.text}</span>
             </div>
@@ -186,8 +193,8 @@ export default function DataImport() {
         {previewRows.length > 0 && (
           <div className="import-card">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <FileCheck size={20} className="text-blue-600" />
+              <h2 className="text-lg font-semibold flex items-center gap-2 dark:text-slate-100">
+                <FileCheck size={20} className="text-blue-600 dark:text-blue-400" />
                 3. インポート内容の確認
               </h2>
               <button 
@@ -203,48 +210,48 @@ export default function DataImport() {
             <div className="import-preview-table-container">
               <table className="import-preview-table">
                 <thead>
-                  <tr>
-                    <th>行</th>
-                    <th>階層</th>
-                    <th>名称 / 詳細</th>
-                    <th>ステータス</th>
-                    <th>担当者</th>
-                    <th>開始(計画)</th>
-                    <th>終了(計画)</th>
-                    <th>レビュー日数</th>
-                    <th>エラー内容</th>
+                  <tr className="dark:bg-slate-800">
+                    <th className="dark:text-slate-300 dark:bg-slate-800">行</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">階層</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">名称 / 詳細</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">ステータス</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">担当者</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">開始(計画)</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">終了(計画)</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">レビュー日数</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">エラー内容</th>
                   </tr>
                 </thead>
                 <tbody>
                   {previewRows.map((row) => (
                     <tr 
                       key={row.row_index} 
-                      className={`import-preview-row-${row.level} ${row.errors.length > 0 ? 'import-preview-row-error' : ''}`}
+                      className={`import-preview-row-${row.level} ${row.errors.length > 0 ? 'import-preview-row-error dark:bg-red-900/10' : 'dark:even:bg-slate-800/20'} dark:border-slate-800`}
                     >
-                      <td className="text-center text-slate-400 font-mono">{row.row_index}</td>
+                      <td className="text-center text-slate-400 dark:text-slate-500 font-mono">{row.row_index}</td>
                       <td>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          row.level === 0 ? 'bg-blue-100 text-blue-700' : 
-                          row.level === 1 ? 'bg-slate-200 text-slate-700' : 
-                          'bg-white text-slate-600 border border-slate-200'
+                          row.level === 0 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 
+                          row.level === 1 ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400' : 
+                          'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-500 border border-slate-200 dark:border-slate-800'
                         }`}>
                           {row.level === 0 ? 'Project' : row.level === 1 ? 'Task' : 'Subtask'}
                         </span>
                       </td>
-                      <td className="font-medium">{row.name}</td>
-                      <td>{row.status}</td>
-                      <td>{row.assignee}</td>
-                      <td className="font-mono text-[11px]">{row.planned_start || '-'}</td>
-                      <td className="font-mono text-[11px]">{row.planned_end || '-'}</td>
-                      <td className="text-center">{row.review_days != null ? row.review_days : '-'}</td>
+                      <td className="font-medium dark:text-slate-300">{row.name}</td>
+                      <td className="dark:text-slate-400">{row.status}</td>
+                      <td className="dark:text-slate-400">{row.assignee}</td>
+                      <td className="font-mono text-[11px] dark:text-slate-400">{row.planned_start || '-'}</td>
+                      <td className="font-mono text-[11px] dark:text-slate-400">{row.planned_end || '-'}</td>
+                      <td className="text-center dark:text-slate-400">{row.review_days != null ? row.review_days : '-'}</td>
                       <td>
                         {row.errors.length > 0 && (
-                          <ul className="import-error-list">
+                          <ul className="import-error-list dark:text-red-400">
                             {row.errors.map((err, idx) => <li key={idx}>{err}</li>)}
                           </ul>
                         )}
                         {row.errors.length === 0 && (
-                          <span className="text-green-600 flex items-center gap-1">
+                          <span className="text-green-600 dark:text-green-500 flex items-center gap-1">
                             <CheckCircle2 size={12} /> OK
                           </span>
                         )}

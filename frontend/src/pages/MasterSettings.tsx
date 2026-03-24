@@ -631,13 +631,15 @@ export default function MasterSettings() {
 
             <div className="space-y-8">
               <div className="mapping-group">
-                <label className="master-setting-label mb-3 block font-bold text-gray-700">「未着手」と判定するステータス</label>
+                <label className="master-setting-label mb-3 block font-bold text-gray-700 dark:text-slate-300">「未着手」と判定するステータス</label>
                 <div className="flex flex-wrap gap-2">
                   {data?.statuses.map(s => (
                     <button
                       key={s.id}
                       onClick={() => toggleMapping('new', s.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs transition-all border ${statusMappingNew.includes(s.id) ? 'bg-gray-100 border-gray-400 text-gray-900 font-bold shadow-sm' : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'}`}
+                      className={`px-3 py-1.5 rounded-full text-xs transition-all border ${statusMappingNew.includes(s.id) 
+                        ? 'bg-gray-100 dark:bg-slate-700 border-gray-400 dark:border-slate-500 text-gray-900 dark:text-white font-bold shadow-sm' 
+                        : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500 hover:border-gray-300 dark:hover:border-slate-600'}`}
                     >
                       {s.status_name}
                     </button>
@@ -653,7 +655,9 @@ export default function MasterSettings() {
                     <button
                       key={s.id}
                       onClick={() => toggleMapping('blocked', s.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs transition-all border ${statusMappingBlocked.includes(s.id) ? 'bg-red-50 border-red-400 text-red-700 font-bold shadow-sm' : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'}`}
+                      className={`px-3 py-1.5 rounded-full text-xs transition-all border ${statusMappingBlocked.includes(s.id) 
+                        ? 'bg-red-50 dark:bg-red-900/30 border-red-400 dark:border-red-600 text-red-700 dark:text-red-400 font-bold shadow-sm' 
+                        : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500 hover:border-gray-300 dark:hover:border-slate-600'}`}
                     >
                       {s.status_name}
                     </button>
@@ -663,13 +667,15 @@ export default function MasterSettings() {
               </div>
 
               <div className="mapping-group">
-                <label className="master-setting-label mb-3 block font-bold text-green-600">「完了」と判定するステータス</label>
+                <label className="master-setting-label mb-3 block font-bold text-green-600 dark:text-green-400">「完了」と判定するステータス</label>
                 <div className="flex flex-wrap gap-2">
                   {data?.statuses.map(s => (
                     <button
                       key={s.id}
                       onClick={() => toggleMapping('done', s.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs transition-all border ${statusMappingDone.includes(s.id) ? 'bg-green-50 border-green-400 text-green-700 font-bold shadow-sm' : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'}`}
+                      className={`px-3 py-1.5 rounded-full text-xs transition-all border ${statusMappingDone.includes(s.id) 
+                        ? 'bg-green-50 dark:bg-green-900/30 border-green-400 dark:border-green-600 text-green-700 dark:text-green-400 font-bold shadow-sm' 
+                        : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 dark:text-slate-500 hover:border-gray-300 dark:hover:border-slate-600'}`}
                     >
                       {s.status_name}
                     </button>

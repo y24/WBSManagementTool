@@ -82,7 +82,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       }
     }
 
-    const typeColor = isSubtask ? getStatusColor(item.status_id) : '#cbd5e1';
+    const isDark = document.documentElement.classList.contains('dark');
+    const typeColor = isSubtask ? getStatusColor(item.status_id) : (isDark ? '#475569' : '#cbd5e1');
 
     let rStart, rWidth;
     if (isSubtask && item.planned_start_date && item.planned_end_date && item.review_days && item.review_days > 0) {
@@ -214,7 +215,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
               return (
                 <div
                   key={d.toISOString()}
-                  className={`flex-shrink-0 border-r border-gray-200 flex items-center justify-center text-[10px] ${dayClasses} ${isToday(d) ? 'font-bold' : ''}`}
+                  className={`flex-shrink-0 border-r border-gray-200 dark:border-slate-700 flex items-center justify-center text-[10px] ${dayClasses} ${isToday(d) ? 'font-bold' : ''}`}
                   style={{ width: `${CELL_WIDTH}px` }}
                   title={holidayInfo?.holiday_name}
                 >
