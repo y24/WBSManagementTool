@@ -71,7 +71,7 @@ const ShiftDatesModal = ({
 
           <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 p-3 rounded-lg border border-amber-100 dark:border-amber-900/30 italic">
             <span>※</span>
-            <span>土日および登録された祝日を考慮して、期間（営業日数）を保ったまま移動します。</span>
+            <span>土日および祝日を考慮して、営業日数を保ったまま移動します。</span>
           </div>
         </div>
 

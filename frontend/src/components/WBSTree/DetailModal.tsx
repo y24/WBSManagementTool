@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, X, Check, Hash, MessageSquare, ExternalLink, FolderKanban, ListTodo, AlignLeft, Percent } from 'lucide-react';
+import { FileText, X, Check, Hash, MessageSquare, ExternalLink, FolderKanban, ListTodo, AlignLeft, Percent, AlertTriangle } from 'lucide-react';
 
 export type EditingType = 'project' | 'task' | 'subtask';
 
@@ -22,8 +22,8 @@ interface DetailModalProps {
 
 const TYPE_LABELS: Record<EditingType, { label: string; icon: React.ReactNode }> = {
   project: { label: 'プロジェクト', icon: <FolderKanban size={18} className="text-violet-500" /> },
-  task:    { label: 'タスク',       icon: <ListTodo size={18} className="text-blue-500" /> },
-  subtask: { label: 'サブタスク',   icon: <AlignLeft size={18} className="text-teal-500" /> },
+  task: { label: 'タスク', icon: <ListTodo size={18} className="text-blue-500" /> },
+  subtask: { label: 'サブタスク', icon: <AlignLeft size={18} className="text-teal-500" /> },
 };
 
 const DetailModal = ({
@@ -41,6 +41,48 @@ const DetailModal = ({
   onClose,
   onSave,
 }: DetailModalProps) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  
+  // 初期値を保持
+  const initialValues = useRef({
+    detailValue,
+    ticketIdValue,
+    memoValue,
+    workloadPercentValue,
+  });
+
+  const isChanged = () => {
+    return (
+      detailValue !== initialValues.current.detailValue ||
+      ticketIdValue !== initialValues.current.ticketIdValue ||
+      memoValue !== initialValues.current.memoValue ||
+      (workloadPercentValue !== undefined && workloadPercentValue !== initialValues.current.workloadPercentValue)
+    );
+  };
+
+  const handleCloseRequest = () => {
+    if (isChanged()) {
+      setShowConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  // Escキーイベントの監視
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showConfirm) {
+          setShowConfirm(false);
+        } else {
+          handleCloseRequest();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [detailValue, ticketIdValue, memoValue, workloadPercentValue, showConfirm]);
+
   const ticketUrl = ticketUrlTemplate && ticketIdValue
     ? ticketUrlTemplate.replace('{TICKET_ID}', ticketIdValue)
     : null;
@@ -57,7 +99,7 @@ const DetailModal = ({
             詳細情報の編集
           </h3>
           <button
-            onClick={onClose}
+            onClick={handleCloseRequest}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full"
           >
             <X size={20} />
@@ -177,9 +219,8 @@ const DetailModal = ({
 
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-slate-800/50 border-t dark:border-slate-800 items-center">
-          <div className="flex-1 text-xs text-gray-400 dark:text-slate-500 italic">保存すると即座に反映されます</div>
           <button
-            onClick={onClose}
+            onClick={handleCloseRequest}
             className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:border-gray-200 dark:hover:border-slate-700 border border-transparent rounded-lg transition-all"
           >
             キャンセル
@@ -194,8 +235,42 @@ const DetailModal = ({
           </button>
         </div>
       </div>
+      {showConfirm && <SmallConfirmModal onConfirm={onClose} onCancel={() => setShowConfirm(false)} />}
     </div>,
     document.body
+  );
+};
+
+// 確認用の小さなモーダルコンポーネント（内部使用）
+const SmallConfirmModal = ({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) => {
+  return (
+    <div className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200 p-6">
+        <div className="flex items-center gap-3 text-amber-500 mb-4">
+          <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-full">
+            <AlertTriangle size={24} />
+          </div>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100">変更を破棄しますか？</h3>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-slate-400 mb-6 leading-relaxed">
+          入力された内容が保存されていません。変更を破棄して編集を終了してもよろしいですか？
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl transition-all"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-all active:scale-95"
+          >
+            破棄して閉じる
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
