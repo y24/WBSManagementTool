@@ -169,8 +169,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         <button
           onClick={() => setIsSettingsOpen(!isSettingsOpen)}
           className={`p-2 rounded-lg border transition-all shadow-sm ${isSettingsOpen
-              ? 'bg-blue-600 border-blue-600 text-white shadow-blue-200 dark:shadow-blue-900/20'
-              : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-500'
+            ? 'bg-blue-600 border-blue-600 text-white shadow-blue-200 dark:shadow-blue-900/20'
+            : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-500'
             }`}
           title="表示設定"
         >
@@ -206,7 +206,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
                   <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md transition-colors">
                     <span className="text-xs font-medium text-gray-600 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-                      削除済アイテムを表示
+                      Removedアイテムを表示
                     </span>
                     <div className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -215,7 +215,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                         onChange={(e) => setDisplayOptions(prev => ({ ...prev, showRemoved: e.target.checked }))}
                         className="sr-only peer"
                       />
-                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-500 shadow-inner"></div>
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-slate-500 shadow-inner"></div>
                     </div>
                   </label>
 
