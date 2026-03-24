@@ -95,7 +95,8 @@ export default function MainBoard() {
       showProjectRange: true,
       showTodayHighlight: true,
       showRemoved: false,
-      showDoneProjects: false
+      showDoneProjects: false,
+      hidePlanningColumns: false
     };
     if (saved) {
       try {
@@ -420,6 +421,7 @@ export default function MainBoard() {
             setExpandedProjects={setExpandedProjects}
             expandedTasks={expandedTasks}
             setExpandedTasks={setExpandedTasks}
+            hidePlanningColumns={displayOptions.hidePlanningColumns}
             onScroll={handleTreeScroll}
           />
         </div>

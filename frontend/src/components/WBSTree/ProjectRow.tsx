@@ -20,6 +20,7 @@ interface ProjectRowProps {
   onEditDetail: () => void;
   initialData: InitialData | null;
   provided: any;
+  hidePlanningColumns?: boolean;
 }
 
 const ProjectRow = memo(({ 
@@ -33,7 +34,8 @@ const ProjectRow = memo(({
   onAddTask, 
   onEditDetail,
   initialData,
-  provided 
+  provided,
+  hidePlanningColumns = false
 }: ProjectRowProps) => {
   const warning = getWarning(project);
 
@@ -122,36 +124,40 @@ const ProjectRow = memo(({
           highlight={getHighlight('assignee_id', project.assignee_id)}
         />
       </div>
-      <div className={`w-20 ${commonCellClasses}`}></div>
-      <div className={`w-20 ${dateCellClasses}`}>
-        <EditableInput 
-          type="date" 
-          value={project.planned_start_date} 
-          max={project.planned_end_date}
-          onChange={(v: string) => onUpdateField('project', project.id, 'planned_start_date', v)} 
-          isAuto={project.is_auto_planned_date}
-          onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_planned_date', v)}
-        />
-      </div>
-      <div className={`w-20 ${dateCellClasses}`}>
-        <EditableInput 
-          type="date" 
-          value={project.planned_end_date} 
-          min={project.planned_start_date}
-          onChange={(v: string) => onUpdateField('project', project.id, 'planned_end_date', v)} 
-          isAuto={project.is_auto_planned_date}
-          onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_planned_date', v)}
-        />
-      </div>
-      <div className={`w-16 ${dateCellClasses}`}>
-        <EditableInput 
-          type="number" 
-          value={project.planned_effort_total} 
-          precision={1} 
-          readOnly={true} 
-          isAuto={true} 
-        />
-      </div>
+      {!hidePlanningColumns && (
+        <>
+          <div className={`w-20 ${commonCellClasses}`}></div>
+          <div className={`w-20 ${dateCellClasses}`}>
+            <EditableInput 
+              type="date" 
+              value={project.planned_start_date} 
+              max={project.planned_end_date}
+              onChange={(v: string) => onUpdateField('project', project.id, 'planned_start_date', v)} 
+              isAuto={project.is_auto_planned_date}
+              onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_planned_date', v)}
+            />
+          </div>
+          <div className={`w-20 ${dateCellClasses}`}>
+            <EditableInput 
+              type="date" 
+              value={project.planned_end_date} 
+              min={project.planned_start_date}
+              onChange={(v: string) => onUpdateField('project', project.id, 'planned_end_date', v)} 
+              isAuto={project.is_auto_planned_date}
+              onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_planned_date', v)}
+            />
+          </div>
+          <div className={`w-16 ${dateCellClasses}`}>
+            <EditableInput 
+              type="number" 
+              value={project.planned_effort_total} 
+              precision={1} 
+              readOnly={true} 
+              isAuto={true} 
+            />
+          </div>
+        </>
+      )}
       <div className={`w-20 ${dateCellClasses}`}>
         <EditableInput 
           type="date" 

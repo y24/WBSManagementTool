@@ -23,6 +23,7 @@ interface WBSTreeProps {
   setExpandedProjects: React.Dispatch<React.SetStateAction<Record<number, boolean>>>;
   expandedTasks: Record<number, boolean>;
   setExpandedTasks: React.Dispatch<React.SetStateAction<Record<number, boolean>>>;
+  hidePlanningColumns?: boolean;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
@@ -34,6 +35,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   setExpandedProjects,
   expandedTasks,
   setExpandedTasks,
+  hidePlanningColumns = false,
   onScroll
 }, ref) => {
   const [saving, setSaving] = useState(false);
@@ -600,10 +602,14 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           </div>
           <div className={`w-28 flex items-center ${commonHeaderClasses}`}>ステータス</div>
           <div className={`w-28 flex items-center ${commonHeaderClasses}`}>担当者</div>
-          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー日数</div>
-          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(計画)</div>
-          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(計画)</div>
-          <div className={`w-16 flex items-center ${commonHeaderClasses}`}>予定工数</div>
+          {!hidePlanningColumns && (
+            <>
+              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー日数</div>
+              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(計画)</div>
+              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(計画)</div>
+              <div className={`w-16 flex items-center ${commonHeaderClasses}`}>予定工数</div>
+            </>
+          )}
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(実績)</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー開始</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(実績)</div>
@@ -637,6 +643,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                              }}
                             initialData={initialData}
                             provided={provided}
+                            hidePlanningColumns={hidePlanningColumns}
                           />
 
                         {expandedProjects[project.id] !== false && (
@@ -665,6 +672,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                              }}
                                             initialData={initialData}
                                             provided={provided}
+                                            hidePlanningColumns={hidePlanningColumns}
                                           />
 
                                         {expandedTasks[task.id] !== false && (
@@ -694,6 +702,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                               setWorkloadPercentValue(subtask.workload_percent != null ? String(subtask.workload_percent) : '100');
                                                             }}
                                                             provided={provided}
+                                                            hidePlanningColumns={hidePlanningColumns}
                                                           />
                                                         </div>
                                                       )}
