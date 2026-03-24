@@ -6,6 +6,7 @@ from .. import models, schemas
 from .recalc import recalculate_task_dates, recalculate_task_status
 from ..utils import date_utils
 from .master import get_holidays
+from .base import get_status_ids_by_category
 
 def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_data: Optional[Dict] = None):
     # Check if auto_effort is already set or being set to True
@@ -110,7 +111,12 @@ def create_subtask(db: Session, subtask: schemas.SubtaskCreate):
     
     # Auto-set dates based on status
     # 1. actual_start_date for In Progress (2), In Review (3) or Done (4)
-    if db_subtask.status_id in [2, 3, 4] and db_subtask.actual_start_date is None:
+    # Get status categories
+    done_ids = get_status_ids_by_category(db, "done")
+    # Actually 2, 3 are not in categories yet, keep them hardcoded or just keep as is if they are standard
+    # Ongoing = [2, 3] (In Progress, In Review)
+    
+    if db_subtask.status_id in ([2, 3] + done_ids) and db_subtask.actual_start_date is None:
         db_subtask.actual_start_date = date.today()
     
     # 2. actual_end_date for In Progress (2) or In Review (3)
@@ -120,11 +126,11 @@ def create_subtask(db: Session, subtask: schemas.SubtaskCreate):
         if db_subtask.actual_start_date and db_subtask.actual_start_date > db_subtask.actual_end_date:
             db_subtask.actual_start_date = db_subtask.actual_end_date
 
-    # 3. actual_end_date for Done (4)
-    if db_subtask.status_id == 4 and db_subtask.actual_end_date is None:
+    # 3. actual_end_date for Done
+    if db_subtask.status_id in done_ids and db_subtask.actual_end_date is None:
         db_subtask.actual_end_date = date.today()
     
-    # 3. review_start_date for In Review (3)
+    # 4. review_start_date for In Review (3)
     if db_subtask.status_id == 3 and db_subtask.review_start_date is None:
         db_subtask.review_start_date = date.today()
     
@@ -152,8 +158,10 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
     # Auto-set dates if status is being changed
     new_status_id = update_dict.get("status_id")
     if new_status_id is not None and new_status_id != db_subtask.status_id:
-        # 1. actual_start_date for In Progress (2), In Review (3) or Done (4)
-        if new_status_id in [2, 3, 4]:
+        done_ids = get_status_ids_by_category(db, "done")
+
+        # 1. actual_start_date for In Progress (2), In Review (3) or Done
+        if new_status_id in ([2, 3] + done_ids):
             if "actual_start_date" not in update_dict and db_subtask.actual_start_date is None:
                 update_dict["actual_start_date"] = date.today()
         
@@ -168,8 +176,8 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
             if a_start and a_end and a_start > a_end:
                 update_dict["actual_start_date"] = a_end
 
-        # 2. actual_end_date for Done (4)
-        if new_status_id == 4:
+        # 2. actual_end_date for Done
+        if new_status_id in done_ids:
             if "actual_end_date" not in update_dict and db_subtask.actual_end_date is None:
                 update_dict["actual_end_date"] = date.today()
         
@@ -178,8 +186,8 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
             if "review_start_date" not in update_dict and db_subtask.review_start_date is None:
                 update_dict["review_start_date"] = date.today()
                 
-        # 4. Clear actual_end_date if moving AWAY from Done (4)
-        if db_subtask.status_id == 4 and new_status_id != 4:
+        # 4. Clear actual_end_date if moving AWAY from Done
+        if db_subtask.status_id in done_ids and new_status_id not in done_ids:
             if "actual_end_date" not in update_dict:
                 update_dict["actual_end_date"] = None
     

@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
+from datetime import date
 from .. import models, schemas
 from .recalc import recalculate_task_dates, recalculate_task_status, recalculate_project_dates
+from .base import get_status_ids_by_category
 
 # --- Tasks ---
 def create_task(db: Session, task: schemas.TaskCreate):
@@ -14,6 +16,17 @@ def create_task(db: Session, task: schemas.TaskCreate):
         task_dict["sort_order"] = (max_order + 1) if max_order is not None else 0
         
     db_task = models.Task(**task_dict)
+    
+    # Auto-set dates based on status
+    done_ids = get_status_ids_by_category(db, "done")
+    # Ongoing = [2, 3] (In Progress, In Review)
+    
+    if db_task.status_id in ([2, 3] + done_ids) and db_task.actual_start_date is None:
+        db_task.actual_start_date = date.today()
+        
+    if db_task.status_id in done_ids and db_task.actual_end_date is None:
+        db_task.actual_end_date = date.today()
+        
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -27,7 +40,18 @@ def update_task(db: Session, task_id: int, task: schemas.TaskUpdate):
     db_task = db.query(models.Task).filter(models.Task.id == task_id, models.Task.is_deleted == False).first()
     if not db_task:
         return None
-    for key, value in task.dict(exclude_unset=True).items():
+    
+    update_dict = task.dict(exclude_unset=True)
+    
+    # Auto-set dates if status is being changed
+    new_status_id = update_dict.get("status_id")
+    if new_status_id is not None and new_status_id != db_task.status_id:
+        done_ids = get_status_ids_by_category(db, "done")
+        if new_status_id in done_ids:
+            if "actual_end_date" not in update_dict and db_task.actual_end_date is None:
+                update_dict["actual_end_date"] = date.today()
+
+    for key, value in update_dict.items():
         setattr(db_task, key, value)
     
     db.commit()
