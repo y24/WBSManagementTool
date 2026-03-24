@@ -34,7 +34,7 @@ const ShiftDatesModal = ({
         <div className="flex items-center justify-between px-6 py-4 border-b bg-indigo-50/50">
           <h3 className="font-bold text-gray-800 flex items-center gap-2">
             <CalendarDays size={18} className="text-indigo-600" />
-            日付一括ずらし
+            日付一括変更
           </h3>
           <button
             onClick={onClose}
@@ -71,7 +71,7 @@ const ShiftDatesModal = ({
 
           <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100 italic">
             <span>※</span>
-            <span>土日および登録された祝日を考慮して、期間（営業日数）を保ったままスライドさせます。</span>
+            <span>土日および登録された祝日を考慮して、期間（営業日数）を保ったまま移動します。</span>
           </div>
         </div>
 

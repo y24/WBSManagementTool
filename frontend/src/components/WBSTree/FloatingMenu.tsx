@@ -13,15 +13,15 @@ interface FloatingMenuProps {
   loading?: boolean;
 }
 
-const FloatingMenu = ({ 
-  totalSelectedCount, 
-  onDelete, 
-  onDuplicate, 
-  onClearActuals, 
+const FloatingMenu = ({
+  totalSelectedCount,
+  onDelete,
+  onDuplicate,
+  onClearActuals,
   onShiftDates,
-  onClear, 
-  menuRendered, 
-  loading 
+  onClear,
+  menuRendered,
+  loading
 }: FloatingMenuProps) => {
   if (!menuRendered) return null;
 
@@ -58,7 +58,7 @@ const FloatingMenu = ({
             className={`flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-bold text-sm transition-all hover:scale-105 active:scale-95 ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <CalendarDays size={18} className={loading ? 'animate-pulse' : ''} />
-            {loading ? '処理中...' : '日付一括ずらし'}
+            {loading ? '処理中...' : '日付一括変更'}
           </button>
           <button
             onClick={onDelete}
