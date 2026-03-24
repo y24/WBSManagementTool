@@ -840,6 +840,11 @@ code {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   margin-top: 1rem;
+  transition: border-color 0.2s;
+}
+
+:root.dark .import-preview-table-container {
+  border-color: #1e293b;
 }
 
 .import-preview-table {
@@ -871,14 +876,22 @@ code {
   font-size: 0.875rem;
   border-bottom: 1px solid #f1f5f9;
   color: #1e293b;
+  transition: color 0.2s, border-color 0.2s;
 }
+
 :root.dark .import-preview-table td {
   border-bottom-color: #1e293b;
+  color: #cbd5e1;
 }
 
 .import-preview-row-0 { background-color: rgba(219, 234, 254, 0.3); }
+:root.dark .import-preview-row-0 { background-color: rgba(30, 41, 59, 0.4); }
+
 .import-preview-row-1 { background-color: rgba(241, 245, 249, 0.4); }
+:root.dark .import-preview-row-1 { background-color: rgba(15, 23, 42, 0.4); }
+
 .import-preview-row-error { background-color: #fef2f2; }
+:root.dark .import-preview-row-error { background-color: rgba(127, 29, 29, 0.2); }
 
 .import-error-list {
   color: #ef4444;

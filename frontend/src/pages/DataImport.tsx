@@ -226,24 +226,24 @@ export default function DataImport() {
                   {previewRows.map((row) => (
                     <tr 
                       key={row.row_index} 
-                      className={`import-preview-row-${row.level} ${row.errors.length > 0 ? 'import-preview-row-error dark:bg-red-900/10' : 'dark:even:bg-slate-800/20'} dark:border-slate-800`}
+                      className={`import-preview-row-${row.level} ${row.errors.length > 0 ? 'import-preview-row-error dark:bg-red-900/20' : 'dark:even:bg-slate-800/10'} dark:border-slate-800`}
                     >
-                      <td className="text-center text-slate-400 dark:text-slate-500 font-mono">{row.row_index}</td>
+                      <td className="text-center text-slate-400 dark:text-slate-400 font-mono">{row.row_index}</td>
                       <td>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          row.level === 0 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 
-                          row.level === 1 ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400' : 
-                          'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-500 border border-slate-200 dark:border-slate-800'
+                          row.level === 0 ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 
+                          row.level === 1 ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200' : 
+                          'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
                         }`}>
                           {row.level === 0 ? 'Project' : row.level === 1 ? 'Task' : 'Subtask'}
                         </span>
                       </td>
-                      <td className="font-medium dark:text-slate-300">{row.name}</td>
-                      <td className="dark:text-slate-400">{row.status}</td>
-                      <td className="dark:text-slate-400">{row.assignee}</td>
-                      <td className="font-mono text-[11px] dark:text-slate-400">{row.planned_start || '-'}</td>
-                      <td className="font-mono text-[11px] dark:text-slate-400">{row.planned_end || '-'}</td>
-                      <td className="text-center dark:text-slate-400">{row.review_days != null ? row.review_days : '-'}</td>
+                      <td className="font-medium dark:text-slate-100">{row.name}</td>
+                      <td className="dark:text-slate-200">{row.status}</td>
+                      <td className="dark:text-slate-200">{row.assignee}</td>
+                      <td className="font-mono text-[11px] dark:text-slate-300">{row.planned_start || '-'}</td>
+                      <td className="font-mono text-[11px] dark:text-slate-300">{row.planned_end || '-'}</td>
+                      <td className="text-center dark:text-slate-200">{row.review_days != null ? row.review_days : '-'}</td>
                       <td>
                         {row.errors.length > 0 && (
                           <ul className="import-error-list dark:text-red-400">
