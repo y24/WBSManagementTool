@@ -295,3 +295,9 @@ def shift_dates(req: schemas.ShiftDatesRequest, db: Session = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=400, detail="Date shifting failed or no items selected")
     return {"status": "ok"}
+
+# --- Dashboard ---
+@router.get("/dashboard", response_model=schemas.DashboardData)
+def get_dashboard(db: Session = Depends(get_db)):
+    return crud.get_dashboard_data(db)
+

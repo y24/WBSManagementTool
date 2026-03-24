@@ -321,3 +321,54 @@ class ShiftDatesRequest(BaseModel):
     task_ids: List[int] = []
     subtask_ids: List[int] = []
     new_base_date: date
+
+# --- Dashboard ---
+
+class DashboardKPIs(BaseModel):
+    ongoing_projects_count: int
+    overdue_subtasks_count: int
+    review_delay_count: int
+    this_week_end_count: int
+
+class ProjectProgressData(BaseModel):
+    project_name: str
+    progress_percent: int
+
+class AssigneeDelayData(BaseModel):
+    member_name: str
+    delay_count: int
+
+class StatusCountData(BaseModel):
+    status_name: str
+    count: int
+    color_code: str
+
+class SubtaskSummary(BaseModel):
+    id: int
+    task_name: str
+    subtask_detail: str
+    planned_end_date: Optional[date]
+    progress_percent: int = 0
+    assignee_name: Optional[str] = None
+
+class ReviewDelaySubtask(SubtaskSummary):
+    review_days: float = 0
+    review_start_date: Optional[date] = None
+    delay_days: float = 0
+
+class AssigneeSummary(BaseModel):
+    member_name: str
+    total_count: int
+    this_week_end_count: int
+    overdue_count: int
+    concurrent_count: int
+
+class DashboardData(BaseModel):
+    kpis: DashboardKPIs
+    project_progress: List[ProjectProgressData]
+    assignee_delays: List[AssigneeDelayData]
+    status_counts: List[StatusCountData]
+    review_delays_top5: List[ReviewDelaySubtask]
+    low_progress_soon_to_finish: List[SubtaskSummary]
+    assignee_summary: List[AssigneeSummary]
+

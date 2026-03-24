@@ -65,4 +65,8 @@ export const wbsOps = {
       subtask_ids: subtaskIds,
       new_base_date: newBaseDate
     }),
+
+  getDashboard: () => 
+    apiClient.get('/dashboard'),
 };
+

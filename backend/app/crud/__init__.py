@@ -64,3 +64,8 @@ from .recalc import (
     recalculate_task_dates,
     recalculate_task_status
 )
+
+from .dashboard import (
+    get_dashboard_data
+)
+
