@@ -71,6 +71,19 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     filters.onlyDelayed ||
     filters.searchTerm !== '';
 
+  // Removedステータスの自動解除
+  React.useEffect(() => {
+    if (!displayOptions.showRemoved) {
+      const removedStatusId = statuses.find(s => s.status_name === 'Removed')?.id;
+      if (removedStatusId && filters.statusIds.includes(removedStatusId)) {
+        setFilters(prev => ({
+          ...prev,
+          statusIds: prev.statusIds.filter(id => id !== removedStatusId)
+        }));
+      }
+    }
+  }, [displayOptions.showRemoved, statuses, filters.statusIds, setFilters]);
+
   return (
     <div className="bg-slate-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-3 flex items-center gap-4 shrink-0 shadow-sm z-40 transition-colors">
       <div className="flex items-center gap-2 text-blue-600 mr-2">
@@ -104,7 +117,12 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         {/* Status Filter */}
         <MultiSelect
           values={filters.statusIds}
-          options={statuses.map(s => ({ id: s.id, name: s.status_name, color: s.color_code }))}
+          options={statuses.map(s => ({ 
+            id: s.id, 
+            name: s.status_name, 
+            color: s.color_code,
+            disabled: !displayOptions.showRemoved && s.status_name === 'Removed'
+          }))}
           onChange={(ids) => setFilters(prev => ({ ...prev, statusIds: ids as number[] }))}
           placeholder="ステータスを選択"
           dropdownTitle="ステータス"

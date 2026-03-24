@@ -4,7 +4,7 @@ import { ChevronDown, Check, X } from 'lucide-react';
 
 interface MultiSelectProps {
   values: any[];
-  options: { id: any; name: string; color?: string }[];
+  options: { id: any; name: string; color?: string; disabled?: boolean }[];
   onChange: (values: any[]) => void;
   className?: string;
   placeholder?: string;
@@ -147,16 +147,18 @@ const MultiSelect = memo(({
           <div className="max-h-64 overflow-y-auto overscroll-contain px-1">
             {options.map((opt) => {
               const isSelected = values.includes(opt.id);
+              const isDisabled = opt.disabled;
               return (
                 <div
                   key={opt.id ?? 'null'}
-                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg cursor-pointer transition-colors group ${isSelected ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-colors group ${isDisabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : isSelected ? 'bg-blue-50/50 dark:bg-blue-900/20 cursor-pointer' : 'hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer'}`}
                   onClick={(e) => {
+                    if (isDisabled) return;
                     e.stopPropagation();
                     toggleOption(opt.id);
                   }}
                 >
-                  <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-blue-600 border-blue-600' : 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 group-hover:border-blue-400'}`}>
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors shadow-sm ${isDisabled ? 'bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700' : isSelected ? 'bg-blue-600 border-blue-600' : 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 group-hover:border-blue-400'}`}>
                     {isSelected && <Check size={10} className="text-white stroke-[3px]" />}
                   </div>
                   {opt.color && (
@@ -165,7 +167,7 @@ const MultiSelect = memo(({
                       style={{ backgroundColor: opt.color }}
                     />
                   )}
-                  <span className={`text-xs flex-1 transition-colors ${isSelected ? 'text-blue-700 dark:text-blue-400 font-bold' : 'text-gray-700 dark:text-slate-300 font-medium'}`}>{opt.name}</span>
+                  <span className={`text-xs flex-1 transition-colors ${isDisabled ? 'text-gray-400 dark:text-slate-500 font-medium italic' : isSelected ? 'text-blue-700 dark:text-blue-400 font-bold' : 'text-gray-700 dark:text-slate-300 font-medium'}`}>{opt.name}</span>
                 </div>
               );
             })}
