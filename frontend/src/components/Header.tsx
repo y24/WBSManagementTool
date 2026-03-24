@@ -1,7 +1,10 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Settings, ListTree, Plus, FileInput, LayoutDashboard } from 'lucide-react';
 
 export default function Header() {
+  const location = useLocation();
+  const isMainBoard = location.pathname === '/';
+
   return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 h-14 flex items-center px-6 justify-between shrink-0 shadow-md z-50 transition-colors">
       <div className="flex items-center gap-10">
@@ -42,13 +45,15 @@ export default function Header() {
 
       </div>
       <div className="flex items-center gap-6">
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent('add-project'))}
-          className="ml-auto flex items-center gap-2 px-4 py-1.5 bg-indigo-600 dark:bg-indigo-700/40 text-white dark:text-indigo-100 rounded-lg text-sm border border-indigo-500 dark:border-indigo-500/30 hover:bg-indigo-700 dark:hover:bg-indigo-600/60 hover:border-indigo-600 dark:hover:border-indigo-400 hover:text-white hover:scale-105 active:scale-95 transition-all shadow-lg dark:shadow-xl backdrop-blur-md font-bold group"
-        >
-          <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />
-          <span>プロジェクト追加</span>
-        </button>
+        {isMainBoard && (
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('add-project'))}
+            className="ml-auto flex items-center gap-2 px-4 py-1.5 bg-indigo-600 dark:bg-indigo-700/40 text-white dark:text-indigo-100 rounded-lg text-sm border border-indigo-500 dark:border-indigo-500/30 hover:bg-indigo-700 dark:hover:bg-indigo-600/60 hover:border-indigo-600 dark:hover:border-indigo-400 hover:text-white hover:scale-105 active:scale-95 transition-all shadow-lg dark:shadow-xl backdrop-blur-md font-bold group"
+          >
+            <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />
+            <span>プロジェクト追加</span>
+          </button>
+        )}
       </div>
     </header>
   );
