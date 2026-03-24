@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { wbsOps } from '../api/wbsOperations';
 import { DashboardData } from '../types/dashboard';
 import { 
@@ -14,6 +14,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
   const [showAllAssignees, setShowAllAssignees] = useState(false);
+  const dashboardScrollRef = useRef<HTMLDivElement | null>(null);
+  const assigneeSectionRef = useRef<HTMLDivElement | null>(null);
+  const scrollAnimationRef = useRef<number | null>(null);
+  const assigneeHeightBeforeToggleRef = useRef<number | null>(null);
+  const isAssigneeTogglingRef = useRef(false);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -27,6 +32,55 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (scrollAnimationRef.current !== null) {
+        cancelAnimationFrame(scrollAnimationRef.current);
+      }
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isAssigneeTogglingRef.current) return;
+
+    const section = assigneeSectionRef.current;
+    const from = assigneeHeightBeforeToggleRef.current;
+    if (!section || from === null) {
+      isAssigneeTogglingRef.current = false;
+      assigneeHeightBeforeToggleRef.current = null;
+      return;
+    }
+
+    const to = section.getBoundingClientRect().height;
+    if (Math.abs(to - from) < 1) {
+      isAssigneeTogglingRef.current = false;
+      assigneeHeightBeforeToggleRef.current = null;
+      return;
+    }
+
+    section.style.height = `${from}px`;
+    section.style.overflow = 'hidden';
+    section.style.willChange = 'height';
+    section.getBoundingClientRect();
+    section.style.transition = 'height 420ms cubic-bezier(0.22, 1, 0.36, 1)';
+    section.style.height = `${to}px`;
+
+    const handleEnd = () => {
+      section.style.height = '';
+      section.style.overflow = '';
+      section.style.transition = '';
+      section.style.willChange = '';
+      isAssigneeTogglingRef.current = false;
+      assigneeHeightBeforeToggleRef.current = null;
+    };
+
+    section.addEventListener('transitionend', handleEnd, { once: true });
+
+    return () => {
+      section.removeEventListener('transitionend', handleEnd);
+    };
+  }, [showAllAssignees]);
+
   const fetchData = async () => {
     try {
       const res = await wbsOps.getDashboard();
@@ -36,6 +90,60 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleToggleAssignees = () => {
+    const section = assigneeSectionRef.current;
+    if (section) {
+      assigneeHeightBeforeToggleRef.current = section.getBoundingClientRect().height;
+      isAssigneeTogglingRef.current = true;
+    }
+
+    setShowAllAssignees((prev) => {
+      const next = !prev;
+      if (prev && !next) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const container = dashboardScrollRef.current;
+            const section = assigneeSectionRef.current;
+            if (!container || !section) return;
+
+            const containerRect = container.getBoundingClientRect();
+            const sectionRect = section.getBoundingClientRect();
+            const topOffset = 12;
+            const targetTop =
+              container.scrollTop + (sectionRect.top - containerRect.top) - topOffset;
+            const to = Math.max(0, targetTop);
+            const from = container.scrollTop;
+            const distance = to - from;
+            const duration = 520;
+            const start = performance.now();
+            const easeInOutCubic = (t: number) =>
+              t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+            if (scrollAnimationRef.current !== null) {
+              cancelAnimationFrame(scrollAnimationRef.current);
+            }
+
+            const tick = (now: number) => {
+              const elapsed = now - start;
+              const progress = Math.min(1, elapsed / duration);
+              const eased = easeInOutCubic(progress);
+              container.scrollTop = from + distance * eased;
+
+              if (progress < 1) {
+                scrollAnimationRef.current = requestAnimationFrame(tick);
+              } else {
+                scrollAnimationRef.current = null;
+              }
+            };
+
+            scrollAnimationRef.current = requestAnimationFrame(tick);
+          });
+        });
+      }
+      return next;
+    });
   };
 
   if (loading || !data) {
@@ -56,7 +164,10 @@ export default function Dashboard() {
   const tooltipText = isDark ? '#e2e8f0' : '#1e293b';
 
   return (
-    <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-full text-slate-700 dark:text-slate-200 overflow-y-auto transition-colors duration-300">
+    <div
+      ref={dashboardScrollRef}
+      className="p-8 space-y-8 bg-slate-50 dark:bg-slate-950 min-h-full text-slate-700 dark:text-slate-200 overflow-y-auto transition-colors duration-300"
+    >
       <div>
         <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
           Dashboard
@@ -228,7 +339,8 @@ export default function Dashboard() {
           </div>
         </ListContainer>
 
-        <ListContainer title="担当者別 負荷・レベル状況">
+        <div ref={assigneeSectionRef}>
+          <ListContainer title="担当者別 負荷・レベル状況">
           <div className="overflow-x-auto mt-4 px-1">
             <table className="w-full text-base text-left border-collapse">
               <thead>
@@ -274,7 +386,7 @@ export default function Dashboard() {
           </div>
           {data.assignee_summary.length > 5 && (
             <button 
-              onClick={() => setShowAllAssignees(!showAllAssignees)}
+              onClick={handleToggleAssignees}
               className="mt-6 w-full py-3 flex items-center justify-center gap-2 text-sm font-black text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/5 rounded-xl border border-indigo-500/10 transition-all group"
             >
               {showAllAssignees ? (
@@ -284,7 +396,8 @@ export default function Dashboard() {
               )}
             </button>
           )}
-        </ListContainer>
+          </ListContainer>
+        </div>
       </div>
 
       {/* New Analytics Section */}
