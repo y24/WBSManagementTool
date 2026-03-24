@@ -31,17 +31,23 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
         models.Project.status_id.in_(active_status_ids)
     ).count()
 
-    overdue_subtasks_count = db.query(models.Subtask).filter(
+    overdue_subtasks_count = db.query(models.Subtask).join(models.Task).join(models.Project).filter(
         models.Subtask.is_deleted == False,
         models.Subtask.planned_end_date < today,
         models.Subtask.status_id != done_id,
-        models.Subtask.status_id != removed_id
+        models.Subtask.status_id != removed_id,
+        models.Task.is_deleted == False,
+        models.Project.is_deleted == False,
+        models.Project.status_id.in_(active_status_ids)
     ).count()
 
-    # Get all subtasks to process in Python for more complex logic
-    all_subtasks_base = db.query(models.Subtask).filter(
+    # Get all subtasks for active projects to process in Python for more complex logic
+    all_subtasks_base = db.query(models.Subtask).join(models.Task).join(models.Project).filter(
         models.Subtask.is_deleted == False,
-        models.Subtask.status_id != removed_id
+        models.Subtask.status_id != removed_id,
+        models.Task.is_deleted == False,
+        models.Project.is_deleted == False,
+        models.Project.status_id.in_(active_status_ids)
     ).all()
 
     review_delay_count = 0
@@ -177,7 +183,7 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
         # Concurrent: Status is In Progress or (actual_start_date is set and actual_end_date is null)
         concurrent = 0
         for s in m_subtasks:
-            if s.status.status_name == "In Progress":
+            if s.status.status_name in ["In Progress", "In Review"]:
                 concurrent += 1
             elif s.actual_start_date and not s.actual_end_date and s.status_id != done_id:
                 concurrent += 1

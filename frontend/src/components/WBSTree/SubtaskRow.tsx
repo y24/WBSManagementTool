@@ -32,7 +32,8 @@ const SubtaskRow = memo(({
   hidePlanningColumns = false
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData);
-  const isInProgress = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name === 'In Progress';
+  const statusName = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name;
+  const isOngoing = statusName === 'In Progress' || statusName === 'In Review';
 
   const [localProgress, setLocalProgress] = React.useState<number | null>(subtask.progress_percent ?? null);
 
@@ -165,7 +166,7 @@ const SubtaskRow = memo(({
           min={subtask.actual_start_date}
           onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v)}
           highlight={getHighlight('actual_end_date', subtask.actual_end_date)}
-          className={isInProgress ? "bg-yellow-100/90 dark:bg-yellow-900/40" : ""}
+          className={isOngoing ? "bg-yellow-100/90 dark:bg-yellow-900/40" : ""}
         />
       </div>
       <div className={`w-16 ${dateCellClasses}`}>

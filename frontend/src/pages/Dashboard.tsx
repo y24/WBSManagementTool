@@ -159,112 +159,110 @@ export default function Dashboard() {
       </div>
 
       {/* Lists Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 pb-8">
-        <div className="space-y-8">
-          <ListContainer title="レビュー遅延サブタスク" subtitle="レビュー開始の遅延、またはレビュー期間の超過">
-            <div className="space-y-3 mt-4">
-              {data.review_delays.length === 0 ? (
-                <div className="text-center py-10 text-slate-400 text-base font-medium italic bg-white dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
-                  現在、レビュー遅延サブタスクはありません。
-                </div>
-              ) : (
-                data.review_delays.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none hover:border-amber-500/30 transition-all group relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500 opacity-50"></div>
-                    <div className="space-y-1 ml-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter max-w-[150px] truncate">{s.task_name}</span>
-                        <ChevronRight size={12} className="text-slate-300 dark:text-slate-700" />
-                        <span className="text-base font-bold text-slate-700 dark:text-slate-200">{s.subtask_detail}</span>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-                        <span className="flex items-center gap-1"><Briefcase size={12}/> {s.assignee_name || '-'}</span>
-                        <span className="flex items-center gap-1">
-                          <Clock size={12}/> {s.review_start_date ? `開始: ${s.review_start_date}` : <span className="text-amber-600 dark:text-amber-400 font-bold italic">未開始 (開始期限超過)</span>}
-                        </span>
-                        <span className="text-slate-400 dark:text-slate-500">枠: {s.review_days}日</span>
-                      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 pb-8">
+        <ListContainer title="レビュー遅延サブタスク" subtitle="レビュー開始の遅延、またはレビュー期間の超過">
+          <div className="space-y-3 mt-4">
+            {data.review_delays.length === 0 ? (
+              <div className="text-center py-10 text-slate-400 text-base font-medium italic bg-white dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                現在、レビュー遅延サブタスクはありません。
+              </div>
+            ) : (
+              data.review_delays.map((s) => (
+                <div key={s.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none hover:border-amber-500/30 transition-all group relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500 opacity-50"></div>
+                  <div className="space-y-1 ml-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter max-w-[150px] truncate">{s.task_name}</span>
+                      <ChevronRight size={12} className="text-slate-300 dark:text-slate-700" />
+                      <span className="text-base font-bold text-slate-700 dark:text-slate-200">{s.subtask_detail}</span>
                     </div>
-                    <div className="text-right flex flex-col items-end">
-                      <div className="text-base font-black text-amber-600 dark:text-amber-500">+{s.delay_days.toFixed(1)}d</div>
-                      <div className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800/50 px-2 py-0.5 rounded">{s.progress_percent}%</div>
+                    <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="flex items-center gap-1"><Briefcase size={12}/> {s.assignee_name || '-'}</span>
+                      <span className="flex items-center gap-1">
+                        <Clock size={12}/> {s.review_start_date ? `開始: ${s.review_start_date}` : <span className="text-amber-600 dark:text-amber-400 font-bold italic">未開始 (開始期限超過)</span>}
+                      </span>
+                      <span className="text-slate-400 dark:text-slate-500">枠: {s.review_days}日</span>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          </ListContainer>
+                  <div className="text-right flex flex-col items-end">
+                    <div className="text-base font-black text-amber-600 dark:text-amber-500">+{s.delay_days.toFixed(1)}d</div>
+                    <div className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800/50 px-2 py-0.5 rounded">{s.progress_percent}%</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </ListContainer>
 
-          <ListContainer title="今週終了予定・低進捗サブタスク" subtitle="終了予定が今週だが進捗50%未満">
-            <div className="space-y-3 mt-4">
-              {data.low_progress_soon_to_finish.length === 0 ? (
-                <div className="text-center py-10 text-slate-400 text-base font-medium italic bg-white dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
-                  現在、対象となるサブタスクはありません。
-                </div>
-              ) : (
-                data.low_progress_soon_to_finish.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none hover:border-rose-500/30 transition-all group relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500 opacity-50"></div>
-                    <div className="space-y-1 ml-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter max-w-[150px] truncate">{s.task_name}</span>
-                        <ChevronRight size={12} className="text-slate-300 dark:text-slate-700" />
-                        <span className="text-base font-bold text-slate-700 dark:text-slate-200">{s.subtask_detail}</span>
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-3">
-                        <span className="text-rose-600 dark:text-rose-400 font-medium italic">Due: {s.planned_end_date}</span>
-                        <span>Assignee: {s.assignee_name || '-'}</span>
-                      </div>
+        <ListContainer title="今週終了予定・低進捗サブタスク" subtitle="終了予定が今週だが進捗50%未満">
+          <div className="space-y-3 mt-4">
+            {data.low_progress_soon_to_finish.length === 0 ? (
+              <div className="text-center py-10 text-slate-400 text-base font-medium italic bg-white dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                現在、対象となるサブタスクはありません。
+              </div>
+            ) : (
+              data.low_progress_soon_to_finish.map((s) => (
+                <div key={s.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none hover:border-rose-500/30 transition-all group relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500 opacity-50"></div>
+                  <div className="space-y-1 ml-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter max-w-[150px] truncate">{s.task_name}</span>
+                      <ChevronRight size={12} className="text-slate-300 dark:text-slate-700" />
+                      <span className="text-base font-bold text-slate-700 dark:text-slate-200">{s.subtask_detail}</span>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-20 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" style={{ width: `${s.progress_percent}%` }}></div>
-                      </div>
-                      <span className="text-sm font-black text-rose-600 dark:text-rose-400 w-10 text-right tracking-tighter">{s.progress_percent}%</span>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-3">
+                      <span className="text-rose-600 dark:text-rose-400 font-medium italic">Due: {s.planned_end_date}</span>
+                      <span>Assignee: {s.assignee_name || '-'}</span>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          </ListContainer>
-        </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" style={{ width: `${s.progress_percent}%` }}></div>
+                    </div>
+                    <span className="text-sm font-black text-rose-600 dark:text-rose-400 w-10 text-right tracking-tighter">{s.progress_percent}%</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </ListContainer>
 
         <ListContainer title="担当者別 負荷・レベル状況">
-          <div className="overflow-x-auto mt-4">
+          <div className="overflow-x-auto mt-4 px-1">
             <table className="w-full text-base text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest">
-                  <th className="pb-4 px-2">Member</th>
-                  <th className="pb-4 px-2 text-center">Total</th>
-                  <th className="pb-4 px-2 text-center">ThisWk</th>
-                  <th className="pb-4 px-2 text-center text-rose-500/80">Delays</th>
-                  <th className="pb-4 px-2 text-center text-indigo-400/80">Ongoing</th>
-                  <th className="pb-4 px-2 text-right">Status</th>
+                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                  <th className="pb-4 px-1">Member</th>
+                  <th className="pb-4 px-1 text-center">Total</th>
+                  <th className="pb-4 px-1 text-center">ThisWk</th>
+                  <th className="pb-4 px-1 text-center text-rose-500/80">Delay</th>
+                  <th className="pb-4 px-1 text-center text-indigo-400/80">Run</th>
+                  <th className="pb-4 px-1 text-right">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                 {data.assignee_summary.map((m) => (
                   <tr key={m.member_name} className="hover:bg-indigo-500/5 transition-colors group">
-                    <td className="py-4 px-2">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-black text-indigo-600 dark:text-indigo-400">
+                    <td className="py-4 px-1">
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-indigo-600 dark:text-indigo-400 shrink-0">
                                 {m.member_name.substring(0, 1)}
                             </div>
-                            <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{m.member_name}</span>
+                            <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white transition-colors truncate max-w-[80px]">{m.member_name}</span>
                         </div>
                     </td>
-                    <td className="py-4 px-2 text-center text-slate-500 dark:text-slate-400 font-medium">{m.total_count}</td>
-                    <td className="py-4 px-2 text-center font-bold text-slate-700 dark:text-slate-200">{m.this_week_end_count}</td>
-                    <td className={`py-4 px-2 text-center font-black ${m.overdue_count > 0 ? 'text-rose-600 dark:text-rose-500' : 'text-slate-300 dark:text-slate-700'}`}>{m.overdue_count}</td>
-                    <td className="py-4 px-2 text-center font-black text-indigo-600 dark:text-indigo-400">{m.concurrent_count}</td>
-                    <td className="py-4 px-2 text-right">
-                       <div className="flex items-center justify-end gap-1">
+                    <td className="py-4 px-1 text-center text-slate-500 dark:text-slate-400 font-medium text-sm">{m.total_count}</td>
+                    <td className="py-4 px-1 text-center font-bold text-slate-700 dark:text-slate-200 text-sm">{m.this_week_end_count}</td>
+                    <td className={`py-4 px-1 text-center font-black text-sm ${m.overdue_count > 0 ? 'text-rose-600 dark:text-rose-500' : 'text-slate-300 dark:text-slate-700'}`}>{m.overdue_count}</td>
+                    <td className="py-4 px-1 text-center font-black text-indigo-600 dark:text-indigo-400 text-sm">{m.concurrent_count}</td>
+                    <td className="py-4 px-1 text-right">
+                       <div className="flex items-center justify-end">
                           {m.overdue_count > 0 ? (
-                            <span className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-500 text-[11px] font-black border border-rose-500/20 shadow-sm dark:shadow-[0_0_10px_rgba(244,63,94,0.1)]">OVERLOAD</span>
+                            <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-500 text-[9px] font-black border border-rose-500/20">OVLD</span>
                           ) : m.concurrent_count > 3 ? (
-                            <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-500 text-[11px] font-black border border-amber-500/20">CAUTION</span>
+                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-500 text-[9px] font-black border border-amber-500/20">CAUT</span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[11px] font-black border border-emerald-500/20">STABLE</span>
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[9px] font-black border border-emerald-500/20">STBL</span>
                           )}
                        </div>
                     </td>

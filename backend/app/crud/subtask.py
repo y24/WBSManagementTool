@@ -61,11 +61,11 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
 
 def refresh_subtasks_actual_end_date(db: Session, project_ids: Optional[List[int]] = None):
     """
-    Update actual_end_date to today for all subtasks with 'In Progress' status (ID 2).
+    Update actual_end_date to today for all subtasks with 'In Progress' or 'In Review' status (ID 2, 3).
     This ensures that for ongoing tasks, the actual end date tracks today.
     """
     query = db.query(models.Subtask).join(models.Task).filter(
-        models.Subtask.status_id == 2,
+        models.Subtask.status_id.in_([2, 3]),
         models.Subtask.is_deleted == False
     )
     if project_ids:
@@ -109,12 +109,12 @@ def create_subtask(db: Session, subtask: schemas.SubtaskCreate):
     db_subtask = models.Subtask(**subtask_dict)
     
     # Auto-set dates based on status
-    # 1. actual_start_date for In Progress (2) or Done (4)
-    if db_subtask.status_id in [2, 4] and db_subtask.actual_start_date is None:
+    # 1. actual_start_date for In Progress (2), In Review (3) or Done (4)
+    if db_subtask.status_id in [2, 3, 4] and db_subtask.actual_start_date is None:
         db_subtask.actual_start_date = date.today()
     
-    # 2. actual_end_date for In Progress (2)
-    if db_subtask.status_id == 2:
+    # 2. actual_end_date for In Progress (2) or In Review (3)
+    if db_subtask.status_id in [2, 3]:
         db_subtask.actual_end_date = date.today()
         # Guarantee actual_start_date <= actual_end_date
         if db_subtask.actual_start_date and db_subtask.actual_start_date > db_subtask.actual_end_date:
@@ -152,13 +152,13 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
     # Auto-set dates if status is being changed
     new_status_id = update_dict.get("status_id")
     if new_status_id is not None and new_status_id != db_subtask.status_id:
-        # 1. actual_start_date for In Progress (2) or Done (4)
-        if new_status_id in [2, 4]:
+        # 1. actual_start_date for In Progress (2), In Review (3) or Done (4)
+        if new_status_id in [2, 3, 4]:
             if "actual_start_date" not in update_dict and db_subtask.actual_start_date is None:
                 update_dict["actual_start_date"] = date.today()
         
-        # 1.5. actual_end_date for In Progress (2)
-        if new_status_id == 2:
+        # 1.5. actual_end_date for In Progress (2) or In Review (3)
+        if new_status_id in [2, 3]:
             if "actual_end_date" not in update_dict:
                 update_dict["actual_end_date"] = date.today()
             
