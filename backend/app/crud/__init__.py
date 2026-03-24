@@ -69,3 +69,8 @@ from .dashboard import (
     get_dashboard_data
 )
 
+from .shared_filter import (
+    create_shared_filter,
+    get_shared_filter
+)
+

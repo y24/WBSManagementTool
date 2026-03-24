@@ -87,6 +87,27 @@ export default function MainBoard() {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shareToken = params.get('share');
+    if (shareToken) {
+      const fetchSharedFilters = async () => {
+        try {
+          const res = await apiClient.get(`/shared-filters/${shareToken}`);
+          if (res.data && res.data.filter_data) {
+            setFilters(res.data.filter_data);
+            // URLからshareパラメータを削除（リロード時に再度適用されるのを防ぐ）
+            const newUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+          }
+        } catch (error) {
+          console.error('Failed to fetch shared filters:', error);
+        }
+      };
+      fetchSharedFilters();
+    }
+  }, []);
+
+  useEffect(() => {
     if (displayOptions.isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {

@@ -193,3 +193,11 @@ class Subtask(Base):
         CheckConstraint("actual_start_date IS NULL OR actual_end_date IS NULL OR actual_end_date >= actual_start_date", name="check_subtask_actual_dates"),
         CheckConstraint("actual_start_date IS NULL OR review_start_date IS NULL OR review_start_date >= actual_start_date", name="check_subtask_review_start_date"),
     )
+
+class SharedFilter(Base):
+    __tablename__ = "shared_filters"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String(100), unique=True, index=True, nullable=False)
+    filter_data = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

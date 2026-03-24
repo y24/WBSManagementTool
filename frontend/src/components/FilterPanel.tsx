@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, Columns3, Columns2, ChartNoAxesGantt } from 'lucide-react';
+import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, Columns3, Columns2, ChartNoAxesGantt, Link2, Share2 } from 'lucide-react';
 import MultiSelect from './MultiSelect';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
@@ -43,6 +43,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   onClear
 }) => {
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const [isCopied, setIsCopied] = React.useState(false);
   const settingsRef = React.useRef<HTMLDivElement>(null);
 
   // ポップアップの外をクリックしたら閉じる
@@ -188,6 +189,35 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         aria-label={displayOptions.showGanttChart ? 'ガントチャートを非表示' : 'ガントチャートを表示'}
       >
         <ChartNoAxesGantt size={18} />
+      </button>
+
+      <button
+        onClick={async () => {
+          try {
+            const { apiClient } = await import('../api/client');
+            const response = await apiClient.post<{ token: string }>('/shared-filters', { filter_data: filters });
+            const token = response.data.token;
+            const url = `${window.location.origin}${window.location.pathname}?share=${token}`;
+            await navigator.clipboard.writeText(url);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+          } catch (error) {
+            console.error('Failed to share filters:', error);
+            alert('URLの発行に失敗しました。');
+          }
+        }}
+        className={`relative p-2 rounded-lg border transition-all shadow-sm ${isCopied
+          ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 text-emerald-600'
+          : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-500'
+          }`}
+        title="URLをコピーして共有"
+      >
+        {isCopied ? <Check size={18} /> : <Link2 size={18} />}
+        {isCopied && (
+          <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded shadow-lg animate-in fade-in slide-in-from-top-1 z-50">
+            Copied!
+          </div>
+        )}
       </button>
 
       <div className="relative" ref={settingsRef}>

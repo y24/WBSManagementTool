@@ -398,3 +398,12 @@ class DashboardData(BaseModel):
     assignee_estimate_errors: List[AssigneeEstimateErrorData] = []
     estimate_accuracy_trend: List[EstimateAccuracyTrendData] = []
 
+# --- Shared Filters ---
+class SharedFilterCreate(BaseModel):
+    filter_data: dict
+
+class SharedFilterResponse(BaseModel):
+    token: str
+    filter_data: dict
+    model_config = { "from_attributes": True }
+

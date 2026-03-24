@@ -301,3 +301,24 @@ def shift_dates(req: schemas.ShiftDatesRequest, db: Session = Depends(get_db)):
 def get_dashboard(db: Session = Depends(get_db)):
     return crud.get_dashboard_data(db)
 
+# --- Shared Filters ---
+@router.post("/shared-filters", response_model=schemas.SharedFilterResponse)
+def create_shared_filter(filter_in: schemas.SharedFilterCreate, db: Session = Depends(get_db)):
+    db_shared = crud.create_shared_filter(db, filter_in)
+    import json
+    return {
+        "token": db_shared.token,
+        "filter_data": json.loads(db_shared.filter_data)
+    }
+
+@router.get("/shared-filters/{token}", response_model=schemas.SharedFilterResponse)
+def get_shared_filter(token: str, db: Session = Depends(get_db)):
+    db_shared = crud.get_shared_filter(db, token)
+    if not db_shared:
+        raise HTTPException(status_code=404, detail="Shared filter not found")
+    import json
+    return {
+        "token": db_shared.token,
+        "filter_data": json.loads(db_shared.filter_data)
+    }
+
