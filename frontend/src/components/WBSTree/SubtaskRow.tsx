@@ -183,6 +183,7 @@ const SubtaskRow = memo(({
           min={0}
           max={100}
           suffix="%"
+          autoPercent={true}
         />
       </div>
     </div>

@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Calendar } from 'lucide-react';
 import { formatDateForInput, parseDateFromInput, formatDisplayDate } from './utils';
 
-const EditableInput = memo(({ value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight }: any) => {
+const EditableInput = memo(({ value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent }: any) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const isCommittingRef = useRef(false);
   const datePickerRef = useRef<any>(null);
   const containerRef = useRef<any>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isEditing || isAuto) {
@@ -73,6 +74,27 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
     }
     setIsEditing(false);
   }, [isEditing, value, onChange, type, min, max, isAuto]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVal = e.target.value;
+    const nativeEvent = e.nativeEvent as any;
+    const inputType = nativeEvent.inputType;
+
+    // 補助機能: 1~9の1桁入力時に自動で0を付与して選択状態にする
+    if (autoPercent && inputType === 'insertText' && /^[1-9]$/.test(newVal)) {
+      const adjustedVal = newVal + '0';
+      setVal(adjustedVal);
+      
+      // 0の部分を選択状態にする
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.setSelectionRange(1, 2);
+        }
+      }, 0);
+    } else {
+      setVal(newVal);
+    }
+  };
 
   useEffect(() => {
     if (!isEditing) return;
@@ -156,14 +178,16 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
             )}
           </div>
           <input
-            type={type === 'date' ? 'text' : 'number'}
+            ref={inputRef}
+            type={type === 'date' || autoPercent ? 'text' : (type === 'number' ? 'number' : type)}
+            inputMode={autoPercent ? 'numeric' : undefined}
             placeholder={type === 'date' ? "YYYY/MM/DD" : "0.0"}
             className="flex-1 bg-transparent min-w-0 h-full border-none outline-none px-2 text-sm font-bold text-gray-800 dark:text-slate-100 disabled:text-gray-400 dark:disabled:text-slate-600 disabled:cursor-not-allowed"
             value={val}
             autoFocus
             disabled={isAuto}
             onFocus={(e) => e.target.select()}
-            onChange={(e) => setVal(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleCommit((e.target as HTMLInputElement).value);
               else if (e.key === 'Escape') {
@@ -197,12 +221,14 @@ const EditableInput = memo(({ value, onChange, type = "text", className = "", mi
         </div>
       ) : (
         <input
-          type={type === 'date' ? "text" : type}
+          ref={inputRef}
+          type={type === 'date' || autoPercent ? 'text' : type}
+          inputMode={autoPercent ? 'numeric' : undefined}
           className={`bg-white dark:bg-slate-800 h-full border-2 border-blue-400 outline-none px-1 w-full shadow-sm rounded text-gray-800 dark:text-slate-100 ${className}`}
           value={val}
           autoFocus={isEditing}
           onFocus={(e) => e.target.select()}
-          onChange={(e) => setVal(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleCommit((e.target as HTMLInputElement).value);
             else if (e.key === 'Escape') {
