@@ -55,7 +55,7 @@ const ConfirmModal = ({ isOpen, totalCount, title, description, confirmText, onC
             </button>
             <button
               onClick={onConfirm}
-              className={`flex-1 px-4 py-3 text-sm font-semibold text-white ${isDanger ? 'bg-red-600 hover:bg-red-700 shadow-red-200' : 'bg-amber-600 hover:bg-amber-700 shadow-amber-200'} rounded-xl shadow-lg transition-all active:scale-95`}
+              className={`flex-1 px-4 py-3 text-sm font-semibold text-white ${isDanger ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'} rounded-xl transition-all active:scale-95`}
             >
               {confirmText}
             </button>
