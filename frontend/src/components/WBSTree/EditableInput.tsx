@@ -29,20 +29,21 @@ interface DisplayViewProps {
   precision?: number;
   isAuto?: boolean;
   isActuallyReadOnly: boolean;
+  readOnly?: boolean;
   highlight?: boolean;
   className: string;
   onClick: () => void;
   displayValue: () => React.ReactNode;
 }
 
-const DisplayView = ({ 
-  type, value, isAuto, isActuallyReadOnly, highlight, className, onClick, displayValue 
+const DisplayView = ({
+  type, value, isAuto, isActuallyReadOnly, readOnly, highlight, className, onClick, displayValue
 }: DisplayViewProps) => (
   <div
     className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 
       ${!isActuallyReadOnly ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5' : 'cursor-default'} 
-      ${isActuallyReadOnly ? 'bg-gray-50/30 dark:bg-slate-800/30 font-medium' : ''} 
-      ${isAuto ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-slate-300'} 
+      ${isActuallyReadOnly ? 'bg-gray-50/30 dark:bg-slate-800/30' : ''} 
+      ${(isAuto && !readOnly) ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-slate-300'} 
       ${type === 'number' ? 'border border-gray-200 dark:border-slate-700 bg-gray-50/30 dark:bg-slate-800/30 rounded' : ''} 
       ${highlight ? 'bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/50' : ''} 
       ${className}`}
@@ -64,11 +65,11 @@ interface PopoverEditorProps {
   children: React.ReactNode;
 }
 
-const PopoverEditor = ({ 
-  type, isAuto, onToggleAuto, onPickerToggle, children 
+const PopoverEditor = ({
+  type, isAuto, onToggleAuto, onPickerToggle, children
 }: PopoverEditorProps) => {
   const width = type === 'date' ? (onToggleAuto ? '220px' : '160px') : (onToggleAuto ? '180px' : '100px');
-  
+
   return (
     <div className="absolute left-0 top-0 z-[1000] flex items-center bg-white dark:bg-slate-800 shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10 whitespace-nowrap overflow-hidden"
       style={{ width, height: '37px', marginLeft: '-2px', marginTop: '-2px' }}
@@ -88,7 +89,7 @@ const PopoverEditor = ({
           <span className="text-gray-400 font-bold italic">#</span>
         )}
       </div>
-      
+
       {children}
 
       {onToggleAuto && (
@@ -114,8 +115,8 @@ const PopoverEditor = ({
   );
 };
 
-const EditableInput = memo(({ 
-  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent 
+const EditableInput = memo(({
+  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent
 }: EditableInputProps) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -242,6 +243,7 @@ const EditableInput = memo(({
         precision={precision}
         isAuto={isAuto}
         isActuallyReadOnly={isActuallyReadOnly}
+        readOnly={readOnly}
         highlight={highlight}
         className={className}
         onClick={() => {
