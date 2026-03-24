@@ -81,7 +81,10 @@ export default function MainBoard() {
 
   useEffect(() => {
     fetchData(true);
-  }, [fetchData]);
+    // Main board initial fetch should run only once on mount.
+    // Adding fetchData to deps recreates this effect whenever data changes and causes refetch loops.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (displayOptions.isDarkMode) {
