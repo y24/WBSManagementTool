@@ -44,6 +44,32 @@ export interface AssigneeSummary {
   concurrent_count: number;
 }
 
+export interface ProjectEffortData {
+  project_name: string;
+  planned_effort: number;
+  actual_effort: number;
+}
+
+export interface TaskDeviationData {
+  task_name: string;
+  project_name: string;
+  planned_effort: number;
+  actual_effort: number;
+  deviation_rate: number;
+}
+
+export interface AssigneeEstimateErrorData {
+  member_name: string;
+  avg_deviation_rate: number;
+  task_count: number;
+}
+
+export interface EstimateAccuracyTrendData {
+  period: string;
+  avg_deviation_rate: number;
+  task_count: number;
+}
+
 export interface DashboardData {
   kpis: DashboardKPIs;
   project_progress: ProjectProgressData[];
@@ -52,4 +78,8 @@ export interface DashboardData {
   review_delays: ReviewDelaySubtask[];
   low_progress_soon_to_finish: SubtaskSummary[];
   assignee_summary: AssigneeSummary[];
+  project_effort: ProjectEffortData[];
+  task_deviations: TaskDeviationData[];
+  assignee_estimate_errors: AssigneeEstimateErrorData[];
+  estimate_accuracy_trend: EstimateAccuracyTrendData[];
 }

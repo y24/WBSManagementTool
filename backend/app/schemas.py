@@ -363,6 +363,28 @@ class AssigneeSummary(BaseModel):
     overdue_count: int
     concurrent_count: int
 
+class ProjectEffortData(BaseModel):
+    project_name: str
+    planned_effort: float
+    actual_effort: float
+
+class TaskDeviationData(BaseModel):
+    task_name: str
+    project_name: str
+    planned_effort: float
+    actual_effort: float
+    deviation_rate: float
+
+class AssigneeEstimateErrorData(BaseModel):
+    member_name: str
+    avg_deviation_rate: float
+    task_count: int
+
+class EstimateAccuracyTrendData(BaseModel):
+    period: str
+    avg_deviation_rate: float
+    task_count: int
+
 class DashboardData(BaseModel):
     kpis: DashboardKPIs
     project_progress: List[ProjectProgressData]
@@ -371,4 +393,8 @@ class DashboardData(BaseModel):
     review_delays: List[ReviewDelaySubtask]
     low_progress_soon_to_finish: List[SubtaskSummary]
     assignee_summary: List[AssigneeSummary]
+    project_effort: List[ProjectEffortData] = []
+    task_deviations: List[TaskDeviationData] = []
+    assignee_estimate_errors: List[AssigneeEstimateErrorData] = []
+    estimate_accuracy_trend: List[EstimateAccuracyTrendData] = []
 

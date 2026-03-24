@@ -3,9 +3,9 @@ import { wbsOps } from '../api/wbsOperations';
 import { DashboardData } from '../types/dashboard';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, Legend 
+  PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
-import { Briefcase, Clock, AlertTriangle, Calendar, ChevronRight } from 'lucide-react';
+import { Briefcase, Clock, AlertTriangle, Calendar, ChevronRight, TrendingUp, Target, Users } from 'lucide-react';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4'];
 
@@ -270,6 +270,103 @@ export default function Dashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </ListContainer>
+      </div>
+
+      {/* New Analytics Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <ChartContainer title="プロジェクト別 予定工数 vs 実績工数 (TOP5)">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.project_effort} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
+                <XAxis dataKey="project_name" stroke={chartAxisColor} fontSize={12} />
+                <YAxis stroke={chartAxisColor} fontSize={12} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '14px', color: tooltipText }}
+                  itemStyle={{ color: tooltipText }}
+                />
+                <Legend />
+                <Bar name="予定工数" dataKey="planned_effort" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar name="実績工数" dataKey="actual_effort" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartContainer>
+
+        <ChartContainer title="完了済みタスクの見積精度推移">
+          <div className="h-[300px] w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data.estimate_accuracy_trend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
+                <XAxis dataKey="period" stroke={chartAxisColor} fontSize={12} />
+                <YAxis stroke={chartAxisColor} fontSize={12} unit="%" />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '14px', color: tooltipText }}
+                  itemStyle={{ color: tooltipText }}
+                />
+                <Legend />
+                <Line name="平均乖離率" type="monotone" dataKey="avg_deviation_rate" stroke="#f43f5e" strokeWidth={3} dot={{ r: 6 }} activeDot={{ r: 8 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartContainer>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
+        <ListContainer title="タスク別 工数乖離率" subtitle="乖離の大きいタスク上位10件">
+          <div className="space-y-3 mt-4">
+            {data.task_deviations.length === 0 ? (
+              <div className="text-center py-10 text-slate-400 italic">データがありません。</div>
+            ) : (
+              data.task_deviations.map((t, i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:border-indigo-500/30">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase">{t.project_name}</span>
+                        <ChevronRight size={12} className="text-slate-300" />
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{t.task_name}</span>
+                    </div>
+                    <div className="text-xs text-slate-500 flex gap-3">
+                      <span>予定: {t.planned_effort}d</span>
+                      <span>実績: {t.actual_effort}d</span>
+                    </div>
+                  </div>
+                  <div className={`text-right font-black text-lg ${t.deviation_rate > 20 ? 'text-rose-600' : t.deviation_rate < -20 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                    {t.deviation_rate > 0 ? '+' : ''}{t.deviation_rate.toFixed(1)}%
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </ListContainer>
+
+        <ListContainer title="担当者別 見積誤差傾向" subtitle="平均的な工数乖離率（実績 vs 予定）">
+          <div className="space-y-3 mt-4">
+            {data.assignee_estimate_errors.length === 0 ? (
+              <div className="text-center py-10 text-slate-400 italic">データがありません。</div>
+            ) : (
+              data.assignee_estimate_errors.map((m, i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:border-indigo-500/30">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-600 font-black">
+                      {m.member_name.substring(0, 1)}
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-700 dark:text-slate-200">{m.member_name}</div>
+                      <div className="text-xs text-slate-500">{m.task_count} tasks analyzed</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-black ${Math.abs(m.avg_deviation_rate) > 15 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                      {m.avg_deviation_rate > 0 ? '+' : ''}{m.avg_deviation_rate.toFixed(1)}%
+                    </div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Dev</div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </ListContainer>
       </div>

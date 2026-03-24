@@ -196,6 +196,90 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
             concurrent_count=concurrent
         ))
 
+    # 8. Project Effort (Top 5 by absolute deviation)
+    project_effort_list = [
+        schemas.ProjectEffortData(
+            project_name=p.project_name,
+            planned_effort=float(p.planned_effort_total),
+            actual_effort=float(p.actual_effort_total)
+        ) for p in projects_wbs
+    ]
+    # Sort by absolute deviation
+    project_effort_list.sort(key=lambda x: abs(x.actual_effort - x.planned_effort), reverse=True)
+    project_effort = project_effort_list[:5]
+
+    # 9. Task Deviation & 10. Assignee Error & 11. Trend
+    # Fetch all relevant subtasks to calculate task-level stats
+    # Including Done projects for trend analysis
+    all_subtasks_for_stats = db.query(models.Subtask).join(models.Task).join(models.Project).filter(
+        models.Subtask.is_deleted == False,
+        models.Task.is_deleted == False,
+        models.Project.is_deleted == False,
+        models.Subtask.status_id != removed_id
+    ).all()
+
+    task_stats = {}
+    for s in all_subtasks_for_stats:
+        tid = s.task_id
+        if tid not in task_stats:
+            task_stats[tid] = {
+                "name": s.task.task_name,
+                "project": s.task.project.project_name,
+                "planned": 0.0,
+                "actual": 0.0,
+                "assignee": s.task.assignee.member_name if s.task.assignee else (s.assignee.member_name if s.assignee else "未割当"),
+                "completed_date": s.task.actual_end_date
+            }
+        task_stats[tid]["planned"] += float(s.planned_effort_days or 0)
+        task_stats[tid]["actual"] += float(s.actual_effort_days or 0)
+
+    task_deviations_list = []
+    assignee_errors = {}
+    trend_data = {}
+
+    for tid, stats in task_stats.items():
+        if stats["planned"] > 0:
+            dev_rate = (stats["actual"] - stats["planned"]) / stats["planned"] * 100
+            
+            task_deviations_list.append(schemas.TaskDeviationData(
+                task_name=stats["name"],
+                project_name=stats["project"],
+                planned_effort=stats["planned"],
+                actual_effort=stats["actual"],
+                deviation_rate=dev_rate
+            ))
+            
+            name = stats["assignee"]
+            if name not in assignee_errors: assignee_errors[name] = []
+            assignee_errors[name].append(dev_rate)
+            
+            if stats["completed_date"]:
+                period = stats["completed_date"].strftime("%Y-%m")
+                if period not in trend_data: trend_data[period] = []
+                trend_data[period].append(dev_rate)
+
+    task_deviations_list.sort(key=lambda x: abs(x.deviation_rate), reverse=True)
+    task_deviations = task_deviations_list[:10]
+
+    assignee_estimate_errors = [
+        schemas.AssigneeEstimateErrorData(
+            member_name=name,
+            avg_deviation_rate=sum(devs) / len(devs),
+            task_count=len(devs)
+        ) for name, devs in assignee_errors.items()
+    ]
+    assignee_estimate_errors.sort(key=lambda x: abs(x.avg_deviation_rate), reverse=True)
+
+    sorted_p_keys = sorted(trend_data.keys(), reverse=True)[:6]
+    sorted_p_keys.reverse()
+    estimate_accuracy_trend = [
+        schemas.EstimateAccuracyTrendData(
+            period=p,
+            avg_deviation_rate=sum(trend_data[p]) / len(trend_data[p]),
+            task_count=len(trend_data[p])
+        ) for p in sorted_p_keys
+    ]
+
     return schemas.DashboardData(
         kpis=kpis,
         project_progress=project_progress,
@@ -203,5 +287,9 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
         status_counts=status_counts,
         review_delays=review_delays,
         low_progress_soon_to_finish=low_progress_soon,
-        assignee_summary=assignee_summary
+        assignee_summary=assignee_summary,
+        project_effort=project_effort,
+        task_deviations=task_deviations,
+        assignee_estimate_errors=assignee_estimate_errors,
+        estimate_accuracy_trend=estimate_accuracy_trend
     )
