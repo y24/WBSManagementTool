@@ -63,6 +63,29 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     onConfirm: () => {} 
   });
   const isConfirming = useRef(false);
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+
+  // 新しく追加された項目へスクロールするEffect
+  useEffect(() => {
+    if (lastAddedId) {
+      let attempts = 0;
+      const scrollInterval = setInterval(() => {
+        const element = document.querySelector(`[data-wbs-id="${lastAddedId}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setLastAddedId(null);
+          clearInterval(scrollInterval);
+        } else {
+          attempts++;
+          if (attempts > 20) { // 最大2秒間試行
+            setLastAddedId(null);
+            clearInterval(scrollInterval);
+          }
+        }
+      }, 100);
+      return () => clearInterval(scrollInterval);
+    }
+  }, [projects, lastAddedId]);
 
   useEffect(() => {
     if (Object.values(checkedIds).some(Boolean)) {
@@ -424,8 +447,19 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   }, [projects, setExpandedProjects, setExpandedTasks]);
 
   const handleAddProject = useCallback(async () => {
-    await wbsOps.createProject('新しいプロジェクト');
-    onUpdate();
+    try {
+      setSaving(true);
+      const res = await wbsOps.createProject('新しいプロジェクト');
+      if (res.data && res.data.id) {
+        setLastAddedId(`p-${res.data.id}`);
+      }
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('プロジェクトの追加に失敗しました。');
+    } finally {
+      setSaving(false);
+    }
   }, [onUpdate]);
 
   useEffect(() => {
@@ -498,18 +532,40 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   }, [onUpdate, initialData, projects]);
 
   const handleAddTask = useCallback(async (projectId: number) => {
-    await wbsOps.createTask(projectId, '新しいタスク');
-    setExpandedProjects(p => ({ ...p, [projectId]: true }));
-    onUpdate();
+    try {
+      setSaving(true);
+      const res = await wbsOps.createTask(projectId, '新しいタスク');
+      if (res.data && res.data.id) {
+        setLastAddedId(`t-${res.data.id}`);
+      }
+      setExpandedProjects(p => ({ ...p, [projectId]: true }));
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('タスクの追加に失敗しました。');
+    } finally {
+      setSaving(false);
+    }
   }, [onUpdate, setExpandedProjects]);
 
   const handleAddSubtask = useCallback(async (taskId: number) => {
     if (!initialData) return;
-    const typeId = null;
-    const statusId = initialData.statuses[0]?.id || 1;
-    await wbsOps.createSubtask(taskId, typeId, statusId);
-    setExpandedTasks(t => ({ ...t, [taskId]: true }));
-    onUpdate();
+    try {
+      setSaving(true);
+      const typeId = null;
+      const statusId = initialData.statuses[0]?.id || 1;
+      const res = await wbsOps.createSubtask(taskId, typeId, statusId);
+      if (res.data && res.data.id) {
+        setLastAddedId(`s-${res.data.id}`);
+      }
+      setExpandedTasks(t => ({ ...t, [taskId]: true }));
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('サブタスクの追加に失敗しました。');
+    } finally {
+      setSaving(false);
+    }
   }, [onUpdate, initialData, setExpandedTasks]);
 
   const onDragEnd = async (result: DropResult) => {
@@ -624,7 +680,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                 {projects.map((project, pIndex) => (
                   <Draggable key={`p-${project.id}`} draggableId={`p-${project.id}`} index={pIndex}>
                     {(provided) => (
-                      <div ref={provided.innerRef} {...provided.draggableProps}>
+                      <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`p-${project.id}`}>
                         <ProjectRow 
                           project={project}
                           nameWidth={nameWidth}
@@ -653,7 +709,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                 {project.tasks.map((task, tIndex) => (
                                   <Draggable key={`t-${task.id}`} draggableId={`t-${task.id}`} index={tIndex}>
                                     {(provided) => (
-                                      <div ref={provided.innerRef} {...provided.draggableProps}>
+                                      <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`t-${task.id}`}>
                                         <TaskRow 
                                           task={task}
                                           nameWidth={nameWidth}
@@ -683,7 +739,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                   return (
                                                     <Draggable key={`s-${subtask.id}`} draggableId={`s-${subtask.id}`} index={sIndex}>
                                                       {(provided) => (
-                                                        <div ref={provided.innerRef} {...provided.draggableProps}>
+                                                        <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`s-${subtask.id}`}>
                                                           <SubtaskRow 
                                                             subtask={subtask}
                                                             nameWidth={nameWidth}
