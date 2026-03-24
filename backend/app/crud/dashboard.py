@@ -196,6 +196,11 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
             concurrent_count=concurrent
         ))
 
+    # Sort by Delay desc, then Run desc (and name for deterministic order).
+    assignee_summary.sort(
+        key=lambda x: (-x.overdue_count, -x.concurrent_count, x.member_name)
+    )
+
     # 8. Project Effort (Top 5 by absolute deviation)
     project_effort_list = [
         schemas.ProjectEffortData(

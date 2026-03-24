@@ -190,8 +190,6 @@ export default function Dashboard() {
 
       <DashboardKPISection kpis={data.kpis} />
 
-      <DashboardChartsSection data={data} theme={chartTheme} />
-
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 pb-8">
         <DashboardListsSection data={data} />
         <AssigneeSummarySection
@@ -201,6 +199,8 @@ export default function Dashboard() {
           onToggle={handleToggleAssignees}
         />
       </div>
+
+      <DashboardChartsSection data={data} theme={chartTheme} />
 
       <DashboardAnalyticsChartsSection data={data} theme={chartTheme} />
 
