@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
-import { Briefcase, Clock, AlertTriangle, Calendar, ChevronRight, TrendingUp, Target, Users } from 'lucide-react';
+import { Briefcase, Clock, AlertTriangle, Calendar, ChevronRight, TrendingUp, Target, Users, ChevronDown, ChevronUp } from 'lucide-react';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4'];
 
@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+  const [showAllAssignees, setShowAllAssignees] = useState(false);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -241,7 +242,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                {data.assignee_summary.map((m) => (
+                {(showAllAssignees ? data.assignee_summary : data.assignee_summary.slice(0, 5)).map((m) => (
                   <tr key={m.member_name} className="hover:bg-indigo-500/5 transition-colors group">
                     <td className="py-4 px-1">
                         <div className="flex items-center gap-2">
@@ -271,6 +272,18 @@ export default function Dashboard() {
               </tbody>
             </table>
           </div>
+          {data.assignee_summary.length > 5 && (
+            <button 
+              onClick={() => setShowAllAssignees(!showAllAssignees)}
+              className="mt-6 w-full py-3 flex items-center justify-center gap-2 text-sm font-black text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/5 rounded-xl border border-indigo-500/10 transition-all group"
+            >
+              {showAllAssignees ? (
+                <>一部を表示 <ChevronUp size={16} className="group-hover:-translate-y-0.5 transition-transform" /></>
+              ) : (
+                <>すべて表示 <ChevronDown size={16} className="group-hover:translate-y-0.5 transition-transform" /></>
+              )}
+            </button>
+          )}
         </ListContainer>
       </div>
 
