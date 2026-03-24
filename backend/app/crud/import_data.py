@@ -19,8 +19,8 @@ COLUMN_MAPPING = {
     "ステータス": "status",
     "担当者": "assignee",
     "レビュー日数": "review_days",
-    "計画開始": "planned_start",
-    "計画終了": "planned_end",
+    "開始(計画)": "planned_start",
+    "終了(計画)": "planned_end",
     "予定工数": "planned_effort",
     "工数比率": "workload",
     "メモ": "memo"
@@ -135,7 +135,7 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
         d_end = to_date(p_end)
         
         if d_start and d_end and d_start > d_end:
-            errors.append("計画開始日が計画終了日より後になっています")
+            errors.append("開始(計画)日が終了(計画)日より後になっています")
 
         # Decimal / Int validation
         effort = row.get("planned_effort")

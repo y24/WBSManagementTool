@@ -209,8 +209,8 @@ export default function DataImport() {
                     <th>名称 / 詳細</th>
                     <th>ステータス</th>
                     <th>担当者</th>
-                    <th>計画開始</th>
-                    <th>計画終了</th>
+                    <th>開始(計画)</th>
+                    <th>終了(計画)</th>
                     <th>レビュー日数</th>
                     <th>エラー内容</th>
                   </tr>

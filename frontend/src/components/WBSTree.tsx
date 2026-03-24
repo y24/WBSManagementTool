@@ -601,12 +601,12 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           <div className={`w-28 flex items-center ${commonHeaderClasses}`}>ステータス</div>
           <div className={`w-28 flex items-center ${commonHeaderClasses}`}>担当者</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー日数</div>
-          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>計画開始</div>
-          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>計画終了</div>
+          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(計画)</div>
+          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(計画)</div>
           <div className={`w-16 flex items-center ${commonHeaderClasses}`}>予定工数</div>
-          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>実績開始</div>
+          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(実績)</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー開始</div>
-          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>実績終了</div>
+          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(実績)</div>
           <div className={`w-16 flex items-center ${commonHeaderClasses}`}>実績工数</div>
           <div className={`w-16 flex items-center ${commonHeaderClasses}`}>進捗</div>
         </div>

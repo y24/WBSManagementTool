@@ -27,10 +27,8 @@ DBではこの階層を素直に分割し、以下の考え方で設計する。
 
 対象日付:
 
-* 計画開始日
-* 計画終了日
-* 実績開始日
-* 実績終了日
+* 開始日(計画)/終了日(計画)
+* 開始日(実績)/終了日(実績)
 
 ### 1.3 工数管理方針
 
@@ -97,10 +95,10 @@ DBではこの階層を素直に分割し、以下の考え方で設計する。
 | -------------------- | ------------ | -------: | -: | -: | ----- | --------------- |
 | id                   | bigserial    |        ○ |  ○ |    |       | プロジェクトID        |
 | project_name         | varchar(200) |        ○ |    |    |       | プロジェクト名         |
-| planned_start_date   | date         |          |    |    |       | 計画開始日           |
-| planned_end_date     | date         |          |    |    |       | 計画終了日           |
-| actual_start_date    | date         |          |    |    |       | 実績開始日           |
-| actual_end_date      | date         |          |    |    |       | 実績終了日           |
+| planned_start_date   | date         |          |    |    |       | 開始日(計画)           |
+| planned_end_date     | date         |          |    |    |       | 終了日(計画)           |
+| actual_start_date    | date         |          |    |    |       | 開始日(実績)           |
+| actual_end_date      | date         |          |    |    |       | 終了日(実績)           |
 | is_auto_planned_date | boolean      |        ○ |    |    | false | 計画日を配下から自動設定するか |
 | is_auto_actual_date  | boolean      |        ○ |    |    | false | 実績日を配下から自動設定するか |
 | sort_order           | integer      |        ○ |    |    | 0     | 表示順             |
@@ -130,10 +128,10 @@ DBではこの階層を素直に分割し、以下の考え方で設計する。
 | id                   | bigserial    |        ○ |  ○ |    |       | タスクID           |
 | project_id           | bigint       |        ○ |    |  ○ |       | 所属プロジェクトID      |
 | task_name            | varchar(200) |        ○ |    |    |       | タスク名            |
-| planned_start_date   | date         |          |    |    |       | 計画開始日           |
-| planned_end_date     | date         |          |    |    |       | 計画終了日           |
-| actual_start_date    | date         |          |    |    |       | 実績開始日           |
-| actual_end_date      | date         |          |    |    |       | 実績終了日           |
+| planned_start_date   | date         |          |    |    |       | 開始日(計画)           |
+| planned_end_date     | date         |          |    |    |       | 終了日(計画)           |
+| actual_start_date    | date         |          |    |    |       | 開始日(実績)           |
+| actual_end_date      | date         |          |    |    |       | 終了日(実績)           |
 | is_auto_planned_date | boolean      |        ○ |    |    | false | 計画日を配下から自動設定するか |
 | is_auto_actual_date  | boolean      |        ○ |    |    | false | 実績日を配下から自動設定するか |
 | sort_order           | integer      |        ○ |    |    | 0     | プロジェクト内表示順      |
@@ -172,10 +170,10 @@ DBではこの階層を素直に分割し、以下の考え方で設計する。
 | status_id           | bigint       |        ○ |    |  ○ |       | ステータスID    |
 | progress_percent    | integer      |          |    |    |       | 進捗率（0～100） |
 | assignee_id         | bigint       |          |    |  ○ |       | 担当者ID      |
-| planned_start_date  | date         |          |    |    |       | 計画開始日      |
-| planned_end_date    | date         |          |    |    |       | 計画終了日      |
-| actual_start_date   | date         |          |    |    |       | 実績開始日      |
-| actual_end_date     | date         |          |    |    |       | 実績終了日      |
+| planned_start_date  | date         |          |    |    |       | 開始日(計画)      |
+| planned_end_date    | date         |          |    |    |       | 終了日(計画)      |
+| actual_start_date   | date         |          |    |    |       | 開始日(実績)      |
+| actual_end_date     | date         |          |    |    |       | 終了日(実績)      |
 | planned_effort_days | numeric(8,2) |          |    |    |       | 予定工数（人日）   |
 | actual_effort_days  | numeric(8,2) |          |    |    |       | 実績工数（人日）   |
 | review_days         | numeric(8,2) |          |    |    |       | レビュー日数     |
