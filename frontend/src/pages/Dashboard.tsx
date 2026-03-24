@@ -185,9 +185,6 @@ export default function Dashboard() {
       <div>
         <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
           Dashboard
-          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20 uppercase">
-            WBS Analytics
-          </span>
         </h2>
       </div>
 

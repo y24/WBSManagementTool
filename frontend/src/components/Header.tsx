@@ -42,9 +42,6 @@ export default function Header() {
 
       </div>
       <div className="flex items-center gap-6">
-        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest px-2.5 py-1 bg-slate-100 dark:bg-slate-800/50 rounded-full border border-slate-200 dark:border-slate-700">
-          Sync Status: Online
-        </span>
         <button
           onClick={() => window.dispatchEvent(new CustomEvent('add-project'))}
           className="ml-auto flex items-center gap-2 px-4 py-1.5 bg-indigo-600 dark:bg-indigo-700/40 text-white dark:text-indigo-100 rounded-lg text-sm border border-indigo-500 dark:border-indigo-500/30 hover:bg-indigo-700 dark:hover:bg-indigo-600/60 hover:border-indigo-600 dark:hover:border-indigo-400 hover:text-white hover:scale-105 active:scale-95 transition-all shadow-lg dark:shadow-xl backdrop-blur-md font-bold group"
@@ -56,4 +53,3 @@ export default function Header() {
     </header>
   );
 }
-
