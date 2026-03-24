@@ -38,21 +38,34 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_removed: bo
         p_actual_effort = Decimal('0')
         task_periods = []
         
+        valid_tasks_for_recalc = []
         for t in p.tasks:
             if t.is_deleted: continue
             
             is_task_removed = t.status and t.status.status_name == "Removed"
             
             t_wbs = schemas.TaskWBS.from_orm(t)
-            t_wbs.planned_effort_total = sum((s.planned_effort_days or Decimal('0')) for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed"))
-            t_wbs.actual_effort_total = sum((s.actual_effort_days or Decimal('0')) for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed"))
+            valid_subtasks = [s for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed")]
+            t_wbs.planned_effort_total = sum((s.planned_effort_days or Decimal('0')) for s in valid_subtasks)
+            t_wbs.actual_effort_total = sum((s.actual_effort_days or Decimal('0')) for s in valid_subtasks)
             
+            # Weighted progress for Task
+            if t_wbs.planned_effort_total > 0:
+                weighted_sum = sum((Decimal(str(s.progress_percent or 0)) * (s.planned_effort_days or Decimal('0'))) for s in valid_subtasks)
+                t_wbs.progress_percent = int(round(float(weighted_sum) / float(t_wbs.planned_effort_total)))
+            elif valid_subtasks:
+                # Fallback to simple average if no planned effort
+                t_wbs.progress_percent = int(round(sum(s.progress_percent or 0 for s in valid_subtasks) / len(valid_subtasks)))
+            else:
+                t_wbs.progress_percent = 0
+
             if not is_task_removed:
                 p_planned_effort += t_wbs.planned_effort_total
                 p_actual_effort += t_wbs.actual_effort_total
+                valid_tasks_for_recalc.append(t_wbs)
             
             # Subtask overlap check
-            subtask_periods = [(s.planned_start_date, s.planned_end_date) for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed")]
+            subtask_periods = [(s.planned_start_date, s.planned_end_date) for s in valid_subtasks]
             t_wbs.is_overlapping = check_overlap(subtask_periods)
             
             if not is_task_removed and t_wbs.planned_start_date and t_wbs.planned_end_date:
@@ -63,6 +76,15 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_removed: bo
         p_wbs.tasks = tasks_wbs
         p_wbs.planned_effort_total = p_planned_effort
         p_wbs.actual_effort_total = p_actual_effort
+        
+        # Weighted progress for Project
+        if p_wbs.planned_effort_total > 0:
+            weighted_sum = sum((Decimal(str(t.progress_percent or 0)) * (t.planned_effort_total or Decimal('0'))) for t in valid_tasks_for_recalc)
+            p_wbs.progress_percent = int(round(float(weighted_sum) / float(p_wbs.planned_effort_total)))
+        elif valid_tasks_for_recalc:
+            p_wbs.progress_percent = int(round(sum(t.progress_percent or 0 for t in valid_tasks_for_recalc) / len(valid_tasks_for_recalc)))
+        else:
+            p_wbs.progress_percent = 0
         
         # Task level overlap check for project
         p_wbs.is_overlapping = check_overlap(task_periods)

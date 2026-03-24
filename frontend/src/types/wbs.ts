@@ -47,6 +47,7 @@ export interface Task {
   is_overlapping?: boolean;
   planned_effort_total?: number;
   actual_effort_total?: number;
+  progress_percent?: number | null;
   subtasks: Subtask[];
 }
 
@@ -69,6 +70,7 @@ export interface Project {
   is_overlapping?: boolean;
   planned_effort_total?: number;
   actual_effort_total?: number;
+  progress_percent?: number | null;
   tasks: Task[];
 }
 

@@ -192,7 +192,24 @@ const ProjectRow = memo(({
           onChange={() => {}}
         />
       </div>
-      <div className={`w-24 ${commonCellClasses}`}></div>
+      <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
+        {project.progress_percent != null && (
+          <div 
+            className="absolute top-0 left-0 h-full bg-blue-500/20 dark:bg-blue-500/30 transition-all duration-300 pointer-events-none"
+            style={{ width: `${project.progress_percent}%` }}
+          />
+        )}
+        <div className="relative z-10 w-full h-full flex items-center">
+          <EditableInput 
+            type="number" 
+            value={project.progress_percent} 
+            suffix="%" 
+            readOnly={true} 
+            isAuto={true} 
+            onChange={() => {}}
+          />
+        </div>
+      </div>
     </div>
   );
 });

@@ -190,6 +190,7 @@ class Task(TaskBase):
 class TaskWBS(Task):
     planned_effort_total: Union[Decimal, float, int] = Decimal('0.0')
     actual_effort_total: Union[Decimal, float, int] = Decimal('0.0')
+    progress_percent: Optional[int] = 0
     is_overlapping: bool = False
 
 # --- Projects ---
@@ -240,6 +241,7 @@ class ProjectWBS(Project):
     tasks: List[TaskWBS] = []
     planned_effort_total: Union[Decimal, float, int] = Decimal('0.0')
     actual_effort_total: Union[Decimal, float, int] = Decimal('0.0')
+    progress_percent: Optional[int] = 0
     is_overlapping: bool = False
 
 # --- Response Models ---
