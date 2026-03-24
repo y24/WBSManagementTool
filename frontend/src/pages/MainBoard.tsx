@@ -150,7 +150,19 @@ export default function MainBoard() {
     persistGanttScrollLeft(scrollLeft);
   };
 
-  if (loading && !data) return <div className="p-4 text-gray-500 font-medium">Loading WBS...</div>;
+  if (loading && !data) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="h-14 w-14 animate-spin rounded-full border-4 border-slate-300 border-t-indigo-500 dark:border-slate-700 dark:border-t-indigo-400"
+            aria-hidden="true"
+          />
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading WBS...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full h-full bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
