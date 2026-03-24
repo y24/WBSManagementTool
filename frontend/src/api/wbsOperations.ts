@@ -57,4 +57,12 @@ export const wbsOps = {
 
   clearActuals: (projectIds: number[], taskIds: number[], subtaskIds: number[]) =>
     apiClient.post('/items/clear-actuals', { project_ids: projectIds, task_ids: taskIds, subtask_ids: subtaskIds }),
+
+  shiftDates: (projectIds: number[], taskIds: number[], subtaskIds: number[], newBaseDate: string) =>
+    apiClient.post('/items/shift-dates', { 
+      project_ids: projectIds, 
+      task_ids: taskIds, 
+      subtask_ids: subtaskIds,
+      new_base_date: newBaseDate
+    }),
 };

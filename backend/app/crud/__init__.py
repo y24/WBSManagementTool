@@ -54,7 +54,8 @@ from .subtask import (
 from .wbs import (
     get_wbs_data,
     duplicate_items,
-    clear_actuals
+    clear_actuals,
+    shift_dates
 )
 
 from .recalc import (

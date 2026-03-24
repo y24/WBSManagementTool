@@ -288,3 +288,10 @@ def clear_actuals(req: schemas.ClearActualsRequest, db: Session = Depends(get_db
     if not success:
         raise HTTPException(status_code=400, detail="Clear actuals failed")
     return {"status": "ok"}
+
+@router.post("/items/shift-dates")
+def shift_dates(req: schemas.ShiftDatesRequest, db: Session = Depends(get_db)):
+    success = crud.shift_dates(db, req)
+    if not success:
+        raise HTTPException(status_code=400, detail="Date shifting failed or no items selected")
+    return {"status": "ok"}

@@ -1,18 +1,28 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { Trash2, Copy, Eraser } from 'lucide-react';
+import { Trash2, Copy, Eraser, CalendarDays } from 'lucide-react';
 
 interface FloatingMenuProps {
   totalSelectedCount: number;
   onDelete: () => void;
   onDuplicate: () => void;
   onClearActuals: () => void;
+  onShiftDates: () => void;
   onClear: () => void;
   menuRendered: boolean;
   loading?: boolean;
 }
 
-const FloatingMenu = ({ totalSelectedCount, onDelete, onDuplicate, onClearActuals, onClear, menuRendered, loading }: FloatingMenuProps) => {
+const FloatingMenu = ({ 
+  totalSelectedCount, 
+  onDelete, 
+  onDuplicate, 
+  onClearActuals, 
+  onShiftDates,
+  onClear, 
+  menuRendered, 
+  loading 
+}: FloatingMenuProps) => {
   if (!menuRendered) return null;
 
   return createPortal(
@@ -40,7 +50,15 @@ const FloatingMenu = ({ totalSelectedCount, onDelete, onDuplicate, onClearActual
             className={`flex items-center gap-2 text-amber-600 hover:text-amber-700 font-bold text-sm transition-all hover:scale-105 active:scale-95 ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <Eraser size={18} className={loading ? 'animate-pulse' : ''} />
-            {loading ? 'クリア中...' : '実績値をクリア'}
+            {loading ? 'クリア中...' : '実績クリア'}
+          </button>
+          <button
+            onClick={onShiftDates}
+            disabled={loading}
+            className={`flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-bold text-sm transition-all hover:scale-105 active:scale-95 ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            <CalendarDays size={18} className={loading ? 'animate-pulse' : ''} />
+            {loading ? '処理中...' : '日付一括ずらし'}
           </button>
           <button
             onClick={onDelete}

@@ -313,3 +313,9 @@ class ClearActualsRequest(BaseModel):
     project_ids: List[int] = []
     task_ids: List[int] = []
     subtask_ids: List[int] = []
+
+class ShiftDatesRequest(BaseModel):
+    project_ids: List[int] = []
+    task_ids: List[int] = []
+    subtask_ids: List[int] = []
+    new_base_date: date

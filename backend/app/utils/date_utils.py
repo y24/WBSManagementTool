@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from typing import List
+from typing import List, Optional
 
 def is_business_day(target_date: date, holidays: List[date]) -> bool:
     """
@@ -49,6 +49,31 @@ def add_business_days(start_date: date, effort_days: float, holidays: List[date]
     # If effort is > 1, we need to find subsequent business days.
     while remaining > 1:
         curr += timedelta(days=1)
+        if is_business_day(curr, holidays):
+            remaining -= 1
+            
+    return curr
+
+def shift_business_days(start_date: date, offset: int, holidays: List[date]) -> Optional[date]:
+    """
+    Shift a date by a given number of business days.
+    Offset can be positive, negative, or zero.
+    If offset is 0, it returns the same date (or the next/previous business day if it falls on a holiday?). 
+    Actually, let's keep it simple: if start_date is a holiday, 0 offset might still be on holiday?
+    The requirements say "営業日数（休日を考慮）を保ったまま、各日付が増減されて".
+    If I shift a date that was on Saturday to Monday, then a date that was on Monday should shift to Wednesday.
+    """
+    if not start_date:
+        return None
+    if offset == 0:
+        return start_date
+    
+    curr = start_date
+    remaining = abs(offset)
+    step = timedelta(days=1) if offset > 0 else timedelta(days=-1)
+    
+    while remaining > 0:
+        curr += step
         if is_business_day(curr, holidays):
             remaining -= 1
             

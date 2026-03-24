@@ -12,6 +12,7 @@ import SubtaskRow from './WBSTree/SubtaskRow';
 import DetailModal, { EditingType } from './WBSTree/DetailModal';
 import FloatingMenu from './WBSTree/FloatingMenu';
 import ConfirmModal from './WBSTree/ConfirmModal';
+import ShiftDatesModal from './WBSTree/ShiftDatesModal';
 import { commonHeaderClasses } from './WBSTree/constants';
 
 interface WBSTreeProps {
@@ -49,6 +50,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
   const [menuRendered, setMenuRendered] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isShiftDatesModalOpen, setIsShiftDatesModalOpen] = useState(false);
+  const [currentMinDate, setCurrentMinDate] = useState<string | null>(null);
   const [confirmData, setConfirmData] = useState({ 
     total: 0, 
     detail: '', 
@@ -250,6 +253,86 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     } catch (err) {
       console.error(err);
       alert('複製中にエラーが発生しました。');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleShiftDatesSelected = () => {
+    if (saving || isShiftDatesModalOpen) return;
+    if (totalSelectedCount === 0) return;
+
+    // 起点となる最小の日付を探す
+    let minDate: string | null = null;
+
+    const updateMinDate = (dateStr: string | null | undefined) => {
+      if (!dateStr) return;
+      if (!minDate || dateStr < minDate) {
+        minDate = dateStr;
+      }
+    };
+
+    projects.forEach(p => {
+      const isPChecked = checkedIds[`p-${p.id}`];
+      if (isPChecked) {
+        updateMinDate(p.planned_start_date);
+        updateMinDate(p.planned_end_date);
+        updateMinDate(p.actual_start_date);
+        updateMinDate(p.actual_end_date);
+      }
+      p.tasks.forEach(t => {
+        const isTChecked = checkedIds[`t-${t.id}`] || isPChecked;
+        if (isTChecked) {
+          updateMinDate(t.planned_start_date);
+          updateMinDate(t.planned_end_date);
+          updateMinDate(t.actual_start_date);
+          updateMinDate(t.actual_end_date);
+        }
+        t.subtasks.forEach(s => {
+          const isSChecked = checkedIds[`s-${s.id}`] || isTChecked;
+          if (isSChecked) {
+            updateMinDate(s.planned_start_date);
+            updateMinDate(s.planned_end_date);
+            updateMinDate(s.actual_start_date);
+            updateMinDate(s.review_start_date);
+            updateMinDate(s.actual_end_date);
+          }
+        });
+      });
+    });
+
+    if (!minDate) {
+      alert('日付が設定されている項目がありません。');
+      return;
+    }
+
+    setCurrentMinDate(minDate);
+    setIsShiftDatesModalOpen(true);
+  };
+
+  const executeShiftDates = async (newBaseDate: string) => {
+    setIsShiftDatesModalOpen(false);
+    setSaving(true);
+    try {
+      const pIds: number[] = [];
+      const tIds: number[] = [];
+      const sIds: number[] = [];
+
+      Object.entries(checkedIds).forEach(([key, isChecked]) => {
+        if (!isChecked) return;
+        const [type, idStr] = key.split('-');
+        const id = parseInt(idStr);
+        if (type === 'p') pIds.push(id);
+        else if (type === 't') tIds.push(id);
+        else if (type === 's') sIds.push(id);
+      });
+
+      await wbsOps.shiftDates(pIds, tIds, sIds, newBaseDate);
+      setCheckedIds({});
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('日付の移動中にエラーが発生しました。');
     } finally {
       setSaving(false);
     }
@@ -696,9 +779,18 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         onDelete={handleDeleteSelected}
         onDuplicate={handleDuplicateSelected}
         onClearActuals={handleClearActualsSelected}
+        onShiftDates={handleShiftDatesSelected}
         onClear={() => setCheckedIds({})}
         menuRendered={menuRendered}
         loading={saving}
+      />
+
+      <ShiftDatesModal
+        isOpen={isShiftDatesModalOpen}
+        onClose={() => setIsShiftDatesModalOpen(false)}
+        onConfirm={executeShiftDates}
+        currentMinDate={currentMinDate}
+        totalSelectedCount={totalSelectedCount}
       />
 
       <ConfirmModal 

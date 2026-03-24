@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from decimal import Decimal
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
@@ -330,4 +331,141 @@ def clear_actuals(db: Session, req: schemas.ClearActualsRequest):
         recalculate_project_dates(db, pid)
         recalculate_project_status(db, pid)
 
+    return True
+
+def shift_dates(db: Session, req: schemas.ShiftDatesRequest):
+    from ..utils.date_utils import shift_business_days, get_business_days_count, is_business_day
+    
+    # 1. Collect all affected items and their dates to find the global min_date
+    p_ids = set(req.project_ids)
+    t_ids = set(req.task_ids)
+    s_ids = set(req.subtask_ids)
+    
+    all_projects = db.query(models.Project).filter(models.Project.id.in_(p_ids)).all()
+    all_tasks = db.query(models.Task).filter(models.Task.id.in_(t_ids)).all()
+    all_subtasks = db.query(models.Subtask).filter(models.Subtask.id.in_(s_ids)).all()
+    
+    # Add children to the set of affected items
+    affected_projects = list(all_projects)
+    affected_tasks = list(all_tasks)
+    affected_subtasks = list(all_subtasks)
+    
+    # Track which IDs are already included to avoid double processing
+    processed_p_ids = {p.id for p in affected_projects}
+    processed_t_ids = {t.id for t in affected_tasks}
+    processed_s_ids = {s.id for s in affected_subtasks}
+    
+    # Include descendants of projects
+    for p in all_projects:
+        for t in p.tasks:
+            if t.id not in processed_t_ids:
+                affected_tasks.append(t)
+                processed_t_ids.add(t.id)
+            for s in t.subtasks:
+                if s.id not in processed_s_ids:
+                    affected_subtasks.append(s)
+                    processed_s_ids.add(s.id)
+                    
+    # Include descendants of tasks
+    for t in all_tasks:
+        for s in t.subtasks:
+            if s.id not in processed_s_ids:
+                affected_subtasks.append(s)
+                processed_s_ids.add(s.id)
+                
+    # 2. Find min_date among all selected items and their children
+    all_dates = []
+    for p in affected_projects:
+        for d in [p.planned_start_date, p.planned_end_date, p.actual_start_date, p.actual_end_date]:
+            if d: all_dates.append(d)
+    for t in affected_tasks:
+        for d in [t.planned_start_date, t.planned_end_date, t.actual_start_date, t.actual_end_date]:
+            if d: all_dates.append(d)
+    for s in affected_subtasks:
+        for d in [s.planned_start_date, s.planned_end_date, s.actual_start_date, s.review_start_date, s.actual_end_date]:
+            if d: all_dates.append(d)
+            
+    if not all_dates:
+        return False
+        
+    min_date = min(all_dates)
+    
+    # 3. Calculate offset in business days
+    holidays = [h.holiday_date for h in db.query(models.MstHoliday).filter(models.MstHoliday.is_active == True).all()]
+    
+    # We need a proper business day offset.
+    # If new_base_date > min_date, offset is positive business days.
+    # If new_base_date < min_date, offset is negative business days.
+    
+    offset = 0
+    if req.new_base_date > min_date:
+        # Count business days from min_date to new_base_date
+        # Note: if min_date is 3/2 and new_base_date is 3/3, and both are biz days, offset should be 1.
+        # get_business_days_count(3/2, 3/3) returns 2.0 (inclusive).
+        # So offset = count - 1 if min_date is a biz day?
+        # Let's use a simpler loop to find the offset.
+        curr = min_date
+        while curr < req.new_base_date:
+            curr += timedelta(days=1)
+            if is_business_day(curr, holidays):
+                offset += 1
+    elif req.new_base_date < min_date:
+        curr = min_date
+        while curr > req.new_base_date:
+            curr -= timedelta(days=1)
+            if is_business_day(curr, holidays):
+                offset -= 1
+                
+    # 4. Apply shift
+    for p in affected_projects:
+        p.planned_start_date = shift_business_days(p.planned_start_date, offset, holidays)
+        p.planned_end_date = shift_business_days(p.planned_end_date, offset, holidays)
+        p.actual_start_date = shift_business_days(p.actual_start_date, offset, holidays)
+        p.actual_end_date = shift_business_days(p.actual_end_date, offset, holidays)
+        
+    for t in affected_tasks:
+        t.planned_start_date = shift_business_days(t.planned_start_date, offset, holidays)
+        t.planned_end_date = shift_business_days(t.planned_end_date, offset, holidays)
+        t.actual_start_date = shift_business_days(t.actual_start_date, offset, holidays)
+        t.actual_end_date = shift_business_days(t.actual_end_date, offset, holidays)
+        
+    for s in affected_subtasks:
+        s.planned_start_date = shift_business_days(s.planned_start_date, offset, holidays)
+        s.planned_end_date = shift_business_days(s.planned_end_date, offset, holidays)
+        s.actual_start_date = shift_business_days(s.actual_start_date, offset, holidays)
+        s.review_start_date = shift_business_days(s.review_start_date, offset, holidays)
+        s.actual_end_date = shift_business_days(s.actual_end_date, offset, holidays)
+        
+    db.commit()
+
+    # 5. Trigger recalculations for parent items
+    from .recalc import recalculate_task_dates, recalculate_task_status, recalculate_project_dates, recalculate_project_status
+    
+    # Identify parents of affected items to trigger recalculations
+    final_affected_task_ids = set()
+    final_affected_project_ids = set()
+    
+    for s in affected_subtasks:
+        final_affected_task_ids.add(s.task_id)
+    
+    for t in affected_tasks:
+        final_affected_project_ids.add(t.project_id)
+        # Also need to make sure we recalculate this task itself if it has subtasks
+        if t.id not in processed_t_ids: # Wait, processed_t_ids includes all affected.
+            pass
+        final_affected_task_ids.add(t.id)
+
+    # Recalculate tasks first
+    for tid in final_affected_task_ids:
+        recalculate_task_dates(db, tid)
+        recalculate_task_status(db, tid)
+        
+    db.commit() # Save task changes so project recalc sees them
+    
+    # Recalculate projects
+    for pid in final_affected_project_ids:
+        recalculate_project_dates(db, pid)
+        recalculate_project_status(db, pid)
+        
+    db.commit()
     return True
