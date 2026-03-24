@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -94,9 +94,9 @@ class SubtaskBase(BaseModel):
     actual_start_date: Optional[date] = None
     review_start_date: Optional[date] = None
     actual_end_date: Optional[date] = None
-    planned_effort_days: Optional[Decimal] = None
-    actual_effort_days: Optional[Decimal] = None
-    review_days: Optional[Decimal] = None
+    planned_effort_days: Optional[Union[Decimal, float, int]] = None
+    actual_effort_days: Optional[Union[Decimal, float, int]] = None
+    review_days: Optional[Union[Decimal, float, int]] = None
     ticket_id: Optional[int] = None
     memo: Optional[str] = None
     is_auto_effort: bool = True
@@ -120,9 +120,9 @@ class SubtaskUpdate(BaseModel):
     actual_start_date: Optional[date] = None
     review_start_date: Optional[date] = None
     actual_end_date: Optional[date] = None
-    planned_effort_days: Optional[Decimal] = None
-    actual_effort_days: Optional[Decimal] = None
-    review_days: Optional[Decimal] = None
+    planned_effort_days: Optional[Union[Decimal, float, int]] = None
+    actual_effort_days: Optional[Union[Decimal, float, int]] = None
+    review_days: Optional[Union[Decimal, float, int]] = None
     ticket_id: Optional[int] = None
     memo: Optional[str] = None
     is_auto_effort: Optional[bool] = None
@@ -188,8 +188,8 @@ class Task(TaskBase):
     model_config = { "from_attributes": True }
 
 class TaskWBS(Task):
-    planned_effort_total: Decimal = Decimal('0.0')
-    actual_effort_total: Decimal = Decimal('0.0')
+    planned_effort_total: Union[Decimal, float, int] = Decimal('0.0')
+    actual_effort_total: Union[Decimal, float, int] = Decimal('0.0')
     is_overlapping: bool = False
 
 # --- Projects ---
@@ -238,8 +238,8 @@ class Project(ProjectBase):
 
 class ProjectWBS(Project):
     tasks: List[TaskWBS] = []
-    planned_effort_total: Decimal = Decimal('0.0')
-    actual_effort_total: Decimal = Decimal('0.0')
+    planned_effort_total: Union[Decimal, float, int] = Decimal('0.0')
+    actual_effort_total: Union[Decimal, float, int] = Decimal('0.0')
     is_overlapping: bool = False
 
 # --- Response Models ---
@@ -291,8 +291,8 @@ class ImportPreviewRow(BaseModel):
     ticket_id: Optional[str] = None
     planned_start: Optional[date] = None
     planned_end: Optional[date] = None
-    planned_effort: Optional[Decimal] = None
-    review_days: Optional[Decimal] = None
+    planned_effort: Optional[Union[Decimal, float, int]] = None
+    review_days: Optional[Union[Decimal, float, int]] = None
     workload: Optional[int] = None
     memo: Optional[str] = None
     errors: List[str] = []

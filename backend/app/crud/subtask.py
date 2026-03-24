@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from datetime import date
+from decimal import Decimal
 from typing import Optional, List, Dict
 from .. import models, schemas
 from .recalc import recalculate_task_dates, recalculate_task_status
@@ -44,7 +45,7 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
             if p_end:
                 raw_days = date_utils.get_business_days_count(p_start, p_end, holidays)
                 # 四捨五入
-                db_subtask.planned_effort_days = int(raw_days * workload_factor * 10 + 0.5) / 10.0
+                db_subtask.planned_effort_days = Decimal(str(int(raw_days * workload_factor * 10 + 0.5) / 10.0))
             elif is_turning_on and p_effort is not None:
                 db_subtask.planned_end_date = date_utils.add_business_days(p_start, float(p_effort), holidays)
         elif update_data and "planned_effort_days" in update_data:
@@ -56,7 +57,7 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
         if not update_data or "actual_start_date" in update_data or "actual_end_date" in update_data or is_turning_on or "workload_percent" in (update_data or {}):
             raw_days = date_utils.get_business_days_count(a_start, a_end, holidays)
             # 四捨五入
-            db_subtask.actual_effort_days = int(raw_days * workload_factor * 10 + 0.5) / 10.0
+            db_subtask.actual_effort_days = Decimal(str(int(raw_days * workload_factor * 10 + 0.5) / 10.0))
 
 def refresh_subtasks_actual_end_date(db: Session, project_ids: Optional[List[int]] = None):
     """
