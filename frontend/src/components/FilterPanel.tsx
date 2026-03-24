@@ -103,7 +103,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         {/* Status Filter */}
         <MultiSelect
           values={filters.statusIds}
-          options={statuses.map(s => ({ id: s.id, name: s.status_name }))}
+          options={statuses.map(s => ({ id: s.id, name: s.status_name, color: s.color_code }))}
           onChange={(ids) => setFilters(prev => ({ ...prev, statusIds: ids as number[] }))}
           placeholder="ステータスを選択"
           dropdownTitle="ステータス"

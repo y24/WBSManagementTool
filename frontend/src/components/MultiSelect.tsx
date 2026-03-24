@@ -4,7 +4,7 @@ import { ChevronDown, Check, X } from 'lucide-react';
 
 interface MultiSelectProps {
   values: any[];
-  options: { id: any; name: string }[];
+  options: { id: any; name: string; color?: string }[];
   onChange: (values: any[]) => void;
   className?: string;
   placeholder?: string;
@@ -149,6 +149,12 @@ const MultiSelect = memo(({
                   <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-blue-600 border-blue-600' : 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 group-hover:border-blue-400'}`}>
                     {isSelected && <Check size={10} className="text-white stroke-[3px]" />}
                   </div>
+                  {opt.color && (
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: opt.color }}
+                    />
+                  )}
                   <span className={`text-xs flex-1 transition-colors ${isSelected ? 'text-blue-700 dark:text-blue-400 font-bold' : 'text-gray-700 dark:text-slate-300 font-medium'}`}>{opt.name}</span>
                 </div>
               );
