@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings } from 'lucide-react';
+import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, Columns3, Columns2 } from 'lucide-react';
 import MultiSelect from './MultiSelect';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
@@ -165,6 +165,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         リセット
       </button>
 
+      <button
+        onClick={() => setDisplayOptions(prev => ({ ...prev, hidePlanningColumns: !prev.hidePlanningColumns }))}
+        className={`p-2 rounded-lg border transition-all shadow-sm ${displayOptions.hidePlanningColumns
+          ? 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200'
+          : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
+          }`}
+        title={displayOptions.hidePlanningColumns ? '計画列を表示' : '計画列を非表示'}
+        aria-label={displayOptions.hidePlanningColumns ? '計画列を表示' : '計画列を非表示'}
+      >
+        {displayOptions.hidePlanningColumns ? <Columns2 size={18} /> : <Columns3 size={18} />}
+      </button>
+
       <div className="relative" ref={settingsRef}>
         <button
           onClick={() => setIsSettingsOpen(!isSettingsOpen)}
@@ -219,20 +231,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                     </div>
                   </label>
 
-                  <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md transition-colors">
-                    <span className="text-xs font-medium text-gray-600 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-                      計画列を非表示
-                    </span>
-                    <div className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={displayOptions.hidePlanningColumns}
-                        onChange={(e) => setDisplayOptions(prev => ({ ...prev, hidePlanningColumns: e.target.checked }))}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500 shadow-inner"></div>
-                    </div>
-                  </label>
                 </div>
               </div>
 
