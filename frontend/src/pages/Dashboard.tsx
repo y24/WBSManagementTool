@@ -1,19 +1,21 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { wbsOps } from '../api/wbsOperations';
 import { DashboardData } from '../types/dashboard';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, Legend, LineChart, Line
-} from 'recharts';
-import { Briefcase, Clock, AlertTriangle, Calendar, ChevronRight, TrendingUp, Target, Users, ChevronDown, ChevronUp } from 'lucide-react';
-
-const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4'];
+import { DashboardAnalyticsChartsSection, DashboardChartsSection } from '../components/dashboard/DashboardChartsSection';
+import { DashboardKPISection } from '../components/dashboard/DashboardKPISection';
+import {
+  AssigneeSummarySection,
+  DashboardInsightsSection,
+  DashboardListsSection,
+} from '../components/dashboard/DashboardListsSection';
+import { DashboardChartTheme } from '../components/dashboard/constants';
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
   const [showAllAssignees, setShowAllAssignees] = useState(false);
+
   const dashboardScrollRef = useRef<HTMLDivElement | null>(null);
   const assigneeSectionRef = useRef<HTMLDivElement | null>(null);
   const scrollAnimationRef = useRef<number | null>(null);
@@ -24,7 +26,9 @@ export default function Dashboard() {
     const observer = new MutationObserver(() => {
       setIsDark(document.documentElement.classList.contains('dark'));
     });
+
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
     return () => observer.disconnect();
   }, []);
 
@@ -41,10 +45,13 @@ export default function Dashboard() {
   }, []);
 
   useLayoutEffect(() => {
-    if (!isAssigneeTogglingRef.current) return;
+    if (!isAssigneeTogglingRef.current) {
+      return;
+    }
 
     const section = assigneeSectionRef.current;
     const from = assigneeHeightBeforeToggleRef.current;
+
     if (!section || from === null) {
       isAssigneeTogglingRef.current = false;
       assigneeHeightBeforeToggleRef.current = null;
@@ -52,6 +59,7 @@ export default function Dashboard() {
     }
 
     const to = section.getBoundingClientRect().height;
+
     if (Math.abs(to - from) < 1) {
       isAssigneeTogglingRef.current = false;
       assigneeHeightBeforeToggleRef.current = null;
@@ -94,6 +102,7 @@ export default function Dashboard() {
 
   const handleToggleAssignees = () => {
     const section = assigneeSectionRef.current;
+
     if (section) {
       assigneeHeightBeforeToggleRef.current = section.getBoundingClientRect().height;
       isAssigneeTogglingRef.current = true;
@@ -101,25 +110,27 @@ export default function Dashboard() {
 
     setShowAllAssignees((prev) => {
       const next = !prev;
+
       if (prev && !next) {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             const container = dashboardScrollRef.current;
-            const section = assigneeSectionRef.current;
-            if (!container || !section) return;
+            const currentSection = assigneeSectionRef.current;
+
+            if (!container || !currentSection) {
+              return;
+            }
 
             const containerRect = container.getBoundingClientRect();
-            const sectionRect = section.getBoundingClientRect();
+            const sectionRect = currentSection.getBoundingClientRect();
             const topOffset = 12;
-            const targetTop =
-              container.scrollTop + (sectionRect.top - containerRect.top) - topOffset;
+            const targetTop = container.scrollTop + (sectionRect.top - containerRect.top) - topOffset;
             const to = Math.max(0, targetTop);
             const from = container.scrollTop;
             const distance = to - from;
             const duration = 520;
             const start = performance.now();
-            const easeInOutCubic = (t: number) =>
-              t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
             if (scrollAnimationRef.current !== null) {
               cancelAnimationFrame(scrollAnimationRef.current);
@@ -142,6 +153,7 @@ export default function Dashboard() {
           });
         });
       }
+
       return next;
     });
   };
@@ -157,11 +169,13 @@ export default function Dashboard() {
     );
   }
 
-  const chartGridColor = isDark ? '#334155' : '#e2e8f0';
-  const chartAxisColor = isDark ? '#94a3b8' : '#64748b';
-  const tooltipBg = isDark ? '#0f172a' : '#ffffff';
-  const tooltipBorder = isDark ? '#334155' : '#e2e8f0';
-  const tooltipText = isDark ? '#e2e8f0' : '#1e293b';
+  const chartTheme: DashboardChartTheme = {
+    gridColor: isDark ? '#334155' : '#e2e8f0',
+    axisColor: isDark ? '#94a3b8' : '#64748b',
+    tooltipBg: isDark ? '#0f172a' : '#ffffff',
+    tooltipBorder: isDark ? '#334155' : '#e2e8f0',
+    tooltipText: isDark ? '#e2e8f0' : '#1e293b',
+  };
 
   return (
     <div
@@ -171,381 +185,31 @@ export default function Dashboard() {
       <div>
         <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
           Dashboard
-          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20 uppercase">WBS Analytics</span>
+          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20 uppercase">
+            WBS Analytics
+          </span>
         </h2>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard 
-          title="進行中プロジェクト数" 
-          value={data.kpis.ongoing_projects_count} 
-          icon={<Briefcase className="text-indigo-600 dark:text-indigo-400" size={24} />}
-          gradient="from-indigo-500/5 to-white dark:from-indigo-900/40 dark:to-slate-900"
-        />
-        <KPICard 
-          title="期限超過サブタスク数" 
-          value={data.kpis.overdue_subtasks_count} 
-          icon={<AlertTriangle className="text-rose-600 dark:text-rose-400" size={24} />}
-          gradient="from-rose-500/5 to-white dark:from-rose-900/40 dark:to-slate-900"
-          highlight={data.kpis.overdue_subtasks_count > 0}
-        />
-        <KPICard 
-          title="レビュー開始遅延件数" 
-          value={data.kpis.review_delay_count} 
-          icon={<Clock className="text-amber-600 dark:text-amber-400" size={24} />}
-          gradient="from-amber-500/5 to-white dark:from-amber-900/40 dark:to-slate-900"
-          highlight={data.kpis.review_delay_count > 0}
-        />
-        <KPICard 
-          title="今週終了予定件数" 
-          value={data.kpis.this_week_end_count} 
-          icon={<Calendar className="text-emerald-600 dark:text-emerald-400" size={24} />}
-          gradient="from-emerald-500/5 to-white dark:from-emerald-900/40 dark:to-slate-900"
-        />
-      </div>
+      <DashboardKPISection kpis={data.kpis} />
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <ChartContainer title="プロジェクト別 進捗率">
-          <div className="h-[300px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.project_progress} layout="vertical" margin={{ left: 10, right: 30, top: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} />
-                <XAxis type="number" domain={[0, 100]} stroke={chartAxisColor} fontSize={12} />
-                <YAxis dataKey="project_name" type="category" stroke={chartAxisColor} fontSize={12} width={120} />
-                <Tooltip 
-                    contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '14px', color: tooltipText }}
-                    itemStyle={{ color: tooltipText }}
-                />
-                <Bar dataKey="progress_percent" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={16} />
-                </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartContainer>
+      <DashboardChartsSection data={data} theme={chartTheme} />
 
-        <ChartContainer title="担当者別の遅延件数">
-          <div className="h-[300px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.assignee_delays}>
-                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
-                <XAxis dataKey="member_name" stroke={chartAxisColor} fontSize={12} />
-                <YAxis stroke={chartAxisColor} fontSize={12} />
-                <Tooltip 
-                    contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '14px', color: tooltipText }}
-                    itemStyle={{ color: tooltipText }}
-                />
-                <Bar dataKey="delay_count" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={30} />
-                </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartContainer>
-
-        <ChartContainer title="ステータス別サブタスク件数">
-          <div className="h-[300px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                <Pie
-                    data={data.status_counts}
-                    dataKey="count"
-                    nameKey="status_name"
-                    cx="50%"
-                    cy="45%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={5}
-                >
-                    {data.status_counts.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color_code || COLORS[index % COLORS.length]} />
-                    ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '14px', color: tooltipText }}
-                  itemStyle={{ color: tooltipText }}
-                />
-                <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: '12px' }} />
-                </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartContainer>
-      </div>
-
-      {/* Lists Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 pb-8">
-        <ListContainer title="レビュー遅延サブタスク" subtitle="レビュー開始の遅延、またはレビュー期間の超過">
-          <div className="space-y-3 mt-4">
-            {data.review_delays.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 text-base font-medium italic bg-white dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
-                現在、レビュー遅延サブタスクはありません。
-              </div>
-            ) : (
-              data.review_delays.map((s) => (
-                <div key={s.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none hover:border-amber-500/30 transition-all group relative overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500 opacity-50"></div>
-                  <div className="space-y-1 ml-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter max-w-[150px] truncate">{s.task_name}</span>
-                      <ChevronRight size={12} className="text-slate-300 dark:text-slate-700" />
-                      <span className="text-base font-bold text-slate-700 dark:text-slate-200">{s.subtask_detail}</span>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-                      <span className="flex items-center gap-1"><Briefcase size={12}/> {s.assignee_name || '-'}</span>
-                      <span className="flex items-center gap-1">
-                        <Clock size={12}/> {s.review_start_date ? `開始: ${s.review_start_date}` : <span className="text-amber-600 dark:text-amber-400 font-bold italic">未開始 (開始期限超過)</span>}
-                      </span>
-                      <span className="text-slate-400 dark:text-slate-500">枠: {s.review_days}日</span>
-                    </div>
-                  </div>
-                  <div className="text-right flex flex-col items-end">
-                    <div className="text-base font-black text-amber-600 dark:text-amber-500">+{s.delay_days.toFixed(1)}d</div>
-                    <div className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800/50 px-2 py-0.5 rounded">{s.progress_percent}%</div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ListContainer>
-
-        <ListContainer title="今週終了予定・低進捗サブタスク" subtitle="終了予定が今週だが進捗50%未満">
-          <div className="space-y-3 mt-4">
-            {data.low_progress_soon_to_finish.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 text-base font-medium italic bg-white dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
-                現在、対象となるサブタスクはありません。
-              </div>
-            ) : (
-              data.low_progress_soon_to_finish.map((s) => (
-                <div key={s.id} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none hover:border-rose-500/30 transition-all group relative overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500 opacity-50"></div>
-                  <div className="space-y-1 ml-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter max-w-[150px] truncate">{s.task_name}</span>
-                      <ChevronRight size={12} className="text-slate-300 dark:text-slate-700" />
-                      <span className="text-base font-bold text-slate-700 dark:text-slate-200">{s.subtask_detail}</span>
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-3">
-                      <span className="text-rose-600 dark:text-rose-400 font-medium italic">Due: {s.planned_end_date}</span>
-                      <span>Assignee: {s.assignee_name || '-'}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" style={{ width: `${s.progress_percent}%` }}></div>
-                    </div>
-                    <span className="text-sm font-black text-rose-600 dark:text-rose-400 w-10 text-right tracking-tighter">{s.progress_percent}%</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ListContainer>
-
-        <div ref={assigneeSectionRef}>
-          <ListContainer title="担当者別 負荷・レベル状況">
-          <div className="overflow-x-auto mt-4 px-1">
-            <table className="w-full text-base text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                  <th className="pb-4 px-1">Member</th>
-                  <th className="pb-4 px-1 text-center">Total</th>
-                  <th className="pb-4 px-1 text-center">ThisWk</th>
-                  <th className="pb-4 px-1 text-center text-rose-500/80">Delay</th>
-                  <th className="pb-4 px-1 text-center text-indigo-400/80">Run</th>
-                  <th className="pb-4 px-1 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                {(showAllAssignees ? data.assignee_summary : data.assignee_summary.slice(0, 5)).map((m) => (
-                  <tr key={m.member_name} className="hover:bg-indigo-500/5 transition-colors group">
-                    <td className="py-4 px-1">
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-indigo-600 dark:text-indigo-400 shrink-0">
-                                {m.member_name.substring(0, 1)}
-                            </div>
-                            <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white transition-colors truncate max-w-[80px]">{m.member_name}</span>
-                        </div>
-                    </td>
-                    <td className="py-4 px-1 text-center text-slate-500 dark:text-slate-400 font-medium text-sm">{m.total_count}</td>
-                    <td className="py-4 px-1 text-center font-bold text-slate-700 dark:text-slate-200 text-sm">{m.this_week_end_count}</td>
-                    <td className={`py-4 px-1 text-center font-black text-sm ${m.overdue_count > 0 ? 'text-rose-600 dark:text-rose-500' : 'text-slate-300 dark:text-slate-700'}`}>{m.overdue_count}</td>
-                    <td className="py-4 px-1 text-center font-black text-indigo-600 dark:text-indigo-400 text-sm">{m.concurrent_count}</td>
-                    <td className="py-4 px-1 text-right">
-                       <div className="flex items-center justify-end">
-                          {m.overdue_count > 0 ? (
-                            <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-500 text-[9px] font-black border border-rose-500/20">OVLD</span>
-                          ) : m.concurrent_count > 3 ? (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-500 text-[9px] font-black border border-amber-500/20">CAUT</span>
-                          ) : (
-                            <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[9px] font-black border border-emerald-500/20">STBL</span>
-                          )}
-                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {data.assignee_summary.length > 5 && (
-            <button 
-              onClick={handleToggleAssignees}
-              className="mt-6 w-full py-3 flex items-center justify-center gap-2 text-sm font-black text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/5 rounded-xl border border-indigo-500/10 transition-all group"
-            >
-              {showAllAssignees ? (
-                <>一部を表示 <ChevronUp size={16} className="group-hover:-translate-y-0.5 transition-transform" /></>
-              ) : (
-                <>すべて表示 <ChevronDown size={16} className="group-hover:translate-y-0.5 transition-transform" /></>
-              )}
-            </button>
-          )}
-          </ListContainer>
-        </div>
+        <DashboardListsSection data={data} />
+        <AssigneeSummarySection
+          ref={assigneeSectionRef}
+          assigneeSummary={data.assignee_summary}
+          showAllAssignees={showAllAssignees}
+          onToggle={handleToggleAssignees}
+        />
       </div>
 
-      {/* New Analytics Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ChartContainer title="プロジェクト別 予定工数 vs 実績工数 (TOP5)">
-          <div className="h-[300px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.project_effort} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
-                <XAxis dataKey="project_name" stroke={chartAxisColor} fontSize={12} />
-                <YAxis stroke={chartAxisColor} fontSize={12} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '14px', color: tooltipText }}
-                  itemStyle={{ color: tooltipText }}
-                />
-                <Legend />
-                <Bar name="予定工数" dataKey="planned_effort" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar name="実績工数" dataKey="actual_effort" fill="#10b981" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartContainer>
-
-        <ChartContainer title="完了済みタスクの見積精度推移">
-          <div className="h-[300px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.estimate_accuracy_trend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} vertical={false} />
-                <XAxis dataKey="period" stroke={chartAxisColor} fontSize={12} />
-                <YAxis stroke={chartAxisColor} fontSize={12} unit="%" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '8px', fontSize: '14px', color: tooltipText }}
-                  itemStyle={{ color: tooltipText }}
-                />
-                <Legend />
-                <Line name="平均乖離率" type="monotone" dataKey="avg_deviation_rate" stroke="#f43f5e" strokeWidth={3} dot={{ r: 6 }} activeDot={{ r: 8 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartContainer>
-      </div>
+      <DashboardAnalyticsChartsSection data={data} theme={chartTheme} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
-        <ListContainer title="タスク別 工数乖離率" subtitle="乖離の大きいタスク上位10件">
-          <div className="space-y-3 mt-4">
-            {data.task_deviations.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 italic">データがありません。</div>
-            ) : (
-              data.task_deviations.map((t, i) => (
-                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:border-indigo-500/30">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase">{t.project_name}</span>
-                        <ChevronRight size={12} className="text-slate-300" />
-                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{t.task_name}</span>
-                    </div>
-                    <div className="text-xs text-slate-500 flex gap-3">
-                      <span>予定: {t.planned_effort}d</span>
-                      <span>実績: {t.actual_effort}d</span>
-                    </div>
-                  </div>
-                  <div className={`text-right font-black text-lg ${t.deviation_rate > 20 ? 'text-rose-600' : t.deviation_rate < -20 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                    {t.deviation_rate > 0 ? '+' : ''}{t.deviation_rate.toFixed(1)}%
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ListContainer>
-
-        <ListContainer title="担当者別 見積誤差傾向" subtitle="平均的な工数乖離率（実績 vs 予定）">
-          <div className="space-y-3 mt-4">
-            {data.assignee_estimate_errors.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 italic">データがありません。</div>
-            ) : (
-              data.assignee_estimate_errors.map((m, i) => (
-                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:border-indigo-500/30">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-600 font-black">
-                      {m.member_name.substring(0, 1)}
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-700 dark:text-slate-200">{m.member_name}</div>
-                      <div className="text-xs text-slate-500">{m.task_count} tasks analyzed</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-lg font-black ${Math.abs(m.avg_deviation_rate) > 15 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                      {m.avg_deviation_rate > 0 ? '+' : ''}{m.avg_deviation_rate.toFixed(1)}%
-                    </div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Dev</div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ListContainer>
+        <DashboardInsightsSection data={data} />
       </div>
     </div>
   );
 }
-
-function KPICard({ title, value, icon, gradient, highlight = false }: any) {
-  return (
-    <div className={`relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br shadow-sm dark:shadow-none ${gradient} border ${highlight ? 'border-rose-500/40 shadow-[0_0_25px_rgba(244,63,94,0.15)] ring-1 ring-rose-500/20' : 'border-slate-200 dark:border-slate-800'} backdrop-blur-xl group transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1`}>
-      <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform duration-500">
-        {icon}
-      </div>
-      <div className="flex justify-between items-start mb-6">
-        <div className={`p-3 rounded-xl ${highlight ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-white dark:bg-slate-900/80 border border-slate-100 dark:border-slate-700/50'} shadow-sm`}>
-          {icon}
-        </div>
-      </div>
-      <div className="relative z-10">
-        <p className="text-slate-500 dark:text-slate-400 text-xs font-black uppercase tracking-[0.2em] mb-2">{title}</p>
-        <p className="text-5xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
-          {value}<span className="text-base font-bold text-slate-400 dark:text-slate-500 ml-2 tracking-normal uppercase">{title.includes('数') || title.includes('件') ? 'items' : ''}</span>
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function ChartContainer({ title, children }: any) {
-  return (
-    <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 backdrop-blur-sm shadow-sm dark:shadow-2xl relative overflow-hidden group">
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent"></div>
-      <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 mb-8 uppercase tracking-[0.3em] flex items-center gap-3">
-        <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span>
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
-
-function ListContainer({ title, subtitle, children }: any) {
-  return (
-    <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 backdrop-blur-sm shadow-sm dark:shadow-2xl h-full relative group">
-      <div className="mb-6 flex justify-between items-end">
-        <div>
-            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{title}</h3>
-            {subtitle && <p className="text-[11px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.1em] mt-1.5 opacity-80">{subtitle}</p>}
-        </div>
-        <div className="w-8 h-1 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
