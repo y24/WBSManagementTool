@@ -34,6 +34,12 @@ const SubtaskRow = memo(({
   const warning = getWarning(subtask, initialData);
   const isInProgress = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name === 'In Progress';
 
+  const [localProgress, setLocalProgress] = React.useState<number | null>(subtask.progress_percent ?? null);
+
+  React.useEffect(() => {
+    setLocalProgress(subtask.progress_percent ?? null);
+  }, [subtask.progress_percent]);
+
   const getHighlight = (field: string, value: any) =>
     shouldHighlightField('subtask', field, value, subtask, initialData);
 
@@ -176,10 +182,10 @@ const SubtaskRow = memo(({
         />
       </div>
       <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
-        {subtask.progress_percent != null && (
+        {(localProgress != null) && (
           <div 
             className="absolute top-0 left-0 h-full bg-green-500/20 dark:bg-green-500/30 transition-all duration-300 pointer-events-none"
-            style={{ width: `${subtask.progress_percent}%` }}
+            style={{ width: `${localProgress}%` }}
           />
         )}
         <div className="relative z-10 w-full h-full flex items-center">
@@ -187,6 +193,7 @@ const SubtaskRow = memo(({
             type="number"
             value={subtask.progress_percent}
             onChange={(v: any) => onUpdateField('subtask', subtask.id, 'progress_percent', v)}
+            onInputChange={(v: number | null) => setLocalProgress(v)}
             min={0}
             max={100}
             suffix="%"

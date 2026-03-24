@@ -17,6 +17,7 @@ interface EditableInputProps {
   onToggleAuto?: (isAuto: boolean) => void;
   highlight?: boolean;
   autoPercent?: boolean;
+  onInputChange?: (value: number | null) => void;
 }
 
 /**
@@ -116,7 +117,7 @@ const PopoverEditor = ({
 };
 
 const EditableInput = memo(({
-  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent
+  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange
 }: EditableInputProps) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -136,9 +137,12 @@ const EditableInput = memo(({
         if (!isNaN(num)) initVal = num.toFixed(precision);
       }
       setVal(initVal);
+      if (onInputChange && type === 'number') {
+        onInputChange(value != null ? Number(value) : null);
+      }
       if (!isAuto) isCommittingRef.current = false;
     }
-  }, [value, isEditing, type, precision, isAuto]);
+  }, [value, isEditing, type, precision, isAuto, onInputChange]);
 
   // 更新の確定処理
   const handleCommit = useCallback((newVal: string) => {
@@ -185,9 +189,12 @@ const EditableInput = memo(({
     if (newValAsString !== currentValAsString) {
       isCommittingRef.current = true;
       onChange(valueToSave);
+      if (onInputChange && type === 'number') {
+        onInputChange(valueToSave);
+      }
     }
     setIsEditing(false);
-  }, [isEditing, value, onChange, type, min, max, isAuto]);
+  }, [isEditing, value, onChange, type, min, max, isAuto, onInputChange]);
 
   // 入力変更ハンドラ
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,10 +203,19 @@ const EditableInput = memo(({
     const inputType = nativeEvent.inputType;
 
     if (autoPercent && inputType === 'insertText' && /^[1-9]$/.test(newVal)) {
-      setVal(newVal + '0');
+      const valueWithZero = newVal + '0';
+      setVal(valueWithZero);
+      if (onInputChange) {
+        const num = Number(valueWithZero);
+        if (!isNaN(num)) onInputChange(num);
+      }
       setTimeout(() => inputRef.current?.setSelectionRange(1, 2), 0);
     } else {
       setVal(newVal);
+      if (onInputChange) {
+        const num = Number(newVal);
+        if (!isNaN(num)) onInputChange(num);
+      }
     }
   };
 
