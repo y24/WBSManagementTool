@@ -49,8 +49,15 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     }
   }, [range]);
 
-  const getStatusColor = (statusId: number) => {
-    return initialData?.statuses.find(s => s.id === statusId)?.color_code || '#a0aec0';
+  const getStatusColor = (statusId: number | null | undefined): string => {
+    if (statusId === null || statusId === undefined) return isDarkMode ? '#334155' : '#cbd5e1';
+    let color = initialData?.statuses.find(s => s.id === statusId)?.color_code || '#a0aec0';
+    if (!color.startsWith('#')) color = '#' + color;
+    // 3桁の16進数の場合は6桁に拡張
+    if (color.length === 4) {
+      color = '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+    }
+    return color;
   };
 
   const renderBar = (item: any, isSubtask = false) => {
@@ -271,7 +278,12 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                   {showProjectRange && pRange && (
                     <div 
                       className="wbs-project-range-highlight" 
-                      style={{ left: `${pRange.left}px`, width: `${pRange.width}px` }} 
+                      style={{ 
+                        left: `${pRange.left}px`, 
+                        width: `${pRange.width}px`,
+                        '--highlight-bg': `${getStatusColor(project.status_id)}26`, // 15% opacity
+                        '--highlight-border': `${getStatusColor(project.status_id)}73` // 45% opacity
+                      } as React.CSSProperties} 
                     />
                   )}
                   
