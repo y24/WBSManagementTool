@@ -105,7 +105,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       rStart = pStart! + calcPWidth - rWidth;
     }
 
-    const warningText = getWarning(item, initialData);
+    const warningText = getWarning(item, initialData, isSubtask);
     const isDelayed = !!warningText;
 
     const rightEdge = Math.max(

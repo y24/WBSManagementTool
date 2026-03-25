@@ -37,7 +37,7 @@ const ProjectRow = memo(({
   provided,
   hidePlanningColumns = false
 }: ProjectRowProps) => {
-  const warning = getWarning(project);
+  const warning = getWarning(project, initialData);
 
   const getHighlight = (field: string, value: any) => 
     shouldHighlightField('project', field, value, project, initialData);

@@ -21,10 +21,12 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
     done_status = db.query(models.MstStatus).filter(models.MstStatus.status_name == "Done").first()
     removed_status = db.query(models.MstStatus).filter(models.MstStatus.status_name == "Removed").first()
     in_review_status = db.query(models.MstStatus).filter(models.MstStatus.status_name == "In Review").first()
+    new_status = db.query(models.MstStatus).filter(models.MstStatus.status_name == "New").first()
     
     done_id = done_status.id if done_status else -1
     removed_id = removed_status.id if removed_status else -1
     in_review_id = in_review_status.id if in_review_status else -1
+    new_id = new_status.id if new_status else -1
 
     ongoing_projects_count = db.query(models.Project).filter(
         models.Project.is_deleted == False,
@@ -36,6 +38,15 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
         models.Subtask.planned_end_date < today,
         models.Subtask.status_id != done_id,
         models.Subtask.status_id != removed_id,
+        models.Task.is_deleted == False,
+        models.Project.is_deleted == False,
+        models.Project.status_id.in_(active_status_ids)
+    ).count()
+
+    start_delay_count = db.query(models.Subtask).join(models.Task).join(models.Project).filter(
+        models.Subtask.is_deleted == False,
+        models.Subtask.planned_start_date < today,
+        models.Subtask.status_id == new_id,
         models.Task.is_deleted == False,
         models.Project.is_deleted == False,
         models.Project.status_id.in_(active_status_ids)
@@ -67,6 +78,7 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
 
     kpis = schemas.DashboardKPIs(
         ongoing_projects_count=ongoing_projects_count,
+        start_delay_count=start_delay_count,
         overdue_subtasks_count=overdue_subtasks_count,
         review_delay_count=review_delay_count,
         this_week_end_count=this_week_end_count

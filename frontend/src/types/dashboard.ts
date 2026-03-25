@@ -1,5 +1,6 @@
 export interface DashboardKPIs {
   ongoing_projects_count: number;
+  start_delay_count: number;
   overdue_subtasks_count: number;
   review_delay_count: number;
   this_week_end_count: number;

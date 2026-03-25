@@ -97,7 +97,7 @@ export const calculateReviewCalendarDays = (endDate: Date, reviewDays: number, h
   return calendarDays;
 };
 
-export const getWarning = (item: any, initialData?: InitialData | null) => {
+export const getWarning = (item: any, initialData?: InitialData | null, isSubtask = false) => {
   const warnings = [];
   if (item.planned_start_date && item.planned_end_date && item.planned_start_date > item.planned_end_date) {
     warnings.push("計画期間の開始日が終了日より後になっています。");
@@ -109,20 +109,30 @@ export const getWarning = (item: any, initialData?: InitialData | null) => {
   // 遅延判定
   if (initialData && item.status_id) {
     const status = initialData.statuses.find(s => s.id === item.status_id);
-    if (status && status.status_name !== 'Done' && status.status_name !== 'Removed' && item.planned_end_date) {
+    if (status && status.status_name !== 'Done' && status.status_name !== 'Removed') {
       const today = new Date();
-      today.setHours(0,0,0,0);
-      const plannedEnd = new Date(item.planned_end_date);
-      
-      if (today > plannedEnd) {
-        warnings.push("完了予定日を過ぎていますが未完了です。");
-      } else if (item.review_days && item.review_days > 0) {
-        if (status.status_name !== 'In Review') {
-          const holidays = initialData.holidays.map(h => h.holiday_date);
-          const plannedEnd = new Date(item.planned_end_date);
-          const reviewStartDeadline = subtractBusinessDays(plannedEnd, Math.ceil(item.review_days), holidays);
-          if (today >= reviewStartDeadline) {
-            warnings.push("レビュー開始期限を過ぎていますがレビュー中になっていません。");
+      today.setHours(0, 0, 0, 0);
+
+      // 開始遅延判定 (サブタスクかつステータスがNewで、開始予定日を過ぎている場合)
+      if (isSubtask && status.status_name === 'New' && item.planned_start_date) {
+        const plannedStart = new Date(item.planned_start_date);
+        if (today > plannedStart) {
+          warnings.push("開始予定日を過ぎていますが開始されていません。");
+        }
+      }
+
+      // 完了遅延判定
+      if (item.planned_end_date) {
+        const plannedEnd = new Date(item.planned_end_date);
+        if (today > plannedEnd) {
+          warnings.push("完了予定日を過ぎていますが未完了です。");
+        } else if (item.review_days && item.review_days > 0) {
+          if (status.status_name !== 'In Review') {
+            const holidays = initialData.holidays.map(h => h.holiday_date);
+            const reviewStartDeadline = subtractBusinessDays(plannedEnd, Math.ceil(item.review_days), holidays);
+            if (today >= reviewStartDeadline) {
+              warnings.push("レビュー開始期限を過ぎていますがレビュー中になっていません。");
+            }
           }
         }
       }

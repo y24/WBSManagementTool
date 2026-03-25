@@ -31,7 +31,7 @@ const SubtaskRow = memo(({
   provided,
   hidePlanningColumns = false
 }: SubtaskRowProps) => {
-  const warning = getWarning(subtask, initialData);
+  const warning = getWarning(subtask, initialData, true);
   const statusName = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name;
   const isOngoing = statusName === 'In Progress' || statusName === 'In Review';
 

@@ -37,7 +37,7 @@ const TaskRow = memo(({
   provided,
   hidePlanningColumns = false
 }: TaskRowProps) => {
-  const warning = getWarning(task);
+  const warning = getWarning(task, initialData);
 
   const getHighlight = (field: string, value: any) => 
     shouldHighlightField('task', field, value, task, initialData);

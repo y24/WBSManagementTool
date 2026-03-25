@@ -326,6 +326,7 @@ class ShiftDatesRequest(BaseModel):
 
 class DashboardKPIs(BaseModel):
     ongoing_projects_count: int
+    start_delay_count: int
     overdue_subtasks_count: int
     review_delay_count: int
     this_week_end_count: int
