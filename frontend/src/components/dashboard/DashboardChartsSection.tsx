@@ -60,7 +60,7 @@ export function DashboardChartsSection({ data, theme }: DashboardChartsSectionPr
             <BarChart data={data.assignee_delays}>
               <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} vertical={false} />
               <XAxis dataKey="member_name" stroke={theme.axisColor} fontSize={12} />
-              <YAxis stroke={theme.axisColor} fontSize={12} />
+              <YAxis stroke={theme.axisColor} fontSize={12} allowDecimals={false} />
               <Tooltip {...tooltipStyle} />
               <Bar dataKey="delay_count" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={30} />
             </BarChart>
