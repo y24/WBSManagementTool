@@ -277,7 +277,7 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
 
     return True
 
-def export_wbs_to_excel(projects: List[schemas.ProjectWBS]) -> io.BytesIO:
+def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.BytesIO:
     """
     Flatten hierarchical WBS data and generate an Excel file in the import format.
     """
@@ -291,11 +291,17 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS]) -> io.BytesIO:
         "開始(計画)", "終了(計画)", "予定工数", "開始(実績)", "終了(実績)", "実績工数", "進捗", "工数比率", "メモ"
     ]
 
+    # Fetch master data for lookup
+    status_map = {s.id: s.status_name for s in db.query(models.MstStatus).all()}
+    member_map = {m.id: m.member_name for m in db.query(models.MstMember).all()}
+    type_map = {t.id: t.type_name for t in db.query(models.MstSubtaskType).all()}
+
     for p in projects:
         # Level 0: Project
         rows.append([
             0, p.project_name, "", "", p.ticket_id, 
-            getattr(p, 'status_name', ""), getattr(p, 'assignee_name', ""), "",
+            status_map.get(p.status_id, ""), 
+            member_map.get(p.assignee_id, ""), "",
             p.planned_start_date, p.planned_end_date, p.planned_effort_total,
             p.actual_start_date, p.actual_end_date, p.actual_effort_total,
             p.progress_percent, "", p.memo
@@ -305,7 +311,8 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS]) -> io.BytesIO:
             # Level 1: Task
             rows.append([
                 1, t.task_name, "", "", t.ticket_id,
-                getattr(t, 'status_name', ""), getattr(t, 'assignee_name', ""), "",
+                status_map.get(t.status_id, ""), 
+                member_map.get(t.assignee_id, ""), "",
                 t.planned_start_date, t.planned_end_date, t.planned_effort_total,
                 t.actual_start_date, t.actual_end_date, t.actual_effort_total,
                 t.progress_percent, "", t.memo
@@ -314,8 +321,11 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS]) -> io.BytesIO:
             for s in t.subtasks:
                 # Level 2: Subtask
                 rows.append([
-                    2, "", getattr(s, 'subtask_type_name', ""), s.subtask_detail, s.ticket_id,
-                    getattr(s, 'status_name', ""), getattr(s, 'assignee_name', ""), s.review_days,
+                    2, "", 
+                    type_map.get(s.subtask_type_id, ""), 
+                    s.subtask_detail, s.ticket_id,
+                    status_map.get(s.status_id, ""), 
+                    member_map.get(s.assignee_id, ""), s.review_days,
                     s.planned_start_date, s.planned_end_date, s.planned_effort_days,
                     s.actual_start_date, s.actual_end_date, s.actual_effort_days,
                     s.progress_percent, s.workload_percent, s.memo

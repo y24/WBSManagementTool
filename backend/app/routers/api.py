@@ -62,7 +62,7 @@ def export_wbs(
     db: Session = Depends(get_db)
 ):
     from ..crud import import_data
-    buffer = import_data.export_wbs_to_excel(projects)
+    buffer = import_data.export_wbs_to_excel(projects, db)
     
     # Generate filename with current date
     from datetime import date
