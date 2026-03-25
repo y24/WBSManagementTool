@@ -8,10 +8,9 @@ from .base import check_overlap
 def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool = False, include_removed: bool = False):
     from .base import get_status_ids_by_category
     done_ids = get_status_ids_by_category(db, "done")
-    # In base.py, category "done" currently includes 4 (Done) and 7 (Removed).
-    # We want to separate them for clearer filtering.
-    # Status ID 7 is "Removed".
-    removed_id = 7 
+    
+    removed_status = db.query(models.MstStatus).filter(models.MstStatus.status_name == "Removed").first()
+    removed_id = removed_status.id if removed_status else 7
     
     query = db.query(models.Project)
     
@@ -22,9 +21,12 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
     # Project status level filters
     exclude_project_status_ids = []
     if not include_done:
-        exclude_project_status_ids.append(4) # Done
+        # Avoid excluding items that are both 'Done' and 'Removed' if include_removed is True
+        for d_id in done_ids:
+            if d_id != removed_id:
+                exclude_project_status_ids.append(d_id)
     if not include_removed:
-        exclude_project_status_ids.append(7) # Removed
+        exclude_project_status_ids.append(removed_id)
         
     if exclude_project_status_ids:
         query = query.filter((models.Project.status_id == None) | (~models.Project.status_id.in_(exclude_project_status_ids)))

@@ -61,7 +61,7 @@ export default function MainBoard() {
         setLoading(false);
       }
     },
-    [data, initialData],
+    [data, initialData, displayOptions],
   );
 
   useEffect(() => {
