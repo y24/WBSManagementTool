@@ -9,7 +9,7 @@ export default function Header() {
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 h-14 flex items-center px-6 justify-between shrink-0 shadow-md z-50 transition-colors">
       <div className="flex items-center gap-10">
         <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-widest uppercase">
-          WBS Manager
+          WBS Tracker
         </h1>
         <nav className="flex gap-4">
           <Link
