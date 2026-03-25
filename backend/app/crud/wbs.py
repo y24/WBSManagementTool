@@ -5,26 +5,46 @@ from sqlalchemy.orm import Session, selectinload
 from .. import models, schemas
 from .base import check_overlap
 
-def get_wbs_data(db: Session, project_ids: list[int] = None, include_removed: bool = False):
+def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool = False, include_removed: bool = False):
+    from .base import get_status_ids_by_category
+    done_ids = get_status_ids_by_category(db, "done")
+    # In base.py, category "done" currently includes 4 (Done) and 7 (Removed).
+    # We want to separate them for clearer filtering.
+    # Status ID 7 is "Removed".
+    removed_id = 7 
+    
     query = db.query(models.Project)
+    
+    # Base soft-delete filter
     if not include_removed:
         query = query.filter(models.Project.is_deleted == False)
+    
+    # Project status level filters
+    exclude_project_status_ids = []
+    if not include_done:
+        exclude_project_status_ids.append(4) # Done
+    if not include_removed:
+        exclude_project_status_ids.append(7) # Removed
+        
+    if exclude_project_status_ids:
+        query = query.filter((models.Project.status_id == None) | (~models.Project.status_id.in_(exclude_project_status_ids)))
         
     if project_ids:
         query = query.filter(models.Project.id.in_(project_ids))
     
+    # Task/Subtask level filters using status
+    task_filter = models.Task.is_deleted == False
+    subtask_filter = models.Subtask.is_deleted == False
+    
     if not include_removed:
-        query = query.options(
-            selectinload(models.Project.tasks.and_(models.Task.is_deleted == False)).selectinload(models.Task.status),
-            selectinload(models.Project.tasks.and_(models.Task.is_deleted == False)).selectinload(models.Task.subtasks.and_(models.Subtask.is_deleted == False)).selectinload(models.Subtask.status),
-            selectinload(models.Project.status)
-        )
-    else:
-        query = query.options(
-            selectinload(models.Project.tasks).selectinload(models.Task.status),
-            selectinload(models.Project.tasks).selectinload(models.Task.subtasks).selectinload(models.Subtask.status),
-            selectinload(models.Project.status)
-        )
+        task_filter = task_filter & ((models.Task.status_id == None) | (models.Task.status_id != removed_id))
+        subtask_filter = subtask_filter & ((models.Subtask.status_id == None) | (models.Subtask.status_id != removed_id))
+
+    query = query.options(
+        selectinload(models.Project.tasks.and_(task_filter)).selectinload(models.Task.status),
+        selectinload(models.Project.tasks.and_(task_filter)).selectinload(models.Task.subtasks.and_(subtask_filter)).selectinload(models.Subtask.status),
+        selectinload(models.Project.status)
+    )
         
     projects = query.order_by(models.Project.sort_order, models.Project.id).all()
     

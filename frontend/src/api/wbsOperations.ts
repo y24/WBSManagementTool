@@ -66,6 +66,17 @@ export const wbsOps = {
       new_base_date: newBaseDate
     }),
 
+  getWBS: (projectIds?: number[], includeDone?: boolean, includeRemoved?: boolean, weeks: number = 8) => {
+    const params = new URLSearchParams();
+    if (projectIds && projectIds.length > 0) {
+      projectIds.forEach(id => params.append('project_ids', id.toString()));
+    }
+    if (includeDone !== undefined) params.append('include_done', includeDone.toString());
+    if (includeRemoved !== undefined) params.append('include_removed', includeRemoved.toString());
+    params.append('weeks', weeks.toString());
+    return apiClient.get(`/wbs?${params.toString()}`);
+  },
+
   getDashboard: () => 
     apiClient.get('/dashboard'),
 };

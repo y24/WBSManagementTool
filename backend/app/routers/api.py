@@ -13,12 +13,13 @@ router = APIRouter()
 @router.get("/wbs", response_model=schemas.WBSResponse)
 def read_wbs(
     project_ids: List[int] = Query(default=None),
+    include_done: bool = False,
     include_removed: bool = False,
     weeks: int = 8,
     db: Session = Depends(get_db)
 ):
     crud.refresh_subtasks_actual_end_date(db, project_ids)
-    projects = crud.get_wbs_data(db, project_ids, include_removed)
+    projects = crud.get_wbs_data(db, project_ids, include_done, include_removed)
     
     # Dynamic gantt range calculation
     from datetime import date, timedelta

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, UIEvent } from 'react';
+import { wbsOps } from '../api/wbsOperations';
 import { apiClient } from '../api/client';
 import { WBSResponse } from '../types/wbs';
 import { InitialData } from '../types';
@@ -43,7 +44,11 @@ export default function MainBoard() {
       try {
         if (isInitial || !data) setLoading(true);
 
-        const wbsRes = await apiClient.get<WBSResponse>('/wbs');
+        const wbsRes = await wbsOps.getWBS(
+          undefined, // projectIds
+          displayOptions.showDoneProjects,
+          displayOptions.showRemoved
+        );
         setData(wbsRes.data);
 
         if (isInitial || !initialData) {
@@ -81,10 +86,7 @@ export default function MainBoard() {
 
   useEffect(() => {
     fetchData(true);
-    // Main board initial fetch should run only once on mount.
-    // Adding fetchData to deps recreates this effect whenever data changes and causes refetch loops.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [displayOptions.showDoneProjects, displayOptions.showRemoved]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
