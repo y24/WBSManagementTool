@@ -7,7 +7,6 @@ import { StatusMappingSection } from '../components/masterSettings/StatusMapping
 import { StatusSection } from '../components/masterSettings/StatusSection';
 import { SubtaskTypeSection } from '../components/masterSettings/SubtaskTypeSection';
 import { SystemSettingsSection } from '../components/masterSettings/SystemSettingsSection';
-import { useWebSocket } from '../api/websocket';
 
 type EditingItem = { id: number; field: string } | null;
 
@@ -59,14 +58,6 @@ export default function MasterSettings() {
   const [isSavingSetting, setIsSavingSetting] = useState(false);
   const [isSyncingHolidays, setIsSyncingHolidays] = useState(false);
   const [isHolidayListExpanded, setIsHolidayListExpanded] = useState(false);
-
-  // Real-time synchronization
-  useWebSocket((msg) => {
-    if (msg.type === 'update') {
-      console.log('MasterSettings received update signal, refreshing...');
-      fetchData();
-    }
-  });
 
   const fetchData = useCallback(() => {
     apiClient.get<InitialData>('/initial-data')

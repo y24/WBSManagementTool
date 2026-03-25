@@ -22,7 +22,6 @@ import {
   persistGanttScrollLeft,
   persistTreeWidth,
 } from './mainboard/storage';
-import { useWebSocket } from '../api/websocket';
 
 export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
@@ -39,14 +38,6 @@ export default function MainBoard() {
 
   const treeRef = useRef<HTMLDivElement>(null);
   const ganttRef = useRef<HTMLDivElement>(null);
-
-  // Real-time synchronization
-  useWebSocket((msg) => {
-    if (msg.type === 'update') {
-      console.log('MainBoard received update signal, refreshing...');
-      fetchData();
-    }
-  });
 
   const fetchData = useCallback(
     async (isInitial = false) => {

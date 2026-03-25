@@ -9,7 +9,6 @@ import {
   DashboardListsSection,
 } from '../components/dashboard/DashboardListsSection';
 import { DashboardChartTheme } from '../components/dashboard/constants';
-import { useWebSocket } from '../api/websocket';
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -22,14 +21,6 @@ export default function Dashboard() {
   const scrollAnimationRef = useRef<number | null>(null);
   const assigneeHeightBeforeToggleRef = useRef<number | null>(null);
   const isAssigneeTogglingRef = useRef(false);
-
-  // Real-time synchronization
-  useWebSocket((msg) => {
-    if (msg.type === 'update') {
-      console.log('Dashboard received update signal, refreshing...');
-      fetchData();
-    }
-  });
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
