@@ -13,6 +13,8 @@ interface GanttChartProps {
   expandedTasks: Record<number, boolean>;
   showProjectRange: boolean;
   showTodayHighlight: boolean;
+  showAssigneeName?: boolean;
+  showProgressRate?: boolean;
   isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
 }
@@ -27,6 +29,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   expandedTasks,
   showProjectRange,
   showTodayHighlight,
+  showAssigneeName = false,
+  showProgressRate = false,
   isDarkMode = false,
   onScroll
 }, ref) => {
@@ -99,7 +103,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       const pE = new Date(item.planned_end_date);
       const r_days_cal = calculateReviewCalendarDays(pE, item.review_days, holidays);
       rWidth = r_days_cal * CELL_WIDTH;
-      
+
       const calcPWidth = (differenceInDays(pE, new Date(item.planned_start_date)) + 1) * CELL_WIDTH;
       if (rWidth > calcPWidth) rWidth = calcPWidth;
       rStart = pStart! + calcPWidth - rWidth;
@@ -133,10 +137,16 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
         {aStart !== undefined && aWidth !== undefined && (
           <>
             <div
-              className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm`}
+              className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm flex items-center justify-center overflow-hidden`}
               style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
               title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
-            />
+            >
+              {showProgressRate && item.progress_percent !== undefined && item.progress_percent !== null && (
+                <span className="text-[11px] font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)] leading-none pointer-events-none">
+                  {item.progress_percent}%
+                </span>
+              )}
+            </div>
             {arStart !== undefined && arWidth !== undefined && (
               <div
                 className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm bg-black/20 pointer-events-none`}
@@ -145,6 +155,18 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
               />
             )}
           </>
+        )}
+        {isSubtask && showAssigneeName && item.assignee_id && (aStart !== undefined || pStart !== undefined) && (
+          <div
+            className="absolute text-[10px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
+            style={{
+              left: `${(aStart !== undefined ? aStart : pStart!) - 4}px`,
+              top: '13px',
+              transform: 'translateX(-100%)'
+            }}
+          >
+            {initialData?.members.find(m => m.id === item.assignee_id)?.member_name}
+          </div>
         )}
         {isDelayed && warningText && (
           <div
@@ -176,7 +198,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
             try {
               const d = new Date(item[k]);
               if (!isNaN(d.getTime())) allDates.push(d.getTime());
-            } catch {}
+            } catch { }
           }
         });
       };
@@ -276,17 +298,17 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                 <div key={`p-wrapper-${project.id}`} className="relative">
                   {/* プロジェクト全体の期間をハイライト */}
                   {showProjectRange && pRange && (
-                    <div 
-                      className="wbs-project-range-highlight" 
-                      style={{ 
-                        left: `${pRange.left}px`, 
+                    <div
+                      className="wbs-project-range-highlight"
+                      style={{
+                        left: `${pRange.left}px`,
                         width: `${pRange.width}px`,
                         '--highlight-bg': `${getStatusColor(project.status_id)}26`, // 15% opacity
                         '--highlight-border': `${getStatusColor(project.status_id)}73` // 45% opacity
-                      } as React.CSSProperties} 
+                      } as React.CSSProperties}
                     />
                   )}
-                  
+
                   {/* Project Row */}
                   <div key={`p-${project.id}`} className={`${commonRowClasses} wbs-row-project`}>
                     {renderBar(project, false)}

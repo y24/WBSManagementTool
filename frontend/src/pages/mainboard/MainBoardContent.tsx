@@ -81,6 +81,8 @@ export default function MainBoardContent({
                 expandedTasks={expandedTasks}
                 showProjectRange={displayOptions.showProjectRange}
                 showTodayHighlight={displayOptions.showTodayHighlight}
+                showAssigneeName={displayOptions.showAssigneeName}
+                showProgressRate={displayOptions.showProgressRate}
                 isDarkMode={displayOptions.isDarkMode}
                 onScroll={onGanttScroll}
               />

@@ -25,6 +25,8 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showDoneProjects: false,
   hidePlanningColumns: false,
   showGanttChart: true,
+  showAssigneeName: false,
+  showProgressRate: false,
   isDarkMode: false,
 };
 
