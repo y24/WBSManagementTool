@@ -50,18 +50,25 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const [isCopied, setIsCopied] = React.useState(false);
   const settingsRef = React.useRef<HTMLDivElement>(null);
 
-  // ポップアップの外をクリックしたら閉じる
+  // ポップアップの外をクリック、あるいはEscキー押下で閉じる
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
         setIsSettingsOpen(false);
       }
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSettingsOpen(false);
+      }
+    };
     if (isSettingsOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isSettingsOpen]);
   const statuses = initialData?.statuses || [];

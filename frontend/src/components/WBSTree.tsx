@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback, forwardRef } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo, forwardRef } from 'react';
 import { List, Layers, ChevronsDown } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Project, Task, Subtask } from '../types/wbs';
@@ -126,34 +126,55 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     }));
   }, []);
 
-  const totalSelectedCount = Object.values(checkedIds).filter(Boolean).length;
+  const { selectedCounts, totalSelectedCount, selectedIds, minimalIds } = useMemo(() => {
+    let pCount = 0;
+    let tCount = 0;
+    let sCount = 0;
+    const pIds: number[] = [];
+    const tIds: number[] = [];
+    const sIds: number[] = [];
+    const minPIds: number[] = [];
+    const minTIds: number[] = [];
+    const minSIds: number[] = [];
 
-  const handleDeleteSelected = () => {
-    if (saving || isConfirmModalOpen) return;
-
-    if (totalSelectedCount === 0) return;
-
-    // 削除対象を算出
-    const projectIdsToDelete = projects.filter(p => checkedIds[`p-${p.id}`]).map(p => p.id);
-    const tasksToDelete: number[] = [];
     projects.forEach(p => {
-      if (projectIdsToDelete.includes(p.id)) return;
+      const pChecked = !!checkedIds[`p-${p.id}`];
+      if (pChecked) {
+        pCount++;
+        pIds.push(p.id);
+        minPIds.push(p.id);
+      }
       p.tasks.forEach(t => {
-        if (checkedIds[`t-${t.id}`]) tasksToDelete.push(t.id);
-      });
-    });
-    const subtasksToDelete: number[] = [];
-    projects.forEach(p => {
-      if (projectIdsToDelete.includes(p.id)) return;
-      p.tasks.forEach(t => {
-        if (tasksToDelete.includes(t.id)) return;
+        const tChecked = !!checkedIds[`t-${t.id}`];
+        if (tChecked) {
+          tCount++;
+          tIds.push(t.id);
+          if (!pChecked) minTIds.push(t.id);
+        }
         t.subtasks.forEach(s => {
-          if (checkedIds[`s-${s.id}`]) subtasksToDelete.push(s.id);
+          const sChecked = !!checkedIds[`s-${s.id}`];
+          if (sChecked) {
+            sCount++;
+            sIds.push(s.id);
+            if (!pChecked && !tChecked) minSIds.push(s.id);
+          }
         });
       });
     });
 
-    const detailMsg = `削除対象の内訳: プロジェクト:${projectIdsToDelete.length}, タスク:${tasksToDelete.length}, サブタスク:${subtasksToDelete.length}`;
+    return {
+      selectedCounts: { pCount, tCount, sCount },
+      totalSelectedCount: pCount + tCount + sCount,
+      selectedIds: { pIds, tIds, sIds },
+      minimalIds: { pIds: minPIds, tIds: minTIds, sIds: minSIds }
+    };
+  }, [projects, checkedIds]);
+
+  const handleDeleteSelected = () => {
+    if (saving || isConfirmModalOpen) return;
+    if (totalSelectedCount === 0) return;
+
+    const detailMsg = `削除対象の内訳: プロジェクト:${selectedCounts.pCount}, タスク:${selectedCounts.tCount}, サブタスク:${selectedCounts.sCount}`;
     setConfirmData({ 
       total: totalSelectedCount, 
       detail: detailMsg,
@@ -170,29 +191,10 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     setSaving(true);
     
     try {
-      const projectIdsToDelete = projects.filter(p => checkedIds[`p-${p.id}`]).map(p => p.id);
-      const tasksToDelete: number[] = [];
-      projects.forEach(p => {
-        if (projectIdsToDelete.includes(p.id)) return;
-        p.tasks.forEach(t => {
-          if (checkedIds[`t-${t.id}`]) tasksToDelete.push(t.id);
-        });
-      });
-      const subtasksToDelete: number[] = [];
-      projects.forEach(p => {
-        if (projectIdsToDelete.includes(p.id)) return;
-        p.tasks.forEach(t => {
-          if (tasksToDelete.includes(t.id)) return;
-          t.subtasks.forEach(s => {
-            if (checkedIds[`s-${s.id}`]) subtasksToDelete.push(s.id);
-          });
-        });
-      });
-
       const promises = [
-        ...projectIdsToDelete.map(id => wbsOps.deleteProject(id)),
-        ...tasksToDelete.map(id => wbsOps.deleteTask(id)),
-        ...subtasksToDelete.map(id => wbsOps.deleteSubtask(id))
+        ...minimalIds.pIds.map(id => wbsOps.deleteProject(id)),
+        ...minimalIds.tIds.map(id => wbsOps.deleteTask(id)),
+        ...minimalIds.sIds.map(id => wbsOps.deleteSubtask(id))
       ];
 
       if (promises.length > 0) {
@@ -213,20 +215,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     if (saving || isConfirmModalOpen) return;
     if (totalSelectedCount === 0) return;
 
-    const pIds: number[] = [];
-    const tIds: number[] = [];
-    const sIds: number[] = [];
-
-    Object.entries(checkedIds).forEach(([key, isChecked]) => {
-      if (!isChecked) return;
-      const [type, idStr] = key.split('-');
-      const id = parseInt(idStr);
-      if (type === 'p') pIds.push(id);
-      else if (type === 't') tIds.push(id);
-      else if (type === 's') sIds.push(id);
-    });
-
-    const detailMsg = `クリア対象の内訳: プロジェクト:${pIds.length}, タスク:${tIds.length}, サブタスク:${sIds.length}\n\n対象の実績開始、レビュー開始、実績終了、実績工数、進捗が消去されます。`;
+    const detailMsg = `クリア対象の内訳: プロジェクト:${selectedCounts.pCount}, タスク:${selectedCounts.tCount}, サブタスク:${selectedCounts.sCount}\n\n対象の実績開始、レビュー開始、実績終了、実績工数、進捗が消去されます。`;
     
     setConfirmData({ 
       total: totalSelectedCount, 
@@ -234,7 +223,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       title: '実績値のクリア確認',
       confirmText: '実績値をクリアする',
       variant: 'warning',
-      onConfirm: () => executeClearActuals(pIds, tIds, sIds)
+      onConfirm: () => executeClearActuals(selectedIds.pIds, selectedIds.tIds, selectedIds.sIds)
     });
     setIsConfirmModalOpen(true);
   };
@@ -259,20 +248,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
     setSaving(true);
     try {
-      const pIds: number[] = [];
-      const tIds: number[] = [];
-      const sIds: number[] = [];
-
-      Object.entries(checkedIds).forEach(([key, isChecked]) => {
-        if (!isChecked) return;
-        const [type, idStr] = key.split('-');
-        const id = parseInt(idStr);
-        if (type === 'p') pIds.push(id);
-        else if (type === 't') tIds.push(id);
-        else if (type === 's') sIds.push(id);
-      });
-
-      await wbsOps.duplicateItems(pIds, tIds, sIds);
+      await wbsOps.duplicateItems(selectedIds.pIds, selectedIds.tIds, selectedIds.sIds);
       setCheckedIds({});
       onUpdate();
     } catch (err) {
@@ -289,7 +265,6 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
     // 起点となる最小の日付を探す
     let minDate: string | null = null;
-
     const updateMinDate = (dateStr: string | null | undefined) => {
       if (!dateStr) return;
       if (!minDate || dateStr < minDate) {
@@ -339,20 +314,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     setIsShiftDatesModalOpen(false);
     setSaving(true);
     try {
-      const pIds: number[] = [];
-      const tIds: number[] = [];
-      const sIds: number[] = [];
-
-      Object.entries(checkedIds).forEach(([key, isChecked]) => {
-        if (!isChecked) return;
-        const [type, idStr] = key.split('-');
-        const id = parseInt(idStr);
-        if (type === 'p') pIds.push(id);
-        else if (type === 't') tIds.push(id);
-        else if (type === 's') sIds.push(id);
-      });
-
-      await wbsOps.shiftDates(pIds, tIds, sIds, newBaseDate);
+      await wbsOps.shiftDates(selectedIds.pIds, selectedIds.tIds, selectedIds.sIds, newBaseDate);
       setCheckedIds({});
       onUpdate();
     } catch (err) {

@@ -35,6 +35,20 @@ const ConfirmModal = ({
   descriptionPosition = 'beforeButtons',
   footerPosition = 'afterButtons'
 }: ConfirmModalProps) => {
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCancel();
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onCancel]);
+
   if (!isOpen) return null;
 
   const isDanger = variant === 'danger';
