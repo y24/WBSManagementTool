@@ -253,24 +253,6 @@ export default function MasterSettings() {
       <div className="master-container">
         <h2 className="master-title">マスタ・設定</h2>
 
-        <StatusSection
-          statuses={data?.statuses ?? []}
-          showAddStatus={showAddStatus}
-          setShowAddStatus={setShowAddStatus}
-          newStatus={newStatus}
-          setNewStatus={setNewStatus}
-          createStatus={createStatus}
-          isEditing={isEditing}
-          editValue={editValue}
-          setEditValue={setEditValue}
-          editColorValue={editColorValue}
-          setEditColorValue={setEditColorValue}
-          saveEdit={saveEdit}
-          cancelEdit={cancelEdit}
-          startEdit={startEdit}
-          deleteItem={deleteItem}
-        />
-
         <SubtaskTypeSection
           subtaskTypes={data?.subtask_types ?? []}
           showAddSubtaskType={showAddSubtaskType}
@@ -325,11 +307,22 @@ export default function MasterSettings() {
           deleteItem={deleteItem}
         />
 
-        <SystemSettingsSection
-          ticketUrlTemplate={ticketUrlTemplate}
-          setTicketUrlTemplate={setTicketUrlTemplate}
-          isSavingSetting={isSavingSetting}
-          saveSetting={saveSetting}
+        <StatusSection
+          statuses={data?.statuses ?? []}
+          showAddStatus={showAddStatus}
+          setShowAddStatus={setShowAddStatus}
+          newStatus={newStatus}
+          setNewStatus={setNewStatus}
+          createStatus={createStatus}
+          isEditing={isEditing}
+          editValue={editValue}
+          setEditValue={setEditValue}
+          editColorValue={editColorValue}
+          setEditColorValue={setEditColorValue}
+          saveEdit={saveEdit}
+          cancelEdit={cancelEdit}
+          startEdit={startEdit}
+          deleteItem={deleteItem}
         />
 
         <StatusMappingSection
@@ -338,6 +331,13 @@ export default function MasterSettings() {
           statusMappingBlocked={statusMappingBlocked}
           statusMappingDone={statusMappingDone}
           toggleMapping={toggleMapping}
+        />
+
+        <SystemSettingsSection
+          ticketUrlTemplate={ticketUrlTemplate}
+          setTicketUrlTemplate={setTicketUrlTemplate}
+          isSavingSetting={isSavingSetting}
+          saveSetting={saveSetting}
         />
       </div>
     </div>

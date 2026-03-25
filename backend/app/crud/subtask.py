@@ -27,12 +27,15 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
     p_start = get_val("planned_start_date")
     p_end = get_val("planned_end_date")
     p_effort = get_val("planned_effort_days")
+    p_review = get_val("review_days")
     workload = get_val("workload_percent")
     if workload is None: workload = 100
-    workload_factor = workload / 100.0
+    # Avoid division by zero: assume at least 1% if it's 0 (most tasks have some workload)
+    workload_factor = max(0.01, workload / 100.0)
     
     a_start = get_val("actual_start_date")
     a_end = get_val("actual_end_date")
+    r_start = get_val("review_start_date")
 
     # Check if auto_effort is being turned ON
     is_turning_on = False
@@ -42,23 +45,40 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
     # logic for planned
     if p_start:
         # If dates are updated OR auto_effort is being turned on, prioritize calculating effort
-        if not update_data or "planned_start_date" in update_data or "planned_end_date" in update_data or is_turning_on or "workload_percent" in (update_data or {}):
+        if not update_data or any(k in (update_data or {}) for k in ["planned_start_date", "planned_end_date", "workload_percent", "is_auto_effort", "review_days"]):
             if p_end:
                 raw_days = date_utils.get_business_days_count(p_start, p_end, holidays)
-                # 四捨五入
-                db_subtask.planned_effort_days = Decimal(str(int(raw_days * workload_factor * 10 + 0.5) / 10.0))
+                # 予定工数 = (計画期間の営業日数 * 負荷率) - レビュー日数
+                effort = max(0.0, raw_days * workload_factor - float(p_review or 0))
+                # 四捨五入して1桁
+                db_subtask.planned_effort_days = Decimal(str(int(effort * 10 + 0.5) / 10.0))
             elif is_turning_on and p_effort is not None:
-                db_subtask.planned_end_date = date_utils.add_business_days(p_start, float(p_effort), holidays)
+                # 工数から終了日を逆算: 予定終了日 = (予定工数 + レビュー日数) / 負荷率
+                total_duration = (float(p_effort) + float(p_review or 0)) / workload_factor
+                db_subtask.planned_end_date = date_utils.add_business_days(p_start, total_duration, holidays)
         elif update_data and "planned_effort_days" in update_data:
             if p_effort is not None:
-                db_subtask.planned_end_date = date_utils.add_business_days(p_start, float(p_effort), holidays)
+                # 同様に逆算
+                total_duration = (float(p_effort) + float(p_review or 0)) / workload_factor
+                db_subtask.planned_end_date = date_utils.add_business_days(p_start, total_duration, holidays)
 
     # logic for actual
     if a_start and a_end:
-        if not update_data or "actual_start_date" in update_data or "actual_end_date" in update_data or is_turning_on or "workload_percent" in (update_data or {}):
+        if not update_data or any(k in (update_data or {}) for k in ["actual_start_date", "actual_end_date", "workload_percent", "is_auto_effort", "review_start_date"]):
             raw_days = date_utils.get_business_days_count(a_start, a_end, holidays)
-            # 四捨五入
-            db_subtask.actual_effort_days = Decimal(str(int(raw_days * workload_factor * 10 + 0.5) / 10.0))
+            
+            # 実績のレビュー期間（営業日数）を算出
+            review_biz_days = 0.0
+            if r_start and r_start <= a_end:
+                # レビュー開始〜実績終了までの営業日数を差し引く
+                # 制約により r_start >= a_start は保証されている
+                review_start_for_calc = max(a_start, r_start)
+                review_biz_days = date_utils.get_business_days_count(review_start_for_calc, a_end, holidays)
+            
+            # 実績工数 = (全体の営業日数 - レビュー営業日数) * 負荷率
+            effort = max(0.0, (raw_days - review_biz_days) * workload_factor)
+            # 四捨五入して1桁
+            db_subtask.actual_effort_days = Decimal(str(int(effort * 10 + 0.5) / 10.0))
 
 def refresh_subtasks_actual_end_date(db: Session, project_ids: Optional[List[int]] = None):
     """
