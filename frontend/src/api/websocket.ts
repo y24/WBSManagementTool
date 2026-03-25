@@ -14,6 +14,7 @@ export const useWebSocket = (onMessage: (msg: WSMessage) => void) => {
   const reconnectTimeoutRef = useRef<number | null>(null);
   const onMessageRef = useRef(onMessage);
   const isMountedRef = useRef(true);
+  const lastActiveTimestampRef = useRef(Date.now());
 
   // Keep callback ref updated
   useEffect(() => {
@@ -39,6 +40,10 @@ export const useWebSocket = (onMessage: (msg: WSMessage) => void) => {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
+      
+      // Notify the component that the connection is (re)opened
+      // This allows the component to refresh data to ensure consistency.
+      onMessageRef.current({ type: 'connected' });
     };
 
     socket.onmessage = (event) => {
@@ -50,9 +55,9 @@ export const useWebSocket = (onMessage: (msg: WSMessage) => void) => {
       }
     };
 
-    socket.onclose = () => {
+    socket.onclose = (event) => {
       if (!isMountedRef.current) return;
-      console.log('WebSocket Disconnected, attempting to reconnect...');
+      console.log(`WebSocket Disconnected (code: ${event.code}), attempting to reconnect...`);
       // Reconnect after 3 seconds
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = window.setTimeout(() => {
@@ -77,9 +82,36 @@ export const useWebSocket = (onMessage: (msg: WSMessage) => void) => {
       connect();
     }, 50);
 
+    // Reconnect/Refresh on visibility change (e.g., wake from sleep)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        const timeSinceLastActive = now - lastActiveTimestampRef.current;
+        
+        // If the socket is not open, or if we've been away for a while (e.g. 1 minute)
+        // trigger a connection check.
+        if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+          console.log('Tab became visible and WebSocket is not open. Reconnecting...');
+          connect();
+        } else if (timeSinceLastActive > 60000) {
+          // If we've been away for more than a minute, even if socket seems open,
+          // it might be a ghost connection. 
+          console.log('Tab became visible after long period. Refreshing connection...');
+          connect();
+        }
+        
+        lastActiveTimestampRef.current = now;
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
+
     return () => {
       isMountedRef.current = false;
       clearTimeout(connectionTimer);
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
       
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);

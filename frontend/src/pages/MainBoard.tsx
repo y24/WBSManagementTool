@@ -42,8 +42,8 @@ export default function MainBoard() {
 
   // Real-time synchronization
   useWebSocket((msg) => {
-    if (msg.type === 'update') {
-      console.log('MainBoard received update signal, refreshing...');
+    if (msg.type === 'update' || msg.type === 'connected') {
+      console.log(`MainBoard received ${msg.type} signal, refreshing...`);
       fetchData();
     }
   });

@@ -62,8 +62,8 @@ export default function MasterSettings() {
 
   // Real-time synchronization
   useWebSocket((msg) => {
-    if (msg.type === 'update') {
-      console.log('MasterSettings received update signal, refreshing...');
+    if (msg.type === 'update' || msg.type === 'connected') {
+      console.log(`MasterSettings received ${msg.type} signal, refreshing...`);
       fetchData();
     }
   });
