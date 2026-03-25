@@ -106,7 +106,7 @@ class SubtaskBase(BaseModel):
 class SubtaskCreate(SubtaskBase):
     task_id: int
     subtask_type_id: Optional[int] = None
-    status_id: int
+    status_id: int = 1
     assignee_id: Optional[int] = None
 
 class SubtaskUpdate(BaseModel):
@@ -155,7 +155,7 @@ class TaskBase(BaseModel):
     is_auto_planned_date: bool = True
     is_auto_actual_date: bool = True
     sort_order: int = 0
-    status_id: Optional[int] = None
+    status_id: Optional[int] = 1
     assignee_id: Optional[int] = None
 
 class TaskCreate(TaskBase):
@@ -206,7 +206,7 @@ class ProjectBase(BaseModel):
     is_auto_planned_date: bool = True
     is_auto_actual_date: bool = True
     sort_order: int = 0
-    status_id: Optional[int] = None
+    status_id: Optional[int] = 1
     assignee_id: Optional[int] = None
 
 class ProjectCreate(ProjectBase):

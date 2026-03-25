@@ -553,7 +553,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     try {
       setSaving(true);
       const typeId = null;
-      const statusId = initialData.statuses[0]?.id || 1;
+      const newStatus = initialData.statuses.find(s => s.status_name === 'New') || initialData.statuses[0];
+      const statusId = newStatus?.id || 1;
       const res = await wbsOps.createSubtask(taskId, typeId, statusId);
       if (res.data && res.data.id) {
         setLastAddedId(`s-${res.data.id}`);
