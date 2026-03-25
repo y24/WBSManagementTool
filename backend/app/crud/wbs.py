@@ -14,9 +14,8 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
     
     query = db.query(models.Project)
     
-    # Base soft-delete filter
-    if not include_removed:
-        query = query.filter(models.Project.is_deleted == False)
+    # Base soft-delete filter (ALWAYS exclude soft-deleted items from WBS)
+    query = query.filter(models.Project.is_deleted == False)
     
     # Project status level filters
     exclude_project_status_ids = []
@@ -34,7 +33,7 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
     if project_ids:
         query = query.filter(models.Project.id.in_(project_ids))
     
-    # Task/Subtask level filters using status
+    # Task/Subtask level filters (ALWAYS exclude soft-deleted items)
     task_filter = models.Task.is_deleted == False
     subtask_filter = models.Subtask.is_deleted == False
     
