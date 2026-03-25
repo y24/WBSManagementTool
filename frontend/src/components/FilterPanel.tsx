@@ -184,17 +184,17 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           遅延タスク
         </button>
 
+        <button
+          onClick={onClear}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-lg text-xs font-bold transition-all shadow-sm shrink-0 border border-slate-200 dark:border-slate-700 ${!isFiltered ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+          title="フィルターをリセット"
+        >
+          <RotateCcw size={14} />
+          リセット
+        </button>
+
         {/* Done Projects Toggle は設定ポップアップへ移動 */}
       </div>
-
-      <button
-        onClick={onClear}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-lg text-xs font-bold transition-all shadow-sm shrink-0 border border-slate-200 dark:border-slate-700 ${!isFiltered ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-        title="フィルターをリセット"
-      >
-        <RotateCcw size={14} />
-        リセット
-      </button>
 
       <button
         onClick={() => setDisplayOptions(prev => ({ ...prev, hidePlanningColumns: !prev.hidePlanningColumns }))}
