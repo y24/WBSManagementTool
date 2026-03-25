@@ -344,8 +344,8 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.B
             max_len = max(
                 df[col].astype(str).map(len).max(),
                 len(col)
-            ) + 2
-            worksheet.column_dimensions[chr(65 + idx)].width = min(max_len, 50)
+            ) + 4
+            worksheet.column_dimensions[chr(65 + idx)].width = min(max_len, 52)
 
     output.seek(0)
     return output
