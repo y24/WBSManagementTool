@@ -276,3 +276,66 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
             next_subtask_sort += 1
 
     return True
+
+def export_wbs_to_excel(projects: List[schemas.ProjectWBS]) -> io.BytesIO:
+    """
+    Flatten hierarchical WBS data and generate an Excel file in the import format.
+    """
+    rows = []
+    
+    # Use user-requested column names as headers
+    # 階層、名称、サブタスク種別、サブタスク詳細、チケットID、ステータス、担当者、レビュー日数、
+    # 開始(計画)、終了(計画)、予定工数、開始(実績)、終了(実績)、実績工数、進捗、工数比率、メモ
+    headers = [
+        "階層", "名称", "サブタスク種別", "サブタスク詳細", "チケットID", "ステータス", "担当者", "レビュー日数",
+        "開始(計画)", "終了(計画)", "予定工数", "開始(実績)", "終了(実績)", "実績工数", "進捗", "工数比率", "メモ"
+    ]
+
+    for p in projects:
+        # Level 0: Project
+        rows.append([
+            0, p.project_name, "", "", p.ticket_id, 
+            getattr(p, 'status_name', ""), getattr(p, 'assignee_name', ""), "",
+            p.planned_start_date, p.planned_end_date, p.planned_effort_total,
+            p.actual_start_date, p.actual_end_date, p.actual_effort_total,
+            p.progress_percent, "", p.memo
+        ])
+        
+        for t in p.tasks:
+            # Level 1: Task
+            rows.append([
+                1, t.task_name, "", "", t.ticket_id,
+                getattr(t, 'status_name', ""), getattr(t, 'assignee_name', ""), "",
+                t.planned_start_date, t.planned_end_date, t.planned_effort_total,
+                t.actual_start_date, t.actual_end_date, t.actual_effort_total,
+                t.progress_percent, "", t.memo
+            ])
+            
+            for s in t.subtasks:
+                # Level 2: Subtask
+                rows.append([
+                    2, "", getattr(s, 'subtask_type_name', ""), s.subtask_detail, s.ticket_id,
+                    getattr(s, 'status_name', ""), getattr(s, 'assignee_name', ""), s.review_days,
+                    s.planned_start_date, s.planned_end_date, s.planned_effort_days,
+                    s.actual_start_date, s.actual_end_date, s.actual_effort_days,
+                    s.progress_percent, s.workload_percent, s.memo
+                ])
+
+    df = pd.DataFrame(rows, columns=headers)
+    
+    # Reset index to avoid issues with pandas potentially adding an index column
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='WBS')
+        
+        # Optional: Auto-adjust column width (requires openpyxl)
+        worksheet = writer.sheets['WBS']
+        for idx, col in enumerate(df.columns):
+            max_len = max(
+                df[col].astype(str).map(len).max(),
+                len(col)
+            ) + 2
+            worksheet.column_dimensions[chr(65 + idx)].width = min(max_len, 50)
+
+    output.seek(0)
+    return output

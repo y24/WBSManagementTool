@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback, UIEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, UIEvent, useMemo } from 'react';
 import { wbsOps } from '../api/wbsOperations';
-import { apiClient } from '../api/client';
+import { apiClient, getInitialData } from '../api/client';
 import { WBSResponse } from '../types/wbs';
 import { InitialData } from '../types';
 import FilterPanel, { DisplayOptions, FilterState } from '../components/FilterPanel';
@@ -23,6 +23,8 @@ import {
   persistTreeWidth,
 } from './mainboard/storage';
 import { useWebSocket } from '../api/websocket';
+import ConfirmModal from '../components/WBSTree/ConfirmModal';
+import { Download } from 'lucide-react';
 
 export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
@@ -36,6 +38,7 @@ export default function MainBoard() {
 
   const [treeWidth, setTreeWidth] = useState(getInitialTreeWidth);
   const [isResizing, setIsResizing] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const treeRef = useRef<HTMLDivElement>(null);
   const ganttRef = useRef<HTMLDivElement>(null);
@@ -48,8 +51,14 @@ export default function MainBoard() {
     }
   });
 
+  const isFetchingRef = useRef(false);
+
   const fetchData = useCallback(
     async (isInitial = false) => {
+      // Prevent concurrent WBS fetches
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
+
       try {
         if (isInitial || !data) setLoading(true);
 
@@ -60,13 +69,15 @@ export default function MainBoard() {
         );
         setData(wbsRes.data);
 
-        if (isInitial || !initialData) {
-          const initRes = await apiClient.get<InitialData>('/initial-data');
+        // Fetch initial-data using the shared/cached getter
+        if (!initialData) {
+          const initRes = await getInitialData();
           setInitialData(initRes.data);
         }
       } catch (error) {
         console.error(error);
       } finally {
+        isFetchingRef.current = false;
         setLoading(false);
       }
     },
@@ -182,6 +193,48 @@ export default function MainBoard() {
     persistGanttScrollLeft(scrollLeft);
   };
 
+  const counts = useMemo(() => {
+    let projectCount = 0;
+    let taskCount = 0;
+    let subtaskCount = 0;
+
+    filteredProjects.forEach(p => {
+      projectCount++;
+      p.tasks.forEach(t => {
+        taskCount++;
+        subtaskCount += t.subtasks.length;
+      });
+    });
+
+    return {
+      projectCount,
+      taskCount,
+      subtaskCount,
+      total: projectCount + taskCount + subtaskCount
+    };
+  }, [filteredProjects]);
+
+  const handleExport = async () => {
+    setIsExportModalOpen(false);
+    try {
+      const response = await wbsOps.exportWBS(filteredProjects);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      link.setAttribute('download', `wbs_export_${today}.xlsx`);
+      
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Excelの出力に失敗しました。');
+    }
+  };
+
   if (loading && !data) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -206,6 +259,7 @@ export default function MainBoard() {
         projects={data?.projects || []}
         initialData={initialData}
         onClear={() => setFilters(createDefaultFilters())}
+        onExport={() => setIsExportModalOpen(true)}
       />
 
       <MainBoardContent
@@ -224,6 +278,27 @@ export default function MainBoard() {
         dynamicGanttRange={dynamicGanttRange}
         onTreeScroll={handleTreeScroll}
         onGanttScroll={handleGanttScroll}
+      />
+
+      <ConfirmModal
+        isOpen={isExportModalOpen}
+        totalCount={counts.total}
+        title="Excelダウンロード"
+        description="表示されている内容をExcelファイルとして書き出します。"
+        confirmText="ダウンロード"
+        onConfirm={handleExport}
+        onCancel={() => setIsExportModalOpen(false)}
+        variant="primary"
+        icon={<Download size={20} />}
+        showWarningText={false}
+        showBodyIcon={true}
+        descriptionPosition="afterButtons"
+        footerPosition="beforeButtons"
+        footer={(
+          <div className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-4">
+            ダウンロード対象の内訳: プロジェクト:{counts.projectCount}, タスク:{counts.taskCount}, サブタスク:{counts.subtaskCount}
+          </div>
+        )}
       />
     </div>
   );

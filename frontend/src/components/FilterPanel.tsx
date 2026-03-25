@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, Columns3, Columns2, ChartNoAxesGantt, Link2, Share2 } from 'lucide-react';
+import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, Columns3, Columns2, ChartNoAxesGantt, Link2, Share2, Download } from 'lucide-react';
 import MultiSelect from './MultiSelect';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
@@ -31,6 +31,7 @@ interface FilterPanelProps {
   projects: Project[];
   initialData: InitialData | null;
   onClear: () => void;
+  onExport: () => void;
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -40,7 +41,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   setDisplayOptions,
   projects,
   initialData,
-  onClear
+  onClear,
+  onExport
 }) => {
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   const [isCopied, setIsCopied] = React.useState(false);
@@ -236,6 +238,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             Copied!
           </div>
         )}
+      </button>
+
+      <button
+        onClick={onExport}
+        className="p-2 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all shadow-sm"
+        title="Excelをダウンロード"
+      >
+        <Download size={18} />
       </button>
 
       <div className="relative" ref={settingsRef}>

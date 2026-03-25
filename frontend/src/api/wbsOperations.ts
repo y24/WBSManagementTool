@@ -79,5 +79,8 @@ export const wbsOps = {
 
   getDashboard: () => 
     apiClient.get('/dashboard'),
+
+  exportWBS: (projects: any[]) =>
+    apiClient.post('/wbs/export', projects, { responseType: 'blob' }),
 };
 

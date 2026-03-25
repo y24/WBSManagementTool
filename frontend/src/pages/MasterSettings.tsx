@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient, getInitialData } from '../api/client';
 import { InitialData } from '../types';
 import { HolidaySection } from '../components/masterSettings/HolidaySection';
 import { MemberSection } from '../components/masterSettings/MemberSection';
@@ -69,7 +69,7 @@ export default function MasterSettings() {
   });
 
   const fetchData = useCallback(() => {
-    apiClient.get<InitialData>('/initial-data')
+    getInitialData()
       .then(res => {
         setData(res.data);
         setTicketUrlTemplate(res.data.ticket_url_template || '');

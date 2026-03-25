@@ -56,6 +56,25 @@ def read_wbs(
         "projects": projects
     }
 
+@router.post("/wbs/export")
+def export_wbs(
+    projects: List[schemas.ProjectWBS],
+    db: Session = Depends(get_db)
+):
+    from ..crud import import_data
+    buffer = import_data.export_wbs_to_excel(projects)
+    
+    # Generate filename with current date
+    from datetime import date
+    today = date.today().strftime("%Y%m%d")
+    filename = f"wbs_export_{today}.xlsx"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 # --- Projects ---
 @router.post("/projects", response_model=schemas.Project)
 def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)):
