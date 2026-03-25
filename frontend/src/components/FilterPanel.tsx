@@ -97,7 +97,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   return (
     <div className="bg-slate-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-3 flex items-center gap-4 shrink-0 shadow-sm z-40 transition-colors">
-      <div className="flex items-center gap-2 text-blue-600 mr-2">
+      <div className="flex items-center gap-2 text-blue-600">
         <Filter size={18} className="stroke-[2.5px]" />
       </div>
 
