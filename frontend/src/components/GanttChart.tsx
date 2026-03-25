@@ -158,7 +158,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
         )}
         {isSubtask && showAssigneeName && item.assignee_id && (aStart !== undefined || pStart !== undefined) && (
           <div
-            className="absolute text-[10px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
+            className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
             style={{
               left: `${(aStart !== undefined ? aStart : pStart!) - 4}px`,
               top: '13px',
