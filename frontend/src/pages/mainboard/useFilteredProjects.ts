@@ -26,6 +26,7 @@ export function useFilteredProjects({
     const todayStr = data.gantt_range?.today || new Date().toISOString().split('T')[0];
     const doneStatusId = initialData?.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null;
     const removedStatusId = initialData?.statuses.find((status) => status.status_name === 'Removed')?.id ?? 7;
+    const newStatusId = initialData?.statuses.find((status) => status.status_name === 'New')?.id;
 
     const hasConditions =
       filters.statusIds.length > 0 ||
@@ -75,8 +76,11 @@ export function useFilteredProjects({
 
               if (filters.onlyDelayed) {
                 const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
-                const isDelayed = !isDone && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
-                if (!isDelayed) return false;
+                const isNew = newStatusId !== undefined && subtask.status_id === newStatusId;
+                const isStartDelayed = isNew && !!subtask.planned_start_date && subtask.planned_start_date < todayStr;
+                const isEndOverdue = !isDone && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
+                
+                if (!isStartDelayed && !isEndOverdue) return false;
               }
 
               if (filters.searchTerm) {
@@ -108,8 +112,11 @@ export function useFilteredProjects({
 
               if (filters.onlyDelayed) {
                 const isDone = doneStatusId !== null && task.status_id === doneStatusId;
-                const isDelayed = !isDone && !!task.planned_end_date && task.planned_end_date < todayStr;
-                if (!isDelayed) return false;
+                const isNew = newStatusId !== undefined && task.status_id === newStatusId;
+                const isStartDelayed = isNew && !!task.planned_start_date && task.planned_start_date < todayStr;
+                const isEndOverdue = !isDone && !!task.planned_end_date && task.planned_end_date < todayStr;
+
+                if (!isStartDelayed && !isEndOverdue) return false;
               }
 
               if (filters.searchTerm) {
