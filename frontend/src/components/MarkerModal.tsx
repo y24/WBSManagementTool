@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Check, Trash2, Tag, MessageSquare, Palette } from 'lucide-react';
+import { X, Check, Trash2, Tag, MessageSquare, Palette, AlertTriangle } from 'lucide-react';
 import { Marker } from '../types';
 
 interface MarkerModalProps {
@@ -33,26 +33,69 @@ const MarkerModal: React.FC<MarkerModalProps> = ({
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
   const [color, setColor] = useState(COLORS[0].value);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // 初期値を保持
+  const initialValues = useRef({
+    name: '',
+    note: '',
+    color: '',
+  });
 
   useEffect(() => {
-    if (existingMarker) {
-      setName(existingMarker.name);
-      setNote(existingMarker.note || '');
-      setColor(existingMarker.color);
-    } else {
-      setName('');
-      setNote('');
-      setColor(COLORS[0].value);
+    if (isOpen) {
+      if (existingMarker) {
+        setName(existingMarker.name);
+        setNote(existingMarker.note || '');
+        setColor(existingMarker.color);
+        initialValues.current = {
+          name: existingMarker.name,
+          note: existingMarker.note || '',
+          color: existingMarker.color,
+        };
+      } else {
+        setName('');
+        setNote('');
+        setColor(COLORS[0].value);
+        initialValues.current = {
+          name: '',
+          note: '',
+          color: COLORS[0].value,
+        };
+      }
+      setShowConfirm(false);
     }
   }, [existingMarker, isOpen]);
 
+  const isChanged = () => {
+    return (
+      name !== initialValues.current.name ||
+      note !== initialValues.current.note ||
+      color !== initialValues.current.color
+    );
+  };
+
+  const handleCloseRequest = () => {
+    if (isChanged()) {
+      setShowConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (showConfirm) {
+          setShowConfirm(false);
+        } else {
+          handleCloseRequest();
+        }
+      }
     };
     if (isOpen) window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, showConfirm, name, note, color, onClose]);
 
   if (!isOpen) return null;
 
@@ -73,7 +116,7 @@ const MarkerModal: React.FC<MarkerModalProps> = ({
             マーカーの{existingMarker ? '編集' : '作成'}
           </h3>
           <button
-            onClick={onClose}
+            onClick={handleCloseRequest}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full"
           >
             <X size={20} />
@@ -160,7 +203,7 @@ const MarkerModal: React.FC<MarkerModalProps> = ({
           </div>
           <div className="flex gap-3">
             <button
-              onClick={onClose}
+              onClick={handleCloseRequest}
               className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:border-gray-200 dark:hover:border-slate-700 border border-transparent rounded-lg transition-all"
             >
               キャンセル
@@ -176,8 +219,42 @@ const MarkerModal: React.FC<MarkerModalProps> = ({
           </div>
         </div>
       </div>
+      {showConfirm && <SmallConfirmModal onConfirm={onClose} onCancel={() => setShowConfirm(false)} />}
     </div>,
     document.body
+  );
+};
+
+// 確認用の小さなモーダルコンポーネント（内部使用）
+const SmallConfirmModal = ({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) => {
+  return (
+    <div className="fixed inset-0 z-[13000] flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200 p-6">
+        <div className="flex items-center gap-3 text-amber-500 mb-4">
+          <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-full">
+            <AlertTriangle size={24} />
+          </div>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100">変更を破棄しますか？</h3>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-slate-400 mb-6 leading-relaxed">
+          入力された内容が保存されていません。変更を破棄して編集を終了してもよろしいですか？
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl transition-all"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-all active:scale-95"
+          >
+            破棄して閉じる
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
