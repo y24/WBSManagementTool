@@ -327,7 +327,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
           {/* プレビュー線 (z-25) */}
           {hoveredDate && (
             <div
-              className="absolute top-0 bottom-0 z-25 pointer-events-none border-l-2 border-dashed border-gray-400 opacity-50"
+              className="absolute top-0 bottom-0 z-25 pointer-events-none border-l border-dashed border-gray-400 opacity-50"
               style={{ left: `${differenceInCalendarDays(parseISO(hoveredDate), parseISO(range.start_date!)) * CELL_WIDTH}px` }}
             />
           )}

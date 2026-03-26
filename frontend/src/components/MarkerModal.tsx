@@ -13,13 +13,13 @@ interface MarkerModalProps {
 }
 
 const COLORS = [
-  { name: 'Red', value: '#ef4444' },
-  { name: 'Blue', value: '#3b82f6' },
-  { name: 'Green', value: '#22c55e' },
-  { name: 'Amber', value: '#f59e0b' },
-  { name: 'Pink', value: '#ec4899' },
-  { name: 'Purple', value: '#a855f7' },
-  { name: 'Slate', value: '#64748b' },
+  { name: 'Red', value: '#be123c' },
+  { name: 'Blue', value: '#1d4ed8' },
+  { name: 'Green', value: '#15803d' },
+  { name: 'Amber', value: '#b45309' },
+  { name: 'Pink', value: '#be185d' },
+  { name: 'Purple', value: '#7e22ce' },
+  { name: 'Slate', value: '#334155' },
 ];
 
 const MarkerModal: React.FC<MarkerModalProps> = ({
@@ -112,7 +112,7 @@ const MarkerModal: React.FC<MarkerModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50">
           <h3 className="font-bold text-gray-800 dark:text-slate-100 flex items-center gap-2">
-            <Tag size={18} className="text-rose-500" />
+            <Tag size={18} className="text-gray-500" />
             マーカーの{existingMarker ? '編集' : '作成'}
           </h3>
           <button
@@ -124,8 +124,8 @@ const MarkerModal: React.FC<MarkerModalProps> = ({
         </div>
 
         {/* Date Label */}
-        <div className="px-6 py-3 bg-rose-50 dark:bg-rose-900/10 border-b dark:border-slate-800">
-          <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
+        <div className="px-6 py-3 bg-gray-100 dark:bg-slate-800 border-b dark:border-slate-700">
+          <p className="text-sm font-bold text-gray-700 dark:text-slate-200">
             {dateStr}
           </p>
         </div>
