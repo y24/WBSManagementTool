@@ -28,6 +28,19 @@ def create_or_update_marker(db: Session, marker: schemas.MarkerCreate):
     db.refresh(db_marker)
     return db_marker
 
+def update_marker(db: Session, marker_id: int, marker_in: schemas.MarkerUpdate):
+    db_marker = db.query(models.Marker).filter(models.Marker.id == marker_id).first()
+    if not db_marker:
+        return None
+    
+    update_data = marker_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_marker, field, value)
+    
+    db.commit()
+    db.refresh(db_marker)
+    return db_marker
+
 def delete_marker(db: Session, marker_id: int):
     db_marker = db.query(models.Marker).filter(models.Marker.id == marker_id).first()
     if db_marker:

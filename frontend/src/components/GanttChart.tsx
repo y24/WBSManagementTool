@@ -115,6 +115,9 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
               setIsMarkerModalOpen(true);
             }}
             setHoveredDate={setHoveredDate}
+            handleMouseDown={handleMouseDown}
+            dragState={dragState}
+            tempDates={tempDates}
           />
 
           <GanttBackground
@@ -128,6 +131,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
             showProjectRange={showProjectRange}
             projects={projects}
             getStatusColor={getStatusColor}
+            dragState={dragState}
+            tempDates={tempDates}
           />
 
           {/* 要素行の描画 (z-10) */}

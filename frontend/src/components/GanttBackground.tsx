@@ -14,6 +14,8 @@ interface GanttBackgroundProps {
   showProjectRange: boolean;
   projects: Project[];
   getStatusColor: (statusId: number | null | undefined) => string;
+  dragState: any;
+  tempDates: Record<number, any>;
 }
 
 const GanttBackground: React.FC<GanttBackgroundProps> = ({
@@ -27,6 +29,8 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
   showProjectRange,
   projects,
   getStatusColor,
+  dragState,
+  tempDates,
 }) => {
   const isHoliday = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -98,12 +102,16 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
       {/* マーカー垂直線 (z-25) */}
       {showMarkers && initialData?.markers?.map(m => {
         if (!range.start_date) return null;
-        const mDate = parseISO(m.marker_date);
+        const temp = tempDates[m.id];
+        const isDragging = dragState?.itemId === m.id && dragState?.itemType === 'marker';
+        const displayDate = (isDragging && temp?.marker_date) ? temp.marker_date : m.marker_date;
+        
+        const mDate = parseISO(displayDate);
         const left = differenceInCalendarDays(mDate, parseISO(range.start_date)) * cellWidth;
         return (
           <div
             key={`marker-line-${m.id}`}
-            className="absolute top-0 bottom-0 z-25 pointer-events-none border-l-2"
+            className={`absolute top-0 bottom-0 z-25 pointer-events-none border-l-2 ${isDragging ? 'opacity-50' : ''}`}
             style={{ left: `${left}px`, borderLeftColor: m.color }}
           />
         );

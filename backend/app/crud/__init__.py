@@ -77,6 +77,7 @@ from .shared_filter import (
 from .marker import (
     get_markers,
     create_or_update_marker,
+    update_marker,
     delete_marker
 )
 

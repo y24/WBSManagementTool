@@ -360,6 +360,14 @@ def create_or_update_marker(marker: schemas.MarkerCreate, db: Session = Depends(
     manager.broadcast_sync({"type": "update", "entity": "marker"})
     return db_marker
 
+@router.patch("/markers/{marker_id}", response_model=schemas.Marker)
+def update_marker(marker_id: int, marker: schemas.MarkerUpdate, db: Session = Depends(get_db)):
+    db_marker = crud.update_marker(db, marker_id, marker)
+    if not db_marker:
+        raise HTTPException(status_code=404, detail="Marker not found")
+    manager.broadcast_sync({"type": "update", "entity": "marker"})
+    return db_marker
+
 @router.delete("/markers/{marker_id}", response_model=schemas.Marker)
 def delete_marker(marker_id: int, db: Session = Depends(get_db)):
     db_marker = crud.delete_marker(db, marker_id)
