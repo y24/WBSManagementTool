@@ -931,3 +931,88 @@ code {
   background: #cbd5e1;
   cursor: not-allowed;
 }
+
+/* Gantt Chart Drag-and-Drop Styles */
+.gantt-bar-draggable {
+  cursor: move !important;
+}
+
+.gantt-resize-handle {
+  position: absolute;
+  width: 8px;
+  top: 0;
+  bottom: 0;
+  z-index: 20;
+  background: transparent;
+  transition: background-color 0.15s;
+}
+
+.gantt-resize-handle:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  cursor: ew-resize !important;
+}
+
+.gantt-resize-forbidden:hover {
+  cursor: not-allowed !important;
+}
+
+.dark .gantt-resize-forbidden:hover {
+  cursor: not-allowed !important;
+}
+
+.dark .gantt-resize-handle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.gantt-resize-handle-left {
+  left: 0;
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
+}
+
+.gantt-resize-handle-right {
+  right: 0;
+  border-top-right-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+.gantt-review-handle {
+  position: absolute;
+  width: 10px;
+  top: 0;
+  bottom: 0;
+  z-index: 25;
+  cursor: ew-resize !important;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s;
+}
+
+.gantt-review-handle:hover {
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
+.dark .gantt-review-handle:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* バーとバーの境界線（レビュー開始位置）を視覚的にガイド */
+.gantt-review-handle:hover::after {
+  content: '';
+  width: 2px;
+  height: 60%;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 1px;
+}
+
+.gantt-bar-dragging {
+  opacity: 0.6 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  z-index: 30 !important;
+}
+
+.user-select-none {
+  user-select: none !important;
+}

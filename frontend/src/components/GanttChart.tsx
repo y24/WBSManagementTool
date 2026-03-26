@@ -1,9 +1,9 @@
-import { useMemo, forwardRef, useState, useCallback } from 'react';
-import { format, differenceInCalendarDays, addDays, getDay, isToday, parseISO } from 'date-fns';
+import { useMemo, forwardRef, useState, useCallback, useEffect, useRef } from 'react';
+import { format, differenceInCalendarDays, addDays, getDay, isToday, parseISO, isValid } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
 import { Project, Task, Subtask, GanttRange } from '../types/wbs';
 import { InitialData, Marker } from '../types';
-import { getWarning, subtractBusinessDays, calculateReviewCalendarDays } from './WBSTree/utils';
+import { getWarning, subtractBusinessDays, calculateReviewCalendarDays, isBusinessDay, addBusinessDays, getBusinessDaysCount } from './WBSTree/utils';
 import MarkerModal from './MarkerModal';
 import { apiClient } from '../api/client';
 
@@ -21,6 +21,24 @@ interface GanttChartProps {
   isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
   onRefresh?: () => void;
+}
+
+type DragMode = 'move' | 'resize-left' | 'resize-right' | 'resize-review' | 'resize-planned-review';
+type ItemType = 'project' | 'task' | 'subtask';
+type BarType = 'planned' | 'actual';
+
+interface DragState {
+  itemId: number;
+  itemType: ItemType;
+  barType: BarType;
+  mode: DragMode;
+  startX: number;
+  initialDates: {
+    start?: string;
+    end?: string;
+    reviewStart?: string;
+    reviewDays?: number;
+  };
 }
 
 const CELL_WIDTH = 24; // 1日あたりのピクセル幅
@@ -43,6 +61,11 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isMarkerModalOpen, setIsMarkerModalOpen] = useState(false);
+
+  // Drag state
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const [tempDates, setTempDates] = useState<Record<number, any>>({});
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   // 休日判定ロジック
   const isHoliday = (date: Date) => {
@@ -102,47 +125,227 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     return color;
   };
 
-  const renderBar = (item: any, isSubtask = false) => {
+  const handleMouseDown = (
+    e: React.MouseEvent,
+    itemId: number,
+    itemType: ItemType,
+    barType: BarType,
+    mode: DragMode,
+    initialDates: { start?: string; end?: string; reviewStart?: string; reviewDays?: number }
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragState({
+      itemId,
+      itemType,
+      barType,
+      mode,
+      startX: e.clientX,
+      initialDates
+    });
+    document.body.classList.add('user-select-none');
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!dragState || !range.start_date || !initialData) return;
+
+    const deltaX = e.clientX - dragState.startX;
+    const deltaDays = Math.round(deltaX / CELL_WIDTH);
+
+    if (deltaDays === 0) {
+      setTempDates(prev => ({ ...prev, [dragState.itemId]: null }));
+      return;
+    }
+
+    const holidays = initialData.holidays.map(h => h.holiday_date);
+    const { start, end, reviewStart } = dragState.initialDates;
+    const update: any = { barType: dragState.barType };
+
+    if (dragState.mode === 'move') {
+      if (start && end) {
+        const s = parseISO(start);
+        const eDate = parseISO(end);
+        const businessDays = getBusinessDaysCount(s, eDate, holidays);
+        const movedStart = addDays(s, deltaDays);
+        const movedEnd = addBusinessDays(movedStart, businessDays, holidays);
+
+        if (dragState.barType === 'planned') {
+          update.planned_start_date = format(movedStart, 'yyyy-MM-dd');
+          update.planned_end_date = format(movedEnd, 'yyyy-MM-dd');
+        } else {
+          update.actual_start_date = format(movedStart, 'yyyy-MM-dd');
+          update.actual_end_date = format(movedEnd, 'yyyy-MM-dd');
+          if (reviewStart) {
+            const rs = parseISO(reviewStart);
+            update.review_start_date = format(addDays(rs, deltaDays), 'yyyy-MM-dd');
+          }
+        }
+      }
+    } else if (dragState.mode === 'resize-left') {
+      if (start) {
+        const s = parseISO(start);
+        const updated = addDays(s, deltaDays);
+        if (end && updated > parseISO(end)) return;
+        if (dragState.barType === 'planned') {
+          update.planned_start_date = format(updated, 'yyyy-MM-dd');
+        } else {
+          update.actual_start_date = format(updated, 'yyyy-MM-dd');
+        }
+      }
+    } else if (dragState.mode === 'resize-right') {
+      if (end) {
+        const eDate = parseISO(end);
+        const updated = addDays(eDate, deltaDays);
+        if (start && updated < parseISO(start)) return;
+        if (dragState.barType === 'planned') {
+          update.planned_end_date = format(updated, 'yyyy-MM-dd');
+        } else {
+          update.actual_end_date = format(updated, 'yyyy-MM-dd');
+          if (reviewStart) {
+            const rs = parseISO(reviewStart);
+            update.review_start_date = format(addDays(rs, deltaDays), 'yyyy-MM-dd');
+          }
+        }
+      }
+    } else if (dragState.mode === 'resize-review') {
+      if (reviewStart) {
+        const rs = parseISO(reviewStart);
+        const updated = addDays(rs, deltaDays);
+        if (start && updated < parseISO(start)) return;
+        if (end && updated > parseISO(end)) return;
+        update.review_start_date = format(updated, 'yyyy-MM-dd');
+      }
+    } else if (dragState.mode === 'resize-planned-review') {
+      if (end) {
+        const pEnd = parseISO(end);
+        const pStart = parseISO(start!);
+        const calendarDays = calculateReviewCalendarDays(pEnd, dragState.initialDates.reviewDays || 0, holidays);
+        const initialRStart = addDays(pEnd, -(calendarDays - 1));
+        const movedRStart = addDays(initialRStart, deltaDays);
+        let effectiveRStart = movedRStart;
+        if (effectiveRStart < pStart) effectiveRStart = pStart;
+        if (effectiveRStart > pEnd) effectiveRStart = pEnd;
+        update.review_days = getBusinessDaysCount(effectiveRStart, pEnd, holidays);
+      }
+    }
+
+    setTempDates(prev => ({
+      ...prev,
+      [dragState.itemId]: {
+        ...prev[dragState.itemId],
+        ...update
+      }
+    }));
+  }, [dragState, range.start_date, initialData]);
+
+  const handleMouseUp = useCallback(async () => {
+    if (!dragState) return;
+
+    const finalTemp = tempDates[dragState.itemId];
+    setDragState(null);
+    setTempDates({});
+    document.body.classList.remove('user-select-none');
+
+    if (!finalTemp) return;
+
+    try {
+      const endpoint = `/${dragState.itemType}s/${dragState.itemId}`;
+      const payload: any = {};
+
+      if (dragState.barType === 'planned') {
+        if (finalTemp.planned_start_date) payload.planned_start_date = finalTemp.planned_start_date;
+        if (finalTemp.planned_end_date) payload.planned_end_date = finalTemp.planned_end_date;
+      } else {
+        if (finalTemp.actual_start_date) payload.actual_start_date = finalTemp.actual_start_date;
+        if (finalTemp.actual_end_date) payload.actual_end_date = finalTemp.actual_end_date;
+      }
+
+      if (finalTemp.review_start_date !== undefined) {
+        payload.review_start_date = finalTemp.review_start_date;
+      }
+      if (finalTemp.review_days !== undefined) {
+        payload.review_days = finalTemp.review_days;
+      }
+
+      await apiClient.patch(endpoint, payload);
+      onRefresh?.();
+    } catch (err) {
+      console.error('Failed to update period:', err);
+      alert('期間の更新に失敗しました。');
+    }
+  }, [dragState, tempDates, onRefresh]);
+
+  useEffect(() => {
+    if (dragState) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [dragState, handleMouseMove, handleMouseUp]);
+
+  const renderBar = (item: any, itemType: ItemType) => {
     if (!range.start_date || !days.length) return null;
     const baseDate = parseISO(range.start_date);
+    const isSubtask = itemType === 'subtask';
+
+    // ドラッグ中の反映があればそれを使う
+    const temp = tempDates[item.id];
+    const plannedStart = temp?.planned_start_date || item.planned_start_date;
+    const plannedEnd = temp?.planned_end_date || item.planned_end_date;
+    const actualStart = temp?.actual_start_date || item.actual_start_date;
+    const actualEnd = temp?.actual_end_date || item.actual_end_date;
+    const reviewStart = temp?.review_start_date || item.review_start_date;
+    const reviewDays = temp?.review_days !== undefined ? temp.review_days : item.review_days;
 
     // 計画バーの計算
     let pStart, pWidth;
-    if (item.planned_start_date && item.planned_end_date) {
-      const pS = parseISO(item.planned_start_date);
-      const pE = parseISO(item.planned_end_date);
-      pStart = differenceInCalendarDays(pS, baseDate) * CELL_WIDTH;
-      pWidth = (differenceInCalendarDays(pE, pS) + 1) * CELL_WIDTH;
+    if (plannedStart && plannedEnd) {
+      const pS = parseISO(plannedStart);
+      const pE = parseISO(plannedEnd);
+      if (isValid(pS) && isValid(pE)) {
+        pStart = differenceInCalendarDays(pS, baseDate) * CELL_WIDTH;
+        pWidth = (differenceInCalendarDays(pE, pS) + 1) * CELL_WIDTH;
+      }
     }
 
     // 実績バーの計算
     let aStart, aWidth;
     let arStart, arWidth;
-    if (item.actual_start_date) {
-      const aS = parseISO(item.actual_start_date);
-      const aE = item.actual_end_date ? parseISO(item.actual_end_date) : aS;
-      aStart = differenceInCalendarDays(aS, baseDate) * CELL_WIDTH;
-      aWidth = (differenceInCalendarDays(aE, aS) + 1) * CELL_WIDTH;
+    if (actualStart) {
+      const aS = parseISO(actualStart);
+      const aE = actualEnd ? parseISO(actualEnd) : aS;
+      if (isValid(aS) && isValid(aE)) {
+        aStart = differenceInCalendarDays(aS, baseDate) * CELL_WIDTH;
+        aWidth = (differenceInCalendarDays(aE, aS) + 1) * CELL_WIDTH;
 
-      if (isSubtask && item.review_start_date) {
-        const rS = parseISO(item.review_start_date);
-        const effectiveRS = rS < aS ? aS : rS;
-        const effectiveRE = aE < effectiveRS ? effectiveRS : aE;
-        arStart = differenceInCalendarDays(effectiveRS, baseDate) * CELL_WIDTH;
-        arWidth = (differenceInCalendarDays(effectiveRE, effectiveRS) + 1) * CELL_WIDTH;
+        if (isSubtask && reviewStart) {
+          const rS = parseISO(reviewStart);
+          if (isValid(rS)) {
+            const effectiveRS = rS < aS ? aS : rS;
+            const effectiveRE = aE < effectiveRS ? effectiveRS : aE;
+            arStart = differenceInCalendarDays(effectiveRS, baseDate) * CELL_WIDTH;
+            arWidth = (differenceInCalendarDays(effectiveRE, effectiveRS) + 1) * CELL_WIDTH;
+          }
+        }
       }
     }
 
     const typeColor = isSubtask ? getStatusColor(item.status_id) : (isDarkMode ? '#334155' : '#cbd5e1');
 
     let rStart, rWidth;
-    if (isSubtask && item.planned_start_date && item.planned_end_date && item.review_days && item.review_days > 0) {
+    if (isSubtask && plannedStart && plannedEnd && reviewDays && reviewDays > 0) {
       const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
-      const pE = parseISO(item.planned_end_date);
-      const r_days_cal = calculateReviewCalendarDays(pE, item.review_days, holidays);
+      const pE = parseISO(plannedEnd);
+      const r_days_cal = calculateReviewCalendarDays(pE, reviewDays, holidays);
       rWidth = r_days_cal * CELL_WIDTH;
 
-      const calcPWidth = (differenceInCalendarDays(pE, parseISO(item.planned_start_date)) + 1) * CELL_WIDTH;
+      const calcPWidth = (differenceInCalendarDays(pE, parseISO(plannedStart)) + 1) * CELL_WIDTH;
       if (rWidth > calcPWidth) rWidth = calcPWidth;
       rStart = pStart! + calcPWidth - rWidth;
     }
@@ -155,19 +358,53 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       aStart !== undefined && aWidth !== undefined ? aStart + aWidth : 0
     );
 
+    const isDragging = dragState?.itemId === item.id;
+    const statusName = initialData?.statuses.find(s => s.id === item.status_id)?.status_name;
+    const isFixedEnd = (
+      statusName === 'In Progress' ||
+      statusName === '進捗中' ||
+      statusName === 'In Review' ||
+      statusName === 'レビュー中'
+    ) && itemType === 'subtask';
+
+    const isAutoPlanned = (itemType === 'project' || itemType === 'task') && item.is_auto_planned_date;
+    const isAutoActual = (itemType === 'project' || itemType === 'task') && item.is_auto_actual_date;
+
     return (
       <div className="relative w-full h-full min-h-[30px] flex flex-col justify-start">
         {pStart !== undefined && pWidth !== undefined && (
           <>
             <div
-              className={`absolute top-[6px] rounded-t-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70`}
+              className={`absolute top-[6px] rounded-t-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70 ${isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''}`}
               style={{ left: `${pStart}px`, width: `${pWidth}px` }}
-            />
+              onMouseDown={(e) => {
+                if (isAutoPlanned) return;
+                handleMouseDown(e, item.id, itemType, 'planned', 'move', { start: plannedStart, end: plannedEnd, reviewDays });
+              }}
+            >
+              {/* リサイズハンドル */}
+              {!isAutoPlanned && (
+                <>
+                  <div className="gantt-resize-handle gantt-resize-handle-left" onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'planned', 'resize-left', { start: plannedStart, end: plannedEnd, reviewDays })} />
+                  <div className="gantt-resize-handle gantt-resize-handle-right" onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'planned', 'resize-right', { start: plannedStart, end: plannedEnd, reviewDays })} />
+                </>
+              )}
+            </div>
+            {/* 計画レビュー境界ハンドル */}
+            {isSubtask && rStart !== undefined && !isAutoPlanned && (
+              <div
+                className="gantt-review-handle"
+                style={{ left: `${rStart - 5}px`, top: '6px', height: '6px' }}
+                onMouseDown={(e) => {
+                  handleMouseDown(e, item.id, itemType, 'planned', 'resize-planned-review', { start: plannedStart, end: plannedEnd, reviewDays });
+                }}
+              />
+            )}
             {rStart !== undefined && rWidth !== undefined && (
               <div
-                className="absolute top-[6px] rounded-tr-sm h-1.5 bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50"
+                className="absolute top-[6px] rounded-tr-sm h-1.5 bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50 pointer-events-none"
                 style={{ left: `${rStart}px`, width: `${rWidth}px` }}
-                title={`レビュー期間: ${item.review_days}日`}
+                title={`レビュー期間: ${reviewDays}日`}
               />
             )}
           </>
@@ -175,12 +412,36 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
         {aStart !== undefined && aWidth !== undefined && (
           <>
             <div
-              className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm flex items-center justify-center overflow-hidden`}
+              className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable')} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''}`}
               style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
               title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
+              onMouseDown={(e) => {
+                if (isFixedEnd || isAutoActual) return;
+                handleMouseDown(e, item.id, itemType, 'actual', 'move', { start: actualStart, end: actualEnd, reviewStart: reviewStart });
+              }}
             >
+              {/* リサイズハンドル */}
+              {(!isAutoActual) && (
+                <div
+                  className="gantt-resize-handle gantt-resize-handle-left"
+                  onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'actual', 'resize-left', { start: actualStart, end: actualEnd, reviewStart: reviewStart })}
+                />
+              )}
+              {(!isAutoActual) && (
+                <div
+                  className={`gantt-resize-handle gantt-resize-handle-right ${isFixedEnd ? 'gantt-resize-forbidden' : ''}`}
+                  onMouseDown={(e) => {
+                    if (isFixedEnd) {
+                      e.stopPropagation();
+                      return;
+                    }
+                    handleMouseDown(e, item.id, itemType, 'actual', 'resize-right', { start: actualStart, end: actualEnd, reviewStart: reviewStart });
+                  }}
+                />
+              )}
+
               {showProgressRate && item.progress_percent !== undefined && item.progress_percent !== null && (
-                <span className="text-[11px] font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)] leading-none pointer-events-none">
+                <span className="text-[11px] font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)] leading-none pointer-events-none relative z-10">
                   {item.progress_percent}%
                 </span>
               )}
@@ -190,6 +451,21 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                 className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm bg-black/20 pointer-events-none`}
                 style={{ left: `${arStart}px`, width: `${arWidth}px` }}
                 title="レビュー中"
+              />
+            )}
+            {/* レビュー境界ハンドル */}
+            {isSubtask && actualStart && actualEnd && reviewStart && arStart !== undefined && (
+              <div
+                className="gantt-review-handle"
+                style={{
+                  left: `${arStart - 5}px`,
+                  top: isSubtask ? '12px' : '10px',
+                  height: '16px',
+                  // 開始日と重なっている時は、開始日のドラッグハンドル(z-index: 20)を優先するため、
+                  // レビューハンドルのz-indexを下げる
+                  zIndex: arStart === aStart ? 19 : 25
+                }}
+                onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'actual', 'resize-review', { start: actualStart, end: actualEnd, reviewStart: reviewStart })}
               />
             )}
           </>
@@ -298,7 +574,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                   {format(d, 'd')}
                   {/* マーカー名表示 (ヘッダー内) */}
                   {showMarkers && marker && (
-                    <div 
+                    <div
                       className="absolute top-full left-0 z-50 pointer-events-none whitespace-nowrap px-1 py-0.5 rounded text-[9px] font-bold text-white shadow-sm"
                       style={{ backgroundColor: marker.color, transform: 'translateY(2px)' }}
                     >
@@ -388,19 +664,19 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
                   {/* Project Row */}
                   <div key={`p-${project.id}`} className={`${commonRowClasses} wbs-row-project`}>
-                    {renderBar(project, false)}
+                    {renderBar(project, 'project')}
                   </div>
 
                   {expandedProjects[project.id] !== false && project.tasks.map(task => (
                     <div key={`t-wrapper-${task.id}`}>
                       {/* Task Row */}
                       <div key={`t-${task.id}`} className={`${commonRowClasses} wbs-row-task`}>
-                        {renderBar(task, false)}
+                        {renderBar(task, 'task')}
                       </div>
 
                       {expandedTasks[task.id] !== false && task.subtasks.map(subtask => (
                         <div key={`s-${subtask.id}`} className={`${commonRowClasses} wbs-row-subtask`}>
-                          {renderBar(subtask, true)}
+                          {renderBar(subtask, 'subtask')}
                         </div>
                       ))}
                     </div>
