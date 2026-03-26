@@ -194,7 +194,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                 {expandedProjects[project.id] !== false && project.tasks.map(task => (
                   <div key={`t-wrapper-${task.id}`}>
                     <div 
-                      className={`${commonRowClasses} wbs-row-task relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(task) ? 'wbs-row-empty' : ''}`}
+                      className={`${commonRowClasses} wbs-row-task relative z-10 w-full pointer-events-auto select-none`}
                       onDoubleClick={(e) => handleRowDoubleClick(e, task, 'task')}
                     >
                       <GanttBar
@@ -214,28 +214,32 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                       />
                     </div>
 
-                    {expandedTasks[task.id] !== false && task.subtasks.map(subtask => (
-                      <div 
-                        key={`s-${subtask.id}`} 
-                        className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) ? 'wbs-row-empty' : ''}`}
-                        onDoubleClick={(e) => handleRowDoubleClick(e, subtask, 'subtask')}
-                      >
-                        <GanttBar
-                          item={subtask}
-                          itemType="subtask"
-                          baseDate={baseDate}
-                          cellWidth={CELL_WIDTH}
-                          initialData={initialData}
-                          tempDates={tempDates}
-                          dragState={dragState}
-                          isDarkMode={!!isDarkMode}
-                          showProgressRate={showProgressRate}
-                          showAssigneeName={showAssigneeName}
-                          handleMouseDown={handleMouseDown}
-                          getStatusColor={getStatusColor}
-                        />
-                      </div>
-                    ))}
+                    {expandedTasks[task.id] !== false && task.subtasks.map(subtask => {
+                      const typeName = initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name;
+                      return (
+                        <div 
+                          key={`s-${subtask.id}`} 
+                          className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) ? 'wbs-row-empty' : ''}`}
+                          onDoubleClick={(e) => handleRowDoubleClick(e, subtask, 'subtask')}
+                          title={isRowEmpty(subtask) ? (typeName ? `ダブルクリックで計画を入力: ${typeName}` : 'ダブルクリックで計画を入力') : undefined}
+                        >
+                          <GanttBar
+                            item={subtask}
+                            itemType="subtask"
+                            baseDate={baseDate}
+                            cellWidth={CELL_WIDTH}
+                            initialData={initialData}
+                            tempDates={tempDates}
+                            dragState={dragState}
+                            isDarkMode={!!isDarkMode}
+                            showProgressRate={showProgressRate}
+                            showAssigneeName={showAssigneeName}
+                            handleMouseDown={handleMouseDown}
+                            getStatusColor={getStatusColor}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
               </div>

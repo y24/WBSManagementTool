@@ -8,15 +8,18 @@
   width: 10px;
   height: 10px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
   background-clip: content-box;
@@ -25,6 +28,7 @@
 :root.dark ::-webkit-scrollbar-thumb {
   background: #475569;
 }
+
 :root.dark ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
@@ -44,6 +48,7 @@ code {
   border-radius: 0.25rem;
   font-size: 0.85em;
 }
+
 :root.dark code {
   background-color: #1e293b;
   color: #94a3b8;
@@ -67,12 +72,16 @@ code {
   --wbs-subtask-hover: #f8fafc;
 
   /* Header/Slicer Color */
-  --wbs-header-bg: #f1f5f9; /* Slate 100 */
-  --wbs-slicer-bg: #f8fafc; /* Slate 50 */
+  --wbs-header-bg: #f1f5f9;
+  /* Slate 100 */
+  --wbs-slicer-bg: #f8fafc;
+  /* Slate 50 */
 
   /* Border Color */
-  --wbs-border-color: #e2e8f0; /* Slate 200 - vertical lines */
-  --wbs-row-border-color: #cbd5e1; /* Slate 200 - horizontal lines (Project/Task) */
+  --wbs-border-color: #e2e8f0;
+  /* Slate 200 - vertical lines */
+  --wbs-row-border-color: #cbd5e1;
+  /* Slate 200 - horizontal lines (Project/Task) */
 }
 
 .dark {
@@ -103,26 +112,31 @@ code {
 /* 以前は二重線を防ぐために子要素(> div)に線を描いていましたが、
    それだとコンテンツが右端までない場合に線が切れてしまうため、
    行全体(.wbs-row-*)に対して境界線を設定するように修正しました。 */
-.wbs-row-project, .wbs-row-task {
+.wbs-row-project,
+.wbs-row-task {
   border-bottom: 1px solid var(--wbs-row-border-color) !important;
   border-top: none !important;
   box-shadow: none !important;
 }
 
-.wbs-row-project > div, .wbs-row-task > div {
+.wbs-row-project>div,
+.wbs-row-task>div {
   border-bottom: none !important;
 }
 
 .wbs-row-project {
   background-color: var(--wbs-project-row-bg) !important;
 }
+
 .wbs-row-project:hover {
   background-color: var(--wbs-project-row-hover) !important;
 }
+
 .wbs-cell-project {
   background-color: var(--wbs-project-bg) !important;
   border-right: 1px solid var(--wbs-border-color) !important;
 }
+
 .group:hover .wbs-cell-project {
   background-color: var(--wbs-project-hover) !important;
 }
@@ -130,13 +144,16 @@ code {
 .wbs-row-task {
   background-color: var(--wbs-task-row-bg) !important;
 }
+
 .wbs-row-task:hover {
   background-color: var(--wbs-task-row-hover) !important;
 }
+
 .wbs-cell-task {
   background-color: var(--wbs-task-bg) !important;
   border-right: 1px solid var(--wbs-border-color) !important;
 }
+
 .group:hover .wbs-cell-task {
   background-color: var(--wbs-task-hover) !important;
 }
@@ -146,19 +163,24 @@ code {
   background-color: var(--wbs-subtask-bg) !important;
   border-bottom: none !important;
 }
-.wbs-row-subtask > div {
+
+.wbs-row-subtask>div {
   border-bottom: none !important;
 }
+
 .wbs-row-subtask:last-child {
   border-bottom: 1px solid var(--wbs-row-border-color) !important;
 }
+
 .wbs-row-subtask:hover {
   background-color: var(--wbs-subtask-hover) !important;
 }
+
 .wbs-cell-subtask {
   background-color: var(--wbs-subtask-bg) !important;
   border-right: 1px solid var(--wbs-border-color) !important;
 }
+
 .group:hover .wbs-cell-subtask {
   background-color: var(--wbs-subtask-hover) !important;
 }
@@ -167,6 +189,7 @@ code {
 .wbs-cell-border {
   border-right: 1px solid var(--wbs-border-color);
 }
+
 /* Floating Menu Animation */
 .floating-menu-container {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -184,6 +207,7 @@ code {
 .gantt-body .wbs-row-project {
   background-color: rgba(219, 234, 254, 0.45) !important;
 }
+
 :root.dark .gantt-body .wbs-row-project {
   background-color: rgba(30, 41, 59, 0.45) !important;
 }
@@ -191,6 +215,7 @@ code {
 .gantt-body .wbs-row-task {
   background-color: rgba(241, 245, 249, 0.45) !important;
 }
+
 :root.dark .gantt-body .wbs-row-task {
   background-color: rgba(15, 23, 42, 0.45) !important;
 }
@@ -198,15 +223,29 @@ code {
 .gantt-body .wbs-row-subtask {
   background-color: rgba(255, 255, 255, 0.45) !important;
 }
+
 :root.dark .gantt-body .wbs-row-subtask {
   background-color: rgba(30, 41, 59, 0.45) !important;
 }
 
 .gantt-body .wbs-row-empty:hover {
-  background-color: rgba(251, 191, 36, 0.12) !important; /* Amber 400 at 12% */
+  background-color: transparent !important;
 }
-:root.dark .gantt-body .wbs-row-empty:hover {
-  background-color: rgba(251, 191, 36, 0.08) !important;
+
+.gantt-body .wbs-row-empty:hover::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  height: 17px;
+  background-color: rgba(251, 191, 36, 0.15) !important;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+:root.dark .gantt-body .wbs-row-empty:hover::after {
+  background-color: rgba(251, 191, 36, 0.15) !important;
 }
 
 /* Project range highlight in Gantt chart area */
@@ -214,11 +253,14 @@ code {
   position: absolute;
   top: 0;
   bottom: 0;
-  background-color: var(--highlight-bg, rgba(34, 197, 94, 0.1)); /* Default 10% opacity */
-  border-left: 2px solid var(--highlight-border, rgba(132, 204, 22, 0.5)); /* Default 50% opacity */
+  background-color: var(--highlight-bg, rgba(34, 197, 94, 0.1));
+  /* Default 10% opacity */
+  border-left: 2px solid var(--highlight-border, rgba(132, 204, 22, 0.5));
+  /* Default 50% opacity */
   border-right: 2px solid var(--highlight-border, rgba(132, 204, 22, 0.5));
   pointer-events: none;
-  z-index: -1; /* Behind bars and rows background */
+  z-index: -1;
+  /* Behind bars and rows background */
 }
 
 /* ═══════════════════════════════════════════
@@ -234,7 +276,8 @@ code {
 }
 
 .master-page {
-  display: block; /* flex だと padding-bottom が無視される場合があるため block に変更 */
+  display: block;
+  /* flex だと padding-bottom が無視される場合があるため block に変更 */
   width: 100%;
   height: 100%;
   overflow-y: auto;
@@ -248,7 +291,8 @@ code {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding: 2rem 1.5rem 10rem; /* 下部にかなり広めの余白（160px）を確保 */
+  padding: 2rem 1.5rem 10rem;
+  /* 下部にかなり広めの余白（160px）を確保 */
 }
 
 .master-title {
@@ -259,6 +303,7 @@ code {
   padding-bottom: 0.5rem;
   margin: 0;
 }
+
 :root.dark .master-title {
   color: #f1f5f9;
   border-bottom-color: #334155;
@@ -273,14 +318,18 @@ code {
   padding: 1.25rem;
   transition: box-shadow 0.2s, background-color 0.2s, border-color 0.2s;
 }
+
 :root.dark .master-section {
-  background: #0f172a; /* Slightly darker than slate-900 */
+  background: #0f172a;
+  /* Slightly darker than slate-900 */
   border-color: #1e293b;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
 }
+
 .master-section:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
 }
+
 .dark .master-section:hover {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
 }
@@ -301,6 +350,7 @@ code {
   color: #334155;
   margin: 0;
 }
+
 :root.dark .master-section-title {
   color: #f1f5f9;
 }
@@ -318,7 +368,8 @@ code {
   flex-shrink: 0;
 }
 
-.master-add-btn, .master-sync-btn {
+.master-add-btn,
+.master-sync-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -332,32 +383,41 @@ code {
   transition: all 0.2s;
   flex-shrink: 0;
 }
-:root.dark .master-add-btn, :root.dark .master-sync-btn {
+
+:root.dark .master-add-btn,
+:root.dark .master-sync-btn {
   background: #1e293b;
   border-color: #334155;
   color: #94a3b8;
 }
-.master-add-btn:hover, .master-sync-btn:hover {
+
+.master-add-btn:hover,
+.master-sync-btn:hover {
   background: #6366f1;
   color: #fff;
   border-color: #6366f1;
   transform: scale(1.05);
 }
-:root.dark .master-add-btn:hover, :root.dark .master-sync-btn:hover {
+
+:root.dark .master-add-btn:hover,
+:root.dark .master-sync-btn:hover {
   background: #4f46e5;
   color: #fff;
   border-color: #4f46e5;
 }
+
 .master-sync-btn:hover:not(:disabled) {
   background: #f97316;
   color: #fff;
   border-color: #f97316;
 }
+
 :root.dark .master-sync-btn:hover:not(:disabled) {
   background: #ea580c;
   color: #fff;
   border-color: #ea580c;
 }
+
 .master-sync-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -366,9 +426,15 @@ code {
 .animate-spin-slow {
   animation: spin 3s linear infinite;
 }
+
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Add form */
@@ -376,9 +442,17 @@ code {
   margin-bottom: 0.75rem;
   animation: masterSlideIn 0.2s ease-out;
 }
+
 @keyframes masterSlideIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .master-add-form-row {
@@ -403,19 +477,23 @@ code {
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
 }
+
 :root.dark .master-input {
   background: #1e293b;
   border-color: #334155;
   color: #f1f5f9;
 }
+
 .master-input:focus {
   border-color: #6366f1;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
+
 .master-input-sm {
   flex: 0 1 auto;
   min-width: 80px;
 }
+
 .master-input-date {
   max-width: 160px;
 }
@@ -430,6 +508,7 @@ code {
   background: #fff;
   transition: all 0.2s;
 }
+
 :root.dark .master-color-input {
   background: #1e293b;
   border-color: #334155;
@@ -439,20 +518,25 @@ code {
   background: #10b981;
   color: #fff;
 }
+
 :root.dark .master-confirm-btn {
   background: #059669;
 }
+
 .master-confirm-btn:hover {
   background: #059669;
   transform: scale(1.08);
 }
+
 .master-cancel-btn {
   background: #ef4444;
   color: #fff;
 }
+
 :root.dark .master-cancel-btn {
   background: #dc2626;
 }
+
 .master-cancel-btn:hover {
   background: #b91c1c;
   color: #fff;
@@ -474,12 +558,15 @@ code {
   transition: background-color 0.15s;
   min-height: 40px;
 }
+
 .master-list-item:hover {
   background: #f8fafc;
 }
+
 :root.dark .master-list-item:hover {
   background: #1e293b;
 }
+
 .master-list-item:hover .master-actions {
   opacity: 1;
 }
@@ -505,6 +592,7 @@ code {
   font-weight: 500;
   color: #334155;
 }
+
 :root.dark .master-item-name {
   color: #f1f5f9;
 }
@@ -519,6 +607,7 @@ code {
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
+
 :root.dark .master-holiday-date {
   background: #1e293b;
   color: #64748b;
@@ -541,17 +630,20 @@ code {
   cursor: pointer;
   transition: all 0.2s;
 }
+
 :root.dark .master-list-expand-btn {
   background: #1e293b;
   border-color: #334155;
   color: #94a3b8;
 }
+
 .master-list-expand-btn:hover {
   background: #f1f5f9;
   color: #334155;
   border-style: solid;
   border-color: #94a3b8;
 }
+
 :root.dark .master-list-expand-btn:hover {
   background: #334155;
   color: #f1f5f9;
@@ -578,16 +670,20 @@ code {
   transition: all 0.15s;
   background: transparent;
 }
+
 .master-action-btn.master-edit {
   color: #64748b;
 }
+
 .master-action-btn.master-edit:hover {
   background: #ede9fe;
   color: #6366f1;
 }
+
 .master-action-btn.master-delete {
   color: #94a3b8;
 }
+
 .master-action-btn.master-delete:hover {
   background: #fee2e2;
   color: #ef4444;
@@ -620,31 +716,38 @@ code {
   font-weight: 500;
   transition: all 0.15s;
   position: relative;
-  min-width: 3.5rem; /* ボタンが表示されても最低限必要な幅を確保 */
+  min-width: 3.5rem;
+  /* ボタンが表示されても最低限必要な幅を確保 */
 }
+
 .master-chip:hover .master-chip-text {
   opacity: 0;
   visibility: hidden;
 }
+
 .master-chip:hover .master-chip-actions {
   opacity: 1;
   visibility: visible;
 }
+
 .master-chip-blue {
   background: #eff6ff;
   color: #1e40af;
   border: 1px solid #bfdbfe;
 }
+
 :root.dark .master-chip-blue {
   background: #1e293b;
   color: #60a5fa;
   border-color: #2563eb;
 }
+
 .master-chip-green {
   background: #ecfdf5;
   color: #065f46;
   border: 1px solid #a7f3d0;
 }
+
 :root.dark .master-chip-green {
   background: #064e3b;
   color: #34d399;
@@ -657,6 +760,7 @@ code {
   white-space: nowrap;
   transition: opacity 0.2s, visibility 0.2s;
 }
+
 .master-chip-actions {
   grid-column: 1;
   grid-row: 1;
@@ -668,6 +772,7 @@ code {
   justify-content: center;
   align-items: center;
 }
+
 .master-chip-btn {
   display: inline-flex;
   align-items: center;
@@ -682,9 +787,11 @@ code {
   transition: all 0.15s;
   padding: 0;
 }
+
 .master-chip-btn:hover {
   background: rgba(0, 0, 0, 0.12);
 }
+
 .master-chip-btn-del:hover {
   background: #fee2e2;
   color: #ef4444;
@@ -695,6 +802,7 @@ code {
   width: 14px;
   height: 14px;
 }
+
 .master-icon-lg {
   width: 18px;
   height: 18px;
@@ -707,6 +815,7 @@ code {
   border-radius: 12px;
   padding: 1.5rem;
 }
+
 :root.dark .master-setting-card {
   background: #0f172a;
   border-color: #1e293b;
@@ -723,6 +832,7 @@ code {
   color: #334155;
   margin-bottom: 0.35rem;
 }
+
 :root.dark .master-setting-label {
   color: #f1f5f9;
 }
@@ -781,6 +891,7 @@ code {
   background-color: #f8fafc;
   transition: background-color 0.2s;
 }
+
 :root.dark .import-page {
   background-color: #020617;
 }
@@ -802,6 +913,7 @@ code {
   padding: 2rem;
   transition: all 0.2s;
 }
+
 :root.dark .import-card {
   background: #0f172a;
   border-color: #1e293b;
@@ -821,6 +933,7 @@ code {
   align-items: center;
   gap: 1rem;
 }
+
 :root.dark .import-upload-zone {
   background: #1e293b;
   border-color: #334155;
@@ -830,6 +943,7 @@ code {
   border-color: #6366f1;
   background: #f5f3ff;
 }
+
 :root.dark .import-upload-zone:hover {
   background: #1e1b4b;
   border-color: #818cf8;
@@ -872,6 +986,7 @@ code {
   border-bottom: 2px solid #e2e8f0;
   white-space: nowrap;
 }
+
 :root.dark .import-preview-table th {
   background: #0f172a;
   color: #94a3b8;
@@ -891,14 +1006,29 @@ code {
   color: #cbd5e1;
 }
 
-.import-preview-row-0 { background-color: rgba(219, 234, 254, 0.3); }
-:root.dark .import-preview-row-0 { background-color: rgba(30, 41, 59, 0.4); }
+.import-preview-row-0 {
+  background-color: rgba(219, 234, 254, 0.3);
+}
 
-.import-preview-row-1 { background-color: rgba(241, 245, 249, 0.4); }
-:root.dark .import-preview-row-1 { background-color: rgba(15, 23, 42, 0.4); }
+:root.dark .import-preview-row-0 {
+  background-color: rgba(30, 41, 59, 0.4);
+}
 
-.import-preview-row-error { background-color: #fef2f2; }
-:root.dark .import-preview-row-error { background-color: rgba(127, 29, 29, 0.2); }
+.import-preview-row-1 {
+  background-color: rgba(241, 245, 249, 0.4);
+}
+
+:root.dark .import-preview-row-1 {
+  background-color: rgba(15, 23, 42, 0.4);
+}
+
+.import-preview-row-error {
+  background-color: #fef2f2;
+}
+
+:root.dark .import-preview-row-error {
+  background-color: rgba(127, 29, 29, 0.2);
+}
 
 .import-error-list {
   color: #ef4444;
