@@ -48,7 +48,7 @@ export default function Header() {
         {isMainBoard && (
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('add-project'))}
-            className="ml-auto flex items-center gap-2 px-4 py-1.5 bg-indigo-600 dark:bg-indigo-700/40 text-white dark:text-indigo-100 rounded-lg text-sm border border-indigo-500 dark:border-indigo-500/30 hover:bg-indigo-700 dark:hover:bg-indigo-600/60 hover:border-indigo-600 dark:hover:border-indigo-400 hover:text-white hover:scale-105 active:scale-95 transition-all shadow-lg dark:shadow-xl backdrop-blur-md font-bold group"
+            className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 rounded-md text-sm border border-indigo-200/60 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:text-indigo-700 dark:hover:text-indigo-200 transition-all font-medium group active:scale-95 shadow-sm"
           >
             <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />
             <span>プロジェクト追加</span>
