@@ -62,10 +62,15 @@ Push-Location $frontendRoot
 Write-Host "  Installing npm packages..."
 npm install
 
-Write-Host "  Creating .env.production..."
-"VITE_API_URL=/api" | Out-File -FilePath ".env.production" -Encoding UTF8
+# サブディレクトリ設定の確認
+$basePath = if ($env:VITE_BASE_PATH) { $env:VITE_BASE_PATH } else { "/" }
+if ($basePath -ne "/" -and -not $basePath.EndsWith("/")) { $basePath += "/" }
 
-Write-Host "  Building for production..."
+Write-Host "  Creating .env.production..."
+"VITE_BASE_PATH=$basePath" | Out-File -FilePath ".env.production" -Encoding UTF8
+
+Write-Host "  Building for production (Base Path: $basePath)..."
+$env:VITE_BASE_PATH = $basePath
 npm run build
 Pop-Location
 
@@ -77,7 +82,7 @@ $webConfigContent = @"
     <system.webServer>
         <rewrite>
             <rules>
-                <!-- Reverse Proxy Setup: Forward requests to localhost:8000 -->
+                <!-- API Proxy: Forward requests to localhost:8000 -->
                 <rule name="ReverseProxyToBackend" stopProcessing="true">
                     <match url="^api/(.*)" />
                     <action type="Rewrite" url="http://localhost:8000/api/{R:1}" />

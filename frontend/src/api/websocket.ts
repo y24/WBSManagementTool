@@ -1,7 +1,13 @@
 import { useEffect, useRef, useCallback } from 'react';
 
-// Use environment variable or default to localhost:8000
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/api/ws';
+// Use environment variable or derive from current location
+const WS_URL = import.meta.env.VITE_WS_URL || (() => {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.host;
+  // Ensure the base URL is path-safe and ends with api/ws
+  const fullPath = (import.meta.env.BASE_URL + 'api/ws').replace(/\/+/g, '/').replace(/^\/+/, '');
+  return `${protocol}//${host}/${fullPath}`;
+})();
 
 export type WSMessage = {
   type: string;

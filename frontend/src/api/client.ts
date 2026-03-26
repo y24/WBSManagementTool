@@ -2,7 +2,8 @@ import axios from 'axios';
 
 // APIクライアントのベース設定
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  // VITE_API_URL優先、なければ現在のドメインからの相対パス(/wbs/api など)
+  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.BASE_URL + 'api').replace(/\/+$/, '/').replace(/^\/+/, '/'),
   headers: {
     'Content-Type': 'application/json',
   },
