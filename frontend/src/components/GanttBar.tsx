@@ -25,6 +25,7 @@ interface GanttBarProps {
     initialDates: { start?: string; end?: string; reviewStart?: string; reviewDays?: number }
   ) => void;
   getStatusColor: (statusId: number | null | undefined) => string;
+  isExpanded?: boolean;
 }
 
 const GanttBar: React.FC<GanttBarProps> = ({
@@ -40,7 +41,12 @@ const GanttBar: React.FC<GanttBarProps> = ({
   showAssigneeName,
   handleMouseDown,
   getStatusColor,
+  isExpanded = false,
 }) => {
+  if ((itemType === 'project' || itemType === 'task') && isExpanded) {
+    return null;
+  }
+
   const isSubtask = itemType === 'subtask';
 
   // ドラッグ中の反映があればそれを使う

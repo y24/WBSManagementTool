@@ -148,6 +148,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                     showAssigneeName={showAssigneeName}
                     handleMouseDown={handleMouseDown}
                     getStatusColor={getStatusColor}
+                    isExpanded={expandedProjects[project.id] !== false}
                   />
                 </div>
 
@@ -167,6 +168,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                         showAssigneeName={showAssigneeName}
                         handleMouseDown={handleMouseDown}
                         getStatusColor={getStatusColor}
+                        isExpanded={expandedTasks[task.id] !== false}
                       />
                     </div>
 
