@@ -27,6 +27,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showGanttChart: true,
   showAssigneeName: false,
   showProgressRate: false,
+  showMarkers: true,
   isDarkMode: false,
 };
 

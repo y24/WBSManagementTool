@@ -168,6 +168,7 @@ def get_initial_data(db: Session = Depends(get_db)):
         "subtask_types": crud.get_subtask_types(db),
         "members": crud.get_members(db),
         "holidays": crud.get_holidays(db),
+        "markers": crud.get_markers(db),
         "ticket_url_template": ticket_setting.setting_value if ticket_setting else None,
         "status_mapping_new": mapping_new.setting_value if mapping_new else None,
         "status_mapping_blocked": mapping_blocked.setting_value if mapping_blocked else None,
@@ -347,6 +348,25 @@ def shift_dates(req: schemas.ShiftDatesRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Date shifting failed or no items selected")
     manager.broadcast_sync({"type": "update", "entity": "batch"})
     return {"status": "ok"}
+
+# --- Markers ---
+@router.get("/markers", response_model=List[schemas.Marker])
+def get_markers(db: Session = Depends(get_db)):
+    return crud.get_markers(db)
+
+@router.post("/markers", response_model=schemas.Marker)
+def create_or_update_marker(marker: schemas.MarkerCreate, db: Session = Depends(get_db)):
+    db_marker = crud.create_or_update_marker(db, marker)
+    manager.broadcast_sync({"type": "update", "entity": "marker"})
+    return db_marker
+
+@router.delete("/markers/{marker_id}", response_model=schemas.Marker)
+def delete_marker(marker_id: int, db: Session = Depends(get_db)):
+    db_marker = crud.delete_marker(db, marker_id)
+    if not db_marker:
+        raise HTTPException(status_code=404, detail="Marker not found")
+    manager.broadcast_sync({"type": "update", "entity": "marker"})
+    return db_marker
 
 # --- Dashboard ---
 @router.get("/dashboard", response_model=schemas.DashboardData)

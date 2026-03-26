@@ -1,9 +1,11 @@
-import { useMemo, forwardRef } from 'react';
-import { format, differenceInDays, addDays, getDay, isToday } from 'date-fns';
+import { useMemo, forwardRef, useState, useCallback } from 'react';
+import { format, differenceInCalendarDays, addDays, getDay, isToday, parseISO } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
 import { Project, Task, Subtask, GanttRange } from '../types/wbs';
-import { InitialData } from '../types';
+import { InitialData, Marker } from '../types';
 import { getWarning, subtractBusinessDays, calculateReviewCalendarDays } from './WBSTree/utils';
+import MarkerModal from './MarkerModal';
+import { apiClient } from '../api/client';
 
 interface GanttChartProps {
   projects: Project[];
@@ -15,8 +17,10 @@ interface GanttChartProps {
   showTodayHighlight: boolean;
   showAssigneeName?: boolean;
   showProgressRate?: boolean;
+  showMarkers?: boolean;
   isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
+  onRefresh?: () => void;
 }
 
 const CELL_WIDTH = 24; // 1日あたりのピクセル幅
@@ -31,9 +35,15 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   showTodayHighlight,
   showAssigneeName = false,
   showProgressRate = false,
+  showMarkers = true,
   isDarkMode = false,
-  onScroll
+  onScroll,
+  onRefresh
 }, ref) => {
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isMarkerModalOpen, setIsMarkerModalOpen] = useState(false);
+
   // 休日判定ロジック
   const isHoliday = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -44,14 +54,42 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   const days = useMemo(() => {
     if (!range.start_date || !range.end_date) return [];
     try {
-      const start = new Date(range.start_date);
-      const end = new Date(range.end_date);
-      const totalDays = differenceInDays(end, start) + 1;
+      const start = parseISO(range.start_date);
+      const end = parseISO(range.end_date);
+      const totalDays = differenceInCalendarDays(end, start) + 1;
       return Array.from({ length: totalDays }).map((_, i) => addDays(start, i));
     } catch {
       return [];
     }
   }, [range]);
+
+  const handleMarkerSave = async (name: string, note: string, color: string) => {
+    if (!selectedDate) return;
+    try {
+      await apiClient.post('/markers', {
+        marker_date: format(selectedDate, 'yyyy-MM-dd'),
+        name,
+        note,
+        color
+      });
+      setIsMarkerModalOpen(false);
+      onRefresh?.();
+    } catch (err) {
+      console.error('Failed to save marker:', err);
+      alert('マーカーの保存に失敗しました。');
+    }
+  };
+
+  const handleMarkerDelete = async (id: number) => {
+    try {
+      await apiClient.delete(`/markers/${id}`);
+      setIsMarkerModalOpen(false);
+      onRefresh?.();
+    } catch (err) {
+      console.error('Failed to delete marker:', err);
+      alert('マーカーの削除に失敗しました。');
+    }
+  };
 
   const getStatusColor = (statusId: number | null | undefined): string => {
     if (statusId === null || statusId === undefined) return isDarkMode ? '#334155' : '#cbd5e1';
@@ -66,32 +104,32 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
   const renderBar = (item: any, isSubtask = false) => {
     if (!range.start_date || !days.length) return null;
-    const baseDate = new Date(range.start_date);
+    const baseDate = parseISO(range.start_date);
 
     // 計画バーの計算
     let pStart, pWidth;
     if (item.planned_start_date && item.planned_end_date) {
-      const pS = new Date(item.planned_start_date);
-      const pE = new Date(item.planned_end_date);
-      pStart = differenceInDays(pS, baseDate) * CELL_WIDTH;
-      pWidth = (differenceInDays(pE, pS) + 1) * CELL_WIDTH;
+      const pS = parseISO(item.planned_start_date);
+      const pE = parseISO(item.planned_end_date);
+      pStart = differenceInCalendarDays(pS, baseDate) * CELL_WIDTH;
+      pWidth = (differenceInCalendarDays(pE, pS) + 1) * CELL_WIDTH;
     }
 
     // 実績バーの計算
     let aStart, aWidth;
     let arStart, arWidth;
     if (item.actual_start_date) {
-      const aS = new Date(item.actual_start_date);
-      const aE = item.actual_end_date ? new Date(item.actual_end_date) : aS;
-      aStart = differenceInDays(aS, baseDate) * CELL_WIDTH;
-      aWidth = (differenceInDays(aE, aS) + 1) * CELL_WIDTH;
+      const aS = parseISO(item.actual_start_date);
+      const aE = item.actual_end_date ? parseISO(item.actual_end_date) : aS;
+      aStart = differenceInCalendarDays(aS, baseDate) * CELL_WIDTH;
+      aWidth = (differenceInCalendarDays(aE, aS) + 1) * CELL_WIDTH;
 
       if (isSubtask && item.review_start_date) {
-        const rS = new Date(item.review_start_date);
+        const rS = parseISO(item.review_start_date);
         const effectiveRS = rS < aS ? aS : rS;
         const effectiveRE = aE < effectiveRS ? effectiveRS : aE;
-        arStart = differenceInDays(effectiveRS, baseDate) * CELL_WIDTH;
-        arWidth = (differenceInDays(effectiveRE, effectiveRS) + 1) * CELL_WIDTH;
+        arStart = differenceInCalendarDays(effectiveRS, baseDate) * CELL_WIDTH;
+        arWidth = (differenceInCalendarDays(effectiveRE, effectiveRS) + 1) * CELL_WIDTH;
       }
     }
 
@@ -100,11 +138,11 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     let rStart, rWidth;
     if (isSubtask && item.planned_start_date && item.planned_end_date && item.review_days && item.review_days > 0) {
       const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
-      const pE = new Date(item.planned_end_date);
+      const pE = parseISO(item.planned_end_date);
       const r_days_cal = calculateReviewCalendarDays(pE, item.review_days, holidays);
       rWidth = r_days_cal * CELL_WIDTH;
 
-      const calcPWidth = (differenceInDays(pE, new Date(item.planned_start_date)) + 1) * CELL_WIDTH;
+      const calcPWidth = (differenceInCalendarDays(pE, parseISO(item.planned_start_date)) + 1) * CELL_WIDTH;
       if (rWidth > calcPWidth) rWidth = calcPWidth;
       rStart = pStart! + calcPWidth - rWidth;
     }
@@ -188,7 +226,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   // プロジェクトごとの期間（背景ハイライト用）を計算
   const projectDisplayRanges = useMemo(() => {
     if (!range.start_date || !projects.length) return {};
-    const baseDate = new Date(range.start_date);
+    const baseDate = parseISO(range.start_date);
 
     return projects.reduce((acc, project) => {
       const allDates: number[] = [];
@@ -196,7 +234,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
         ['planned_start_date', 'planned_end_date', 'actual_start_date', 'actual_end_date', 'review_start_date'].forEach(k => {
           if (item[k]) {
             try {
-              const d = new Date(item[k]);
+              const d = parseISO(item[k]);
               if (!isNaN(d.getTime())) allDates.push(d.getTime());
             } catch { }
           }
@@ -212,8 +250,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       if (allDates.length > 0) {
         const minTime = Math.min(...allDates);
         const maxTime = Math.max(...allDates);
-        const left = differenceInDays(new Date(minTime), baseDate) * CELL_WIDTH;
-        const width = (differenceInDays(new Date(maxTime), new Date(minTime)) + 1) * CELL_WIDTH;
+        const left = differenceInCalendarDays(new Date(minTime), baseDate) * CELL_WIDTH;
+        const width = (differenceInCalendarDays(new Date(maxTime), new Date(minTime)) + 1) * CELL_WIDTH;
         acc[project.id] = { left, width };
       }
       return acc;
@@ -233,7 +271,9 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
               const isSunday = dow === 0;
               const holidayFlag = isHoliday(d);
               const isSundayOrHoliday = isSunday || holidayFlag;
-              const holidayInfo = initialData?.holidays.find(h => h.holiday_date === format(d, 'yyyy-MM-dd'));
+              const dateStr = format(d, 'yyyy-MM-dd');
+              const holidayInfo = initialData?.holidays.find(h => h.holiday_date === dateStr);
+              const marker = initialData?.markers?.find(m => m.marker_date === dateStr);
 
               let dayClasses = "text-gray-500 dark:text-slate-400";
               if (isSundayOrHoliday) {
@@ -245,15 +285,52 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
               return (
                 <div
                   key={d.toISOString()}
-                  className={`flex-shrink-0 border-r border-gray-200 dark:border-slate-800 flex items-center justify-center text-[10px] ${dayClasses} ${isToday(d) ? 'font-bold' : ''}`}
-                  style={{ width: `${CELL_WIDTH}px` }}
-                  title={holidayInfo?.holiday_name}
+                  className={`flex-shrink-0 border-r border-gray-200 dark:border-slate-800 flex items-center justify-center text-[10px] cursor-pointer transition-colors relative group/header-cell ${dayClasses} ${isToday(d) ? 'font-bold' : ''} ${marker ? 'border-l-2' : ''}`}
+                  style={{ width: `${CELL_WIDTH}px`, borderLeftColor: marker ? marker.color : undefined }}
+                  title={marker ? `[マイルストーン] ${marker.name}${marker.note ? '\n' + marker.note : ''}` : holidayInfo?.holiday_name}
+                  onMouseEnter={() => setHoveredDate(dateStr)}
+                  onMouseLeave={() => setHoveredDate(null)}
+                  onClick={() => {
+                    setSelectedDate(d);
+                    setIsMarkerModalOpen(true);
+                  }}
                 >
                   {format(d, 'd')}
+                  {/* マーカー名表示 (ヘッダー内) */}
+                  {showMarkers && marker && (
+                    <div 
+                      className="absolute top-full left-0 z-50 pointer-events-none whitespace-nowrap px-1 py-0.5 rounded text-[9px] font-bold text-white shadow-sm"
+                      style={{ backgroundColor: marker.color, transform: 'translateY(2px)' }}
+                    >
+                      {marker.name}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
+
+          {/* マーカー垂直線 (z-25) */}
+          {showMarkers && initialData?.markers?.map(m => {
+            if (!range.start_date) return null;
+            const mDate = parseISO(m.marker_date);
+            const left = differenceInCalendarDays(mDate, parseISO(range.start_date)) * CELL_WIDTH;
+            return (
+              <div
+                key={`marker-line-${m.id}`}
+                className="absolute top-0 bottom-0 z-25 pointer-events-none border-l-2"
+                style={{ left: `${left}px`, borderLeftColor: m.color }}
+              />
+            );
+          })}
+
+          {/* プレビュー線 (z-25) */}
+          {hoveredDate && (
+            <div
+              className="absolute top-0 bottom-0 z-25 pointer-events-none border-l-2 border-dashed border-gray-400 opacity-50"
+              style={{ left: `${differenceInCalendarDays(parseISO(hoveredDate), parseISO(range.start_date!)) * CELL_WIDTH}px` }}
+            />
+          )}
 
           {/* 背景の縦線 (z-0) */}
           <div className="absolute inset-0 flex pointer-events-none z-0">
@@ -334,6 +411,16 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
           </div>
         </div>
       </div>
+      {selectedDate && (
+        <MarkerModal
+          isOpen={isMarkerModalOpen}
+          date={selectedDate}
+          existingMarker={initialData?.markers?.find(m => m.marker_date === format(selectedDate, 'yyyy-MM-dd'))}
+          onSave={handleMarkerSave}
+          onDelete={handleMarkerDelete}
+          onClose={() => setIsMarkerModalOpen(false)}
+        />
+      )}
     </div>
   );
 });

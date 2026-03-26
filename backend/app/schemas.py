@@ -272,11 +272,34 @@ class SystemSetting(BaseModel):
     description: Optional[str] = None
     model_config = { "from_attributes": True }
 
+# --- Markers ---
+class MarkerBase(BaseModel):
+    marker_date: date
+    name: str
+    note: Optional[str] = None
+    color: str = "#ef4444"
+
+class MarkerCreate(MarkerBase):
+    pass
+
+class MarkerUpdate(BaseModel):
+    marker_date: Optional[date] = None
+    name: Optional[str] = None
+    note: Optional[str] = None
+    color: Optional[str] = None
+
+class Marker(MarkerBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    model_config = { "from_attributes": True }
+
 class InitialData(BaseModel):
     statuses: List[Status]
     subtask_types: List[SubtaskType]
     members: List[Member]
     holidays: List[Holiday]
+    markers: List[Marker] = []
     ticket_url_template: Optional[str] = None
     status_mapping_new: Optional[str] = None
     status_mapping_blocked: Optional[str] = None
@@ -407,4 +430,6 @@ class SharedFilterResponse(BaseModel):
     token: str
     filter_data: dict
     model_config = { "from_attributes": True }
+
+
 

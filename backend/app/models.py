@@ -201,3 +201,18 @@ class SharedFilter(Base):
     token = Column(String(100), unique=True, index=True, nullable=False)
     filter_data = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+class Marker(Base):
+    __tablename__ = "markers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    marker_date = Column(Date, nullable=False, unique=True, index=True)
+    name = Column(String(100), nullable=False)
+    note = Column(Text, nullable=True)
+    color = Column(String(20), nullable=False, default="#ef4444")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("name <> ''", name="check_marker_name_empty"),
+    )

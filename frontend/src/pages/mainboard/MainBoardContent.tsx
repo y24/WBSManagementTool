@@ -83,8 +83,10 @@ export default function MainBoardContent({
                 showTodayHighlight={displayOptions.showTodayHighlight}
                 showAssigneeName={displayOptions.showAssigneeName}
                 showProgressRate={displayOptions.showProgressRate}
+                showMarkers={displayOptions.showMarkers}
                 isDarkMode={displayOptions.isDarkMode}
                 onScroll={onGanttScroll}
+                onRefresh={() => onUpdate(false)}
               />
             )}
           </div>
