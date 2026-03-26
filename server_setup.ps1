@@ -28,7 +28,7 @@ if (-not (Test-Path "$backendRoot\venv")) {
 }
 
 Write-Host "  Installing dependencies..."
-& "$backendRoot\venv\Scripts\pip.exe" install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings httpx python-dotenv
+& "$backendRoot\venv\Scripts\pip.exe" install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings httpx python-dotenv pandas openpyxl python-multipart
 
 Write-Host "  Setting up .env file..."
 if (-not (Test-Path "$backendRoot\.env")) {
