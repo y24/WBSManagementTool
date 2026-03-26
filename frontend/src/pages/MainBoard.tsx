@@ -70,10 +70,8 @@ export default function MainBoard() {
         setData(wbsRes.data);
 
         // Fetch initial-data using the shared/cached getter
-        if (!initialData) {
-          const initRes = await getInitialData();
-          setInitialData(initRes.data);
-        }
+        const initRes = await getInitialData();
+        setInitialData(initRes.data);
       } catch (error) {
         console.error(error);
       } finally {
