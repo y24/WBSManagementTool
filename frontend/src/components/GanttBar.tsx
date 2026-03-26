@@ -93,7 +93,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
 
   const hasActual = aStart !== undefined && aWidth !== undefined;
 
-  const typeColor = isSubtask ? getStatusColor(item.status_id) : (isDarkMode ? '#334155' : '#cbd5e1');
+  const typeColor = getStatusColor(item.status_id);
 
   let rStart: number | undefined, rWidth: number | undefined;
   if (isSubtask && plannedStart && plannedEnd && reviewDays && reviewDays > 0) {
