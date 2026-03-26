@@ -1,6 +1,6 @@
-import { useMemo, forwardRef, useState, useCallback } from 'react';
+import React, { useMemo, forwardRef, useState, useCallback } from 'react';
 import { format, differenceInCalendarDays, addDays, parseISO } from 'date-fns';
-import { Project, GanttRange } from '../types/wbs';
+import { Project, Subtask, GanttRange } from '../types/wbs';
 import { InitialData } from '../types';
 import MarkerModal from './MarkerModal';
 import { apiClient } from '../api/client';
@@ -97,9 +97,39 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     return color;
   }, [initialData, isDarkMode]);
 
+  const baseDate = useMemo(() => range.start_date ? parseISO(range.start_date) : new Date(), [range.start_date]);
+
+  const handleRowDoubleClick = useCallback(async (e: React.MouseEvent, item: any, itemType: 'task' | 'subtask') => {
+    // すでに計画か実績が入力されている場合はダブルクリックしても何も反応しなくて良い
+    if (item.planned_start_date || item.planned_end_date || 
+        item.actual_start_date || item.actual_end_date) {
+      return;
+    }
+
+    e.stopPropagation();
+
+    // Get the click position relative to the Gantt area
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const dayIndex = Math.floor(offsetX / CELL_WIDTH);
+    
+    const targetDate = addDays(baseDate, dayIndex);
+    const dateStr = format(targetDate, 'yyyy-MM-dd');
+
+    try {
+      const endpoint = itemType === 'subtask' ? `/subtasks/${item.id}` : `/tasks/${item.id}`;
+      await apiClient.patch(endpoint, {
+        planned_start_date: dateStr,
+        planned_end_date: dateStr
+      });
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      console.error('Failed to set initial plan:', err);
+    }
+  }, [baseDate, onRefresh]);
+
   const totalWidth = useMemo(() => days.length * CELL_WIDTH, [days]);
   const commonRowClasses = "transition-colors h-[37px]";
-  const baseDate = useMemo(() => range.start_date ? parseISO(range.start_date) : new Date(), [range.start_date]);
 
   return (
     <div className="h-full w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
@@ -159,7 +189,10 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
                 {expandedProjects[project.id] !== false && project.tasks.map(task => (
                   <div key={`t-wrapper-${task.id}`}>
-                    <div className={`${commonRowClasses} wbs-row-task`}>
+                    <div 
+                      className={`${commonRowClasses} wbs-row-task relative z-10 w-full pointer-events-auto select-none`}
+                      onDoubleClick={(e) => handleRowDoubleClick(e, task, 'task')}
+                    >
                       <GanttBar
                         item={task}
                         itemType="task"
@@ -178,7 +211,11 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                     </div>
 
                     {expandedTasks[task.id] !== false && task.subtasks.map(subtask => (
-                      <div key={`s-${subtask.id}`} className={`${commonRowClasses} wbs-row-subtask`}>
+                      <div 
+                        key={`s-${subtask.id}`} 
+                        className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none`}
+                        onDoubleClick={(e) => handleRowDoubleClick(e, subtask, 'subtask')}
+                      >
                         <GanttBar
                           item={subtask}
                           itemType="subtask"
