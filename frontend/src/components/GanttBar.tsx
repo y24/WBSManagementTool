@@ -1,4 +1,5 @@
-import React from 'react';
+ import React from 'react';
+import { createPortal } from 'react-dom';
 import { parseISO, differenceInCalendarDays, isValid } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
 import { InitialData } from '../types';
@@ -22,7 +23,7 @@ interface GanttBarProps {
     itemType: ItemType,
     barType: BarType,
     mode: DragMode,
-    initialDates: { start?: string; end?: string; reviewStart?: string; reviewDays?: number }
+    initialDates: { start?: string; end?: string; reviewStart?: string; reviewDays?: number; name?: string }
   ) => void;
   getStatusColor: (statusId: number | null | undefined) => string;
   isExpanded?: boolean;
@@ -127,6 +128,9 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const isAutoPlanned = (itemType === 'project' || itemType === 'task') && item.is_auto_planned_date;
   const isAutoActual = (itemType === 'project' || itemType === 'task') && item.is_auto_actual_date;
 
+  const subtaskTypeName = isSubtask ? initialData?.subtask_types.find(t => t.id === item.subtask_type_id)?.type_name : null;
+  const itemName = itemType === 'project' ? item.project_name : (itemType === 'task' ? item.task_name : subtaskTypeName);
+
   return (
     <div className="relative w-full h-full min-h-[30px] flex flex-col justify-start">
       {pStart !== undefined && pWidth !== undefined && (
@@ -136,14 +140,14 @@ const GanttBar: React.FC<GanttBarProps> = ({
             style={{ left: `${pStart}px`, width: `${pWidth}px` }}
             onMouseDown={(e) => {
               if (isAutoPlanned) return;
-              handleMouseDown(e, item.id, itemType, 'planned', 'move', { start: plannedStart, end: plannedEnd, reviewDays });
+              handleMouseDown(e, item.id, itemType, 'planned', 'move', { start: plannedStart, end: plannedEnd, reviewDays, name: itemName ?? undefined });
             }}
           >
             {/* リサイズハンドル */}
             {!isAutoPlanned && (
               <>
-                <div className="gantt-resize-handle gantt-resize-handle-left" onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'planned', 'resize-left', { start: plannedStart, end: plannedEnd, reviewDays })} />
-                <div className="gantt-resize-handle gantt-resize-handle-right" onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'planned', 'resize-right', { start: plannedStart, end: plannedEnd, reviewDays })} />
+                <div className="gantt-resize-handle gantt-resize-handle-left" onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'planned', 'resize-left', { start: plannedStart, end: plannedEnd, reviewDays, name: itemName ?? undefined })} />
+                <div className="gantt-resize-handle gantt-resize-handle-right" onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'planned', 'resize-right', { start: plannedStart, end: plannedEnd, reviewDays, name: itemName ?? undefined })} />
               </>
             )}
           </div>
@@ -157,7 +161,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
                 height: hasActual ? (isSubtask ? '6px' : '4px') : '16px' 
               }}
               onMouseDown={(e) => {
-                handleMouseDown(e, item.id, itemType, 'planned', 'resize-planned-review', { start: plannedStart, end: plannedEnd, reviewDays });
+                handleMouseDown(e, item.id, itemType, 'planned', 'resize-planned-review', { start: plannedStart, end: plannedEnd, reviewDays, name: itemName ?? undefined });
               }}
             />
           )}
@@ -178,14 +182,14 @@ const GanttBar: React.FC<GanttBarProps> = ({
             title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
             onMouseDown={(e) => {
               if (isFixedEnd || isAutoActual) return;
-              handleMouseDown(e, item.id, itemType, 'actual', 'move', { start: actualStart, end: actualEnd, reviewStart: reviewStart });
+              handleMouseDown(e, item.id, itemType, 'actual', 'move', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined });
             }}
           >
             {/* リサイズハンドル */}
             {(!isAutoActual) && (
               <div
                 className="gantt-resize-handle gantt-resize-handle-left"
-                onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'actual', 'resize-left', { start: actualStart, end: actualEnd, reviewStart: reviewStart })}
+                onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'actual', 'resize-left', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined })}
               />
             )}
             {(!isAutoActual) && (
@@ -196,7 +200,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
                     e.stopPropagation();
                     return;
                   }
-                  handleMouseDown(e, item.id, itemType, 'actual', 'resize-right', { start: actualStart, end: actualEnd, reviewStart: reviewStart });
+                  handleMouseDown(e, item.id, itemType, 'actual', 'resize-right', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined });
                 }}
               />
             )}
@@ -226,7 +230,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
                 // レビューハンドルのz-indexを下げる
                 zIndex: arStart === aStart ? 19 : 25
               }}
-              onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'actual', 'resize-review', { start: actualStart, end: actualEnd, reviewStart: reviewStart })}
+              onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'actual', 'resize-review', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined })}
             />
           )}
         </>
@@ -251,6 +255,20 @@ const GanttBar: React.FC<GanttBarProps> = ({
         >
           <AlertTriangle size={14} className="text-amber-500 shrink-0" />
         </div>
+      )}
+
+      {/* ドラッグ中のツールチップを表示 */}
+      {isDragging && temp?.tooltipText && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="gantt-drag-tooltip"
+          style={{ 
+            left: `${temp.mouseX}px`, 
+            top: `${temp.mouseY}px` 
+          }}
+        >
+          {temp.tooltipText}
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -19,6 +19,7 @@ export interface DragState {
     end?: string;
     reviewStart?: string;
     reviewDays?: number;
+    name?: string;
   };
 }
 
@@ -42,7 +43,7 @@ export const useGanttDrag = (
     itemType: ItemType,
     barType: BarType,
     mode: DragMode,
-    initialDates: { start?: string; end?: string; reviewStart?: string; reviewDays?: number }
+    initialDates: { start?: string; end?: string; reviewStart?: string; reviewDays?: number; name?: string }
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -71,32 +72,42 @@ export const useGanttDrag = (
     const deltaDays = Math.round(deltaX / CELL_WIDTH);
 
     const holidays = initialData.holidays.map(h => h.holiday_date);
-    const { start, end, reviewStart } = currentDrag.initialDates;
-    const update: any = { barType: currentDrag.barType };
-
-    if (deltaDays === 0) {
-      setTempDates(prev => {
-        const next = { ...prev, [currentDrag.itemId]: null };
-        tempDatesRef.current = next;
-        return next;
-      });
-      return;
+    const { start, end, reviewStart, name } = currentDrag.initialDates;
+    const update: any = { 
+      barType: currentDrag.barType,
+      mouseX: e.clientX,
+      mouseY: e.clientY
+    };
+    let tooltipText = "";
+    let prefix = "";
+    if (currentDrag.barType === 'planned') {
+      prefix = "[計画]";
+    } else if (currentDrag.barType === 'actual') {
+      prefix = "[実績]";
     }
+    const namePrefix = name ? `${prefix}${name}: ` : prefix;
 
     if (currentDrag.mode === 'move') {
       if (start && end) {
         const s = parseISO(start);
         const eDate = parseISO(end);
-        const businessDays = getBusinessDaysCount(s, eDate, holidays);
+        const originalBusinessDays = getBusinessDaysCount(s, eDate, holidays);
         const movedStart = addDays(s, deltaDays);
-        const movedEnd = addBusinessDays(movedStart, businessDays, holidays);
+        const movedEnd = addBusinessDays(movedStart, originalBusinessDays, holidays);
+
+        const startStr = format(movedStart, 'yyyy-MM-dd');
+        const endStr = format(movedEnd, 'yyyy-MM-dd');
+        
+        const startMD = format(movedStart, 'M/d');
+        const endMD = format(movedEnd, 'M/d');
+        tooltipText = `${namePrefix}${startMD}~${endMD} (${originalBusinessDays}営業日)`;
 
         if (currentDrag.barType === 'planned') {
-          update.planned_start_date = format(movedStart, 'yyyy-MM-dd');
-          update.planned_end_date = format(movedEnd, 'yyyy-MM-dd');
+          update.planned_start_date = startStr;
+          update.planned_end_date = endStr;
         } else {
-          update.actual_start_date = format(movedStart, 'yyyy-MM-dd');
-          update.actual_end_date = format(movedEnd, 'yyyy-MM-dd');
+          update.actual_start_date = startStr;
+          update.actual_end_date = endStr;
           if (reviewStart) {
             const rs = parseISO(reviewStart);
             update.review_start_date = format(addDays(rs, deltaDays), 'yyyy-MM-dd');
@@ -107,22 +118,42 @@ export const useGanttDrag = (
       if (start) {
         const s = parseISO(start);
         const updated = addDays(s, deltaDays);
-        if (end && updated > parseISO(end)) return;
+        const currentEndISO = end || start;
+        if (currentEndISO && updated > parseISO(currentEndISO)) return;
+        
+        const startStr = format(updated, 'yyyy-MM-dd');
+        const endStr = currentEndISO!;
+        const bDays = getBusinessDaysCount(parseISO(startStr), parseISO(endStr), holidays);
+        
+        const startMD = format(updated, 'M/d');
+        const endMD = format(parseISO(endStr), 'M/d');
+        tooltipText = `${namePrefix}${startMD}~${endMD} (${bDays}営業日)`;
+
         if (currentDrag.barType === 'planned') {
-          update.planned_start_date = format(updated, 'yyyy-MM-dd');
+          update.planned_start_date = startStr;
         } else {
-          update.actual_start_date = format(updated, 'yyyy-MM-dd');
+          update.actual_start_date = startStr;
         }
       }
     } else if (currentDrag.mode === 'resize-right') {
       if (end) {
         const eDate = parseISO(end);
         const updated = addDays(eDate, deltaDays);
-        if (start && updated < parseISO(start)) return;
+        const currentStartISO = start || end;
+        if (currentStartISO && updated < parseISO(currentStartISO)) return;
+        
+        const endStr = format(updated, 'yyyy-MM-dd');
+        const startStr = currentStartISO!;
+        const bDays = getBusinessDaysCount(parseISO(startStr), parseISO(endStr), holidays);
+
+        const startMD = format(parseISO(startStr), 'M/d');
+        const endMD = format(updated, 'M/d');
+        tooltipText = `${namePrefix}${startMD}~${endMD} (${bDays}営業日)`;
+
         if (currentDrag.barType === 'planned') {
-          update.planned_end_date = format(updated, 'yyyy-MM-dd');
+          update.planned_end_date = endStr;
         } else {
-          update.actual_end_date = format(updated, 'yyyy-MM-dd');
+          update.actual_end_date = endStr;
           if (reviewStart) {
             const rs = parseISO(reviewStart);
             update.review_start_date = format(addDays(rs, deltaDays), 'yyyy-MM-dd');
@@ -136,6 +167,11 @@ export const useGanttDrag = (
         if (start && updated < parseISO(start)) return;
         if (end && updated > parseISO(end)) return;
         update.review_start_date = format(updated, 'yyyy-MM-dd');
+        
+        const rStartStr = update.review_start_date;
+        const rEndStr = end || rStartStr;
+        const bDays = getBusinessDaysCount(parseISO(rStartStr), parseISO(rEndStr), holidays);
+        tooltipText = `${prefix}レビュー: ${bDays} 営業日`;
       }
     } else if (currentDrag.mode === 'resize-planned-review') {
       if (end) {
@@ -148,14 +184,19 @@ export const useGanttDrag = (
         if (effectiveRStart < pStart) effectiveRStart = pStart;
         if (effectiveRStart > pEnd) effectiveRStart = pEnd;
         update.review_days = getBusinessDaysCount(effectiveRStart, pEnd, holidays);
+        tooltipText = `${prefix}レビュー: ${update.review_days} 営業日`;
       }
     } else if (currentDrag.mode === 'marker-move') {
       if (start) {
         const s = parseISO(start);
         const updated = addDays(s, deltaDays);
         update.marker_date = format(updated, 'yyyy-MM-dd');
+        const dateMD = format(updated, 'M/d');
+        tooltipText = `${namePrefix}${dateMD}`;
       }
     }
+
+    update.tooltipText = tooltipText;
 
     setTempDates(prev => {
       const next = {
@@ -193,7 +234,7 @@ export const useGanttDrag = (
       setTimeout(() => window.removeEventListener('click', suppressClick, true), 500);
     }
 
-    if (!finalTemp) return;
+    if (!moved || !finalTemp) return;
 
     try {
       const endpoint = `/${currentDrag.itemType}s/${currentDrag.itemId}`;

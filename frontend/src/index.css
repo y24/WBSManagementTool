@@ -1016,3 +1016,31 @@ code {
 .user-select-none {
   user-select: none !important;
 }
+
+/* ═══════════════════════════════════════════
+   Gantt Drag Tooltip
+   ═══════════════════════════════════════════ */
+.gantt-drag-tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  background-color: rgba(30, 41, 59, 0.9);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -100%);
+  margin-top: -12px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: opacity 0.1s ease-out;
+}
+
+:root.dark .gantt-drag-tooltip {
+  background-color: rgba(241, 245, 249, 0.9);
+  color: #1e293b;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}

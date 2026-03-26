@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { format, getDay, isToday, parseISO, differenceInCalendarDays } from 'date-fns';
 import { InitialData } from '../types';
 import { DragMode, ItemType, BarType } from '../hooks/useGanttDrag';
@@ -16,7 +17,7 @@ interface GanttHeaderProps {
     itemType: ItemType,
     barType: BarType,
     mode: DragMode,
-    initialDates: { start?: string; end?: string; reviewStart?: string; reviewDays?: number }
+    initialDates: { start?: string; end?: string; reviewStart?: string; reviewDays?: number; name?: string }
   ) => void;
   dragState: any;
   tempDates: Record<number, any>;
@@ -82,32 +83,45 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
         const left = differenceInCalendarDays(parseISO(displayDate), parseISO(baseDateStr)) * cellWidth;
 
         return (
-          <div
-            key={`marker-label-${marker.id}`}
-            className={`absolute top-0 z-50 pointer-events-auto cursor-ew-resize whitespace-nowrap px-1 py-0.5 rounded text-[9px] font-bold text-white shadow-sm hover:brightness-110 active:brightness-90 select-none ${isDragging ? 'opacity-70 scale-105 ring-2 ring-white ring-offset-1' : ''}`}
-            style={{ 
-              backgroundColor: marker.color, 
-              left: `${left}px`, 
-              top: '35px', // ヘッダーのすぐ下
-            }}
-            onMouseDown={(e) => {
-              handleMouseDown?.(
-                e,
-                marker.id,
-                'marker',
-                'marker',
-                'marker-move',
-                { start: marker.marker_date }
-              );
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDateClick(parseISO(marker.marker_date));
-            }}
-            title={`[マイルストーン] ${marker.name}${marker.note ? '\n' + marker.note : ''}`}
-          >
-            {marker.name}
-          </div>
+          <React.Fragment key={`marker-label-${marker.id}`}>
+            <div
+              className={`absolute top-0 z-50 pointer-events-auto cursor-ew-resize whitespace-nowrap px-1 py-0.5 rounded text-[9px] font-bold text-white shadow-sm hover:brightness-110 active:brightness-90 select-none ${isDragging ? 'opacity-70 scale-105 ring-2 ring-white ring-offset-1' : ''}`}
+              style={{ 
+                backgroundColor: marker.color, 
+                left: `${left}px`, 
+                top: '35px', 
+              }}
+              onMouseDown={(e) => {
+                handleMouseDown?.(
+                  e,
+                  marker.id,
+                  'marker',
+                  'marker',
+                  'marker-move',
+                  { start: marker.marker_date, name: marker.name }
+                );
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDateClick(parseISO(marker.marker_date));
+              }}
+              title={`[マイルストーン] ${marker.name}${marker.note ? '\n' + marker.note : ''}`}
+            >
+              {marker.name}
+            </div>
+            {isDragging && temp?.tooltipText && typeof document !== 'undefined' && createPortal(
+              <div 
+                className="gantt-drag-tooltip"
+                style={{ 
+                  left: `${temp.mouseX}px`, 
+                  top: `${temp.mouseY}px` 
+                }}
+              >
+                {temp.tooltipText}
+              </div>,
+              document.body
+            )}
+          </React.Fragment>
         );
       })}
     </div>
