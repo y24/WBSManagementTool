@@ -85,6 +85,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
     }
   }
 
+  const hasActual = aStart !== undefined && aWidth !== undefined;
+
   const typeColor = isSubtask ? getStatusColor(item.status_id) : (isDarkMode ? '#334155' : '#cbd5e1');
 
   let rStart: number | undefined, rWidth: number | undefined;
@@ -124,7 +126,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {pStart !== undefined && pWidth !== undefined && (
         <>
           <div
-            className={`absolute top-[6px] rounded-t-sm ${isSubtask ? 'h-1.5' : 'h-1'} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70 ${isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''}`}
+            className={`absolute ${hasActual ? 'top-[6px]' : (isSubtask ? 'top-[12px]' : 'top-[10px]')} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70 ${isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''}`}
             style={{ left: `${pStart}px`, width: `${pWidth}px` }}
             onMouseDown={(e) => {
               if (isAutoPlanned) return;
@@ -143,7 +145,11 @@ const GanttBar: React.FC<GanttBarProps> = ({
           {isSubtask && rStart !== undefined && !isAutoPlanned && (
             <div
               className="gantt-review-handle"
-              style={{ left: `${rStart - 5}px`, top: '6px', height: '6px' }}
+              style={{ 
+                left: `${rStart - 5}px`, 
+                top: hasActual ? '6px' : (isSubtask ? '12px' : '10px'), 
+                height: hasActual ? (isSubtask ? '6px' : '4px') : '16px' 
+              }}
               onMouseDown={(e) => {
                 handleMouseDown(e, item.id, itemType, 'planned', 'resize-planned-review', { start: plannedStart, end: plannedEnd, reviewDays });
               }}
@@ -151,7 +157,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
           )}
           {rStart !== undefined && rWidth !== undefined && (
             <div
-              className="absolute top-[6px] rounded-tr-sm h-1.5 bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50 pointer-events-none"
+              className={`absolute ${hasActual ? 'top-[6px]' : (isSubtask ? 'top-[12px]' : 'top-[10px]')} ${hasActual ? 'rounded-tr-sm' : 'rounded-r-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50 pointer-events-none`}
               style={{ left: `${rStart}px`, width: `${rWidth}px` }}
               title={`レビュー期間: ${reviewDays}日`}
             />
