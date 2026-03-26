@@ -99,10 +99,14 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
   const baseDate = useMemo(() => range.start_date ? parseISO(range.start_date) : new Date(), [range.start_date]);
 
+  const isRowEmpty = useCallback((item: any) => {
+    return !item.planned_start_date && !item.planned_end_date && 
+           !item.actual_start_date && !item.actual_end_date;
+  }, []);
+
   const handleRowDoubleClick = useCallback(async (e: React.MouseEvent, item: any, itemType: 'task' | 'subtask') => {
     // すでに計画か実績が入力されている場合はダブルクリックしても何も反応しなくて良い
-    if (item.planned_start_date || item.planned_end_date || 
-        item.actual_start_date || item.actual_end_date) {
+    if (!isRowEmpty(item)) {
       return;
     }
 
@@ -126,7 +130,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     } catch (err) {
       console.error('Failed to set initial plan:', err);
     }
-  }, [baseDate, onRefresh]);
+  }, [baseDate, isRowEmpty, onRefresh]);
 
   const totalWidth = useMemo(() => days.length * CELL_WIDTH, [days]);
   const commonRowClasses = "transition-colors h-[37px]";
@@ -190,7 +194,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                 {expandedProjects[project.id] !== false && project.tasks.map(task => (
                   <div key={`t-wrapper-${task.id}`}>
                     <div 
-                      className={`${commonRowClasses} wbs-row-task relative z-10 w-full pointer-events-auto select-none`}
+                      className={`${commonRowClasses} wbs-row-task relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(task) ? 'wbs-row-empty' : ''}`}
                       onDoubleClick={(e) => handleRowDoubleClick(e, task, 'task')}
                     >
                       <GanttBar
@@ -213,7 +217,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                     {expandedTasks[task.id] !== false && task.subtasks.map(subtask => (
                       <div 
                         key={`s-${subtask.id}`} 
-                        className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none`}
+                        className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) ? 'wbs-row-empty' : ''}`}
                         onDoubleClick={(e) => handleRowDoubleClick(e, subtask, 'subtask')}
                       >
                         <GanttBar

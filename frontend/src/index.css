@@ -202,6 +202,13 @@ code {
   background-color: rgba(30, 41, 59, 0.45) !important;
 }
 
+.gantt-body .wbs-row-empty:hover {
+  background-color: rgba(251, 191, 36, 0.12) !important; /* Amber 400 at 12% */
+}
+:root.dark .gantt-body .wbs-row-empty:hover {
+  background-color: rgba(251, 191, 36, 0.08) !important;
+}
+
 /* Project range highlight in Gantt chart area */
 .wbs-project-range-highlight {
   position: absolute;
