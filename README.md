@@ -80,6 +80,14 @@ npm run dev
 * `frontend/` : React + Vite + Tailwind CSS によるフロントエンドアプリのソースコード
 * `docs/` : 要件定義書、UI設計書、API仕様書などのドキュメント群
 
+## 開発ガイドライン (AGENTS.md)
+プロジェクトの細かな実装方針、UI/UXの設計ルール、やってはいけないこと等の「暗黙知」については、[AGENTS.md](AGENTS.md) にまとめてあります。
+新規開発や機能修正を行う際は、必ず事前に目を通してください。
+
+## 利用ガイド (USER_GUIDE.md)
+一般的な操作方法や機能の詳細は、[利用ガイド](docs/USER_GUIDE.md) を参照してください。
+初めて利用するユーザーや、操作方法を確認したい場合に役立ちます。
+
 ## Windows Server / IIS へのデプロイ
 Windows Server および IIS を利用した社内公開・常時稼働の手順は、[IIS セットアップガイド](IIS_Setup_Guide.md) に詳細をまとめています。
 
