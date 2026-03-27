@@ -73,6 +73,18 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         const element = document.querySelector(`[data-wbs-id="${lastAddedId}"]`);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // 名称入力欄にフォーカス（クリックして編集モードにする）
+          if (lastAddedId.startsWith('p-') || lastAddedId.startsWith('t-')) {
+            const nameInput = element.querySelector('.flex-1.min-w-0 > div');
+            if (nameInput instanceof HTMLElement) {
+              // スクロール完了やレンダリングの安定を待つために少し遅延させる
+              setTimeout(() => {
+                nameInput.click();
+              }, 300);
+            }
+          }
+
           setLastAddedId(null);
           clearInterval(scrollInterval);
         } else {
