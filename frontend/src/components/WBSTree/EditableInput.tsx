@@ -18,6 +18,7 @@ interface EditableInputProps {
   highlight?: boolean;
   autoPercent?: boolean;
   onInputChange?: (value: number | null) => void;
+  placeholder?: string;
 }
 
 /**
@@ -117,7 +118,7 @@ const PopoverEditor = ({
 };
 
 const EditableInput = memo(({
-  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange
+  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange, placeholder
 }: EditableInputProps) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -277,7 +278,7 @@ const EditableInput = memo(({
     ref: inputRef,
     type: (type === 'date' || autoPercent) ? 'text' : (type === 'number' ? 'number' : type),
     inputMode: autoPercent ? 'numeric' as const : undefined,
-    placeholder: type === 'date' ? "YYYY/MM/DD" : "0.0",
+    placeholder: placeholder || (type === 'date' ? "YYYY/MM/DD" : (type === 'number' ? "0.0" : "名称を入力")),
     value: val,
     autoFocus: true,
     disabled: isAuto,

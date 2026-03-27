@@ -443,6 +443,13 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   }, [handleAddProject]);
 
   const handleUpdate = useCallback(async (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => {
+    // Name validation
+    if ((field === 'project_name' || field === 'task_name') && (!value || value.trim() === '')) {
+      alert('名称を入力してください。');
+      onUpdate(); // Revert local state by refreshing
+      return;
+    }
+
     // Date range validation
     if (['planned_start_date', 'planned_end_date', 'actual_start_date', 'actual_end_date'].includes(field)) {
       let item: any = null;
@@ -499,7 +506,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('保存に失敗しました。開始日より後の日付を設定してください。');
+      alert('保存に失敗しました。');
     } finally {
       setSaving(false);
     }
