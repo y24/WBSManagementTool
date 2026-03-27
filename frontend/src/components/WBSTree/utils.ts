@@ -149,15 +149,61 @@ export const formatDateForInput = (d: string) => {
 
 export const parseDateFromInput = (s: string) => {
   if (!s) return null;
-  let cleaned = s.replace(/[\/\-\.]/g, '');
+
+  // 区切り文字（/ , - , .）で分割を試みる
+  const parts = s.split(/[\/\-\.]/);
+
+  if (parts.length === 3) {
+    // YYYY/MM/DD, YY/M/D などの形式
+    let [y, m, d] = parts;
+    
+    // 年の補完 (例: 26 -> 2026)
+    if (y.length === 2 && /^\d+$/.test(y)) {
+      y = "20" + y;
+    }
+    
+    const year = y.padStart(4, '0');
+    const month = m.padStart(2, '0');
+    const day = d.padStart(2, '0');
+    
+    // 数字4桁-2桁-2桁であることを確認
+    if (/^\d{4}$/.test(year) && /^\d{2}$/.test(month) && /^\d{2}$/.test(day)) {
+      return `${year}-${month}-${day}`;
+    }
+  } else if (parts.length === 2) {
+    // MM/DD 形式 (今の年を補完)
+    let [m, d] = parts;
+    const year = new Date().getFullYear().toString();
+    const month = m.padStart(2, '0');
+    const day = d.padStart(2, '0');
+    
+    if (/^\d{2}$/.test(month) && /^\d{2}$/.test(day)) {
+      return `${year}-${month}-${day}`;
+    }
+  }
+
+  // 区切り文字がない場合かつ数字のみの場合
+  let cleaned = s.replace(/\D/g, '');
+  
+  // 8桁 (YYYYMMDD)
   if (cleaned.length === 8) {
     const year = cleaned.slice(0, 4);
     const month = cleaned.slice(4, 6);
     const day = cleaned.slice(6, 8);
     return `${year}-${month}-${day}`;
   }
+  
+  // 4桁 (MMDD) -> 今の年を補完
+  if (cleaned.length === 4 && !s.includes('/') && !s.includes('-') && !s.includes('.')) {
+    const year = new Date().getFullYear().toString();
+    const month = cleaned.slice(0, 2);
+    const day = cleaned.slice(2, 4);
+    return `${year}-${month}-${day}`;
+  }
+
+  // すでに YYYY-MM-DD 形式ならそのまま
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  if (/^\d{4}\/\d{2}\/\d{2}$/.test(s)) return s.replace(/\//g, '-');
+
   return null;
 };
 
@@ -165,6 +211,7 @@ export const formatDisplayDate = (dateStr: string, type: string) => {
   if (!dateStr || type !== 'date') return dateStr;
   const parts = dateStr.split('-');
   if (parts.length === 3) {
+    // MM/DD 形式で表示 (スペース節約のため)
     return `${parts[1]}/${parts[2]}`;
   }
   return dateStr;
