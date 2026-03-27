@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, ChartNoAxesGantt, Link2, Share2, Download, PenTool, LayoutDashboard } from 'lucide-react';
+import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, ChartNoAxesGantt, Link2, Share2, Download, PenTool, LayoutDashboard, Layout } from 'lucide-react';
 import MultiSelect from './MultiSelect';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
@@ -198,29 +198,39 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         {/* Done Projects Toggle は設定ポップアップへ移動 */}
       </div>
 
-      <button
-        onClick={() => setDisplayOptions(prev => ({ ...prev, isPlanningMode: !prev.isPlanningMode }))}
-        className={`p-2 rounded-lg border transition-all shadow-sm ${displayOptions.isPlanningMode
-          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 ring-blue-500/10 ring-2'
-          : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-300'
-          }`}
-        title={displayOptions.isPlanningMode ? '計画モードを解除' : '計画モードに切替'}
-        aria-label={displayOptions.isPlanningMode ? '計画モードを解除' : '計画モードに切替'}
-      >
-        <PenTool size={18} />
-      </button>
-
-      <button
-        onClick={() => setDisplayOptions(prev => ({ ...prev, hidePlanningColumns: !prev.hidePlanningColumns }))}
-        className={`p-2 rounded-lg border transition-all shadow-sm ${displayOptions.hidePlanningColumns
-          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 ring-blue-500/10 ring-2'
-          : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-300'
-          }`}
-        title={displayOptions.hidePlanningColumns ? '実績モードを解除' : '実績モードに切替'}
-        aria-label={displayOptions.hidePlanningColumns ? '実績モードを解除' : '実績モードに切替'}
-      >
-        <LayoutDashboard size={18} />
-      </button>
+      {/* Mode Select (Segmented Control) */}
+      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-gray-200 dark:border-slate-700 shadow-inner h-[38px] items-center">
+        <button
+          onClick={() => setDisplayOptions(prev => ({ ...prev, isPlanningMode: false, hidePlanningColumns: false }))}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${!displayOptions.isPlanningMode && !displayOptions.hidePlanningColumns 
+            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+            : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+          title="標準表示"
+        >
+          <Layout size={14} />
+          標準
+        </button>
+        <button
+          onClick={() => setDisplayOptions(prev => ({ ...prev, isPlanningMode: true, hidePlanningColumns: false }))}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${displayOptions.isPlanningMode 
+            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+            : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+          title="計画モード"
+        >
+          <PenTool size={14} />
+          計画
+        </button>
+        <button
+          onClick={() => setDisplayOptions(prev => ({ ...prev, hidePlanningColumns: true, isPlanningMode: false }))}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${displayOptions.hidePlanningColumns 
+            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+            : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+          title="実績モード"
+        >
+          <LayoutDashboard size={14} />
+          実績
+        </button>
+      </div>
 
       <button
         onClick={() => setDisplayOptions(prev => ({ ...prev, showGanttChart: !prev.showGanttChart }))}
