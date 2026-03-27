@@ -96,6 +96,7 @@ class SubtaskBase(BaseModel):
     actual_end_date: Optional[date] = None
     planned_effort_days: Optional[Union[Decimal, float, int]] = None
     actual_effort_days: Optional[Union[Decimal, float, int]] = None
+    work_days: Optional[Union[Decimal, float, int]] = None
     review_days: Optional[Union[Decimal, float, int]] = None
     ticket_id: Optional[int] = None
     memo: Optional[str] = None
@@ -122,6 +123,7 @@ class SubtaskUpdate(BaseModel):
     actual_end_date: Optional[date] = None
     planned_effort_days: Optional[Union[Decimal, float, int]] = None
     actual_effort_days: Optional[Union[Decimal, float, int]] = None
+    work_days: Optional[Union[Decimal, float, int]] = None
     review_days: Optional[Union[Decimal, float, int]] = None
     ticket_id: Optional[int] = None
     memo: Optional[str] = None
@@ -154,6 +156,7 @@ class TaskBase(BaseModel):
     actual_end_date: Optional[date] = None
     is_auto_planned_date: bool = True
     is_auto_actual_date: bool = True
+    work_days: Optional[Union[Decimal, float, int]] = None
     sort_order: int = 0
     status_id: Optional[int] = 1
     assignee_id: Optional[int] = None
@@ -172,6 +175,7 @@ class TaskUpdate(BaseModel):
     actual_end_date: Optional[date] = None
     is_auto_planned_date: Optional[bool] = None
     is_auto_actual_date: Optional[bool] = None
+    work_days: Optional[Union[Decimal, float, int]] = None
     sort_order: Optional[int] = None
     status_id: Optional[int] = None
     assignee_id: Optional[int] = None
@@ -179,6 +183,7 @@ class TaskUpdate(BaseModel):
 class Task(TaskBase):
     id: int
     project_id: int
+    work_days: Optional[Union[Decimal, float, int]]
     is_deleted: bool
     status_id: Optional[int]
     assignee_id: Optional[int]
@@ -191,6 +196,7 @@ class TaskWBS(Task):
     planned_effort_total: Union[Decimal, float, int] = Decimal('0.0')
     actual_effort_total: Union[Decimal, float, int] = Decimal('0.0')
     progress_percent: Optional[int] = 0
+    work_days_total: Union[Decimal, float, int] = Decimal('0.0')
     is_overlapping: bool = False
 
 # --- Projects ---
@@ -205,6 +211,7 @@ class ProjectBase(BaseModel):
     actual_end_date: Optional[date] = None
     is_auto_planned_date: bool = True
     is_auto_actual_date: bool = True
+    work_days: Optional[Union[Decimal, float, int]] = None
     sort_order: int = 0
     status_id: Optional[int] = 1
     assignee_id: Optional[int] = None
@@ -223,12 +230,14 @@ class ProjectUpdate(BaseModel):
     actual_end_date: Optional[date] = None
     is_auto_planned_date: Optional[bool] = None
     is_auto_actual_date: Optional[bool] = None
+    work_days: Optional[Union[Decimal, float, int]] = None
     sort_order: Optional[int] = None
     status_id: Optional[int] = None
     assignee_id: Optional[int] = None
 
 class Project(ProjectBase):
     id: int
+    work_days: Optional[Union[Decimal, float, int]]
     is_deleted: bool
     status_id: Optional[int]
     assignee_id: Optional[int]
@@ -242,6 +251,7 @@ class ProjectWBS(Project):
     planned_effort_total: Union[Decimal, float, int] = Decimal('0.0')
     actual_effort_total: Union[Decimal, float, int] = Decimal('0.0')
     progress_percent: Optional[int] = 0
+    work_days_total: Union[Decimal, float, int] = Decimal('0.0')
     is_overlapping: bool = False
 
 # --- Response Models ---
@@ -317,6 +327,7 @@ class ImportPreviewRow(BaseModel):
     planned_start: Optional[date] = None
     planned_end: Optional[date] = None
     planned_effort: Optional[Union[Decimal, float, int]] = None
+    work_days: Optional[Union[Decimal, float, int]] = None
     review_days: Optional[Union[Decimal, float, int]] = None
     workload: Optional[int] = None
     memo: Optional[str] = None

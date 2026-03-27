@@ -15,6 +15,7 @@ export interface Subtask {
   actual_end_date?: string | null;
   planned_effort_days?: number | null;
   actual_effort_days?: number | null;
+  work_days?: number | null;
   review_days?: number | null;
   ticket_id?: number | null;
   memo?: string | null;
@@ -46,6 +47,8 @@ export interface Task {
   assignee_id?: number | null;
   is_overlapping?: boolean;
   planned_effort_total?: number;
+  work_days?: number | null;
+  work_days_total?: number;
   actual_effort_total?: number;
   progress_percent?: number | null;
   subtasks: Subtask[];
@@ -69,6 +72,8 @@ export interface Project {
   assignee_id?: number | null;
   is_overlapping?: boolean;
   planned_effort_total?: number;
+  work_days?: number | null;
+  work_days_total?: number;
   actual_effort_total?: number;
   progress_percent?: number | null;
   tasks: Task[];

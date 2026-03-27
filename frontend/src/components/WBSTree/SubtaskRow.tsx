@@ -151,6 +151,18 @@ const SubtaskRow = memo(({
           <div className={`w-20 ${commonCellClasses}`}>
             <EditableInput
               type="number"
+              value={subtask.work_days}
+              onChange={(v: number | null) => onUpdateField('subtask', subtask.id, 'work_days', v)}
+              min={0}
+              step={0.5}
+              precision={1}
+              suffix="日"
+              highlight={getHighlight('work_days', subtask.work_days)}
+            />
+          </div>
+          <div className={`w-20 ${commonCellClasses}`}>
+            <EditableInput
+              type="number"
               value={subtask.review_days}
               onChange={(v: number | null) => onUpdateField('subtask', subtask.id, 'review_days', v)}
               min={0}

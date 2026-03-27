@@ -524,7 +524,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       // Level specific field check
       if (field === 'project_name' && item.type !== 'project') return false;
       if (field === 'task_name' && item.type !== 'task') return false;
-      if (['subtask_type_id', 'subtask_detail', 'workload_percent', 'review_days', 'review_start_date'].includes(field) && item.type !== 'subtask') return false;
+      if (['subtask_type_id', 'subtask_detail', 'workload_percent', 'work_days', 'review_days', 'review_start_date'].includes(field) && item.type !== 'subtask') return false;
 
       return true;
     });
@@ -713,6 +713,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           <div className={`w-28 flex items-center ${commonHeaderClasses}`}>担当者</div>
           {!hidePlanningColumns && (
             <>
+              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>作業日数</div>
               <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー日数</div>
               <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(計画)</div>
               <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(計画)</div>

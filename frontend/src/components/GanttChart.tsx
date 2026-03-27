@@ -1,6 +1,6 @@
 import React, { useMemo, forwardRef, useState, useCallback } from 'react';
-import { format, differenceInCalendarDays, addDays, parseISO } from 'date-fns';
-import { Project, Subtask, GanttRange } from '../types/wbs';
+import { format, differenceInCalendarDays, addDays, parseISO, startOfDay, eachDayOfInterval, isSameDay, isWeekend, subDays } from 'date-fns';
+import { Project, Subtask, Task, GanttRange } from '../types/wbs';
 import { InitialData } from '../types';
 import MarkerModal from './MarkerModal';
 import { apiClient } from '../api/client';
@@ -8,6 +8,7 @@ import { useGanttDrag, CELL_WIDTH } from '../hooks/useGanttDrag';
 import GanttBar from './GanttBar';
 import GanttHeader from './GanttHeader';
 import GanttBackground from './GanttBackground';
+import { addBusinessDays } from './WBSTree/utils';
 
 interface GanttChartProps {
   projects: Project[];
@@ -104,7 +105,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
            !item.actual_start_date && !item.actual_end_date;
   }, []);
 
-  const handleRowDoubleClick = useCallback(async (e: React.MouseEvent, item: any, itemType: 'task' | 'subtask') => {
+  const handleRowDoubleClick = useCallback(async (e: React.MouseEvent, item: Task | Subtask, itemType: 'task' | 'subtask') => {
     // すでに計画か実績が入力されている場合はダブルクリックしても何も反応しなくて良い
     if (!isRowEmpty(item)) {
       return;
@@ -117,14 +118,30 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     const offsetX = e.clientX - rect.left;
     const dayIndex = Math.floor(offsetX / CELL_WIDTH);
     
-    const targetDate = addDays(baseDate, dayIndex);
-    const dateStr = format(targetDate, 'yyyy-MM-dd');
+    const clickDate = addDays(baseDate, dayIndex);
+    const startDate = clickDate;
+    
+    // Calculate initial duration based on work_days + review_days
+    const workDays = Number((item as any).work_days) || 0;
+    const reviewDays = Number((item as any).review_days) || 0;
+    const totalDays = workDays + reviewDays;
+    
+    let endDate: Date;
+    if (totalDays > 0) {
+      const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
+      endDate = addBusinessDays(startDate, totalDays, holidays);
+    } else {
+      endDate = addDays(startDate, 0); // Default 1 day (ends on the same day)
+    }
+
+    const startStr = format(startDate, 'yyyy-MM-dd');
+    const endStr = format(endDate, 'yyyy-MM-dd');
 
     try {
       const endpoint = itemType === 'subtask' ? `/subtasks/${item.id}` : `/tasks/${item.id}`;
       await apiClient.patch(endpoint, {
-        planned_start_date: dateStr,
-        planned_end_date: dateStr
+        planned_start_date: startStr,
+        planned_end_date: endStr
       });
       if (onRefresh) onRefresh();
     } catch (err) {

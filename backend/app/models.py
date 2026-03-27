@@ -97,6 +97,7 @@ class Project(Base):
     is_deleted = Column(Boolean, nullable=False, default=False)
     status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=True, index=True)
     assignee_id = Column(Integer, ForeignKey("mst_members.id"), nullable=True, index=True)
+    work_days = Column(Numeric(8, 2), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -107,6 +108,7 @@ class Project(Base):
     __table_args__ = (
         CheckConstraint("project_name <> ''", name="check_project_name_empty"),
         CheckConstraint("sort_order >= 0", name="check_project_sort"),
+        CheckConstraint("work_days IS NULL OR work_days >= 0", name="check_project_work_days"),
         CheckConstraint("planned_start_date IS NULL OR planned_end_date IS NULL OR planned_end_date >= planned_start_date", name="check_project_planned_dates"),
         CheckConstraint("actual_start_date IS NULL OR actual_end_date IS NULL OR actual_end_date >= actual_start_date", name="check_project_actual_dates"),
     )
@@ -130,6 +132,7 @@ class Task(Base):
     is_deleted = Column(Boolean, nullable=False, default=False)
     status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=True, index=True)
     assignee_id = Column(Integer, ForeignKey("mst_members.id"), nullable=True, index=True)
+    work_days = Column(Numeric(8, 2), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -141,6 +144,7 @@ class Task(Base):
     __table_args__ = (
         CheckConstraint("task_name <> ''", name="check_task_name_empty"),
         CheckConstraint("sort_order >= 0", name="check_task_sort"),
+        CheckConstraint("work_days IS NULL OR work_days >= 0", name="check_task_work_days"),
         CheckConstraint("planned_start_date IS NULL OR planned_end_date IS NULL OR planned_end_date >= planned_start_date", name="check_task_planned_dates"),
         CheckConstraint("actual_start_date IS NULL OR actual_end_date IS NULL OR actual_end_date >= actual_start_date", name="check_task_actual_dates"),
     )
@@ -164,6 +168,7 @@ class Subtask(Base):
     
     planned_effort_days = Column(Numeric(8, 2), nullable=True)
     actual_effort_days = Column(Numeric(8, 2), nullable=True)
+    work_days = Column(Numeric(8, 2), nullable=True)
     review_days = Column(Numeric(8, 2), nullable=True)
     
     ticket_id = Column(Integer, nullable=True)
@@ -186,6 +191,7 @@ class Subtask(Base):
         CheckConstraint("workload_percent >= 0", name="check_subtask_workload_percent"),
         CheckConstraint("planned_effort_days IS NULL OR planned_effort_days >= 0", name="check_subtask_planned_effort"),
         CheckConstraint("actual_effort_days IS NULL OR actual_effort_days >= 0", name="check_subtask_actual_effort"),
+        CheckConstraint("work_days IS NULL OR work_days >= 0", name="check_subtask_work_days"),
         CheckConstraint("review_days IS NULL OR review_days >= 0", name="check_subtask_review_days"),
         CheckConstraint("ticket_id IS NULL OR ticket_id >= 0", name="check_subtask_ticket_id"),
         CheckConstraint("sort_order >= 0", name="check_subtask_sort"),

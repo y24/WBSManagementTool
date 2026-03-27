@@ -145,6 +145,7 @@ const ProjectRow = memo(({
       {!hidePlanningColumns && (
         <>
           <div className={`w-20 ${commonCellClasses}`}></div>
+          <div className={`w-20 ${commonCellClasses}`}></div>
           <div className={`w-20 ${dateCellClasses}`}>
             <EditableInput 
               type="date" 

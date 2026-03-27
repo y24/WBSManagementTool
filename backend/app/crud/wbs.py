@@ -69,6 +69,7 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
             valid_subtasks = [s for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed")]
             t_wbs.planned_effort_total = sum((s.planned_effort_days or Decimal('0')) for s in valid_subtasks)
             t_wbs.actual_effort_total = sum((s.actual_effort_days or Decimal('0')) for s in valid_subtasks)
+            t_wbs.work_days_total = sum((s.work_days or Decimal('0')) for s in valid_subtasks)
             
             # Weighted progress for Task
             if t_wbs.planned_effort_total > 0:
@@ -92,6 +93,8 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
             if not is_task_removed:
                 p_planned_effort += t_wbs.planned_effort_total
                 p_actual_effort += t_wbs.actual_effort_total
+                p_work_days_total = getattr(p_wbs, 'work_days_total', Decimal('0')) + t_wbs.work_days_total
+                p_wbs.work_days_total = p_work_days_total
                 valid_tasks_for_recalc.append(t_wbs)
             
             # Subtask overlap check
@@ -169,6 +172,7 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
             is_auto_actual_date=orig_p.is_auto_actual_date,
             sort_order=max_sort + 1,
             status_id=orig_p.status_id,
+            work_days=orig_p.work_days,
             assignee_id=orig_p.assignee_id
         )
         db.add(new_p)
@@ -191,6 +195,7 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
                 is_auto_actual_date=orig_t.is_auto_actual_date,
                 sort_order=orig_t.sort_order,
                 status_id=orig_t.status_id,
+                work_days=orig_t.work_days,
                 assignee_id=orig_t.assignee_id
             )
             db.add(new_t)
@@ -213,6 +218,7 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
                     actual_end_date=orig_s.actual_end_date,
                     planned_effort_days=orig_s.planned_effort_days,
                     actual_effort_days=orig_s.actual_effort_days,
+                    work_days=orig_s.work_days,
                     review_days=orig_s.review_days,
                     ticket_id=orig_s.ticket_id,
                     memo=orig_s.memo,
@@ -244,6 +250,7 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
             is_auto_actual_date=orig_t.is_auto_actual_date,
             sort_order=max_sort + 1,
             status_id=orig_t.status_id,
+            work_days=orig_t.work_days,
             assignee_id=orig_t.assignee_id
         )
         db.add(new_t)
@@ -265,6 +272,7 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
                 actual_end_date=orig_s.actual_end_date,
                 planned_effort_days=orig_s.planned_effort_days,
                 actual_effort_days=orig_s.actual_effort_days,
+                work_days=orig_s.work_days,
                 review_days=orig_s.review_days,
                 ticket_id=orig_s.ticket_id,
                 memo=orig_s.memo,
@@ -297,6 +305,7 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
             planned_effort_days=orig_s.planned_effort_days,
             actual_effort_days=orig_s.actual_effort_days,
             review_days=orig_s.review_days,
+            work_days=orig_s.work_days,
             ticket_id=orig_s.ticket_id,
             memo=orig_s.memo,
             sort_order=max_sort + 1,
