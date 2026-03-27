@@ -45,7 +45,7 @@ const DisplayView = ({
     className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 
       ${!isActuallyReadOnly ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5' : 'cursor-default'} 
       ${isActuallyReadOnly ? 'bg-gray-50/30 dark:bg-slate-800/30' : ''} 
-      ${(isAuto && !readOnly) ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-slate-300'} 
+      ${isAuto ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-slate-300'} 
       ${type === 'number' ? 'border border-gray-200 dark:border-slate-700 bg-gray-50/30 dark:bg-slate-800/30 rounded' : ''} 
       ${highlight ? 'bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/50' : ''} 
       ${className}`}
