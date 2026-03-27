@@ -54,13 +54,13 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isShiftDatesModalOpen, setIsShiftDatesModalOpen] = useState(false);
   const [currentMinDate, setCurrentMinDate] = useState<string | null>(null);
-  const [confirmData, setConfirmData] = useState({ 
-    total: 0, 
-    detail: '', 
-    title: '', 
-    confirmText: '', 
+  const [confirmData, setConfirmData] = useState({
+    total: 0,
+    detail: '',
+    title: '',
+    confirmText: '',
     variant: 'danger' as 'danger' | 'warning',
-    onConfirm: () => {} 
+    onConfirm: () => { }
   });
   const isConfirming = useRef(false);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
@@ -73,7 +73,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         const element = document.querySelector(`[data-wbs-id="${lastAddedId}"]`);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          
+
           // 名称入力欄にフォーカス（クリックして編集モードにする）
           if (lastAddedId.startsWith('p-') || lastAddedId.startsWith('t-')) {
             const nameInput = element.querySelector('.flex-1.min-w-0 > div');
@@ -187,8 +187,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     if (totalSelectedCount === 0) return;
 
     const detailMsg = `削除対象の内訳: プロジェクト:${selectedCounts.pCount}, タスク:${selectedCounts.tCount}, サブタスク:${selectedCounts.sCount}`;
-    setConfirmData({ 
-      total: totalSelectedCount, 
+    setConfirmData({
+      total: totalSelectedCount,
       detail: detailMsg,
       title: '項目の削除確認',
       confirmText: '削除を実行する',
@@ -201,7 +201,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const executeDelete = async () => {
     setIsConfirmModalOpen(false);
     setSaving(true);
-    
+
     try {
       const promises = [
         ...minimalIds.pIds.map(id => wbsOps.deleteProject(id)),
@@ -228,9 +228,9 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     if (totalSelectedCount === 0) return;
 
     const detailMsg = `クリア対象の内訳: プロジェクト:${selectedCounts.pCount}, タスク:${selectedCounts.tCount}, サブタスク:${selectedCounts.sCount}\n\n対象の実績開始、レビュー開始、実績終了、実績工数、進捗が消去されます。`;
-    
-    setConfirmData({ 
-      total: totalSelectedCount, 
+
+    setConfirmData({
+      total: totalSelectedCount,
       detail: detailMsg,
       title: '実績値のクリア確認',
       confirmText: '実績値をクリアする',
@@ -442,75 +442,145 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     return () => window.removeEventListener('add-project', handler);
   }, [handleAddProject]);
 
+  const findItem = useCallback((type: 'project' | 'task' | 'subtask', id: number) => {
+    if (type === 'project') return projects.find(p => p.id === id);
+    for (const p of projects) {
+      if (type === 'task') {
+        const t = p.tasks.find(t => t.id === id);
+        if (t) return t;
+      } else {
+        for (const t of p.tasks) {
+          const s = t.subtasks.find(s => s.id === id);
+          if (s) return s;
+        }
+      }
+    }
+    return null;
+  }, [projects]);
+
   const handleUpdate = useCallback(async (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => {
     // Name validation
     if ((field === 'project_name' || field === 'task_name') && (!value || value.trim() === '')) {
       alert('名称を入力してください。');
-      onUpdate(); // Revert local state by refreshing
+      onUpdate();
       return;
     }
 
     // Date range validation
     if (['planned_start_date', 'planned_end_date', 'actual_start_date', 'actual_end_date'].includes(field)) {
-      let item: any = null;
-      if (type === 'project') item = projects.find(p => p.id === id);
-      else if (type === 'task') {
-        for (const p of projects) {
-          item = p.tasks.find(t => t.id === id);
-          if (item) break;
-        }
-      } else {
-        for (const p of projects) {
-          for (const t of p.tasks) {
-            item = t.subtasks.find(s => s.id === id);
-            if (item) break;
-          }
-          if (item) break;
-        }
-      }
-
+      const item = findItem(type, id);
       if (item) {
         const isPlanned = field.startsWith('planned');
         const isStart = field.endsWith('start_date');
-        const otherField = isStart 
+        const otherField = isStart
           ? (isPlanned ? 'planned_end_date' : 'actual_end_date')
           : (isPlanned ? 'planned_start_date' : 'actual_start_date');
-        
-        const startVal = isStart ? value : item[otherField];
-        const endVal = isStart ? item[otherField] : value;
+
+        const startVal = isStart ? value : (item as any)[otherField];
+        const endVal = isStart ? (item as any)[otherField] : value;
 
         if (startVal && endVal && startVal > endVal) {
           alert('開始日より後の日付を終了日に設定してください。');
-          onUpdate(); // Revert local state by refreshing
-          setSaving(false);
+          onUpdate();
           return;
         }
       }
     }
 
-    try {
-      setSaving(true);
-      const updates: any = { [field]: value };
+    // Determine target items for update
+    const idStr = `${type.charAt(0)}-${id}`;
+    const isSelected = !!checkedIds[idStr];
+    let targetItems: { type: 'project' | 'task' | 'subtask', id: number }[] = [{ type, id }];
 
-      // Side effect: If status changed to Done, set progress to 100%
-      if (type === 'subtask' && field === 'status_id' && initialData) {
-        const doneStatus = initialData.statuses.find(s => s.status_name === 'Done');
-        if (doneStatus && value === doneStatus.id) {
-          updates.progress_percent = 100;
-        }
+    if (isSelected) {
+      const selectedItems: { type: 'project' | 'task' | 'subtask', id: number }[] = [];
+      Object.entries(checkedIds).forEach(([key, checked]) => {
+        if (!checked) return;
+        const [t, i] = key.split('-');
+        selectedItems.push({
+          type: t === 'p' ? 'project' : t === 't' ? 'task' : 'subtask',
+          id: parseInt(i, 10)
+        });
+      });
+      if (selectedItems.length > 1) {
+        targetItems = selectedItems;
+      }
+    }
+
+    // Filter applicable items
+    const applicableItems = targetItems.filter(item => {
+      const data = findItem(item.type, item.id);
+      if (!data) return false;
+
+      // Auto ON check
+      if (item.type === 'project' || item.type === 'task') {
+        if (['planned_start_date', 'planned_end_date'].includes(field) && (data as any).is_auto_planned_date) return false;
+        if (['actual_start_date', 'actual_end_date'].includes(field) && (data as any).is_auto_actual_date) return false;
+        if (['progress_percent', 'planned_effort_total', 'actual_effort_total'].includes(field)) return false;
+      } else if (item.type === 'subtask') {
+        if (['planned_effort_days', 'actual_effort_days'].includes(field) && (data as any).is_auto_effort) return false;
       }
 
-      if (type === 'project') await wbsOps.updateProject(id, updates);
-      else if (type === 'task') await wbsOps.updateTask(id, updates);
-      else await wbsOps.updateSubtask(id, updates);
-      onUpdate();
-    } catch (err) {
-      console.error(err);
-      alert('保存に失敗しました。');
-    } finally {
-      setSaving(false);
+      // Level specific field check
+      if (field === 'project_name' && item.type !== 'project') return false;
+      if (field === 'task_name' && item.type !== 'task') return false;
+      if (['subtask_type_id', 'subtask_detail', 'workload_percent', 'review_days', 'review_start_date'].includes(field) && item.type !== 'subtask') return false;
+
+      return true;
+    });
+
+    const performUpdate = async () => {
+      setSaving(true);
+      setIsConfirmModalOpen(false);
+      try {
+        const promises = applicableItems.map(item => {
+          const updates: any = { [field]: value };
+          if (item.type === 'subtask' && field === 'status_id' && initialData) {
+            const doneStatus = initialData.statuses.find(s => s.status_name === 'Done');
+            if (doneStatus && value === doneStatus.id) {
+              updates.progress_percent = 100;
+            }
+          }
+          if (item.type === 'project') return wbsOps.updateProject(item.id, updates);
+          if (item.type === 'task') return wbsOps.updateTask(item.id, updates);
+          return wbsOps.updateSubtask(item.id, updates);
+        });
+        await Promise.all(promises);
+        onUpdate();
+      } catch (err) {
+        console.error(err);
+        alert('保存に失敗しました。');
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    if (applicableItems.length > 1) {
+      const hasExistingValue = applicableItems.some(item => {
+        if (item.type === type && item.id === id) return false;
+        const data = findItem(item.type, item.id);
+        if (!data) return false;
+        const currentVal = (data as any)[field];
+        return currentVal != null && currentVal !== '' && currentVal !== 0 && currentVal !== value;
+      });
+
+      if (hasExistingValue) {
+        setConfirmData({
+          total: applicableItems.length,
+          detail: `選択された項目のうち、すでに値が入力されているものがあります。上書きしてよろしいですか？\n(対象項目数: ${applicableItems.length})`,
+          title: '一括編集の確認',
+          confirmText: '上書き保存',
+          variant: 'warning',
+          onConfirm: performUpdate
+        });
+        setIsConfirmModalOpen(true);
+      } else {
+        await performUpdate();
+      }
+    } else {
+      await performUpdate();
     }
-  }, [onUpdate, initialData, projects]);
+  }, [onUpdate, initialData, projects, checkedIds, findItem]);
 
   const handleAddTask = useCallback(async (projectId: number) => {
     try {
@@ -663,7 +733,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                   <Draggable key={`p-${project.id}`} draggableId={`p-${project.id}`} index={pIndex}>
                     {(provided) => (
                       <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`p-${project.id}`}>
-                        <ProjectRow 
+                        <ProjectRow
                           project={project}
                           nameWidth={nameWidth}
                           checked={!!checkedIds[`p-${project.id}`]}
@@ -672,17 +742,17 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                           expanded={expandedProjects[project.id] !== false}
                           onUpdateField={handleUpdate}
                           onAddTask={() => handleAddTask(project.id)}
-                            onEditDetail={() => {
-                              setEditingItem({ type: 'project', id: project.id, name: project.project_name });
-                              setDetailValue(project.detail || '');
-                               setTicketIdValue(project.ticket_id != null ? String(project.ticket_id) : '');
-                               setMemoValue(project.memo || '');
-                               setWorkloadPercentValue('100');
-                             }}
-                            initialData={initialData}
-                            provided={provided}
-                            hidePlanningColumns={hidePlanningColumns}
-                          />
+                          onEditDetail={() => {
+                            setEditingItem({ type: 'project', id: project.id, name: project.project_name });
+                            setDetailValue(project.detail || '');
+                            setTicketIdValue(project.ticket_id != null ? String(project.ticket_id) : '');
+                            setMemoValue(project.memo || '');
+                            setWorkloadPercentValue('100');
+                          }}
+                          initialData={initialData}
+                          provided={provided}
+                          hidePlanningColumns={hidePlanningColumns}
+                        />
 
                         {expandedProjects[project.id] !== false && (
                           <Droppable droppableId={`project-${project.id}`} type="TASK">
@@ -692,7 +762,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                   <Draggable key={`t-${task.id}`} draggableId={`t-${task.id}`} index={tIndex}>
                                     {(provided) => (
                                       <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`t-${task.id}`}>
-                                        <TaskRow 
+                                        <TaskRow
                                           task={task}
                                           nameWidth={nameWidth}
                                           checked={!!checkedIds[`t-${task.id}`]}
@@ -701,17 +771,17 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                           expanded={expandedTasks[task.id] !== false}
                                           onUpdateField={handleUpdate}
                                           onAddSubtask={() => handleAddSubtask(task.id)}
-                                            onEditDetail={() => {
-                                              setEditingItem({ type: 'task', id: task.id, name: task.task_name });
-                                              setDetailValue(task.detail || '');
-                                               setTicketIdValue(task.ticket_id != null ? String(task.ticket_id) : '');
-                                               setMemoValue(task.memo || '');
-                                               setWorkloadPercentValue('100');
-                                             }}
-                                            initialData={initialData}
-                                            provided={provided}
-                                            hidePlanningColumns={hidePlanningColumns}
-                                          />
+                                          onEditDetail={() => {
+                                            setEditingItem({ type: 'task', id: task.id, name: task.task_name });
+                                            setDetailValue(task.detail || '');
+                                            setTicketIdValue(task.ticket_id != null ? String(task.ticket_id) : '');
+                                            setMemoValue(task.memo || '');
+                                            setWorkloadPercentValue('100');
+                                          }}
+                                          initialData={initialData}
+                                          provided={provided}
+                                          hidePlanningColumns={hidePlanningColumns}
+                                        />
 
                                         {expandedTasks[task.id] !== false && (
                                           <Droppable droppableId={`task-${task.id}`} type="SUBTASK">
@@ -722,7 +792,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                     <Draggable key={`s-${subtask.id}`} draggableId={`s-${subtask.id}`} index={sIndex}>
                                                       {(provided) => (
                                                         <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`s-${subtask.id}`}>
-                                                          <SubtaskRow 
+                                                          <SubtaskRow
                                                             subtask={subtask}
                                                             nameWidth={nameWidth}
                                                             checked={!!checkedIds[`s-${subtask.id}`]}
@@ -787,41 +857,117 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           ticketIdValue={ticketIdValue}
           setTicketIdValue={setTicketIdValue}
           memoValue={memoValue}
-           setMemoValue={setMemoValue}
-           workloadPercentValue={workloadPercentValue}
-           setWorkloadPercentValue={setWorkloadPercentValue}
-           ticketUrlTemplate={initialData?.ticket_url_template}
+          setMemoValue={setMemoValue}
+          workloadPercentValue={workloadPercentValue}
+          setWorkloadPercentValue={setWorkloadPercentValue}
+          ticketUrlTemplate={initialData?.ticket_url_template}
           onClose={() => setEditingItem(null)}
           onSave={async () => {
             const updates: Record<string, any> = {
               ticket_id: ticketIdValue !== '' ? parseInt(ticketIdValue, 10) : null,
               memo: memoValue || null,
             };
-            // subtask_detail は subtask のみ、project/task は detail フィールド
-             if (editingItem.type === 'subtask') {
-               updates.subtask_detail = detailValue || null;
-               updates.workload_percent = workloadPercentValue !== '' ? parseInt(workloadPercentValue, 10) : 100;
-             } else {
-               updates.detail = detailValue || null;
-             }
-            try {
+            if (editingItem.type === 'subtask') {
+              updates.subtask_detail = detailValue || null;
+              updates.workload_percent = workloadPercentValue !== '' ? parseInt(workloadPercentValue, 10) : 100;
+            } else {
+              updates.detail = detailValue || null;
+            }
+
+            // Bulk logic for DetailModal
+            const idStr = `${editingItem.type.charAt(0)}-${editingItem.id}`;
+            let targetItems: { type: 'project' | 'task' | 'subtask', id: number }[] = [{ type: editingItem.type as any, id: editingItem.id }];
+
+            if (checkedIds[idStr]) {
+              const selectedItems: { type: 'project' | 'task' | 'subtask', id: number }[] = [];
+              Object.entries(checkedIds).forEach(([key, checked]) => {
+                if (!checked) return;
+                const [t, i] = key.split('-');
+                selectedItems.push({
+                  type: t === 'p' ? 'project' : t === 't' ? 'task' : 'subtask',
+                  id: parseInt(i, 10)
+                });
+              });
+              if (selectedItems.length > 1) {
+                targetItems = selectedItems;
+              }
+            }
+
+            const performDetailUpdate = async () => {
               setSaving(true);
-              if (editingItem.type === 'project') await wbsOps.updateProject(editingItem.id, updates);
-              else if (editingItem.type === 'task') await wbsOps.updateTask(editingItem.id, updates);
-              else await wbsOps.updateSubtask(editingItem.id, updates);
-              setEditingItem(null);
-              onUpdate();
-            } catch (err) {
-              console.error(err);
-              alert('保存に失敗しました');
-            } finally {
-              setSaving(false);
+              setIsConfirmModalOpen(false);
+              try {
+                const promises = targetItems.map(item => {
+                  const itemUpdates = { ...updates };
+                  if (item.type === 'subtask') {
+                    if ('detail' in itemUpdates) {
+                      itemUpdates.subtask_detail = itemUpdates.detail;
+                      delete (itemUpdates as any).detail;
+                    }
+                  } else {
+                    if ('subtask_detail' in itemUpdates) {
+                      itemUpdates.detail = itemUpdates.subtask_detail;
+                      delete (itemUpdates as any).subtask_detail;
+                    }
+                    delete (itemUpdates as any).workload_percent;
+                  }
+
+                  if (item.type === 'project') return wbsOps.updateProject(item.id, itemUpdates);
+                  if (item.type === 'task') return wbsOps.updateTask(item.id, itemUpdates);
+                  return wbsOps.updateSubtask(item.id, itemUpdates);
+                });
+                await Promise.all(promises);
+                setEditingItem(null);
+                onUpdate();
+              } catch (err) {
+                console.error(err);
+                alert('保存に失敗しました');
+              } finally {
+                setSaving(false);
+              }
+            };
+
+            if (targetItems.length > 1) {
+              const hasExisting = targetItems.some(item => {
+                if (item.type === editingItem.type && item.id === editingItem.id) return false;
+                const data = findItem(item.type, item.id);
+                if (!data) return false;
+
+                const fieldsToCheck = [
+                  { f: 'ticket_id', v: updates.ticket_id },
+                  { f: 'memo', v: updates.memo },
+                  { f: item.type === 'subtask' ? 'subtask_detail' : 'detail', v: editingItem.type === 'subtask' ? updates.subtask_detail : updates.detail },
+                  { f: 'workload_percent', v: updates.workload_percent }
+                ];
+
+                return fieldsToCheck.some(check => {
+                  if (check.v == null || check.v === '') return false;
+                  const currentVal = (data as any)[check.f];
+                  return currentVal != null && currentVal !== '' && currentVal !== 0 && currentVal !== check.v;
+                });
+              });
+
+              if (hasExisting) {
+                setConfirmData({
+                  total: targetItems.length,
+                  detail: `選択された項目のうち、すでに詳細やメモが入力されているものがあります。上書きしてよろしいですか？\n(対象項目数: ${targetItems.length})`,
+                  title: '一括編集の確認',
+                  confirmText: '上書き保存する',
+                  variant: 'warning',
+                  onConfirm: performDetailUpdate
+                });
+                setIsConfirmModalOpen(true);
+              } else {
+                await performDetailUpdate();
+              }
+            } else {
+              await performDetailUpdate();
             }
           }}
         />
       )}
 
-      <FloatingMenu 
+      <FloatingMenu
         totalSelectedCount={totalSelectedCount}
         onDelete={handleDeleteSelected}
         onDuplicate={handleDuplicateSelected}
@@ -840,7 +986,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         totalSelectedCount={totalSelectedCount}
       />
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={isConfirmModalOpen}
         totalCount={confirmData.total}
         title={confirmData.title}

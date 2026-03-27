@@ -12,7 +12,6 @@ interface ConfirmModalProps {
   onCancel: () => void;
   variant?: 'danger' | 'warning' | 'primary';
   icon?: React.ReactNode;
-  showWarningText?: boolean;
   footer?: React.ReactNode;
   showBodyIcon?: boolean;
   descriptionPosition?: 'beforeButtons' | 'afterButtons';
@@ -29,7 +28,6 @@ const ConfirmModal = ({
   onCancel, 
   variant = 'danger', 
   icon, 
-  showWarningText = true, 
   footer,
   showBodyIcon = true,
   descriptionPosition = 'beforeButtons',
@@ -101,11 +99,6 @@ const ConfirmModal = ({
           {descriptionPosition === 'beforeButtons' && (
             <p className="text-sm text-gray-500 dark:text-slate-400 mb-6 leading-relaxed whitespace-pre-wrap">
               {description}
-              {showWarningText && (
-                <>
-                  {"\n\n"}この操作は取り消せません。本当によろしいですか？
-                </>
-              )}
             </p>
           )}
 
@@ -143,11 +136,6 @@ const ConfirmModal = ({
           {descriptionPosition === 'afterButtons' && (
             <p className="text-sm text-gray-400 dark:text-slate-500 mt-6 leading-relaxed whitespace-pre-wrap">
               {description}
-              {showWarningText && (
-                <>
-                  {"\n\n"}この操作は取り消せません。本当によろしいですか？
-                </>
-              )}
             </p>
           )}
         </div>
