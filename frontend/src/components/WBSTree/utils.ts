@@ -211,8 +211,10 @@ export const formatDisplayDate = (dateStr: string, type: string) => {
   if (!dateStr || type !== 'date') return dateStr;
   const parts = dateStr.split('-');
   if (parts.length === 3) {
-    // MM/DD 形式で表示 (スペース節約のため)
-    return `${parts[1]}/${parts[2]}`;
+    // M/d 形式で表示 (スペース節約のため、0を削る)
+    const month = parseInt(parts[1], 10).toString();
+    const day = parseInt(parts[2], 10).toString();
+    return `${month}/${day}`;
   }
   return dateStr;
 };

@@ -241,9 +241,15 @@ const EditableInput = memo(({
     if (value == null || value === '') return <span className="text-gray-300 dark:text-slate-600 text-[10px]">-</span>;
 
     let formattedValue = value;
-    if (type === 'number' && precision !== undefined && value !== '' && value != null) {
+    if (type === 'number' && value !== '' && value != null) {
       const num = Number(value);
-      if (!isNaN(num)) formattedValue = num.toFixed(precision);
+      if (!isNaN(num)) {
+        // 指定された精度、またはデフォルトで小数点第一位まで
+        const p = precision !== undefined ? precision : 1;
+        const fixed = num.toFixed(p);
+        // 小数点以下が0の場合は整数として表示 (例: 3.0 -> 3)
+        formattedValue = Number.parseFloat(fixed).toString();
+      }
     }
     return `${formattedValue}${suffix || ''}`;
   };
