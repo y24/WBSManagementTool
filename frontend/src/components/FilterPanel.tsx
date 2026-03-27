@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, ChartNoAxesGantt, Link2, Share2, Download, PenTool, LayoutDashboard, Layout } from 'lucide-react';
+import { Filter, X, Search, Calendar, Clock, ChevronDown, Check, RotateCcw, Settings, ChartNoAxesGantt, Link2, Share2, Download, PenTool, LayoutDashboard, Layout } from 'lucide-react';
 import MultiSelect from './MultiSelect';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
@@ -98,12 +98,12 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   }, [displayOptions.showRemoved, statuses, filters.statusIds, setFilters]);
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-6 py-3 flex items-center gap-4 shrink-0 shadow-sm z-40 transition-colors">
+    <div className="bg-slate-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-5 py-2 flex items-center gap-4 shrink-0 shadow-sm z-40 transition-colors">
       <div className="flex items-center gap-2 text-blue-600">
         <Filter size={18} className="stroke-[2.5px]" />
       </div>
 
-      <div className="flex-1 flex items-center gap-3 overflow-x-auto no-scrollbar scroll-smooth">
+      <div className="flex-1 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1.5">
         {/* Project Filter */}
         <MultiSelect
           values={filters.projectIds}
@@ -177,13 +177,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         {/* Delayed Toggle */}
         <button
           onClick={() => setFilters(prev => ({ ...prev, onlyDelayed: !prev.onlyDelayed }))}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.onlyDelayed
+          className={`p-2 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.onlyDelayed
             ? 'bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 ring-rose-500/10 ring-2'
             : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-rose-400 hover:text-rose-500'
             }`}
+          title="遅延タスクを表示"
+          aria-label="遅延タスクを表示"
         >
-          <Calendar size={14} className={filters.onlyDelayed ? 'animate-pulse' : ''} />
-          遅延タスク
+          <Clock size={18} className={filters.onlyDelayed ? 'animate-pulse' : ''} />
         </button>
 
         <button
@@ -199,11 +200,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       </div>
 
       {/* Mode Select (Segmented Control) */}
-      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-gray-200 dark:border-slate-700 shadow-inner h-[38px] items-center">
+      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-gray-200 dark:border-slate-700 shadow-inner h-[36px] items-center">
         <button
           onClick={() => setDisplayOptions(prev => ({ ...prev, isPlanningMode: false, hidePlanningColumns: false }))}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${!displayOptions.isPlanningMode && !displayOptions.hidePlanningColumns 
-            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${!displayOptions.isPlanningMode && !displayOptions.hidePlanningColumns
+            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
             : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
           title="標準表示"
         >
@@ -212,8 +213,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         </button>
         <button
           onClick={() => setDisplayOptions(prev => ({ ...prev, isPlanningMode: true, hidePlanningColumns: false }))}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${displayOptions.isPlanningMode 
-            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${displayOptions.isPlanningMode
+            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
             : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
           title="計画モード"
         >
@@ -222,8 +223,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         </button>
         <button
           onClick={() => setDisplayOptions(prev => ({ ...prev, hidePlanningColumns: true, isPlanningMode: false }))}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${displayOptions.hidePlanningColumns 
-            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' 
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${displayOptions.hidePlanningColumns
+            ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
             : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
           title="実績モード"
         >
