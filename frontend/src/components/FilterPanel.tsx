@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, Columns3, Columns2, ChartNoAxesGantt, Link2, Share2, Download, PenTool } from 'lucide-react';
+import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, ChartNoAxesGantt, Link2, Share2, Download, PenTool, LayoutDashboard } from 'lucide-react';
 import MultiSelect from './MultiSelect';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
@@ -204,8 +204,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 ring-blue-500/10 ring-2'
           : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-300'
           }`}
-        title={displayOptions.isPlanningMode ? '計画モード OFF' : '計画モード ON'}
-        aria-label={displayOptions.isPlanningMode ? '計画モード OFF' : '計画モード ON'}
+        title={displayOptions.isPlanningMode ? '計画モードを解除' : '計画モードに切替'}
+        aria-label={displayOptions.isPlanningMode ? '計画モードを解除' : '計画モードに切替'}
       >
         <PenTool size={18} />
       </button>
@@ -213,13 +213,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       <button
         onClick={() => setDisplayOptions(prev => ({ ...prev, hidePlanningColumns: !prev.hidePlanningColumns }))}
         className={`p-2 rounded-lg border transition-all shadow-sm ${displayOptions.hidePlanningColumns
-          ? 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200'
-          : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
+          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 ring-blue-500/10 ring-2'
+          : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-300'
           }`}
-        title={displayOptions.hidePlanningColumns ? '計画列を表示' : '計画列を非表示'}
-        aria-label={displayOptions.hidePlanningColumns ? '計画列を表示' : '計画列を非表示'}
+        title={displayOptions.hidePlanningColumns ? '実績モードを解除' : '実績モードに切替'}
+        aria-label={displayOptions.hidePlanningColumns ? '実績モードを解除' : '実績モードに切替'}
       >
-        {displayOptions.hidePlanningColumns ? <Columns2 size={18} /> : <Columns3 size={18} />}
+        <LayoutDashboard size={18} />
       </button>
 
       <button
