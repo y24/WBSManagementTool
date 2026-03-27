@@ -43,9 +43,9 @@ const ProjectRow = memo(({
     shouldHighlightField('project', field, value, project, initialData);
 
   return (
-    <div className={`flex group wbs-row-project ${commonRowClasses}`}>
+    <div className={`flex group wbs-row-project ${commonRowClasses} ${checked ? 'checked' : ''}`}>
       <div
-        className={`sticky left-0 z-20 flex items-center gap-1 font-semibold text-gray-800 dark:text-slate-100 wbs-cell-project transition-colors ${commonCellClasses}`}
+        className={`sticky left-0 z-20 flex items-center gap-1 font-semibold text-gray-800 dark:text-slate-100 wbs-cell-project transition-colors ${commonCellClasses} ${checked ? 'checked' : 'bg-white dark:bg-slate-900'}`}
         style={{ width: nameWidth, minWidth: nameWidth }}
       >
         <input

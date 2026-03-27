@@ -185,6 +185,55 @@ code {
   background-color: var(--wbs-subtask-hover) !important;
 }
 
+/* Checked state highlight */
+.wbs-row-project.checked,
+.wbs-row-task.checked,
+.wbs-row-subtask.checked {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.wbs-row-project.checked:hover,
+.wbs-row-task.checked:hover,
+.wbs-row-subtask.checked:hover {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+:root.dark .wbs-row-project.checked,
+:root.dark .wbs-row-task.checked,
+:root.dark .wbs-row-subtask.checked {
+  background-color: rgba(30, 64, 175, 0.25) !important;
+}
+
+:root.dark .wbs-row-project.checked:hover,
+:root.dark .wbs-row-task.checked:hover,
+:root.dark .wbs-row-subtask.checked:hover {
+  background-color: rgba(30, 64, 175, 0.35) !important;
+}
+
+.wbs-cell-project.checked,
+.wbs-cell-task.checked,
+.wbs-cell-subtask.checked {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.group:hover .wbs-cell-project.checked,
+.group:hover .wbs-cell-task.checked,
+.group:hover .wbs-cell-subtask.checked {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+:root.dark .wbs-cell-project.checked,
+:root.dark .wbs-cell-task.checked,
+:root.dark .wbs-cell-subtask.checked {
+  background-color: rgba(30, 64, 175, 0.35) !important;
+}
+
+:root.dark .group:hover .wbs-cell-project.checked,
+:root.dark .group:hover .wbs-cell-task.checked,
+:root.dark .group:hover .wbs-cell-subtask.checked {
+  background-color: rgba(30, 64, 175, 0.45) !important;
+}
+
 /* Common Table utility classes */
 .wbs-cell-border {
   border-right: 1px solid var(--wbs-border-color);

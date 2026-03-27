@@ -45,9 +45,9 @@ const SubtaskRow = memo(({
     shouldHighlightField('subtask', field, value, subtask, initialData);
 
   return (
-    <div className={`flex group wbs-row-subtask ${commonRowClasses}`}>
+    <div className={`flex group wbs-row-subtask ${commonRowClasses} ${checked ? 'checked' : ''}`}>
       <div
-        className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 dark:text-slate-400 wbs-cell-subtask transition-colors ${commonCellClasses}`}
+        className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 dark:text-slate-400 wbs-cell-subtask transition-colors ${commonCellClasses} ${checked ? 'checked' : 'bg-white dark:bg-slate-900'}`}
         style={{ width: nameWidth, minWidth: nameWidth }}
       >
         <input
