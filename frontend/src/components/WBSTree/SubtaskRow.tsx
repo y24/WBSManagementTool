@@ -112,6 +112,26 @@ const SubtaskRow = memo(({
           onUpdateField={onUpdateField}
         />
       </div>
+      <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
+        {(localProgress != null) && (
+          <div 
+            className="absolute top-0 left-0 h-full bg-green-500/20 dark:bg-green-500/30 transition-all duration-300 pointer-events-none"
+            style={{ width: `${localProgress}%` }}
+          />
+        )}
+        <div className="relative z-10 w-full h-full flex items-center">
+          <EditableInput
+            type="number"
+            value={subtask.progress_percent}
+            onChange={(v: any) => onUpdateField('subtask', subtask.id, 'progress_percent', v)}
+            onInputChange={(v: number | null) => setLocalProgress(v)}
+            min={0}
+            max={100}
+            suffix="%"
+            autoPercent={true}
+          />
+        </div>
+      </div>
       <div className={`w-28 flex items-center ${commonCellClasses}`}>
         <PortalSelect
           value={subtask.assignee_id}
@@ -181,26 +201,6 @@ const SubtaskRow = memo(({
           onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
           highlight={getHighlight('actual_effort_days', subtask.actual_effort_days)}
         />
-      </div>
-      <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
-        {(localProgress != null) && (
-          <div 
-            className="absolute top-0 left-0 h-full bg-green-500/20 dark:bg-green-500/30 transition-all duration-300 pointer-events-none"
-            style={{ width: `${localProgress}%` }}
-          />
-        )}
-        <div className="relative z-10 w-full h-full flex items-center">
-          <EditableInput
-            type="number"
-            value={subtask.progress_percent}
-            onChange={(v: any) => onUpdateField('subtask', subtask.id, 'progress_percent', v)}
-            onInputChange={(v: number | null) => setLocalProgress(v)}
-            min={0}
-            max={100}
-            suffix="%"
-            autoPercent={true}
-          />
-        </div>
       </div>
     </div>
   );

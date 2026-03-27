@@ -709,6 +709,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
             />
           </div>
           <div className={`w-28 flex items-center ${commonHeaderClasses}`}>ステータス</div>
+          <div className={`w-24 flex items-center ${commonHeaderClasses}`}>進捗</div>
           <div className={`w-28 flex items-center ${commonHeaderClasses}`}>担当者</div>
           {!hidePlanningColumns && (
             <>
@@ -722,7 +723,6 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー開始</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(実績)</div>
           <div className={`w-16 flex items-center ${commonHeaderClasses}`}>実績工数</div>
-          <div className={`w-24 flex items-center ${commonHeaderClasses}`}>進捗</div>
         </div>
 
         <DragDropContext onDragEnd={onDragEnd}>
