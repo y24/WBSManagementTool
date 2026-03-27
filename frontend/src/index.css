@@ -239,6 +239,14 @@ code {
   border-right: 1px solid var(--wbs-border-color);
 }
 
+.wbs-cell-planning {
+  background-image: linear-gradient(rgba(100, 100, 100, 0.01), rgba(100, 100, 100, 0.01)) !important;
+}
+
+:root.dark .wbs-cell-planning {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.01)) !important;
+}
+
 /* Floating Menu Animation */
 .floating-menu-container {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);

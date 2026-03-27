@@ -13,7 +13,7 @@ import DetailModal, { EditingType } from './WBSTree/DetailModal';
 import FloatingMenu from './WBSTree/FloatingMenu';
 import ConfirmModal from './WBSTree/ConfirmModal';
 import ShiftDatesModal from './WBSTree/ShiftDatesModal';
-import { commonHeaderClasses } from './WBSTree/constants';
+import { commonHeaderClasses, boundaryHeaderClasses, planningCellClasses } from './WBSTree/constants';
 
 interface WBSTreeProps {
   projects: Project[];
@@ -715,16 +715,16 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           <div className={`w-28 flex items-center ${commonHeaderClasses}`}>担当者</div>
           {!hidePlanningColumns && (
             <>
-              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>作業日数</div>
-              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー日数</div>
-              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(計画)</div>
-              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(計画)</div>
-              <div className={`w-16 flex items-center ${commonHeaderClasses}`}>予定工数</div>
+              <div className={`w-20 flex items-center ${commonHeaderClasses} ${boundaryHeaderClasses} ${planningCellClasses}`}>作業日数</div>
+              <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>レビュー日数</div>
+              <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>開始(計画)</div>
+              <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>終了(計画)</div>
+              <div className={`w-16 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>予定工数</div>
             </>
           )}
           {!isPlanningMode && (
             <>
-              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(実績)</div>
+              <div className={`w-20 flex items-center ${commonHeaderClasses} ${boundaryHeaderClasses}`}>開始(実績)</div>
               <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー開始</div>
               <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(実績)</div>
               <div className={`w-16 flex items-center ${commonHeaderClasses}`}>実績工数</div>

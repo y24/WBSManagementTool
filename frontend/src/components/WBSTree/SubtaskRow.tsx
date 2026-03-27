@@ -6,7 +6,7 @@ import EditableInput from './EditableInput';
 import StatusSelect from './StatusSelect';
 import PortalSelect from './PortalSelect';
 import { getWarning, shouldHighlightField } from './utils';
-import { commonRowClasses, commonCellClasses, dateCellClasses } from './constants';
+import { commonRowClasses, commonCellClasses, dateCellClasses, planningCellClasses } from './constants';
 
 interface SubtaskRowProps {
   subtask: Subtask;
@@ -150,7 +150,7 @@ const SubtaskRow = memo(({
       </div>
       {!hidePlanningColumns && (
         <>
-          <div className={`w-20 ${commonCellClasses}`}>
+          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`}>
             <EditableInput
               type="number"
               value={subtask.work_days}
@@ -162,7 +162,7 @@ const SubtaskRow = memo(({
               highlight={getHighlight('work_days', subtask.work_days)}
             />
           </div>
-          <div className={`w-20 ${commonCellClasses}`}>
+          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`}>
             <EditableInput
               type="number"
               value={subtask.review_days}
@@ -174,9 +174,9 @@ const SubtaskRow = memo(({
               highlight={getHighlight('review_days', subtask.review_days)}
             />
           </div>
-          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} max={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v)} highlight={getHighlight('planned_start_date', subtask.planned_start_date)} /></div>
-          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} min={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v)} highlight={getHighlight('planned_end_date', subtask.planned_end_date)} /></div>
-          <div className={`w-16 ${dateCellClasses}`}>
+          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} max={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v)} highlight={getHighlight('planned_start_date', subtask.planned_start_date)} /></div>
+          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} min={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v)} highlight={getHighlight('planned_end_date', subtask.planned_end_date)} /></div>
+          <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`}>
             <EditableInput
               type="number"
               value={subtask.planned_effort_days}

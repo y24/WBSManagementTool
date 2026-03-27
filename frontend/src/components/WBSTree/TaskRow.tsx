@@ -6,7 +6,7 @@ import EditableInput from './EditableInput';
 import StatusSelect from './StatusSelect';
 import PortalSelect from './PortalSelect';
 import { getWarning, getDisabledStatusIds, shouldHighlightField } from './utils';
-import { commonRowClasses, commonCellClasses, dateCellClasses } from './constants';
+import { commonRowClasses, commonCellClasses, dateCellClasses, planningCellClasses } from './constants';
 
 interface TaskRowProps {
   task: Task;
@@ -146,9 +146,9 @@ const TaskRow = memo(({
       </div>
       {!hidePlanningColumns && (
         <>
-          <div className={`w-20 ${commonCellClasses}`}></div>
-          <div className={`w-20 ${commonCellClasses}`}></div>
-          <div className={`w-20 ${dateCellClasses}`}>
+          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`}></div>
+          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`}></div>
+          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
             <EditableInput 
               type="date" 
               value={task.planned_start_date} 
@@ -158,7 +158,7 @@ const TaskRow = memo(({
               onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_planned_date', v)}
             />
           </div>
-          <div className={`w-20 ${dateCellClasses}`}>
+          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
             <EditableInput 
               type="date" 
               value={task.planned_end_date} 
@@ -168,7 +168,7 @@ const TaskRow = memo(({
               onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_planned_date', v)}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses}`}>
+          <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`}>
             <EditableInput 
               type="number" 
               value={task.planned_effort_total} 
