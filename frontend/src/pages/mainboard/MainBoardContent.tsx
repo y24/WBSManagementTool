@@ -56,6 +56,7 @@ export default function MainBoardContent({
           expandedTasks={expandedTasks}
           setExpandedTasks={setExpandedTasks}
           hidePlanningColumns={displayOptions.hidePlanningColumns}
+          isPlanningMode={displayOptions.isPlanningMode}
           onScroll={onTreeScroll}
         />
       </div>

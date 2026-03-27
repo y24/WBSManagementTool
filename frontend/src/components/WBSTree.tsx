@@ -24,6 +24,7 @@ interface WBSTreeProps {
   expandedTasks: Record<number, boolean>;
   setExpandedTasks: React.Dispatch<React.SetStateAction<Record<number, boolean>>>;
   hidePlanningColumns?: boolean;
+  isPlanningMode?: boolean;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
@@ -36,6 +37,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   expandedTasks,
   setExpandedTasks,
   hidePlanningColumns = false,
+  isPlanningMode = false,
   onScroll
 }, ref) => {
   const [saving, setSaving] = useState(false);
@@ -720,10 +722,14 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
               <div className={`w-16 flex items-center ${commonHeaderClasses}`}>予定工数</div>
             </>
           )}
-          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(実績)</div>
-          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー開始</div>
-          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(実績)</div>
-          <div className={`w-16 flex items-center ${commonHeaderClasses}`}>実績工数</div>
+          {!isPlanningMode && (
+            <>
+              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(実績)</div>
+              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー開始</div>
+              <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(実績)</div>
+              <div className={`w-16 flex items-center ${commonHeaderClasses}`}>実績工数</div>
+            </>
+          )}
         </div>
 
         <DragDropContext onDragEnd={onDragEnd}>
@@ -753,6 +759,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                           initialData={initialData}
                           provided={provided}
                           hidePlanningColumns={hidePlanningColumns}
+                          isPlanningMode={isPlanningMode}
                         />
 
                         {expandedProjects[project.id] !== false && (
@@ -782,6 +789,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                           initialData={initialData}
                                           provided={provided}
                                           hidePlanningColumns={hidePlanningColumns}
+                                          isPlanningMode={isPlanningMode}
                                         />
 
                                         {expandedTasks[task.id] !== false && (
@@ -801,17 +809,15 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                             initialData={initialData}
                                                             onUpdateField={handleUpdate}
                                                             onEditDetail={() => {
-                                                              // initialDataからサブタスク種別名を取得
-                                                              const typeName = initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || '未設定';
-                                                              const displayName = subtask.subtask_detail ? `${typeName}(${subtask.subtask_detail})` : typeName;
-                                                              setEditingItem({ type: 'subtask', id: subtask.id, name: displayName });
+                                                              setEditingItem({ type: 'subtask', id: subtask.id, name: `S-${subtask.id}` });
                                                               setDetailValue(subtask.subtask_detail || '');
                                                               setTicketIdValue(subtask.ticket_id != null ? String(subtask.ticket_id) : '');
                                                               setMemoValue(subtask.memo || '');
-                                                              setWorkloadPercentValue(subtask.workload_percent != null ? String(subtask.workload_percent) : '100');
+                                                              setWorkloadPercentValue(String(subtask.workload_percent || '100'));
                                                             }}
                                                             provided={provided}
                                                             hidePlanningColumns={hidePlanningColumns}
+                                                            isPlanningMode={isPlanningMode}
                                                           />
                                                         </div>
                                                       )}

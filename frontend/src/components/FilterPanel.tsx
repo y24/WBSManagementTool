@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, Columns3, Columns2, ChartNoAxesGantt, Link2, Share2, Download } from 'lucide-react';
+import { Filter, X, Search, Calendar, ChevronDown, Check, RotateCcw, Settings, Columns3, Columns2, ChartNoAxesGantt, Link2, Share2, Download, PenTool } from 'lucide-react';
 import MultiSelect from './MultiSelect';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
@@ -19,6 +19,7 @@ export interface DisplayOptions {
   showRemoved: boolean;
   showDoneProjects: boolean;
   hidePlanningColumns: boolean;
+  isPlanningMode: boolean;
   showGanttChart: boolean;
   showAssigneeName: boolean;
   showProgressRate: boolean;
@@ -196,6 +197,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
         {/* Done Projects Toggle は設定ポップアップへ移動 */}
       </div>
+
+      <button
+        onClick={() => setDisplayOptions(prev => ({ ...prev, isPlanningMode: !prev.isPlanningMode }))}
+        className={`p-2 rounded-lg border transition-all shadow-sm ${displayOptions.isPlanningMode
+          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 ring-blue-500/10 ring-2'
+          : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-300'
+          }`}
+        title={displayOptions.isPlanningMode ? '計画モード OFF' : '計画モード ON'}
+        aria-label={displayOptions.isPlanningMode ? '計画モード OFF' : '計画モード ON'}
+      >
+        <PenTool size={18} />
+      </button>
 
       <button
         onClick={() => setDisplayOptions(prev => ({ ...prev, hidePlanningColumns: !prev.hidePlanningColumns }))}

@@ -24,6 +24,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showRemoved: false,
   showDoneProjects: false,
   hidePlanningColumns: false,
+  isPlanningMode: false,
   showGanttChart: true,
   showAssigneeName: false,
   showProgressRate: false,

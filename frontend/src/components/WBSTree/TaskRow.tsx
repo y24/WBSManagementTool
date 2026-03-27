@@ -21,6 +21,7 @@ interface TaskRowProps {
   initialData: InitialData | null;
   provided: any;
   hidePlanningColumns?: boolean;
+  isPlanningMode?: boolean;
 }
 
 const TaskRow = memo(({ 
@@ -35,7 +36,8 @@ const TaskRow = memo(({
   onEditDetail,
   initialData,
   provided,
-  hidePlanningColumns = false
+  hidePlanningColumns = false,
+  isPlanningMode = false
 }: TaskRowProps) => {
   const warning = getWarning(task, initialData);
 
@@ -178,39 +180,43 @@ const TaskRow = memo(({
           </div>
         </>
       )}
-      <div className={`w-20 ${dateCellClasses}`}>
-        <EditableInput 
-          type="date" 
-          value={task.actual_start_date} 
-          max={task.actual_end_date}
-          onChange={(v: string) => onUpdateField('task', task.id, 'actual_start_date', v)} 
-          isAuto={task.is_auto_actual_date}
-          onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_actual_date', v)}
-          highlight={getHighlight('actual_start_date', task.actual_start_date)}
-        />
-      </div>
-      <div className={`w-20 ${dateCellClasses}`}></div>
-      <div className={`w-20 ${dateCellClasses}`}>
-        <EditableInput 
-          type="date" 
-          value={task.actual_end_date} 
-          min={task.actual_start_date}
-          onChange={(v: string) => onUpdateField('task', task.id, 'actual_end_date', v)} 
-          isAuto={task.is_auto_actual_date}
-          onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_actual_date', v)}
-          highlight={getHighlight('actual_end_date', task.actual_end_date)}
-        />
-      </div>
-      <div className={`w-16 ${dateCellClasses}`}>
-        <EditableInput 
-          type="number" 
-          value={task.actual_effort_total} 
-          precision={1} 
-          readOnly={true} 
-          isAuto={true} 
-          onChange={() => {}}
-        />
-      </div>
+      {!isPlanningMode && (
+        <>
+          <div className={`w-20 ${dateCellClasses}`}>
+            <EditableInput 
+              type="date" 
+              value={task.actual_start_date} 
+              max={task.actual_end_date}
+              onChange={(v: string) => onUpdateField('task', task.id, 'actual_start_date', v)} 
+              isAuto={task.is_auto_actual_date}
+              onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_actual_date', v)}
+              highlight={getHighlight('actual_start_date', task.actual_start_date)}
+            />
+          </div>
+          <div className={`w-20 ${dateCellClasses}`}></div>
+          <div className={`w-20 ${dateCellClasses}`}>
+            <EditableInput 
+              type="date" 
+              value={task.actual_end_date} 
+              min={task.actual_start_date}
+              onChange={(v: string) => onUpdateField('task', task.id, 'actual_end_date', v)} 
+              isAuto={task.is_auto_actual_date}
+              onToggleAuto={(v: boolean) => onUpdateField('task', task.id, 'is_auto_actual_date', v)}
+              highlight={getHighlight('actual_end_date', task.actual_end_date)}
+            />
+          </div>
+          <div className={`w-16 ${dateCellClasses}`}>
+            <EditableInput 
+              type="number" 
+              value={task.actual_effort_total} 
+              precision={1} 
+              readOnly={true} 
+              isAuto={true} 
+              onChange={() => {}}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 });

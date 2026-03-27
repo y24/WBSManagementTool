@@ -18,6 +18,7 @@ interface SubtaskRowProps {
   onEditDetail: () => void;
   provided: any;
   hidePlanningColumns?: boolean;
+  isPlanningMode?: boolean;
 }
 
 const SubtaskRow = memo(({
@@ -29,7 +30,8 @@ const SubtaskRow = memo(({
   onUpdateField,
   onEditDetail,
   provided,
-  hidePlanningColumns = false
+  hidePlanningColumns = false,
+  isPlanningMode = false
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData, true);
   const statusName = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name;
@@ -189,31 +191,35 @@ const SubtaskRow = memo(({
           </div>
         </>
       )}
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v)} highlight={getHighlight('actual_start_date', subtask.actual_start_date)} /></div>
-      <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.review_start_date} min={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v)} highlight={getHighlight('review_start_date', subtask.review_start_date)} /></div>
-      <div className={`w-20 ${dateCellClasses}`}>
-        <EditableInput
-          type="date"
-          value={subtask.actual_end_date}
-          min={subtask.actual_start_date}
-          onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v)}
-          highlight={getHighlight('actual_end_date', subtask.actual_end_date)}
-          className={isOngoing ? "bg-yellow-100/90 dark:bg-yellow-900/40" : ""}
-        />
-      </div>
-      <div className={`w-16 ${dateCellClasses}`}>
-        <EditableInput
-          type="number"
-          value={subtask.actual_effort_days}
-          onChange={(v: any) => onUpdateField('subtask', subtask.id, 'actual_effort_days', v)}
-          min={0}
-          step={0.1}
-          precision={1}
-          isAuto={subtask.is_auto_effort}
-          onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
-          highlight={getHighlight('actual_effort_days', subtask.actual_effort_days)}
-        />
-      </div>
+      {!isPlanningMode && (
+        <>
+          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v)} highlight={getHighlight('actual_start_date', subtask.actual_start_date)} /></div>
+          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.review_start_date} min={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v)} highlight={getHighlight('review_start_date', subtask.review_start_date)} /></div>
+          <div className={`w-20 ${dateCellClasses}`}>
+            <EditableInput
+              type="date"
+              value={subtask.actual_end_date}
+              min={subtask.actual_start_date}
+              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v)}
+              highlight={getHighlight('actual_end_date', subtask.actual_end_date)}
+              className={isOngoing ? "bg-yellow-100/90 dark:bg-yellow-900/40" : ""}
+            />
+          </div>
+          <div className={`w-16 ${dateCellClasses}`}>
+            <EditableInput
+              type="number"
+              value={subtask.actual_effort_days}
+              onChange={(v: any) => onUpdateField('subtask', subtask.id, 'actual_effort_days', v)}
+              min={0}
+              step={0.1}
+              precision={1}
+              isAuto={subtask.is_auto_effort}
+              onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
+              highlight={getHighlight('actual_effort_days', subtask.actual_effort_days)}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 });
