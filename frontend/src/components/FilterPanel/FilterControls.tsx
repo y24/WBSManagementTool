@@ -21,7 +21,6 @@ const FilterControls: React.FC<FilterControlsProps> = ({
 }) => {
   const statuses = initialData?.statuses || [];
   const members = initialData?.members || [];
-  const subtaskTypes = initialData?.subtask_types || [];
 
   return (
     <>
@@ -73,15 +72,6 @@ const FilterControls: React.FC<FilterControlsProps> = ({
         className="hover:shadow-md h-[34px]"
       />
 
-      {/* Subtask Type Filter */}
-      <MultiSelect
-        values={filters.subtaskTypeIds}
-        options={subtaskTypes.map(t => ({ id: t.id, name: t.type_name }))}
-        onChange={(ids) => setFilters((prev: FilterState) => ({ ...prev, subtaskTypeIds: ids as number[] }))}
-        placeholder="サブタスク種別を選択"
-        dropdownTitle="サブタスク種別"
-        className="hover:shadow-md h-[34px]"
-      />
     </>
   );
 };
