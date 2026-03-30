@@ -99,6 +99,7 @@ class SubtaskBase(BaseModel):
     work_days: Optional[Union[Decimal, float, int]] = None
     review_days: Optional[Union[Decimal, float, int]] = None
     ticket_id: Optional[int] = None
+    link_url: Optional[str] = None
     memo: Optional[str] = None
     is_auto_effort: bool = True
     workload_percent: int = 100
@@ -126,6 +127,7 @@ class SubtaskUpdate(BaseModel):
     work_days: Optional[Union[Decimal, float, int]] = None
     review_days: Optional[Union[Decimal, float, int]] = None
     ticket_id: Optional[int] = None
+    link_url: Optional[str] = None
     memo: Optional[str] = None
     is_auto_effort: Optional[bool] = None
     workload_percent: Optional[int] = None
@@ -149,6 +151,7 @@ class TaskBase(BaseModel):
     task_name: str
     detail: Optional[str] = None
     ticket_id: Optional[int] = None
+    link_url: Optional[str] = None
     memo: Optional[str] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
@@ -168,6 +171,7 @@ class TaskUpdate(BaseModel):
     task_name: Optional[str] = None
     detail: Optional[str] = None
     ticket_id: Optional[int] = None
+    link_url: Optional[str] = None
     memo: Optional[str] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
@@ -204,6 +208,7 @@ class ProjectBase(BaseModel):
     project_name: str
     detail: Optional[str] = None
     ticket_id: Optional[int] = None
+    link_url: Optional[str] = None
     memo: Optional[str] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
@@ -223,6 +228,7 @@ class ProjectUpdate(BaseModel):
     project_name: Optional[str] = None
     detail: Optional[str] = None
     ticket_id: Optional[int] = None
+    link_url: Optional[str] = None
     memo: Optional[str] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
@@ -324,6 +330,7 @@ class ImportPreviewRow(BaseModel):
     assignee: Optional[str] = None
     type: Optional[str] = None
     ticket_id: Optional[str] = None
+    link_url: Optional[str] = None
     planned_start: Optional[date] = None
     planned_end: Optional[date] = None
     planned_effort: Optional[Union[Decimal, float, int]] = None

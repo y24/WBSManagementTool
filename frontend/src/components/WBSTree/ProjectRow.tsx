@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { ChevronRight, ChevronDown, Plus, GripVertical, AlertTriangle, Pencil, ExternalLink, MessageSquare } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, GripVertical, AlertTriangle, Pencil, ExternalLink, Link, MessageSquare } from 'lucide-react';
 import { Project } from '../../types/wbs';
 import { InitialData } from '../../types';
 import EditableInput from './EditableInput';
@@ -85,6 +85,18 @@ const ProjectRow = memo(({
             onClick={(e) => e.stopPropagation()}
           >
             <ExternalLink size={14} />
+          </a>
+        )}
+        {project.link_url && (
+          <a
+            href={project.link_url.startsWith('http') ? project.link_url : `https://${project.link_url}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-600 transition-colors shrink-0 p-0.5"
+            title="リンク先を開く"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Link size={14} />
           </a>
         )}
         <button

@@ -23,15 +23,16 @@ COLUMN_MAPPING = {
     "終了(計画)": "planned_end",
     "予定工数": "planned_effort",
     "工数比率": "workload",
+    "リンクURL": "link_url",
     "メモ": "memo"
 }
 
 def generate_template() -> io.BytesIO:
     columns = list(COLUMN_MAPPING.keys())
     sample_data = [
-        [0, "新規プロジェクトA", "", "", "123456", "New", "山田 太郎", "", "2026-04-01", "2026-04-17", "", "", "プロジェクトのメモ"],
-        [1, "シナリオテスト", "", "", "234567", "New", "山田 太郎", "", "2026-04-01", "2026-04-10", "", "", "タスクのメモ"],
-        [2, "", "テスト設計", "データ作成含む", "345678", "New", "佐藤 次郎", 1, "2026-04-01", "2026-04-03", 2, 80, "サブタスクのメモ"],
+        [0, "新規プロジェクトA", "", "", "123456", "New", "山田 太郎", "", "2026-04-01", "2026-04-17", "", "", "https://example.com/p1", "プロジェクトのメモ"],
+        [1, "シナリオテスト", "", "", "234567", "New", "山田 太郎", "", "2026-04-01", "2026-04-10", "", "", "https://example.com/t1", "タスクのメモ"],
+        [2, "", "テスト設計", "データ作成含む", "345678", "New", "佐藤 次郎", 1, "2026-04-01", "2026-04-03", 2, 80, "https://example.com/s1", "サブタスクのメモ"],
         [2, "", "テスト実施", "", "", "New", "佐藤 次郎", 0.5, "2026-04-04", "2026-04-05", 1, 100, ""],
         [1, "性能テスト", "", "", "", "New", "鈴木 一郎", "", "", "", "", "", "階層1,2の日付未入力は自動計算されます"],
         [2, "", "テスト設計", "", "", "New", "鈴木 一郎", 0.5, "2026-04-06", "2026-04-07", "", 100, ""],
@@ -182,6 +183,7 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
             planned_effort=effort,
             review_days=review_days,
             workload=workload,
+            link_url=str(row.get("link_url")) if not pd.isna(row.get("link_url")) else None,
             memo=str(row.get("memo")) if not pd.isna(row.get("memo")) else None,
             errors=errors
         ))
@@ -219,6 +221,7 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
                 assignee_id=assignee_id,
                 planned_start_date=r.planned_start,
                 planned_end_date=r.planned_end,
+                link_url=r.link_url,
                 memo=r.memo,
                 is_auto_planned_date=is_auto_planned,
                 ticket_id=int(r.ticket_id) if r.ticket_id else None,
@@ -239,6 +242,7 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
                 assignee_id=assignee_id,
                 planned_start_date=r.planned_start,
                 planned_end_date=r.planned_end,
+                link_url=r.link_url,
                 memo=r.memo,
                 is_auto_planned_date=is_auto_planned,
                 ticket_id=int(r.ticket_id) if r.ticket_id else None,
@@ -267,6 +271,7 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
                 planned_effort_days=r.planned_effort,
                 review_days=r.review_days,
                 workload_percent=r.workload or 100,
+                link_url=r.link_url,
                 memo=r.memo,
                 is_auto_effort=is_auto_effort,
                 ticket_id=int(r.ticket_id) if r.ticket_id else None,
@@ -288,7 +293,7 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.B
     # 開始(計画)、終了(計画)、予定工数、開始(実績)、終了(実績)、実績工数、進捗、工数比率、メモ
     headers = [
         "階層", "名称", "サブタスク種別", "サブタスク詳細", "チケットID", "ステータス", "担当者", "レビュー日数",
-        "開始(計画)", "終了(計画)", "予定工数", "開始(実績)", "終了(実績)", "実績工数", "進捗", "工数比率", "メモ"
+        "開始(計画)", "終了(計画)", "予定工数", "開始(実績)", "終了(実績)", "実績工数", "進捗", "工数比率", "リンクURL", "メモ"
     ]
 
     # Fetch master data for lookup
@@ -304,7 +309,7 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.B
             member_map.get(p.assignee_id, ""), "",
             p.planned_start_date, p.planned_end_date, p.planned_effort_total,
             p.actual_start_date, p.actual_end_date, p.actual_effort_total,
-            p.progress_percent, "", p.memo
+            p.progress_percent, "", p.link_url, p.memo
         ])
         
         for t in p.tasks:
@@ -315,7 +320,7 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.B
                 member_map.get(t.assignee_id, ""), "",
                 t.planned_start_date, t.planned_end_date, t.planned_effort_total,
                 t.actual_start_date, t.actual_end_date, t.actual_effort_total,
-                t.progress_percent, "", t.memo
+                t.progress_percent, "", t.link_url, t.memo
             ])
             
             for s in t.subtasks:
@@ -328,7 +333,7 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.B
                     member_map.get(s.assignee_id, ""), s.review_days,
                     s.planned_start_date, s.planned_end_date, s.planned_effort_days,
                     s.actual_start_date, s.actual_end_date, s.actual_effort_days,
-                    s.progress_percent, s.workload_percent, s.memo
+                    s.progress_percent, s.workload_percent, s.link_url, s.memo
                 ])
 
     df = pd.DataFrame(rows, columns=headers)

@@ -18,6 +18,7 @@ export interface Subtask {
   work_days?: number | null;
   review_days?: number | null;
   ticket_id?: number | null;
+  link_url?: string | null;
   memo?: string | null;
   sort_order: number;
   is_auto_effort: boolean;
@@ -34,6 +35,7 @@ export interface Task {
   task_name: string;
   detail?: string | null;
   ticket_id?: number | null;
+  link_url?: string | null;
   memo?: string | null;
   planned_start_date?: string | null;
   planned_end_date?: string | null;
@@ -59,6 +61,7 @@ export interface Project {
   project_name: string;
   detail?: string | null;
   ticket_id?: number | null;
+  link_url?: string | null;
   memo?: string | null;
   planned_start_date?: string | null;
   planned_end_date?: string | null;

@@ -49,6 +49,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   } | null>(null);
   const [detailValue, setDetailValue] = useState('');
   const [ticketIdValue, setTicketIdValue] = useState('');
+  const [linkUrlValue, setLinkUrlValue] = useState('');
   const [memoValue, setMemoValue] = useState('');
   const [workloadPercentValue, setWorkloadPercentValue] = useState('100');
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
@@ -753,6 +754,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                             setEditingItem({ type: 'project', id: project.id, name: project.project_name });
                             setDetailValue(project.detail || '');
                             setTicketIdValue(project.ticket_id != null ? String(project.ticket_id) : '');
+                            setLinkUrlValue(project.link_url || '');
                             setMemoValue(project.memo || '');
                             setWorkloadPercentValue('100');
                           }}
@@ -783,6 +785,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                             setEditingItem({ type: 'task', id: task.id, name: task.task_name });
                                             setDetailValue(task.detail || '');
                                             setTicketIdValue(task.ticket_id != null ? String(task.ticket_id) : '');
+                                            setLinkUrlValue(task.link_url || '');
                                             setMemoValue(task.memo || '');
                                             setWorkloadPercentValue('100');
                                           }}
@@ -812,6 +815,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                               setEditingItem({ type: 'subtask', id: subtask.id, name: `S-${subtask.id}` });
                                                               setDetailValue(subtask.subtask_detail || '');
                                                               setTicketIdValue(subtask.ticket_id != null ? String(subtask.ticket_id) : '');
+                                                              setLinkUrlValue(subtask.link_url || '');
                                                               setMemoValue(subtask.memo || '');
                                                               setWorkloadPercentValue(String(subtask.workload_percent || '100'));
                                                             }}
@@ -865,6 +869,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           setTicketIdValue={setTicketIdValue}
           memoValue={memoValue}
           setMemoValue={setMemoValue}
+          linkUrlValue={linkUrlValue}
+          setLinkUrlValue={setLinkUrlValue}
           workloadPercentValue={workloadPercentValue}
           setWorkloadPercentValue={setWorkloadPercentValue}
           ticketUrlTemplate={initialData?.ticket_url_template}
@@ -872,6 +878,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           onSave={async () => {
             const updates: Record<string, any> = {
               ticket_id: ticketIdValue !== '' ? parseInt(ticketIdValue, 10) : null,
+              link_url: linkUrlValue || null,
               memo: memoValue || null,
             };
             if (editingItem.type === 'subtask') {

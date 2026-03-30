@@ -97,6 +97,7 @@ class Project(Base):
     is_deleted = Column(Boolean, nullable=False, default=False)
     status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=True, index=True)
     assignee_id = Column(Integer, ForeignKey("mst_members.id"), nullable=True, index=True)
+    link_url = Column(String(500), nullable=True)
     work_days = Column(Numeric(8, 2), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -132,6 +133,7 @@ class Task(Base):
     is_deleted = Column(Boolean, nullable=False, default=False)
     status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=True, index=True)
     assignee_id = Column(Integer, ForeignKey("mst_members.id"), nullable=True, index=True)
+    link_url = Column(String(500), nullable=True)
     work_days = Column(Numeric(8, 2), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -172,6 +174,7 @@ class Subtask(Base):
     review_days = Column(Numeric(8, 2), nullable=True)
     
     ticket_id = Column(Integer, nullable=True)
+    link_url = Column(String(500), nullable=True)
     memo = Column(Text, nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_auto_effort = Column(Boolean, nullable=False, default=True)
