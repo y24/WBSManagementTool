@@ -143,6 +143,34 @@ const DetailModal = ({
             />
           </div>
 
+          {/* link_url */}
+          <div>
+            <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <Link size={12} className="text-blue-500" />
+              リンク先URL
+              {linkUrlValue && (
+                <a
+                  href={linkUrlValue.startsWith('http') ? linkUrlValue : `https://${linkUrlValue}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-auto flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 normal-case tracking-normal transition-colors"
+                >
+                  <ExternalLink size={11} />
+                  リンクを開く
+                </a>
+              )}
+            </label>
+            <input
+              id="modal-link-url-input"
+              type="text"
+              autoComplete="off"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
+              value={linkUrlValue}
+              onChange={(e) => setLinkUrlValue(e.target.value)}
+              placeholder="https://example.com"
+            />
+          </div>
+
           {/* ticket_id */}
           <div>
             <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -182,38 +210,10 @@ const DetailModal = ({
             )}
           </div>
 
-          {/* link_url */}
-          <div>
-            <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-              <Link size={12} className="text-blue-500" />
-              リンク先URL
-              {linkUrlValue && (
-                <a
-                  href={linkUrlValue.startsWith('http') ? linkUrlValue : `https://${linkUrlValue}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-auto flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 normal-case tracking-normal transition-colors"
-                >
-                  <ExternalLink size={11} />
-                  リンクを開く
-                </a>
-              )}
-            </label>
-            <input
-              id="modal-link-url-input"
-              type="text"
-              autoComplete="off"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
-              value={linkUrlValue}
-              onChange={(e) => setLinkUrlValue(e.target.value)}
-              placeholder="https://example.com"
-            />
-          </div>
-
           {/* memo */}
           <div>
             <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-              <MessageSquare size={12} className="text-blue-500" />
+              <MessageSquare size={12} className="text-gray-500 dark:text-slate-400" />
               メモ <span className="text-gray-400 dark:text-slate-500 font-normal normal-case">(複数行)</span>
             </label>
             <textarea

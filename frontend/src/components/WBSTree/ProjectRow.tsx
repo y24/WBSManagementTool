@@ -62,18 +62,26 @@ const ProjectRow = memo(({
         <button onClick={onToggleExpand} className="p-0.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded transition-colors">
           {expanded === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
         </button>
-        <div className="flex-1 min-w-0">
-          <EditableInput value={project.project_name} onChange={(v: string) => onUpdateField('project', project.id, 'project_name', v)} className="font-semibold" />
-        </div>
         {warning && (
           <span title={warning} className="cursor-help inline-flex shrink-0">
             <AlertTriangle size={14} className="text-amber-500" />
           </span>
         )}
-        {project.memo && (
-          <span title={project.memo} className="cursor-help inline-flex items-center text-blue-400 hover:text-blue-600 shrink-0 mx-0.5" onClick={onEditDetail}>
-            <MessageSquare size={14} />
-          </span>
+        <div className="flex-1 min-w-0">
+          <EditableInput value={project.project_name} onChange={(v: string) => onUpdateField('project', project.id, 'project_name', v)} className="font-semibold" />
+        </div>
+
+        {project.link_url && (
+          <a
+            href={project.link_url.startsWith('http') ? project.link_url : `https://${project.link_url}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-600 transition-colors shrink-0 p-0.5"
+            title="リンク先を開く"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Link size={14} />
+          </a>
         )}
         {project.ticket_id && initialData?.ticket_url_template && (
           <a
@@ -87,17 +95,10 @@ const ProjectRow = memo(({
             <ExternalLink size={14} />
           </a>
         )}
-        {project.link_url && (
-          <a
-            href={project.link_url.startsWith('http') ? project.link_url : `https://${project.link_url}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-400 hover:text-blue-600 transition-colors shrink-0 p-0.5"
-            title="リンク先を開く"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Link size={14} />
-          </a>
+        {project.memo && (
+          <span title={project.memo} className="cursor-help inline-flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 shrink-0 mx-0.5" onClick={onEditDetail}>
+            <MessageSquare size={14} />
+          </span>
         )}
         <button
           onClick={onEditDetail}

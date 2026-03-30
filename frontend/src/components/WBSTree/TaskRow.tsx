@@ -62,18 +62,26 @@ const TaskRow = memo(({
         <button onClick={onToggleExpand} className="p-0.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded transition-colors">
           {expanded === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
         </button>
-        <div className="flex-1 min-w-0">
-          <EditableInput value={task.task_name} onChange={(v: string) => onUpdateField('task', task.id, 'task_name', v)} className="font-medium" />
-        </div>
         {warning && (
           <span title={warning} className="cursor-help inline-flex shrink-0">
             <AlertTriangle size={14} className="text-amber-500" />
           </span>
         )}
-        {task.memo && (
-          <span title={task.memo} className="cursor-help inline-flex items-center text-blue-400 hover:text-blue-600 shrink-0 mx-0.5" onClick={onEditDetail}>
-            <MessageSquare size={14} />
-          </span>
+        <div className="flex-1 min-w-0">
+          <EditableInput value={task.task_name} onChange={(v: string) => onUpdateField('task', task.id, 'task_name', v)} className="font-medium" />
+        </div>
+
+        {task.link_url && (
+          <a
+            href={task.link_url.startsWith('http') ? task.link_url : `https://${task.link_url}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-600 transition-colors shrink-0 p-0.5"
+            title="リンク先を開く"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Link size={14} />
+          </a>
         )}
         {task.ticket_id && initialData?.ticket_url_template && (
           <a
@@ -87,17 +95,10 @@ const TaskRow = memo(({
             <ExternalLink size={14} />
           </a>
         )}
-        {task.link_url && (
-          <a
-            href={task.link_url.startsWith('http') ? task.link_url : `https://${task.link_url}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-400 hover:text-blue-600 transition-colors shrink-0 p-0.5"
-            title="リンク先を開く"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Link size={14} />
-          </a>
+        {task.memo && (
+          <span title={task.memo} className="cursor-help inline-flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 shrink-0 mx-0.5" onClick={onEditDetail}>
+            <MessageSquare size={14} />
+          </span>
         )}
         <button
           onClick={onEditDetail}
