@@ -21,10 +21,7 @@ def seed_data():
             if not existing:
                 db.add(MstStatus(**st))
             else:
-                existing.status_name = st["status_name"]
-                existing.color_code = st["color_code"]
-                existing.sort_order = st["sort_order"]
-                existing.is_active = st["is_active"]
+                # システム予約フラグのみ更新し、他の属性（名前、色、ソート順、有効フラグ）はユーザーの変更を優先して保持する
                 existing.is_system_reserved = st.get("is_system_reserved", False)
 
         # Seed subtask types
@@ -39,19 +36,14 @@ def seed_data():
             {"id": 8, "type_name": "データ投入", "sort_order": 8, "is_active": True},
         ]
 
-        target_ids = [ty["id"] for ty in types]
-
         for ty in types:
             existing = db.query(MstSubtaskType).filter(MstSubtaskType.id == ty["id"]).first()
             if not existing:
                 db.add(MstSubtaskType(**ty))
-            else:
-                existing.type_name = ty["type_name"]
-                existing.sort_order = ty["sort_order"]
-                existing.is_active = ty["is_active"]
+            # 既存のレコードは更新せず、ユーザーの設定（名前、ソート順、有効フラグ）を保持する
 
-        # Deactivate types not in the seed list
-        db.query(MstSubtaskType).filter(MstSubtaskType.id.notin_(target_ids)).update({"is_active": False}, synchronize_session=False)
+        # シードリストに含まれないレコードを自動的に非アクティブ化する処理を削除
+        # (ユーザーが追加したカスタム種別を保持するため)
 
         db.commit()
         print("Initial seed data inserted successfully.")
