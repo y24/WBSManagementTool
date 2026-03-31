@@ -32,6 +32,7 @@ const PortalSelect = memo(({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, direction: 'down' as 'up' | 'down' });
+  const [activeIndex, setActiveIndex] = useState(-1);
   const prevValueRef = useRef(value);
   const selectedOption = options.find(o => o.id === value);
 
@@ -125,6 +126,55 @@ const PortalSelect = memo(({
     }
   }, [isFocused, isOpen]);
 
+  // メニュー開封時に現在の値に合わせて activeIndex を初期化
+  useEffect(() => {
+    if (isOpen) {
+      const idx = options.findIndex(o => o.id === value);
+      setActiveIndex(idx >= 0 ? idx : 0);
+    }
+  }, [isOpen, options, value]);
+
+  // ドロップダウンが開いている時のキーボード操作
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex(prev => (prev < options.length - 1 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex(prev => (prev > 0 ? prev - 1 : 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (activeIndex >= 0 && activeIndex < options.length) {
+          onChange(options[activeIndex].id);
+          setIsOpen(false);
+          if (onEditingChange) onEditingChange(false);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsOpen(false);
+        if (onEditingChange) onEditingChange(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, activeIndex, options, onChange, onEditingChange]);
+
+  // activeIndexが変わった時にスクロールさせる
+  useEffect(() => {
+    if (isOpen && activeIndex >= 0 && dropdownRef.current) {
+      const activeEl = dropdownRef.current.querySelector(`[data-index="${activeIndex}"]`);
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [activeIndex, isOpen]);
+
   return (
     <>
       <button
@@ -138,11 +188,6 @@ const PortalSelect = memo(({
           ${shouldFlash ? 'animate-auto-flash' : ''} 
           ${isFocused ? 'ring-2 ring-blue-500 ring-inset z-10' : ''}
           ${className}`}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.stopPropagation();
-          }
-        }}
       >
         <span className="truncate flex-1 leading-none text-gray-900 dark:text-slate-100">
           {selectedOption && selectedOption.id !== null ? (
@@ -174,20 +219,29 @@ const PortalSelect = memo(({
             </div>
           )}
           <div className="max-h-60 overflow-y-auto overscroll-contain">
-            {options.map((opt) => (
-              <button
-                key={opt.id ?? 'null'}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left ${opt.id === value ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-900 dark:text-slate-100'}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange(opt.id);
-                  setIsOpen(false);
-                }}
-              >
-                <span className="text-xs font-normal leading-none flex-1">{opt.name}</span>
-                {opt.id === value && <Check size={12} className="ml-auto" />}
-              </button>
-            ))}
+            {options.map((opt, index) => {
+              const isActive = index === activeIndex;
+              return (
+                <button
+                  key={opt.id ?? 'null'}
+                  data-index={index}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left outline-none
+                    ${opt.id === value ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-900 dark:text-slate-100'}
+                    ${isActive ? 'bg-gray-100 dark:bg-slate-800 ring-1 ring-inset ring-blue-500/50' : ''}
+                  `}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(opt.id);
+                    setIsOpen(false);
+                    if (onEditingChange) onEditingChange(false);
+                  }}
+                  onMouseEnter={() => setActiveIndex(index)}
+                >
+                  <span className="text-xs font-normal leading-none flex-1">{opt.name}</span>
+                  {isActive ? <Check size={12} className="ml-auto" /> : opt.id === value && <Check size={12} className="ml-auto text-blue-600 dark:text-blue-400" />}
+                </button>
+              );
+            })}
           </div>
         </div>,
         document.body

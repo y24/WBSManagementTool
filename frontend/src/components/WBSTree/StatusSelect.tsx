@@ -22,6 +22,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, direction: 'down' as 'up' | 'down' });
+  const [activeIndex, setActiveIndex] = useState(-1);
   const prevStatusIdRef = useRef(statusId);
   const statusInfo = initialData?.statuses.find((s: any) => s.id === statusId);
 
@@ -97,6 +98,58 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
     };
   }, [isOpen]);
 
+  // ドロップダウンが開いている時のキーボード操作
+  useEffect(() => {
+    if (!isOpen || !initialData) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex(prev => (prev < initialData.statuses.length - 1 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex(prev => (prev > 0 ? prev - 1 : 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (activeIndex >= 0 && activeIndex < initialData.statuses.length) {
+          const targetStatus = initialData.statuses[activeIndex];
+          if (!disabledStatusIds.includes(targetStatus.id)) {
+            onUpdateField(type, id, 'status_id', targetStatus.id);
+            setIsOpen(false);
+            if (onEditingChange) onEditingChange(false);
+          }
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsOpen(false);
+        if (onEditingChange) onEditingChange(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, activeIndex, initialData, disabledStatusIds, onUpdateField, type, id, onEditingChange]);
+
+  // メニュー開封時に現在のステータスに合わせて activeIndex を初期化
+  useEffect(() => {
+    if (isOpen && initialData) {
+      const idx = initialData.statuses.findIndex((s: any) => s.id === statusId);
+      setActiveIndex(idx >= 0 ? idx : 0);
+    }
+  }, [isOpen, initialData, statusId]);
+
+  // activeIndexが変わった時にスクロールさせる
+  useEffect(() => {
+    if (isOpen && activeIndex >= 0 && dropdownRef.current) {
+      const activeEl = dropdownRef.current.querySelector(`[data-index="${activeIndex}"]`);
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [activeIndex, isOpen]);
+
   // フォーカス時に Enter/Space でドロップダウンを開く
   useEffect(() => {
     if (isFocused && !isOpen) {
@@ -109,8 +162,6 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
           }
         }
       };
-      // キャプチャフェーズで使用することで、WBSTreeなどのバブリングを確実に防ぐ（またはバブリング前に処理）
-      // ただし通常のイベントバブリング対応としてボタン自体にも付けておきます
       window.addEventListener('keydown', handleGlobalKey, true);
       return () => window.removeEventListener('keydown', handleGlobalKey, true);
     }
@@ -158,22 +209,27 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
             <span className="text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">ステータスを変更</span>
           </div>
           <div className="max-h-60 overflow-y-auto overscroll-contain">
-            {initialData?.statuses.map((s: any) => {
+            {initialData?.statuses.map((s: any, index: number) => {
               const isDisabled = disabledStatusIds.includes(s.id) && s.id !== statusId;
+              const isActive = index === activeIndex;
               return (
                 <button
                   key={s.id}
+                  data-index={index}
                   disabled={isDisabled}
-                  className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left 
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 transition-colors text-left outline-none
                     ${s.id === statusId ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-900 dark:text-slate-100'}
                     ${isDisabled ? 'opacity-40 cursor-not-allowed filter grayscale-[0.5]' : ''}
+                    ${isActive ? 'bg-gray-100 dark:bg-slate-800 ring-1 ring-inset ring-blue-500/50' : ''}
                   `}
                   onClick={(e) => {
                     if (isDisabled) return;
                     e.stopPropagation();
                     onUpdateField(type, id, 'status_id', s.id);
                     setIsOpen(false);
+                    if (onEditingChange) onEditingChange(false);
                   }}
+                  onMouseEnter={() => !isDisabled && setActiveIndex(index)}
                 >
                   <span
                     className="master-color-dot shrink-0"
@@ -183,7 +239,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
                     {s.status_name}
                     {isDisabled && <span className="text-[9px] ml-2 text-gray-400 dark:text-slate-500 italic">(自動)</span>}
                   </span>
-                  {s.id === statusId && <Check size={12} className="ml-auto" />}
+                  {isActive ? <Check size={12} className="ml-auto" /> : s.id === statusId && <Check size={12} className="ml-auto text-blue-600 dark:text-blue-400" />}
                 </button>
               );
             })}
