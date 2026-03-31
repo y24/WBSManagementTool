@@ -74,20 +74,30 @@ const DetailModal = ({
     }
   };
 
-  // Escキーイベントの監視
+  // Esc/Enterキーイベントの監視
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
         if (showConfirm) {
           setShowConfirm(false);
         } else {
           handleCloseRequest();
         }
+      } else if (e.key === 'Enter') {
+        // テキストエリアでのEnterは改行を許可するため保存しない
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'TEXTAREA') return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        onSave();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [detailValue, ticketIdValue, linkUrlValue, memoValue, workloadPercentValue, showConfirm]);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [detailValue, ticketIdValue, linkUrlValue, memoValue, workloadPercentValue, showConfirm, onSave]);
 
   const ticketUrl = ticketUrlTemplate && ticketIdValue
     ? ticketUrlTemplate.replace('{TICKET_ID}', ticketIdValue)
@@ -96,7 +106,10 @@ const DetailModal = ({
   const { label, icon } = TYPE_LABELS[editingType];
 
   return createPortal(
-    <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div 
+      data-modal-active="true"
+      className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+    >
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50">
@@ -279,8 +292,27 @@ const DetailModal = ({
 
 // 確認用の小さなモーダルコンポーネント（内部使用）
 const SmallConfirmModal = ({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onCancel();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        onConfirm();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [onConfirm, onCancel]);
+
   return (
-    <div className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div 
+      data-modal-active="true"
+      className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+    >
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200 p-6">
         <div className="flex items-center gap-3 text-amber-500 mb-4">
           <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-full">

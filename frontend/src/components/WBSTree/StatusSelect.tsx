@@ -103,6 +103,8 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
     if (!isOpen || !initialData) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.querySelector('[data-modal-active="true"]')) return;
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setActiveIndex(prev => (prev < initialData.statuses.length - 1 ? prev + 1 : prev));
@@ -154,6 +156,8 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
   useEffect(() => {
     if (isFocused && !isOpen) {
       const handleGlobalKey = (e: KeyboardEvent) => {
+        if (document.querySelector('[data-modal-active="true"]')) return;
+        
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           e.stopPropagation();

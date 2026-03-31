@@ -50,25 +50,39 @@ const ShiftDatesModal = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
         if (showConfirm) {
           setShowConfirm(false);
         } else {
           handleCloseRequest();
         }
+      } else if (e.key === 'Enter') {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'TEXTAREA') return;
+
+        if (newBaseDate && newBaseDate !== currentMinDate) {
+          e.preventDefault();
+          e.stopPropagation();
+          onConfirm(newBaseDate);
+        }
       }
     };
     if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keydown', handleKeyDown, true);
     }
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [isOpen, showConfirm, newBaseDate, onClose]);
+  }, [isOpen, showConfirm, newBaseDate, currentMinDate, onConfirm, onClose]);
 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div 
+      data-modal-active="true"
+      className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+    >
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b dark:border-slate-800 bg-indigo-50/50 dark:bg-indigo-900/10">
@@ -126,6 +140,7 @@ const ShiftDatesModal = ({
           <button
             onClick={() => onConfirm(newBaseDate)}
             disabled={!newBaseDate || newBaseDate === currentMinDate}
+            autoFocus={true}
             className="flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 transition-all active:scale-95"
           >
             <Check size={16} />
@@ -141,8 +156,27 @@ const ShiftDatesModal = ({
 
 // 確認用の小さなモーダルコンポーネント（内部使用）
 const SmallConfirmModal = ({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onCancel();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        onConfirm();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [onConfirm, onCancel]);
+
   return (
-    <div className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div 
+      data-modal-active="true"
+      className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+    >
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200 p-6">
         <div className="flex items-center gap-3 text-amber-500 mb-4">
           <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-full">

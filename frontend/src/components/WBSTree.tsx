@@ -189,7 +189,11 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       tabIndex={0} // キーボードイベントを受け取るため
       className="flex-1 w-full overflow-auto bg-white dark:bg-slate-900 border-r dark:border-slate-800 relative no-scrollbar transition-colors outline-none focus:ring-1 focus:ring-blue-200/50"
       onScroll={onScroll}
-      onKeyDown={handleKeyDown}
+      onKeyDown={(e) => {
+        // モーダルが表示されている場合はツリーの操作を無効化する
+        if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem) return;
+        handleKeyDown(e);
+      }}
       onClick={(e) => {
         // インタラクティブな要素（ボタン、入力欄、リンクなど）以外の箇所をクリックした場合、
         // キーボード操作を継続できるるようメインコンテナにフォーカスを戻す

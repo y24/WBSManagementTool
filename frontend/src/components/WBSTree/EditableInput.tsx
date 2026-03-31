@@ -260,6 +260,8 @@ const EditableInput = memo(({
   useEffect(() => {
     if (!isEditing) return;
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.querySelector('[data-modal-active="true"]')) return;
+
       // ナビゲーションキーを捉えたら、親のWBSTree等に伝播させない(編集中にセル移動等が起きないように)
       // インプットが活性ならインプット自身の挙動(数値の上下等)を優先し、非活性(isAuto)ならここで確実に止める
       const navKeys = ['Enter', 'Escape', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
@@ -298,6 +300,8 @@ const EditableInput = memo(({
   useEffect(() => {
     if (isFocused && !isEditing && !isActuallyReadOnly) {
       const handleGlobalKey = (e: KeyboardEvent) => {
+        if (document.querySelector('[data-modal-active="true"]')) return;
+
         // すでにフォーカスされている入力要素がある場合は無視
         if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 

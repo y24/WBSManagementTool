@@ -36,16 +36,26 @@ const ConfirmModal = ({
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
         onCancel();
+      } else if (e.key === 'Enter') {
+        // テキストエリア等の入力要素でEnterを押した場合は決定しないように例外を設ける（将来のため）
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        onConfirm();
       }
     };
     if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keydown', handleKeyDown, true);
     }
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [isOpen, onCancel]);
+  }, [isOpen, onCancel, onConfirm]);
 
   if (!isOpen) return null;
 
@@ -55,7 +65,10 @@ const ConfirmModal = ({
   const LucideIcon = isDanger ? Trash2 : AlertTriangle;
 
   return createPortal(
-    <div className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 dark:bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
+    <div 
+      data-modal-active="true"
+      className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 dark:bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200"
+    >
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
         <div className={`flex items-center justify-between px-6 py-4 border-b dark:border-slate-800 ${
           isDanger ? 'bg-red-50/30 dark:bg-red-900/10' : 
@@ -117,6 +130,7 @@ const ConfirmModal = ({
             </button>
             <button
               onClick={onConfirm}
+              autoFocus={true}
               className={`flex-1 px-4 py-3 text-sm font-semibold text-white ${
                 isDanger ? 'bg-red-600 hover:bg-red-700' : 
                 isWarning ? 'bg-amber-600 hover:bg-amber-700' : 

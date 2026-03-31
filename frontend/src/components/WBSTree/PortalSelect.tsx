@@ -113,6 +113,8 @@ const PortalSelect = memo(({
   useEffect(() => {
     if (isFocused && !isOpen) {
       const handleGlobalKey = (e: KeyboardEvent) => {
+        if (document.querySelector('[data-modal-active="true"]')) return;
+
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           e.stopPropagation();
@@ -139,6 +141,8 @@ const PortalSelect = memo(({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.querySelector('[data-modal-active="true"]')) return;
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setActiveIndex(prev => (prev < options.length - 1 ? prev + 1 : prev));
