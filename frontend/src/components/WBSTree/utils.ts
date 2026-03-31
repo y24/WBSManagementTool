@@ -247,7 +247,14 @@ export const getDisabledStatusIds = (type: 'project' | 'task' | 'subtask', item:
     });
   } else if (allDone) {
     initialData.statuses.forEach(s => {
-      if (!doneIds.includes(s.id)) disabled.add(s.id);
+      if (type === 'project') {
+        // プロジェクトの場合、全タスクが完了していても「進行中」等を選択可能にする（自動完了を防ぐため）
+        // ただし「新規」の状態に戻ることは不適切なので制限する
+        if (newIds.includes(s.id)) disabled.add(s.id);
+      } else {
+        // タスクの場合は従来通り、全サブタスク完了時は完了系のみを許可
+        if (!doneIds.includes(s.id)) disabled.add(s.id);
+      }
     });
   } else if (anyBlocked) {
     initialData.statuses.forEach(s => {

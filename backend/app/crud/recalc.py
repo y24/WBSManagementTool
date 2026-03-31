@@ -72,7 +72,8 @@ def recalculate_project_status(db: Session, project_id: int):
     if not task_status_ids: return
     
     if all(sid in done_ids for sid in task_status_ids):
-        new_status_id = next((sid for sid in done_ids if sid != 7), 4)
+        # Don't auto-update to Done. Keep current status.
+        new_status_id = db_project.status_id
     elif all(sid in new_ids for sid in task_status_ids):
         new_status_id = next((sid for sid in new_ids if sid != 7), 1)
     else:
