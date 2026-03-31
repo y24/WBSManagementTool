@@ -212,7 +212,7 @@ const SubtaskRow = memo(({
       {!isPlanningMode && (
         <>
           <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v)} highlight={getHighlight('actual_start_date', subtask.actual_start_date)} /></div>
-          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.review_start_date} min={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v)} highlight={getHighlight('review_start_date', subtask.review_start_date)} /></div>
+          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.review_start_date} min={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v)} highlight={getHighlight('review_start_date', subtask.review_start_date)} readOnly={subtask.review_days !== null && subtask.review_days !== undefined && Number(subtask.review_days) === 0} /></div>
           <div className={`w-20 ${dateCellClasses}`}>
             <EditableInput
               type="date"

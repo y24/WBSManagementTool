@@ -50,7 +50,7 @@ const DisplayView = ({
       ${highlight ? 'bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/50' : ''} 
       ${className}`}
     onClick={onClick}
-    title={isActuallyReadOnly ? "自動算出中 (クリックで設定変更可能)" : (type === 'date' && value ? formatDateForInput(value) : String(value || "未入力"))}
+    title={isAuto ? "自動算出中 (クリックで設定変更可能)" : (readOnly ? "入力不可" : (type === 'date' && value ? formatDateForInput(value) : String(value || "未入力")))}
   >
     {displayValue()}
   </div>
