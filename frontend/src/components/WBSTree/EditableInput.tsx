@@ -255,6 +255,43 @@ const EditableInput = memo(({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isEditing, val, handleCommit]);
 
+  // Esc/Enterキーのグローバル監視 (特に自動ON時などでインプットが非活性の場合の対応)
+  // 捕捉フェーズ(true)でリッスンすることで、親のモーダル（DetailModal等）の Esc 処理よりも優先させる
+  useEffect(() => {
+    if (!isEditing) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // ナビゲーションキーを捉えたら、親のWBSTree等に伝播させない(編集中にセル移動等が起きないように)
+      // インプットが活性ならインプット自身の挙動(数値の上下等)を優先し、非活性(isAuto)ならここで確実に止める
+      const navKeys = ['Enter', 'Escape', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+      if (navKeys.includes(e.key)) {
+        if (isAuto || e.target !== inputRef.current) {
+          e.stopPropagation();
+        }
+      }
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setVal(type === 'date' ? formatDateForInput(value) : (value != null ? String(value) : ''));
+        setIsEditing(false);
+        if (onEditingChange) onEditingChange(false);
+        if (onFocusChange) onFocusChange(true);
+      } else if (e.key === 'Enter' && !e.isComposing) {
+        // 他のテキスト入力フィールドにフォーカスがある場合はそちらを優先
+        const target = e.target as HTMLElement;
+        const isOtherInput = (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && 
+                           target !== inputRef.current && 
+                           (target as HTMLInputElement).type !== 'checkbox';
+        
+        if (!isOtherInput) {
+          e.preventDefault();
+          handleCommit(val);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isEditing, value, type, val, handleCommit, onEditingChange, onFocusChange]);
+
   const isActuallyReadOnly = !!(readOnly || isAuto);
 
   // フォーカス中に F2/Enter または文字入力で編集モードに入る (Excelスタイル)
