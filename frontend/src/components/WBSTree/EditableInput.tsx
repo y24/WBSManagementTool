@@ -131,6 +131,7 @@ const EditableInput = memo(({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prevValueRef = useRef(value);
+  const shouldSelectOnFocus = useRef(true);
 
   // 値の初期化と同期
   useEffect(() => {
@@ -256,22 +257,40 @@ const EditableInput = memo(({
 
   const isActuallyReadOnly = !!(readOnly || isAuto);
 
-  // フォーカスかつ編集モードでない場合に F2/Enter で編集開始
+  // フォーカス中に F2/Enter または文字入力で編集モードに入る (Excelスタイル)
   useEffect(() => {
-    if (isFocused && !isEditing) {
+    if (isFocused && !isEditing && !isActuallyReadOnly) {
       const handleGlobalKey = (e: KeyboardEvent) => {
+        // すでにフォーカスされている入力要素がある場合は無視
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+        // F2 or Enter: 既存の値を維持して編集開始
         if (e.key === 'F2' || e.key === 'Enter') {
-          if (!isActuallyReadOnly) {
-            setIsEditing(true);
-            if (onEditingChange) onEditingChange(true);
-            isCommittingRef.current = false;
-          }
+          e.preventDefault();
+          e.stopPropagation();
+          shouldSelectOnFocus.current = true;
+          setIsEditing(true);
+          if (onEditingChange) onEditingChange(true);
+          isCommittingRef.current = false;
+          return;
+        }
+
+        // 文字入力: 既存の値を消去して入力した文字で編集開始
+        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          shouldSelectOnFocus.current = false;
+          setVal(e.key);
+          setIsEditing(true);
+          if (onEditingChange) onEditingChange(true);
+          isCommittingRef.current = false;
         }
       };
-      window.addEventListener('keydown', handleGlobalKey);
-      return () => window.removeEventListener('keydown', handleGlobalKey);
+
+      window.addEventListener('keydown', handleGlobalKey, true);
+      return () => window.removeEventListener('keydown', handleGlobalKey, true);
     }
-  }, [isFocused, isEditing, isActuallyReadOnly]);
+  }, [isFocused, isEditing, isActuallyReadOnly, onEditingChange]);
 
   const displayValueText = () => {
     if (type === 'date') {
@@ -329,7 +348,15 @@ const EditableInput = memo(({
     value: val,
     autoFocus: true,
     disabled: isAuto,
-    onFocus: (e: React.FocusEvent<HTMLInputElement>) => e.target.select(),
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+      if (shouldSelectOnFocus.current) {
+        e.target.select();
+      } else {
+        // 直接入力の場合は末尾にカーソルを置く
+        const len = e.target.value.length;
+        e.target.setSelectionRange(len, len);
+      }
+    },
     onChange: handleInputChange,
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
       // 親のキーボードナビゲーション（WBSTree）にイベントが伝わらないように止める
