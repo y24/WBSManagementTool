@@ -13,16 +13,19 @@ interface ProjectRowProps {
   nameWidth: number;
   assigneeWidth: number;
   checked: boolean;
-  onToggleCheck: () => void;
-  onToggleExpand: () => void;
+  onToggleCheck: (project: Project) => void;
+  onToggleExpand: (id: number) => void;
   expanded: boolean;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
-  onAddTask: () => void;
-  onEditDetail: () => void;
+  onAddTask: (id: number) => void;
+  onEditDetail: (type: 'project', data: Project) => void;
   initialData: InitialData | null;
   provided: any;
   hidePlanningColumns?: boolean;
   isPlanningMode?: boolean;
+  focusedField?: string | null;
+  onFocusChange?: (rowId: string, field: string) => void;
+  onEditingChange?: (editing: boolean) => void;
 }
 
 const ProjectRow = memo(({ 
@@ -39,7 +42,10 @@ const ProjectRow = memo(({
   initialData,
   provided,
   hidePlanningColumns = false,
-  isPlanningMode = false
+  isPlanningMode = false,
+  focusedField,
+  onFocusChange,
+  onEditingChange
 }: ProjectRowProps) => {
   const warning = getWarning(project, initialData);
 
@@ -55,13 +61,13 @@ const ProjectRow = memo(({
         <input
           type="checkbox"
           checked={checked}
-          onChange={onToggleCheck}
+          onChange={() => onToggleCheck(project)}
           className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-500 mr-1"
         />
         <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300">
           <GripVertical size={14} />
         </div>
-        <button onClick={onToggleExpand} className="p-0.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded transition-colors">
+        <button onClick={() => onToggleExpand(project.id)} className="p-0.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded transition-colors">
           {expanded === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
         </button>
         {warning && (
@@ -70,7 +76,14 @@ const ProjectRow = memo(({
           </span>
         )}
         <div className="flex-1 min-w-0">
-          <EditableInput value={project.project_name} onChange={(v: string) => onUpdateField('project', project.id, 'project_name', v)} className="font-semibold" />
+          <EditableInput 
+            value={project.project_name} 
+            onChange={(v: string) => onUpdateField('project', project.id, 'project_name', v)} 
+            className="font-semibold" 
+            isFocused={focusedField === 'name'}
+            onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'name')}
+            onEditingChange={onEditingChange}
+          />
         </div>
 
         {project.link_url && (
@@ -98,19 +111,19 @@ const ProjectRow = memo(({
           </a>
         )}
         {project.memo && (
-          <span title={project.memo} className="cursor-help inline-flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 shrink-0 mx-0.5" onClick={onEditDetail}>
+          <span title={project.memo} className="cursor-help inline-flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 shrink-0 mx-0.5" onClick={() => onEditDetail('project', project)}>
             <MessageSquare size={14} />
           </span>
         )}
         <button
-          onClick={onEditDetail}
+          onClick={() => onEditDetail('project', project)}
           className="p-1 text-gray-400 hover:text-blue-500 hover:bg-black/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
           title="詳細・メモを編集"
         >
           <Pencil size={14} />
         </button>
         <button
-          onClick={onAddTask}
+          onClick={() => onAddTask(project.id)}
           className="p-1 text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-black/5 dark:hover:bg-white/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
           title="タスクを追加"
         >
@@ -125,6 +138,9 @@ const ProjectRow = memo(({
           initialData={initialData} 
           onUpdateField={onUpdateField} 
           disabledStatusIds={getDisabledStatusIds('project', project, initialData)}
+          isFocused={focusedField === 'status'}
+          onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'status')}
+          onEditingChange={onEditingChange}
         />
       </div>
       <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
@@ -142,6 +158,9 @@ const ProjectRow = memo(({
             readOnly={true} 
             isAuto={true} 
             onChange={() => {}}
+            isFocused={focusedField === 'progress'}
+            onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'progress')}
+            onEditingChange={onEditingChange}
           />
         </div>
       </div>
@@ -160,6 +179,9 @@ const ProjectRow = memo(({
           placeholder="未設定"
           dropdownTitle="担当者を変更"
           highlight={getHighlight('assignee_id', project.assignee_id)}
+          isFocused={focusedField === 'assignee'}
+          onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'assignee')}
+          onEditingChange={onEditingChange}
         />
       </div>
       {!hidePlanningColumns && (
@@ -174,6 +196,9 @@ const ProjectRow = memo(({
               onChange={(v: string) => onUpdateField('project', project.id, 'planned_start_date', v)} 
               isAuto={project.is_auto_planned_date}
               onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_planned_date', v)}
+              isFocused={focusedField === 'planned_start'}
+              onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'planned_start')}
+              onEditingChange={onEditingChange}
             />
           </div>
           <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
@@ -184,6 +209,9 @@ const ProjectRow = memo(({
               onChange={(v: string) => onUpdateField('project', project.id, 'planned_end_date', v)} 
               isAuto={project.is_auto_planned_date}
               onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_planned_date', v)}
+              isFocused={focusedField === 'planned_end'}
+              onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'planned_end')}
+              onEditingChange={onEditingChange}
             />
           </div>
           <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`}>
@@ -194,6 +222,9 @@ const ProjectRow = memo(({
               readOnly={true} 
               isAuto={true} 
               onChange={() => {}}
+              isFocused={focusedField === 'planned_effort'}
+              onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'planned_effort')}
+              onEditingChange={onEditingChange}
             />
           </div>
         </>
@@ -209,6 +240,9 @@ const ProjectRow = memo(({
               isAuto={project.is_auto_actual_date}
               onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_actual_date', v)}
               highlight={getHighlight('actual_start_date', project.actual_start_date)}
+              isFocused={focusedField === 'actual_start'}
+              onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'actual_start')}
+              onEditingChange={onEditingChange}
             />
           </div>
           <div className={`w-20 ${dateCellClasses}`}></div>
@@ -221,6 +255,9 @@ const ProjectRow = memo(({
               isAuto={project.is_auto_actual_date}
               onToggleAuto={(v: boolean) => onUpdateField('project', project.id, 'is_auto_actual_date', v)}
               highlight={getHighlight('actual_end_date', project.actual_end_date)}
+              isFocused={focusedField === 'actual_end'}
+              onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'actual_end')}
+              onEditingChange={onEditingChange}
             />
           </div>
           <div className={`w-16 ${dateCellClasses}`}>
@@ -231,6 +268,9 @@ const ProjectRow = memo(({
               readOnly={true} 
               isAuto={true} 
               onChange={() => {}}
+              isFocused={focusedField === 'actual_effort'}
+              onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'actual_effort')}
+              onEditingChange={onEditingChange}
             />
           </div>
         </>

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, forwardRef } from 'react';
+import React, { useRef, useEffect, useState, forwardRef, useCallback } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Project } from '../types/wbs';
 import { InitialData } from '../types';
@@ -21,6 +21,7 @@ import { useWBSCreation } from './WBSTree/hooks/useWBSCreation';
 import { useWBSTreeActions } from './WBSTree/hooks/useWBSTreeActions';
 import { useWBSDragDrop } from './WBSTree/hooks/useWBSDragDrop';
 import { useDetailModal } from './WBSTree/hooks/useDetailModal';
+import { useWBSKeyboardNavigation } from './WBSTree/hooks/useWBSKeyboardNavigation';
 
 interface WBSTreeProps {
   projects: Project[];
@@ -56,7 +57,30 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
   // Tree State Hook (Expansion logic is handled by props passed from App, but resizing and level toggles are here)
   const treeState = useWBSTreeState(projects);
-  const { nameWidth, assigneeWidth, startResizing, handleProjectLevel: baseHandleProjectLevel, handleTaskLevel: baseHandleTaskLevel, handleSubtaskLevel: baseHandleSubtaskLevel } = treeState;
+  const { nameWidth, assigneeWidth, startResizing } = treeState;
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // 内部的なref統合（propsのrefと自身のref）
+  useEffect(() => {
+    if (typeof ref === 'function') ref(containerRef.current);
+    else if (ref) (ref as any).current = containerRef.current;
+  }, [ref]);
+
+  // Keyboard Navigation Hook
+  const keyboardNav = useWBSKeyboardNavigation({
+    projects,
+    expandedProjects,
+    expandedTasks,
+    hidePlanningColumns,
+    isPlanningMode
+  });
+  const { focus, setFocus, isEditing, handleKeyDown, setIsEditing } = keyboardNav;
+
+  // セルクリック時にコンテナにフォーカスを戻す
+  const handleCellClick = useCallback((rowId: string, field: string) => {
+    setFocus({ rowId, field: field as any });
+    containerRef.current?.focus();
+  }, [setFocus]);
 
   // Wrap level handlers to update the props
   const handleProjectLevel = () => {
@@ -87,6 +111,14 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     setExpandedProjects(newExpandedProjects);
     setExpandedTasks(newExpandedTasks);
   };
+
+  const toggleProjectExpand = useCallback((id: number) => {
+    setExpandedProjects(prev => ({ ...prev, [id]: !(prev[id] !== false) }));
+  }, [setExpandedProjects]);
+
+  const toggleTaskExpand = useCallback((id: number) => {
+    setExpandedTasks(prev => ({ ...prev, [id]: !(prev[id] !== false) }));
+  }, [setExpandedTasks]);
 
   // Actions Hook
   const actions = useWBSTreeActions({
@@ -153,9 +185,17 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
   return (
     <div
-      ref={ref}
-      className="flex-1 w-full overflow-auto bg-white dark:bg-slate-900 border-r dark:border-slate-800 relative no-scrollbar transition-colors"
+      ref={containerRef}
+      tabIndex={0} // キーボードイベントを受け取るため
+      className="flex-1 w-full overflow-auto bg-white dark:bg-slate-900 border-r dark:border-slate-800 relative no-scrollbar transition-colors outline-none focus:ring-1 focus:ring-blue-200/50"
       onScroll={onScroll}
+      onKeyDown={handleKeyDown}
+      onClick={(e) => {
+        // 背景クリック時にコンテナをフォーカス
+        if (e.target === e.currentTarget) {
+          containerRef.current?.focus();
+        }
+      }}
     >
       <div className="min-w-max">
         {saving && (
@@ -195,16 +235,19 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                 nameWidth={nameWidth}
                                 assigneeWidth={assigneeWidth}
                                 checked={!!checkedIds[`p-${project.id}`]}
-                                onToggleCheck={() => toggleCheckProject(project)}
-                                onToggleExpand={() => setExpandedProjects(p => ({ ...p, [project.id]: !(p[project.id] !== false) }))}
+                                onToggleCheck={toggleCheckProject}
+                                onToggleExpand={toggleProjectExpand}
                                 expanded={expandedProjects[project.id] !== false}
                                 onUpdateField={handleUpdate}
-                                onAddTask={() => handleAddTask(project.id)}
-                                onEditDetail={() => openDetailModal('project', project)}
+                                onAddTask={handleAddTask}
+                                onEditDetail={openDetailModal}
                                 initialData={initialData}
                                 provided={provided}
                                 hidePlanningColumns={hidePlanningColumns}
                                 isPlanningMode={isPlanningMode}
+                                focusedField={focus?.rowId === `p-${project.id}` ? focus.field : null}
+                                onFocusChange={handleCellClick}
+                                onEditingChange={setIsEditing}
                               />
                               {rowProvided.placeholder}
                             </div>
@@ -235,16 +278,19 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                 nameWidth={nameWidth}
                                                 assigneeWidth={assigneeWidth}
                                                 checked={!!checkedIds[`t-${task.id}`]}
-                                                onToggleCheck={() => toggleCheckTask(task)}
-                                                onToggleExpand={() => setExpandedTasks(t => ({ ...t, [task.id]: !(t[task.id] !== false) }))}
+                                                onToggleCheck={toggleCheckTask}
+                                                onToggleExpand={toggleTaskExpand}
                                                 expanded={expandedTasks[task.id] !== false}
                                                 onUpdateField={handleUpdate}
-                                                onAddSubtask={() => handleAddSubtask(task.id)}
-                                                onEditDetail={() => openDetailModal('task', task)}
+                                                onAddSubtask={handleAddSubtask}
+                                                onEditDetail={openDetailModal}
                                                 initialData={initialData}
                                                 provided={provided}
                                                 hidePlanningColumns={hidePlanningColumns}
                                                 isPlanningMode={isPlanningMode}
+                                                focusedField={focus?.rowId === `t-${task.id}` ? focus.field : null}
+                                                onFocusChange={handleCellClick}
+                                                onEditingChange={setIsEditing}
                                               />
                                               {rowProvided.placeholder}
                                             </div>
@@ -268,13 +314,16 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                           nameWidth={nameWidth}
                                                           assigneeWidth={assigneeWidth}
                                                           checked={!!checkedIds[`s-${subtask.id}`]}
-                                                          onToggleCheck={() => toggleCheckSubtask(subtask.id)}
+                                                          onToggleCheck={toggleCheckSubtask}
                                                           initialData={initialData}
                                                           onUpdateField={handleUpdate}
-                                                          onEditDetail={() => openDetailModal('subtask', subtask)}
+                                                          onEditDetail={openDetailModal}
                                                           provided={provided}
                                                           hidePlanningColumns={hidePlanningColumns}
                                                           isPlanningMode={isPlanningMode}
+                                                          focusedField={focus?.rowId === `s-${subtask.id}` ? focus.field : null}
+                                                          onFocusChange={handleCellClick}
+                                                          onEditingChange={setIsEditing}
                                                         />
                                                       </div>
                                                     )}

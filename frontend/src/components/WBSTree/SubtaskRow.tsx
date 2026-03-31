@@ -13,13 +13,16 @@ interface SubtaskRowProps {
   nameWidth: number;
   assigneeWidth: number;
   checked: boolean;
-  onToggleCheck: () => void;
+  onToggleCheck: (id: number) => void;
   initialData: InitialData | null;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
-  onEditDetail: () => void;
+  onEditDetail: (type: 'subtask', data: Subtask) => void;
   provided: any;
   hidePlanningColumns?: boolean;
   isPlanningMode?: boolean;
+  focusedField?: string | null;
+  onFocusChange?: (rowId: string, field: string) => void;
+  onEditingChange?: (editing: boolean) => void;
 }
 
 const SubtaskRow = memo(({
@@ -33,7 +36,10 @@ const SubtaskRow = memo(({
   onEditDetail,
   provided,
   hidePlanningColumns = false,
-  isPlanningMode = false
+  isPlanningMode = false,
+  focusedField,
+  onFocusChange,
+  onEditingChange
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData, true);
   const statusName = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name;
@@ -57,7 +63,7 @@ const SubtaskRow = memo(({
         <input
           type="checkbox"
           checked={checked}
-          onChange={onToggleCheck}
+          onChange={() => onToggleCheck(subtask.id)}
           className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-500 mr-1"
         />
         <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400">
@@ -77,6 +83,9 @@ const SubtaskRow = memo(({
             placeholder="未設定"
             dropdownTitle="種別を変更"
             highlight={getHighlight('subtask_type_id', subtask.subtask_type_id)}
+            isFocused={focusedField === 'name'}
+            onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'name')}
+            onEditingChange={onEditingChange}
           />
           <span className="text-gray-400 dark:text-slate-500 text-xs truncate" title={subtask.subtask_detail || undefined}>
             {subtask.subtask_detail}
@@ -107,13 +116,13 @@ const SubtaskRow = memo(({
             </a>
           )}
           {subtask.memo && (
-            <span title={subtask.memo} className="cursor-help inline-flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 shrink-0 mx-0.5" onClick={onEditDetail}>
+            <span title={subtask.memo} className="cursor-help inline-flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 shrink-0 mx-0.5" onClick={() => onEditDetail('subtask', subtask)}>
               <MessageSquare size={14} />
             </span>
           )}
         </div>
         <button
-          onClick={onEditDetail}
+          onClick={() => onEditDetail('subtask', subtask)}
           className="text-gray-300 hover:text-blue-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1"
           title="詳細を編集"
         >
@@ -127,6 +136,9 @@ const SubtaskRow = memo(({
           statusId={subtask.status_id}
           initialData={initialData}
           onUpdateField={onUpdateField}
+          isFocused={focusedField === 'status'}
+          onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'status')}
+          onEditingChange={onEditingChange}
         />
       </div>
       <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
@@ -146,6 +158,9 @@ const SubtaskRow = memo(({
             max={100}
             suffix="%"
             autoPercent={true}
+            isFocused={focusedField === 'progress'}
+            onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'progress')}
+            onEditingChange={onEditingChange}
           />
         </div>
       </div>
@@ -164,6 +179,9 @@ const SubtaskRow = memo(({
           placeholder="未設定"
           dropdownTitle="担当者を変更"
           highlight={getHighlight('assignee_id', subtask.assignee_id)}
+          isFocused={focusedField === 'assignee'}
+          onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'assignee')}
+          onEditingChange={onEditingChange}
         />
       </div>
       {!hidePlanningColumns && (
@@ -178,6 +196,9 @@ const SubtaskRow = memo(({
               precision={1}
               suffix="日"
               highlight={getHighlight('work_days', subtask.work_days)}
+              isFocused={focusedField === 'work_days'}
+              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'work_days')}
+              onEditingChange={onEditingChange}
             />
           </div>
           <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`}>
@@ -190,10 +211,35 @@ const SubtaskRow = memo(({
               precision={1}
               suffix="日"
               highlight={getHighlight('review_days', subtask.review_days)}
+              isFocused={focusedField === 'review_days'}
+              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'review_days')}
+              onEditingChange={onEditingChange}
             />
           </div>
-          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}><EditableInput type="date" value={subtask.planned_start_date} max={subtask.planned_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v)} highlight={getHighlight('planned_start_date', subtask.planned_start_date)} /></div>
-          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}><EditableInput type="date" value={subtask.planned_end_date} min={subtask.planned_start_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v)} highlight={getHighlight('planned_end_date', subtask.planned_end_date)} /></div>
+          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
+            <EditableInput 
+              type="date" 
+              value={subtask.planned_start_date} 
+              max={subtask.planned_end_date} 
+              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v)} 
+              highlight={getHighlight('planned_start_date', subtask.planned_start_date)} 
+              isFocused={focusedField === 'planned_start'}
+              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_start')}
+              onEditingChange={onEditingChange}
+            />
+          </div>
+          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
+            <EditableInput 
+              type="date" 
+              value={subtask.planned_end_date} 
+              min={subtask.planned_start_date} 
+              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v)} 
+              highlight={getHighlight('planned_end_date', subtask.planned_end_date)} 
+              isFocused={focusedField === 'planned_end'}
+              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_end')}
+              onEditingChange={onEditingChange}
+            />
+          </div>
           <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`}>
             <EditableInput
               type="number"
@@ -205,14 +251,41 @@ const SubtaskRow = memo(({
               isAuto={subtask.is_auto_effort}
               onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
               highlight={getHighlight('planned_effort_days', subtask.planned_effort_days)}
+              isFocused={focusedField === 'planned_effort'}
+              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_effort')}
+              onEditingChange={onEditingChange}
             />
           </div>
         </>
       )}
       {!isPlanningMode && (
         <>
-          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v)} highlight={getHighlight('actual_start_date', subtask.actual_start_date)} /></div>
-          <div className={`w-20 ${dateCellClasses}`}><EditableInput type="date" value={subtask.review_start_date} min={subtask.actual_start_date} max={subtask.actual_end_date} onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v)} highlight={getHighlight('review_start_date', subtask.review_start_date)} readOnly={subtask.review_days !== null && subtask.review_days !== undefined && Number(subtask.review_days) === 0} /></div>
+          <div className={`w-20 ${dateCellClasses}`}>
+            <EditableInput 
+              type="date" 
+              value={subtask.actual_start_date} 
+              max={subtask.actual_end_date} 
+              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v)} 
+              highlight={getHighlight('actual_start_date', subtask.actual_start_date)} 
+              isFocused={focusedField === 'actual_start'}
+              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_start')}
+              onEditingChange={onEditingChange}
+            />
+          </div>
+          <div className={`w-20 ${dateCellClasses}`}>
+            <EditableInput 
+              type="date" 
+              value={subtask.review_start_date} 
+              min={subtask.actual_start_date} 
+              max={subtask.actual_end_date} 
+              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v)} 
+              highlight={getHighlight('review_start_date', subtask.review_start_date)} 
+              readOnly={subtask.review_days !== null && subtask.review_days !== undefined && Number(subtask.review_days) === 0} 
+              isFocused={focusedField === 'review_start'}
+              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'review_start')}
+              onEditingChange={onEditingChange}
+            />
+          </div>
           <div className={`w-20 ${dateCellClasses}`}>
             <EditableInput
               type="date"
@@ -221,6 +294,9 @@ const SubtaskRow = memo(({
               onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v)}
               highlight={getHighlight('actual_end_date', subtask.actual_end_date)}
               className={isOngoing ? "bg-yellow-100/90 dark:bg-yellow-900/40" : ""}
+              isFocused={focusedField === 'actual_end'}
+              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_end')}
+              onEditingChange={onEditingChange}
             />
           </div>
           <div className={`w-16 ${dateCellClasses}`}>
@@ -234,6 +310,9 @@ const SubtaskRow = memo(({
               isAuto={subtask.is_auto_effort}
               onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
               highlight={getHighlight('actual_effort_days', subtask.actual_effort_days)}
+              isFocused={focusedField === 'actual_effort'}
+              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_effort')}
+              onEditingChange={onEditingChange}
             />
           </div>
         </>

@@ -10,6 +10,9 @@ interface PortalSelectProps {
   placeholder?: string;
   dropdownTitle?: string;
   highlight?: boolean;
+  isFocused?: boolean;
+  onFocusChange?: (focused: boolean) => void;
+  onEditingChange?: (editing: boolean) => void;
 }
 
 const PortalSelect = memo(({ 
@@ -19,7 +22,10 @@ const PortalSelect = memo(({
   className = "", 
   placeholder = "未設定",
   dropdownTitle,
-  highlight
+  highlight,
+  isFocused,
+  onFocusChange,
+  onEditingChange
 }: PortalSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [shouldFlash, setShouldFlash] = useState(false);
@@ -68,7 +74,9 @@ const PortalSelect = memo(({
         direction
       });
     }
-    setIsOpen(!isOpen);
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    if (onEditingChange) onEditingChange(newIsOpen);
   };
 
   useEffect(() => {
@@ -87,6 +95,7 @@ const PortalSelect = memo(({
         return;
       }
       setIsOpen(false);
+      if (onEditingChange) onEditingChange(false);
     };
 
     window.addEventListener('mousedown', handleEvents, true);
@@ -99,15 +108,41 @@ const PortalSelect = memo(({
     };
   }, [isOpen]);
 
+  // フォーカス時に Enter/Space でドロップダウンを開く
+  useEffect(() => {
+    if (isFocused && !isOpen) {
+      const handleGlobalKey = (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (buttonRef.current) {
+            buttonRef.current.click();
+          }
+        }
+      };
+      window.addEventListener('keydown', handleGlobalKey, true);
+      return () => window.removeEventListener('keydown', handleGlobalKey, true);
+    }
+  }, [isFocused, isOpen]);
+
   return (
     <>
       <button
         ref={buttonRef}
-        onClick={toggleDropdown}
+        onClick={(e) => {
+          if (onFocusChange) onFocusChange(true);
+          toggleDropdown(e);
+        }}
         className={`flex items-center gap-1.5 px-1.5 py-1 rounded transition-colors text-left outline-none group/pselect 
           ${highlight ? 'bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/50' : 'hover:bg-gray-100/80 dark:hover:bg-slate-800'} 
           ${shouldFlash ? 'animate-auto-flash' : ''} 
+          ${isFocused ? 'ring-2 ring-blue-500 ring-inset z-10' : ''}
           ${className}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+          }
+        }}
       >
         <span className="truncate flex-1 leading-none text-gray-900 dark:text-slate-100">
           {selectedOption && selectedOption.id !== null ? (
@@ -130,6 +165,8 @@ const PortalSelect = memo(({
             minWidth: coords.width,
             transform: coords.direction === 'up' ? 'translateY(-100%)' : 'none'
           }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         >
           {dropdownTitle && (
             <div className="px-2 pb-1.5 mb-1.5 border-b border-gray-100 dark:border-slate-800 mx-1 text-center">

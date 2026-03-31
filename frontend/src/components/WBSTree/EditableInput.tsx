@@ -19,6 +19,9 @@ interface EditableInputProps {
   autoPercent?: boolean;
   onInputChange?: (value: number | null) => void;
   placeholder?: string;
+  isFocused?: boolean;
+  onFocusChange?: (focused: boolean) => void;
+  onEditingChange?: (editing: boolean) => void;
 }
 
 /**
@@ -118,7 +121,7 @@ const PopoverEditor = ({
 };
 
 const EditableInput = memo(({
-  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange, placeholder
+  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange, placeholder, isFocused, onFocusChange, onEditingChange
 }: EditableInputProps) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -162,6 +165,8 @@ const EditableInput = memo(({
 
     if (isAuto) {
       setIsEditing(false);
+      if (onEditingChange) onEditingChange(false);
+      if (onFocusChange) onFocusChange(true);
       return;
     }
 
@@ -176,6 +181,8 @@ const EditableInput = memo(({
         } else {
           setVal(formatDateForInput(value));
           setIsEditing(false);
+          if (onEditingChange) onEditingChange(false);
+          if (onFocusChange) onFocusChange(true);
           return;
         }
       }
@@ -187,6 +194,8 @@ const EditableInput = memo(({
         if (isNaN(numVal)) {
           setVal(value != null ? String(value) : '');
           setIsEditing(false);
+          if (onEditingChange) onEditingChange(false);
+          if (onFocusChange) onFocusChange(true);
           return;
         }
         if (min !== undefined && numVal < Number(min)) numVal = Number(min);
@@ -206,7 +215,9 @@ const EditableInput = memo(({
       }
     }
     setIsEditing(false);
-  }, [isEditing, value, onChange, type, min, max, isAuto, onInputChange]);
+    if (onEditingChange) onEditingChange(false);
+    if (onFocusChange) onFocusChange(true); // 編集終了時にフォーカス状態に戻す
+  }, [isEditing, value, onChange, type, min, max, isAuto, onInputChange, onFocusChange, onEditingChange]);
 
   // 入力変更ハンドラ
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,6 +254,25 @@ const EditableInput = memo(({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isEditing, val, handleCommit]);
 
+  const isActuallyReadOnly = !!(readOnly || isAuto);
+
+  // フォーカスかつ編集モードでない場合に F2/Enter で編集開始
+  useEffect(() => {
+    if (isFocused && !isEditing) {
+      const handleGlobalKey = (e: KeyboardEvent) => {
+        if (e.key === 'F2' || e.key === 'Enter') {
+          if (!isActuallyReadOnly) {
+            setIsEditing(true);
+            if (onEditingChange) onEditingChange(true);
+            isCommittingRef.current = false;
+          }
+        }
+      };
+      window.addEventListener('keydown', handleGlobalKey);
+      return () => window.removeEventListener('keydown', handleGlobalKey);
+    }
+  }, [isFocused, isEditing, isActuallyReadOnly]);
+
   const displayValueText = () => {
     if (type === 'date') {
       if (value) return formatDisplayDate(value, type);
@@ -265,8 +295,6 @@ const EditableInput = memo(({
     return `${formattedValue}${suffix || ''}`;
   };
 
-  const isActuallyReadOnly = !!(readOnly || isAuto);
-
   // 表示モード
   if (!isEditing) {
     return (
@@ -279,10 +307,12 @@ const EditableInput = memo(({
         isActuallyReadOnly={isActuallyReadOnly}
         readOnly={readOnly}
         highlight={highlight}
-        className={`${className} ${shouldFlash ? 'animate-auto-flash' : ''}`}
+        className={`${className} ${shouldFlash ? 'animate-auto-flash' : ''} ${isFocused ? 'ring-2 ring-blue-500 ring-inset z-10' : ''}`}
         onClick={() => {
           if (readOnly) return;
+          if (onFocusChange) onFocusChange(true);
           setIsEditing(true);
+          if (onEditingChange) onEditingChange(true);
           isCommittingRef.current = false;
         }}
         displayValue={displayValueText}
@@ -302,10 +332,18 @@ const EditableInput = memo(({
     onFocus: (e: React.FocusEvent<HTMLInputElement>) => e.target.select(),
     onChange: handleInputChange,
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') handleCommit((e.target as HTMLInputElement).value);
-      else if (e.key === 'Escape') {
+      // 親のキーボードナビゲーション（WBSTree）にイベントが伝わらないように止める
+      if (['Enter', 'Escape', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.stopPropagation();
+      }
+
+      if (e.key === 'Enter') {
+        handleCommit((e.target as HTMLInputElement).value);
+      } else if (e.key === 'Escape') {
         setVal(type === 'date' ? formatDateForInput(value) : (value != null ? String(value) : ''));
         setIsEditing(false);
+        if (onEditingChange) onEditingChange(false);
+        if (onFocusChange) onFocusChange(true);
       }
     },
     min: min ?? undefined,

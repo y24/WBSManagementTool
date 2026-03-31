@@ -5,27 +5,31 @@ export const useWBSSelection = (projects: Project[]) => {
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
 
   const toggleCheckProject = useCallback((project: Project) => {
-    const isChecked = !checkedIds[`p-${project.id}`];
-    const newChecked = { ...checkedIds };
-    newChecked[`p-${project.id}`] = isChecked;
-    project.tasks.forEach(task => {
+    setCheckedIds(prev => {
+      const isChecked = !prev[`p-${project.id}`];
+      const newChecked = { ...prev };
+      newChecked[`p-${project.id}`] = isChecked;
+      project.tasks.forEach(task => {
+        newChecked[`t-${task.id}`] = isChecked;
+        task.subtasks.forEach(subtask => {
+          newChecked[`s-${subtask.id}`] = isChecked;
+        });
+      });
+      return newChecked;
+    });
+  }, []);
+
+  const toggleCheckTask = useCallback((task: Task) => {
+    setCheckedIds(prev => {
+      const isChecked = !prev[`t-${task.id}`];
+      const newChecked = { ...prev };
       newChecked[`t-${task.id}`] = isChecked;
       task.subtasks.forEach(subtask => {
         newChecked[`s-${subtask.id}`] = isChecked;
       });
+      return newChecked;
     });
-    setCheckedIds(newChecked);
-  }, [checkedIds]);
-
-  const toggleCheckTask = useCallback((task: Task) => {
-    const isChecked = !checkedIds[`t-${task.id}`];
-    const newChecked = { ...checkedIds };
-    newChecked[`t-${task.id}`] = isChecked;
-    task.subtasks.forEach(subtask => {
-      newChecked[`s-${subtask.id}`] = isChecked;
-    });
-    setCheckedIds(newChecked);
-  }, [checkedIds]);
+  }, []);
 
   const toggleCheckSubtask = useCallback((subtaskId: number) => {
     setCheckedIds(prev => ({

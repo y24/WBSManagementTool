@@ -11,9 +11,12 @@ interface StatusSelectProps {
   initialData: InitialData | null;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
   disabledStatusIds?: number[];
+  isFocused?: boolean;
+  onFocusChange?: (focused: boolean) => void;
+  onEditingChange?: (editing: boolean) => void;
 }
 
-const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, disabledStatusIds = [] }: StatusSelectProps) => {
+const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, disabledStatusIds = [], isFocused, onFocusChange, onEditingChange }: StatusSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [shouldFlash, setShouldFlash] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -59,7 +62,9 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
         direction
       });
     }
-    setIsOpen(!isOpen);
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    if (onEditingChange) onEditingChange(newIsOpen);
   };
 
   useEffect(() => {
@@ -79,6 +84,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
       }
 
       setIsOpen(false);
+      if (onEditingChange) onEditingChange(false);
     };
 
     window.addEventListener('mousedown', handleEvents, true);
@@ -91,12 +97,39 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
     };
   }, [isOpen]);
 
+  // フォーカス時に Enter/Space でドロップダウンを開く
+  useEffect(() => {
+    if (isFocused && !isOpen) {
+      const handleGlobalKey = (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (buttonRef.current) {
+            buttonRef.current.click();
+          }
+        }
+      };
+      // キャプチャフェーズで使用することで、WBSTreeなどのバブリングを確実に防ぐ（またはバブリング前に処理）
+      // ただし通常のイベントバブリング対応としてボタン自体にも付けておきます
+      window.addEventListener('keydown', handleGlobalKey, true);
+      return () => window.removeEventListener('keydown', handleGlobalKey, true);
+    }
+  }, [isFocused, isOpen]);
+
   return (
     <>
       <button
         ref={buttonRef}
-        onClick={toggleDropdown}
-        className={`flex items-center gap-1.5 w-full px-1.5 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left outline-none group/status ${shouldFlash ? 'animate-auto-flash' : ''}`}
+        onClick={(e) => {
+          if (onFocusChange) onFocusChange(true);
+          toggleDropdown(e);
+        }}
+        className={`flex items-center gap-1.5 w-full px-1.5 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left outline-none group/status ${shouldFlash ? 'animate-auto-flash' : ''} ${isFocused ? 'ring-2 ring-blue-500 ring-inset z-10' : ''}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+          }
+        }}
       >
         <span
           className="master-color-dot shrink-0"
@@ -118,6 +151,8 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
             minWidth: coords.width,
             transform: coords.direction === 'up' ? 'translateY(-100%)' : 'none'
           }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         >
           <div className="px-2 pb-1.5 mb-1.5 border-b border-gray-100 dark:border-slate-800 mx-1 text-center">
             <span className="text-[9px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">ステータスを変更</span>
