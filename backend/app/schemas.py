@@ -112,6 +112,7 @@ class SubtaskCreate(SubtaskBase):
     assignee_id: Optional[int] = None
 
 class SubtaskUpdate(BaseModel):
+    task_id: Optional[int] = None
     subtask_type_id: Optional[int] = None
     status_id: Optional[int] = None
     assignee_id: Optional[int] = None
@@ -168,6 +169,7 @@ class TaskCreate(TaskBase):
     project_id: int
 
 class TaskUpdate(BaseModel):
+    project_id: Optional[int] = None
     task_name: Optional[str] = None
     detail: Optional[str] = None
     ticket_id: Optional[int] = None

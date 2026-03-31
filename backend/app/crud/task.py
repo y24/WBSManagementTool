@@ -41,6 +41,7 @@ def update_task(db: Session, task_id: int, task: schemas.TaskUpdate):
     if not db_task:
         return None
     
+    old_project_id = db_task.project_id
     update_dict = task.dict(exclude_unset=True)
     
     # Auto-set dates if status is being changed
@@ -56,12 +57,16 @@ def update_task(db: Session, task_id: int, task: schemas.TaskUpdate):
     
     db.commit()
     
+    new_project_id = db_task.project_id
+    
     # Recalculate if auto-date is enabled
     if db_task.is_auto_planned_date or db_task.is_auto_actual_date:
         recalculate_task_dates(db, task_id)
     else:
         # Affects project even if not auto-date for THIS task
-        recalculate_project_dates(db, db_task.project_id)
+        recalculate_project_dates(db, new_project_id)
+        if new_project_id != old_project_id:
+            recalculate_project_dates(db, old_project_id)
     
     # Always recalculate status
     recalculate_task_status(db, task_id)

@@ -173,9 +173,11 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
     if not db_subtask:
         return None
     
+    old_task_id = db_subtask.task_id
     update_dict = subtask.dict(exclude_unset=True)
     
     # Auto-set dates if status is being changed
+    # ... (existing status logic) ...
     new_status_id = update_dict.get("status_id")
     if new_status_id is not None and new_status_id != db_subtask.status_id:
         done_ids = get_status_ids_by_category(db, "done")
@@ -218,9 +220,15 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
         setattr(db_subtask, key, value)
     db.commit()
     
+    new_task_id = db_subtask.task_id
+    
     # Always trigger recalculation for parent task
-    recalculate_task_dates(db, db_subtask.task_id)
-    recalculate_task_status(db, db_subtask.task_id)
+    recalculate_task_dates(db, new_task_id)
+    recalculate_task_status(db, new_task_id)
+    
+    if new_task_id != old_task_id:
+        recalculate_task_dates(db, old_task_id)
+        recalculate_task_status(db, old_task_id)
     
     db.refresh(db_subtask)
     return db_subtask

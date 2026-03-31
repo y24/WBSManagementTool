@@ -20,25 +20,80 @@ export const useWBSDragDrop = (
         newProjects.splice(destination.index, 0, removed);
         await wbsOps.reorderProjects(newProjects.map(p => p.id));
       } else if (type === 'TASK') {
-        const projectId = parseInt(source.droppableId.split('-')[1]);
-        const project = projects.find(p => p.id === projectId);
-        if (!project) return;
-        const newTasks = Array.from(project.tasks);
-        const [removed] = newTasks.splice(source.index, 1);
-        newTasks.splice(destination.index, 0, removed);
-        await wbsOps.reorderTasks(newTasks.map(t => t.id));
-      } else if (type === 'SUBTASK') {
-        const taskId = parseInt(source.droppableId.split('-')[1]);
-        let targetTask: Task | undefined;
-        for (const p of projects) {
-          targetTask = p.tasks.find(t => t.id === taskId);
-          if (targetTask) break;
+        const sourceProjectId = parseInt(source.droppableId.split('-').pop()!);
+        const isRowDrop = destination.droppableId.startsWith('project-row-drop-');
+        const destProjectId = isRowDrop 
+          ? parseInt(destination.droppableId.replace('project-row-drop-', ''))
+          : parseInt(destination.droppableId.split('-').pop()!);
+        const taskId = parseInt(result.draggableId.split('-').pop()!);
+        const destIndex = isRowDrop ? 0 : destination.index;
+
+        if (sourceProjectId !== destProjectId || !isRowDrop) {
+          // If moving between projects or reordering within a project
+          if (sourceProjectId !== destProjectId) {
+            await wbsOps.updateTask(taskId, { project_id: destProjectId });
+          }
+          
+          const destProject = projects.find(p => p.id === destProjectId);
+          if (destProject) {
+            const newTasks = Array.from(destProject.tasks);
+            if (sourceProjectId === destProjectId) {
+              const [removed] = newTasks.splice(source.index, 1);
+              newTasks.splice(destIndex, 0, removed);
+            } else {
+              let taskToMove: Task | undefined;
+              for (const p of projects) {
+                taskToMove = p.tasks.find(t => t.id === taskId);
+                if (taskToMove) break;
+              }
+              if (taskToMove) {
+                newTasks.splice(destIndex, 0, taskToMove);
+              }
+            }
+            if (newTasks.length > 0) {
+              await wbsOps.reorderTasks(newTasks.map(t => t.id));
+            }
+          }
         }
-        if (!targetTask) return;
-        const newSubtasks = Array.from(targetTask.subtasks);
-        const [removed] = newSubtasks.splice(source.index, 1);
-        newSubtasks.splice(destination.index, 0, removed);
-        await wbsOps.reorderSubtasks(newSubtasks.map(s => s.id));
+      } else if (type === 'SUBTASK') {
+        const sourceTaskId = parseInt(source.droppableId.split('-').pop()!);
+        const isRowDrop = destination.droppableId.startsWith('task-row-drop-');
+        const destTaskId = isRowDrop 
+          ? parseInt(destination.droppableId.replace('task-row-drop-', ''))
+          : parseInt(destination.droppableId.split('-').pop()!);
+        const subtaskId = parseInt(result.draggableId.split('-').pop()!);
+        const destIndex = isRowDrop ? 0 : destination.index;
+
+        if (sourceTaskId !== destTaskId || !isRowDrop) {
+          if (sourceTaskId !== destTaskId) {
+            await wbsOps.updateSubtask(subtaskId, { task_id: destTaskId });
+          }
+
+          let destTask: Task | undefined;
+          let subtaskToMove: any;
+          for (const p of projects) {
+            if (!destTask) destTask = p.tasks.find(t => t.id === destTaskId);
+            if (!subtaskToMove) {
+              for (const t of p.tasks) {
+                const s = t.subtasks.find(sub => sub.id === subtaskId);
+                if (s) { subtaskToMove = s; break; }
+              }
+            }
+          }
+
+          if (destTask) {
+            const newSubtasks = Array.from(destTask.subtasks);
+            if (sourceTaskId === destTaskId) {
+              const [removed] = newSubtasks.splice(source.index, 1);
+              newSubtasks.splice(destIndex, 0, removed);
+            } else if (subtaskToMove) {
+              newSubtasks.splice(destIndex, 0, subtaskToMove);
+            }
+            if (newSubtasks.length > 0) {
+              await wbsOps.reorderSubtasks(newSubtasks.map(s => s.id));
+            }
+          }
+        }
       }
       onUpdate();
     } catch (err) {

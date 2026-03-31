@@ -182,50 +182,80 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                   <Draggable key={`p-${project.id}`} draggableId={`p-${project.id}`} index={pIndex}>
                     {(provided) => (
                       <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`p-${project.id}`}>
-                        <ProjectRow
-                          project={project}
-                          nameWidth={nameWidth}
-                          checked={!!checkedIds[`p-${project.id}`]}
-                          onToggleCheck={() => toggleCheckProject(project)}
-                          onToggleExpand={() => setExpandedProjects(p => ({ ...p, [project.id]: !(p[project.id] !== false) }))}
-                          expanded={expandedProjects[project.id] !== false}
-                          onUpdateField={handleUpdate}
-                          onAddTask={() => handleAddTask(project.id)}
-                          onEditDetail={() => openDetailModal('project', project)}
-                          initialData={initialData}
-                          provided={provided}
-                          hidePlanningColumns={hidePlanningColumns}
-                          isPlanningMode={isPlanningMode}
-                        />
+                        <Droppable droppableId={`project-row-drop-${project.id}`} type="TASK">
+                          {(rowProvided, rowSnapshot) => (
+                            <div 
+                              {...rowProvided.droppableProps} 
+                              ref={rowProvided.innerRef}
+                              className={`transition-all ${rowSnapshot.isDraggingOver ? 'ring-2 ring-blue-500 ring-inset bg-blue-50/20 dark:bg-blue-900/20' : ''}`}
+                            >
+                              <ProjectRow
+                                project={project}
+                                nameWidth={nameWidth}
+                                checked={!!checkedIds[`p-${project.id}`]}
+                                onToggleCheck={() => toggleCheckProject(project)}
+                                onToggleExpand={() => setExpandedProjects(p => ({ ...p, [project.id]: !(p[project.id] !== false) }))}
+                                expanded={expandedProjects[project.id] !== false}
+                                onUpdateField={handleUpdate}
+                                onAddTask={() => handleAddTask(project.id)}
+                                onEditDetail={() => openDetailModal('project', project)}
+                                initialData={initialData}
+                                provided={provided}
+                                hidePlanningColumns={hidePlanningColumns}
+                                isPlanningMode={isPlanningMode}
+                              />
+                              {rowProvided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
 
                         {expandedProjects[project.id] !== false && (
                           <Droppable droppableId={`project-${project.id}`} type="TASK">
-                            {(provided) => (
-                              <div {...provided.droppableProps} ref={provided.innerRef}>
+                            {(listProvided, listSnapshot) => (
+                              <div 
+                                {...listProvided.droppableProps} 
+                                ref={listProvided.innerRef}
+                                className={listSnapshot.isDraggingOver ? 'bg-blue-50/30 dark:bg-blue-900/10 min-h-[4px]' : ''}
+                              >
                                 {project.tasks.map((task, tIndex) => (
                                   <Draggable key={`t-${task.id}`} draggableId={`t-${task.id}`} index={tIndex}>
                                     {(provided) => (
                                       <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`t-${task.id}`}>
-                                        <TaskRow
-                                          task={task}
-                                          nameWidth={nameWidth}
-                                          checked={!!checkedIds[`t-${task.id}`]}
-                                          onToggleCheck={() => toggleCheckTask(task)}
-                                          onToggleExpand={() => setExpandedTasks(t => ({ ...t, [task.id]: !(t[task.id] !== false) }))}
-                                          expanded={expandedTasks[task.id] !== false}
-                                          onUpdateField={handleUpdate}
-                                          onAddSubtask={() => handleAddSubtask(task.id)}
-                                          onEditDetail={() => openDetailModal('task', task)}
-                                          initialData={initialData}
-                                          provided={provided}
-                                          hidePlanningColumns={hidePlanningColumns}
-                                          isPlanningMode={isPlanningMode}
-                                        />
+                                        <Droppable droppableId={`task-row-drop-${task.id}`} type="SUBTASK">
+                                          {(rowProvided, rowSnapshot) => (
+                                            <div 
+                                              {...rowProvided.droppableProps} 
+                                              ref={rowProvided.innerRef}
+                                              className={`transition-all ${rowSnapshot.isDraggingOver ? 'ring-2 ring-blue-500 ring-inset bg-blue-50/20 dark:bg-blue-900/20' : ''}`}
+                                            >
+                                              <TaskRow
+                                                task={task}
+                                                nameWidth={nameWidth}
+                                                checked={!!checkedIds[`t-${task.id}`]}
+                                                onToggleCheck={() => toggleCheckTask(task)}
+                                                onToggleExpand={() => setExpandedTasks(t => ({ ...t, [task.id]: !(t[task.id] !== false) }))}
+                                                expanded={expandedTasks[task.id] !== false}
+                                                onUpdateField={handleUpdate}
+                                                onAddSubtask={() => handleAddSubtask(task.id)}
+                                                onEditDetail={() => openDetailModal('task', task)}
+                                                initialData={initialData}
+                                                provided={provided}
+                                                hidePlanningColumns={hidePlanningColumns}
+                                                isPlanningMode={isPlanningMode}
+                                              />
+                                              {rowProvided.placeholder}
+                                            </div>
+                                          )}
+                                        </Droppable>
 
                                         {expandedTasks[task.id] !== false && (
                                           <Droppable droppableId={`task-${task.id}`} type="SUBTASK">
-                                            {(provided) => (
-                                              <div {...provided.droppableProps} ref={provided.innerRef}>
+                                            {(listProvided, listSnapshot) => (
+                                              <div 
+                                                {...listProvided.droppableProps} 
+                                                ref={listProvided.innerRef}
+                                                className={listSnapshot.isDraggingOver ? 'bg-blue-50/30 dark:bg-blue-900/10 min-h-[4px]' : ''}
+                                              >
                                                 {task.subtasks.map((subtask, sIndex) => (
                                                   <Draggable key={`s-${subtask.id}`} draggableId={`s-${subtask.id}`} index={sIndex}>
                                                     {(provided) => (
@@ -246,7 +276,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                     )}
                                                   </Draggable>
                                                 ))}
-                                                {provided.placeholder}
+                                                {listProvided.placeholder}
                                               </div>
                                             )}
                                           </Droppable>
@@ -255,7 +285,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                     )}
                                   </Draggable>
                                 ))}
-                                {provided.placeholder}
+                                {listProvided.placeholder}
                               </div>
                             )}
                           </Droppable>
