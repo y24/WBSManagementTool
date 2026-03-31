@@ -11,6 +11,7 @@ import { commonRowClasses, commonCellClasses, dateCellClasses, planningCellClass
 interface SubtaskRowProps {
   subtask: Subtask;
   nameWidth: number;
+  assigneeWidth: number;
   checked: boolean;
   onToggleCheck: () => void;
   initialData: InitialData | null;
@@ -24,6 +25,7 @@ interface SubtaskRowProps {
 const SubtaskRow = memo(({
   subtask,
   nameWidth,
+  assigneeWidth,
   checked,
   onToggleCheck,
   initialData,
@@ -147,7 +149,10 @@ const SubtaskRow = memo(({
           />
         </div>
       </div>
-      <div className={`w-28 flex items-center ${commonCellClasses}`}>
+      <div 
+        className={`flex items-center ${commonCellClasses}`}
+        style={{ width: assigneeWidth, minWidth: assigneeWidth }}
+      >
         <PortalSelect
           value={subtask.assignee_id}
           options={[

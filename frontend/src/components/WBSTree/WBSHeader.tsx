@@ -1,10 +1,11 @@
 import React from 'react';
 import { List, Layers, ChevronsDown } from 'lucide-react';
-import { commonHeaderClasses, boundaryHeaderClasses, planningCellClasses } from './constants';
+import { commonHeaderClasses, planningCellClasses } from './constants';
 
 interface WBSHeaderProps {
   nameWidth: number;
-  startResizing: (e: React.MouseEvent) => void;
+  assigneeWidth: number;
+  startResizing: (e: React.MouseEvent, column: 'name' | 'assignee') => void;
   handleProjectLevel: () => void;
   handleTaskLevel: () => void;
   handleSubtaskLevel: () => void;
@@ -14,6 +15,7 @@ interface WBSHeaderProps {
 
 const WBSHeader: React.FC<WBSHeaderProps> = ({
   nameWidth,
+  assigneeWidth,
   startResizing,
   handleProjectLevel,
   handleTaskLevel,
@@ -53,15 +55,24 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
         名称
         <div
           className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 z-10 transition-colors"
-          onMouseDown={startResizing}
+          onMouseDown={(e) => startResizing(e, 'name')}
         />
       </div>
       <div className={`w-28 flex items-center ${commonHeaderClasses}`}>ステータス</div>
       <div className={`w-24 flex items-center ${commonHeaderClasses}`}>進捗</div>
-      <div className={`w-28 flex items-center ${commonHeaderClasses}`}>担当者</div>
+      <div 
+        className={`flex items-center relative ${commonHeaderClasses}`}
+        style={{ width: assigneeWidth, minWidth: assigneeWidth }}
+      >
+        担当者
+        <div
+          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 z-10 transition-colors"
+          onMouseDown={(e) => startResizing(e, 'assignee')}
+        />
+      </div>
       {!hidePlanningColumns && (
         <>
-          <div className={`w-20 flex items-center ${commonHeaderClasses} ${boundaryHeaderClasses} ${planningCellClasses}`}>作業日数</div>
+          <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>作業日数</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>レビュー日数</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>開始(計画)</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>終了(計画)</div>
@@ -70,7 +81,7 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
       )}
       {!isPlanningMode && (
         <>
-          <div className={`w-20 flex items-center ${commonHeaderClasses} ${boundaryHeaderClasses}`}>開始(実績)</div>
+          <div className={`w-20 flex items-center ${commonHeaderClasses}`}>開始(実績)</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>レビュー開始</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses}`}>終了(実績)</div>
           <div className={`w-16 flex items-center ${commonHeaderClasses}`}>実績工数</div>

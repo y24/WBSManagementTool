@@ -56,7 +56,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
   // Tree State Hook (Expansion logic is handled by props passed from App, but resizing and level toggles are here)
   const treeState = useWBSTreeState(projects);
-  const { nameWidth, startResizing, handleProjectLevel: baseHandleProjectLevel, handleTaskLevel: baseHandleTaskLevel, handleSubtaskLevel: baseHandleSubtaskLevel } = treeState;
+  const { nameWidth, assigneeWidth, startResizing, handleProjectLevel: baseHandleProjectLevel, handleTaskLevel: baseHandleTaskLevel, handleSubtaskLevel: baseHandleSubtaskLevel } = treeState;
 
   // Wrap level handlers to update the props
   const handleProjectLevel = () => {
@@ -166,6 +166,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
         <WBSHeader
           nameWidth={nameWidth}
+          assigneeWidth={assigneeWidth}
           startResizing={startResizing}
           handleProjectLevel={handleProjectLevel}
           handleTaskLevel={handleTaskLevel}
@@ -192,6 +193,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                               <ProjectRow
                                 project={project}
                                 nameWidth={nameWidth}
+                                assigneeWidth={assigneeWidth}
                                 checked={!!checkedIds[`p-${project.id}`]}
                                 onToggleCheck={() => toggleCheckProject(project)}
                                 onToggleExpand={() => setExpandedProjects(p => ({ ...p, [project.id]: !(p[project.id] !== false) }))}
@@ -231,6 +233,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                               <TaskRow
                                                 task={task}
                                                 nameWidth={nameWidth}
+                                                assigneeWidth={assigneeWidth}
                                                 checked={!!checkedIds[`t-${task.id}`]}
                                                 onToggleCheck={() => toggleCheckTask(task)}
                                                 onToggleExpand={() => setExpandedTasks(t => ({ ...t, [task.id]: !(t[task.id] !== false) }))}
@@ -263,6 +266,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
                                                         <SubtaskRow
                                                           subtask={subtask}
                                                           nameWidth={nameWidth}
+                                                          assigneeWidth={assigneeWidth}
                                                           checked={!!checkedIds[`s-${subtask.id}`]}
                                                           onToggleCheck={() => toggleCheckSubtask(subtask.id)}
                                                           initialData={initialData}

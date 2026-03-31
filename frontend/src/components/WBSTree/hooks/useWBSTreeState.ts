@@ -44,17 +44,18 @@ export const useWBSTreeState = (projects: Project[]) => {
   }, [projects]);
 
   // Resizing logic
-  const getInitialNameWidth = (): number => {
-    const saved = localStorage.getItem('wbs_name_width');
+  const getInitialWidth = (key: string, defaultWidth: number): number => {
+    const saved = localStorage.getItem(key);
     if (saved) {
       const parsed = parseInt(saved, 10);
       if (!isNaN(parsed)) return parsed;
     }
-    return 320;
+    return defaultWidth;
   };
 
-  const [nameWidth, setNameWidth] = useState(getInitialNameWidth);
-  const [isResizingName, setIsResizingName] = useState(false);
+  const [nameWidth, setNameWidth] = useState(() => getInitialWidth('wbs_name_width', 320));
+  const [assigneeWidth, setAssigneeWidth] = useState(() => getInitialWidth('wbs_assignee_width', 112));
+  const [resizingColumn, setResizingColumn] = useState<'name' | 'assignee' | null>(null);
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(0);
 
@@ -62,22 +63,32 @@ export const useWBSTreeState = (projects: Project[]) => {
     localStorage.setItem('wbs_name_width', nameWidth.toString());
   }, [nameWidth]);
 
-  const startResizing = (e: React.MouseEvent) => {
+  useEffect(() => {
+    localStorage.setItem('wbs_assignee_width', assigneeWidth.toString());
+  }, [assigneeWidth]);
+
+  const startResizing = (e: React.MouseEvent, column: 'name' | 'assignee') => {
     e.preventDefault();
     e.stopPropagation();
-    setIsResizingName(true);
+    setResizingColumn(column);
     resizeStartX.current = e.pageX;
-    resizeStartWidth.current = nameWidth;
+    resizeStartWidth.current = column === 'name' ? nameWidth : assigneeWidth;
   };
 
   useEffect(() => {
-    if (!isResizingName) return;
+    if (!resizingColumn) return;
     const handleMouseMove = (e: MouseEvent) => {
       const delta = e.pageX - resizeStartX.current;
-      setNameWidth(Math.max(150, resizeStartWidth.current + delta));
+      const minWidth = resizingColumn === 'name' ? 150 : 40;
+      const newWidth = Math.max(minWidth, resizeStartWidth.current + delta);
+      if (resizingColumn === 'name') {
+        setNameWidth(newWidth);
+      } else {
+        setAssigneeWidth(newWidth);
+      }
     };
     const handleMouseUp = () => {
-      setIsResizingName(false);
+      setResizingColumn(null);
     };
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -85,7 +96,7 @@ export const useWBSTreeState = (projects: Project[]) => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizingName]);
+  }, [resizingColumn]);
 
   return {
     expandedProjects,
@@ -98,6 +109,7 @@ export const useWBSTreeState = (projects: Project[]) => {
     handleTaskLevel,
     handleSubtaskLevel,
     nameWidth,
+    assigneeWidth,
     startResizing
   };
 };

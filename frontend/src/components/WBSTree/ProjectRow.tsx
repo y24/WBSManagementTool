@@ -11,6 +11,7 @@ import { commonRowClasses, commonCellClasses, dateCellClasses, planningCellClass
 interface ProjectRowProps {
   project: Project;
   nameWidth: number;
+  assigneeWidth: number;
   checked: boolean;
   onToggleCheck: () => void;
   onToggleExpand: () => void;
@@ -27,6 +28,7 @@ interface ProjectRowProps {
 const ProjectRow = memo(({ 
   project, 
   nameWidth, 
+  assigneeWidth,
   checked, 
   onToggleCheck, 
   onToggleExpand, 
@@ -143,7 +145,10 @@ const ProjectRow = memo(({
           />
         </div>
       </div>
-      <div className={`w-28 flex items-center ${commonCellClasses}`}>
+      <div 
+        className={`flex items-center ${commonCellClasses}`}
+        style={{ width: assigneeWidth, minWidth: assigneeWidth }}
+      >
         <PortalSelect
           value={project.assignee_id}
           options={[
