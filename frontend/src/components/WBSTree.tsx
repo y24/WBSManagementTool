@@ -191,8 +191,11 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       onScroll={onScroll}
       onKeyDown={handleKeyDown}
       onClick={(e) => {
-        // 背景クリック時にコンテナをフォーカス
-        if (e.target === e.currentTarget) {
+        // インタラクティブな要素（ボタン、入力欄、リンクなど）以外の箇所をクリックした場合、
+        // キーボード操作を継続できるるようメインコンテナにフォーカスを戻す
+        const target = e.target as HTMLElement;
+        const isInteractive = target.closest('button, input, textarea, a, select, [role="button"]');
+        if (!isInteractive) {
           containerRef.current?.focus();
         }
       }}
