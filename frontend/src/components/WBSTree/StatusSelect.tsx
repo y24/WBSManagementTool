@@ -15,10 +15,23 @@ interface StatusSelectProps {
 
 const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, disabledStatusIds = [] }: StatusSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [shouldFlash, setShouldFlash] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, direction: 'down' as 'up' | 'down' });
+  const prevStatusIdRef = useRef(statusId);
   const statusInfo = initialData?.statuses.find((s: any) => s.id === statusId);
+
+  useEffect(() => {
+    // 外部からの更新（ステータス変更）を検知
+    if (!isOpen && prevStatusIdRef.current !== statusId) {
+      setShouldFlash(true);
+      const timer = setTimeout(() => setShouldFlash(false), 1000);
+      prevStatusIdRef.current = statusId;
+      return () => clearTimeout(timer);
+    }
+    prevStatusIdRef.current = statusId;
+  }, [statusId, isOpen]);
 
   const toggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -83,7 +96,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
       <button
         ref={buttonRef}
         onClick={toggleDropdown}
-        className="flex items-center gap-1.5 w-full px-1.5 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left outline-none group/status"
+        className={`flex items-center gap-1.5 w-full px-1.5 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-left outline-none group/status ${shouldFlash ? 'animate-auto-flash' : ''}`}
       >
         <span
           className="master-color-dot shrink-0"

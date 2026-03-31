@@ -122,10 +122,12 @@ const EditableInput = memo(({
 }: EditableInputProps) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [shouldFlash, setShouldFlash] = useState(false);
   const isCommittingRef = useRef(false);
   const datePickerRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const prevValueRef = useRef(value);
 
   // 値の初期化と同期
   useEffect(() => {
@@ -143,6 +145,15 @@ const EditableInput = memo(({
       }
       if (!isAuto) isCommittingRef.current = false;
     }
+
+    // 外部（自動）での値更新を検知してフラッシュさせる
+    if (!isEditing && prevValueRef.current !== value) {
+      setShouldFlash(true);
+      const timer = setTimeout(() => setShouldFlash(false), 1000);
+      prevValueRef.current = value;
+      return () => clearTimeout(timer);
+    }
+    prevValueRef.current = value;
   }, [value, isEditing, type, precision, isAuto, onInputChange]);
 
   // 更新の確定処理
@@ -268,7 +279,7 @@ const EditableInput = memo(({
         isActuallyReadOnly={isActuallyReadOnly}
         readOnly={readOnly}
         highlight={highlight}
-        className={className}
+        className={`${className} ${shouldFlash ? 'animate-auto-flash' : ''}`}
         onClick={() => {
           if (readOnly) return;
           setIsEditing(true);

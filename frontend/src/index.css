@@ -301,6 +301,20 @@ code {
   border-radius: 2px;
 }
 
+/* Automatic Update Flash Animation */
+@keyframes auto-update-flash {
+  0% {
+    background-color: rgba(59, 130, 246, 0.4);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-auto-flash {
+  animation: auto-update-flash 1s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
 :root.dark .gantt-body .wbs-row-empty:hover::after {
   background-color: rgba(251, 191, 36, 0.15) !important;
 }

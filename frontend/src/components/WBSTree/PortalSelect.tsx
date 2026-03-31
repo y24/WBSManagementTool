@@ -22,10 +22,23 @@ const PortalSelect = memo(({
   highlight
 }: PortalSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [shouldFlash, setShouldFlash] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, direction: 'down' as 'up' | 'down' });
+  const prevValueRef = useRef(value);
   const selectedOption = options.find(o => o.id === value);
+
+  useEffect(() => {
+    // 外部からの値更新を検知
+    if (!isOpen && prevValueRef.current !== value) {
+      setShouldFlash(true);
+      const timer = setTimeout(() => setShouldFlash(false), 1000);
+      prevValueRef.current = value;
+      return () => clearTimeout(timer);
+    }
+    prevValueRef.current = value;
+  }, [value, isOpen]);
 
   const toggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -91,7 +104,10 @@ const PortalSelect = memo(({
       <button
         ref={buttonRef}
         onClick={toggleDropdown}
-        className={`flex items-center gap-1.5 px-1.5 py-1 rounded transition-colors text-left outline-none group/pselect ${highlight ? 'bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/50' : 'hover:bg-gray-100/80 dark:hover:bg-slate-800'} ${className}`}
+        className={`flex items-center gap-1.5 px-1.5 py-1 rounded transition-colors text-left outline-none group/pselect 
+          ${highlight ? 'bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/50' : 'hover:bg-gray-100/80 dark:hover:bg-slate-800'} 
+          ${shouldFlash ? 'animate-auto-flash' : ''} 
+          ${className}`}
       >
         <span className="truncate flex-1 leading-none text-gray-900 dark:text-slate-100">
           {selectedOption && selectedOption.id !== null ? (
