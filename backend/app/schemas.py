@@ -334,6 +334,10 @@ class ImportPreviewRow(BaseModel):
     planned_start: Optional[date] = None
     planned_end: Optional[date] = None
     planned_effort: Optional[Union[Decimal, float, int]] = None
+    actual_start: Optional[date] = None
+    actual_end: Optional[date] = None
+    actual_effort: Optional[Union[Decimal, float, int]] = None
+    progress_percent: Optional[int] = None
     work_days: Optional[Union[Decimal, float, int]] = None
     review_days: Optional[Union[Decimal, float, int]] = None
     workload: Optional[int] = None

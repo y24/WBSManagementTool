@@ -14,6 +14,10 @@ interface ImportPreviewRow {
   planned_start?: string;
   planned_end?: string;
   planned_effort?: number;
+  actual_start?: string;
+  actual_end?: string;
+  actual_effort?: number;
+  progress_percent?: number;
   review_days?: number;
   workload?: number;
   memo?: string;
@@ -218,7 +222,9 @@ export default function DataImport() {
                     <th className="dark:text-slate-300 dark:bg-slate-800">担当者</th>
                     <th className="dark:text-slate-300 dark:bg-slate-800">開始(計画)</th>
                     <th className="dark:text-slate-300 dark:bg-slate-800">終了(計画)</th>
-                    <th className="dark:text-slate-300 dark:bg-slate-800">レビュー日数</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">開始(実績)</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">終了(実績)</th>
+                    <th className="dark:text-slate-300 dark:bg-slate-800">工数/進捗</th>
                     <th className="dark:text-slate-300 dark:bg-slate-800">エラー内容</th>
                   </tr>
                 </thead>
@@ -243,7 +249,14 @@ export default function DataImport() {
                       <td className="dark:text-slate-200">{row.assignee}</td>
                       <td className="font-mono text-[11px] dark:text-slate-300">{row.planned_start || '-'}</td>
                       <td className="font-mono text-[11px] dark:text-slate-300">{row.planned_end || '-'}</td>
-                      <td className="text-center dark:text-slate-200">{row.review_days != null ? row.review_days : '-'}</td>
+                      <td className="font-mono text-[11px] dark:text-slate-300">{row.actual_start || '-'}</td>
+                      <td className="font-mono text-[11px] dark:text-slate-300">{row.actual_end || '-'}</td>
+                      <td className="text-center dark:text-slate-200">
+                        <div className="flex flex-col text-[10px]">
+                          <span>実: {row.actual_effort != null ? row.actual_effort : '-'}</span>
+                          <span>進: {row.progress_percent != null ? `${row.progress_percent}%` : '-'}</span>
+                        </div>
+                      </td>
                       <td>
                         {row.errors.length > 0 && (
                           <ul className="import-error-list dark:text-red-400">

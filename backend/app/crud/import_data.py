@@ -22,6 +22,10 @@ COLUMN_MAPPING = {
     "開始(計画)": "planned_start",
     "終了(計画)": "planned_end",
     "予定工数": "planned_effort",
+    "開始(実績)": "actual_start",
+    "終了(実績)": "actual_end",
+    "実績工数": "actual_effort",
+    "進捗": "progress_percent",
     "工数比率": "workload",
     "リンクURL": "link_url",
     "メモ": "memo"
@@ -30,12 +34,12 @@ COLUMN_MAPPING = {
 def generate_template() -> io.BytesIO:
     columns = list(COLUMN_MAPPING.keys())
     sample_data = [
-        [0, "新規プロジェクトA", "", "", "123456", "New", "山田 太郎", "", "2026-04-01", "2026-04-17", "", "", "https://example.com/p1", "プロジェクトのメモ"],
-        [1, "シナリオテスト", "", "", "234567", "New", "山田 太郎", "", "2026-04-01", "2026-04-10", "", "", "https://example.com/t1", "タスクのメモ"],
-        [2, "", "テスト設計", "データ作成含む", "345678", "New", "佐藤 次郎", 1, "2026-04-01", "2026-04-03", 2, 80, "https://example.com/s1", "サブタスクのメモ"],
-        [2, "", "テスト実施", "", "", "New", "佐藤 次郎", 0.5, "2026-04-04", "2026-04-05", 1, 100, ""],
-        [1, "性能テスト", "", "", "", "New", "鈴木 一郎", "", "", "", "", "", "階層1,2の日付未入力は自動計算されます"],
-        [2, "", "テスト設計", "", "", "New", "鈴木 一郎", 0.5, "2026-04-06", "2026-04-07", "", 100, ""],
+        [0, "新規プロジェクトA", "", "", "123456", "New", "山田 太郎", "", "2026-04-01", "2026-04-17", "", "2026-04-01", "", "", 10, "", "https://example.com/p1", "プロジェクトのメモ"],
+        [1, "シナリオテスト", "", "", "234567", "New", "山田 太郎", "", "2026-04-01", "2026-04-10", "", "2026-04-01", "", "", 20, "", "https://example.com/t1", "タスクのメモ"],
+        [2, "", "テスト設計", "データ作成含む", "345678", "New", "佐藤 次郎", 1, "2026-04-01", "2026-04-03", 2, "2026-04-01", "2026-04-03", 2, 100, 80, "https://example.com/s1", "サブタスクのメモ"],
+        [2, "", "テスト実施", "", "", "New", "佐藤 次郎", 0.5, "2026-04-04", "2026-04-05", 1, "", "", "", 0, 100, "", ""],
+        [1, "性能テスト", "", "", "", "New", "鈴木 一郎", "", "", "", "", "", "", "", 0, "", "", "階層1,2の日付未入力は自動計算されます"],
+        [2, "", "テスト設計", "", "", "New", "鈴木 一郎", 0.5, "2026-04-06", "2026-04-07", "", "", "", "", 0, 100, "", ""],
     ]
     df = pd.DataFrame(sample_data, columns=columns)
     output = io.BytesIO()
@@ -123,6 +127,8 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
         # Date validation
         p_start = row.get("planned_start")
         p_end = row.get("planned_end")
+        a_start = row.get("actual_start")
+        a_end = row.get("actual_end")
         
         def to_date(val):
             if pd.isna(val): return None
@@ -134,9 +140,13 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
 
         d_start = to_date(p_start)
         d_end = to_date(p_end)
+        ad_start = to_date(a_start)
+        ad_end = to_date(a_end)
         
         if d_start and d_end and d_start > d_end:
             errors.append("開始(計画)日が終了(計画)日より後になっています")
+        if ad_start and ad_end and ad_start > ad_end:
+            errors.append("開始(実績)日が終了(実績)日より後になっています")
 
         # Decimal / Int validation
         effort = row.get("planned_effort")
@@ -145,6 +155,23 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
             except: errors.append("予定工数は数値で入力してください")
         else:
             effort = None
+
+        act_effort = row.get("actual_effort")
+        if not pd.isna(act_effort):
+            try: act_effort = Decimal(str(act_effort))
+            except: errors.append("実績工数は数値で入力してください")
+        else:
+            act_effort = None
+
+        progress = row.get("progress_percent")
+        if not pd.isna(progress):
+            try: 
+                progress = int(progress)
+                if progress < 0 or progress > 100:
+                    errors.append("進捗は0〜100の間で入力してください")
+            except: errors.append("進捗は数値で入力してください")
+        else:
+            progress = 0
 
         workload = row.get("workload")
         if not pd.isna(workload):
@@ -181,6 +208,10 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
             planned_start=d_start,
             planned_end=d_end,
             planned_effort=effort,
+            actual_start=ad_start,
+            actual_end=ad_end,
+            actual_effort=act_effort,
+            progress_percent=progress,
             review_days=review_days,
             workload=workload,
             link_url=str(row.get("link_url")) if not pd.isna(row.get("link_url")) else None,
@@ -210,8 +241,9 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
         
         # Determine auto-calculation flags
         # Requirement: "nothing entered -> auto ON"
-        # For Projects/Tasks: IsAutoPlannedDate
+        # For Projects/Tasks: IsAutoPlannedDate / IsAutoActualDate
         is_auto_planned = (r.planned_start is None or r.planned_end is None)
+        is_auto_actual = (r.actual_start is None and r.actual_end is None)
         
         if r.level == 0:
             # Create Project
@@ -221,9 +253,12 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
                 assignee_id=assignee_id,
                 planned_start_date=r.planned_start,
                 planned_end_date=r.planned_end,
+                actual_start_date=r.actual_start,
+                actual_end_date=r.actual_end,
                 link_url=r.link_url,
                 memo=r.memo,
                 is_auto_planned_date=is_auto_planned,
+                is_auto_actual_date=is_auto_actual,
                 ticket_id=int(r.ticket_id) if r.ticket_id else None,
                 sort_order=next_proj_sort
             )
@@ -242,9 +277,12 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
                 assignee_id=assignee_id,
                 planned_start_date=r.planned_start,
                 planned_end_date=r.planned_end,
+                actual_start_date=r.actual_start,
+                actual_end_date=r.actual_end,
                 link_url=r.link_url,
                 memo=r.memo,
                 is_auto_planned_date=is_auto_planned,
+                is_auto_actual_date=is_auto_actual,
                 ticket_id=int(r.ticket_id) if r.ticket_id else None,
                 sort_order=next_task_sort
             )
@@ -268,7 +306,11 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
                 assignee_id=assignee_id,
                 planned_start_date=r.planned_start,
                 planned_end_date=r.planned_end,
+                actual_start_date=r.actual_start,
+                actual_end_date=r.actual_end,
                 planned_effort_days=r.planned_effort,
+                actual_effort_days=r.actual_effort,
+                progress_percent=r.progress_percent or 0,
                 review_days=r.review_days,
                 workload_percent=r.workload or 100,
                 link_url=r.link_url,
