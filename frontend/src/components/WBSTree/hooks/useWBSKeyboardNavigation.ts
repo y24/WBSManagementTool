@@ -221,9 +221,6 @@ export const useWBSKeyboardNavigation = ({
           setIsEditing(true);
         }
         break;
-      case 'Escape':
-        setFocus(null);
-        break;
     }
   }, [isEditing, moveFocus, focus, isReadOnly]);
 
