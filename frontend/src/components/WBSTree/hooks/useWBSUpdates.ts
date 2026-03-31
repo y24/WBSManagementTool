@@ -136,8 +136,49 @@ export const useWBSUpdates = ({
       }
     };
 
-    if (applicableItems.length > 1) {
-      const hasExistingValue = applicableItems.some(item => {
+    // Check for potential date/progress overwrites on status change
+    let statusOverwriteMsg = '';
+    if (field === 'status_id' && initialData) {
+      const doneIds = initialData.status_mapping_done?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [4, 7];
+      const newStatusId = parseInt(value, 10);
+      const isDone = doneIds.includes(newStatusId);
+      const isOngoing = [2, 3].includes(newStatusId); // 2:In Progress, 3:In Review (backend logic)
+
+      const overwriteDetails: string[] = [];
+      applicableItems.forEach(item => {
+        if (item.type !== 'subtask') return;
+        const data = findItem(item.type, item.id) as Subtask | null;
+        if (!data) return;
+
+        const oldIsDone = doneIds.includes(data.status_id);
+
+        // 1. Progress -> 100% (if currently set and not 100)
+        if (isDone && data.progress_percent !== 100 && data.progress_percent !== 0 && data.progress_percent !== null) {
+          overwriteDetails.push(`進捗率: ${data.progress_percent}% -> 100%`);
+        }
+
+        // 2. actual_end_date (overwritten by backend for Ongoing status)
+        if (isOngoing && data.actual_end_date) {
+          const today = new Date().toISOString().split('T')[0];
+          if (data.actual_end_date !== today) {
+            overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> 今日 (自動更新)`);
+          }
+        }
+
+        // 3. actual_end_date cleared when moving away from Done
+        if (oldIsDone && !isDone && data.actual_end_date) {
+          overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> (消去)`);
+        }
+      });
+
+      const uniqueDetails = Array.from(new Set(overwriteDetails));
+      if (uniqueDetails.length > 0) {
+        statusOverwriteMsg = `ステータスの変更により、以下のデータが自動更新・消去されます。上書きしてよろしいですか？\n\n${uniqueDetails.join('\n')}`;
+      }
+    }
+
+    if (applicableItems.length > 1 || statusOverwriteMsg) {
+      const hasBulkValueOverwrite = applicableItems.length > 1 && applicableItems.some(item => {
         if (item.type === type && item.id === id) return false;
         const data = findItem(item.type, item.id);
         if (!data) return false;
@@ -145,12 +186,21 @@ export const useWBSUpdates = ({
         return currentVal != null && currentVal !== '' && currentVal !== 0 && currentVal !== value;
       });
 
-      if (hasExistingValue) {
+      if (hasBulkValueOverwrite || statusOverwriteMsg) {
+        let detail = '';
+        if (hasBulkValueOverwrite && statusOverwriteMsg) {
+          detail = `選択された項目のうち、すでに値が入力されているものがあります。また、自動入力による上書きも発生します。\n\n${statusOverwriteMsg}`;
+        } else if (hasBulkValueOverwrite) {
+          detail = `選択された項目のうち、すでに値が入力されているものがあります。上書きしてよろしいですか？\n(対象項目数: ${applicableItems.length})`;
+        } else {
+          detail = statusOverwriteMsg;
+        }
+
         setConfirmData({
           total: applicableItems.length,
-          detail: `選択された項目のうち、すでに値が入力されているものがあります。上書きしてよろしいですか？\n(対象項目数: ${applicableItems.length})`,
-          title: '一括編集の確認',
-          confirmText: '上書き保存',
+          detail: detail,
+          title: statusOverwriteMsg ? '自動入力の確認' : '一括編集の確認',
+          confirmText: '更新',
           variant: 'warning',
           onConfirm: performUpdate
         });

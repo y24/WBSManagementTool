@@ -45,7 +45,7 @@ export const useWBSTreeActions = ({
       total: totalSelectedCount,
       detail: detailMsg,
       title: '項目の削除確認',
-      confirmText: '削除を実行する',
+      confirmText: '削除を実行',
       variant: 'danger',
       onConfirm: executeDelete
     });

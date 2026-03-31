@@ -32,10 +32,10 @@ export const useDetailModal = ({
   const [workloadPercentValue, setWorkloadPercentValue] = useState('100');
 
   const openDetailModal = useCallback((type: EditingType, item: any) => {
-    setEditingItem({ 
-      type, 
-      id: item.id, 
-      name: type === 'project' ? item.project_name : type === 'task' ? item.task_name : `S-${item.id}` 
+    setEditingItem({
+      type,
+      id: item.id,
+      name: type === 'project' ? item.project_name : type === 'task' ? item.task_name : `S-${item.id}`
     });
     setDetailValue(type === 'subtask' ? (item.subtask_detail || '') : (item.detail || ''));
     setTicketIdValue(item.ticket_id != null ? String(item.ticket_id) : '');
@@ -138,7 +138,7 @@ export const useDetailModal = ({
           total: targetItems.length,
           detail: `選択された項目のうち、すでに詳細やメモが入力されているものがあります。上書きしてよろしいですか？\n(対象項目数: ${targetItems.length})`,
           title: '一括編集の確認',
-          confirmText: '上書き保存する',
+          confirmText: '上書き保存',
           variant: 'warning',
           onConfirm: performDetailUpdate
         });
