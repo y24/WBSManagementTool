@@ -13,7 +13,7 @@ interface SubtaskRowProps {
   nameWidth: number;
   assigneeWidth: number;
   checked: boolean;
-  onToggleCheck: (id: number) => void;
+  onToggleCheck: (id: number, isShift?: boolean) => void;
   initialData: InitialData | null;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
   onEditDetail: (type: 'subtask', data: Subtask) => void;
@@ -63,7 +63,8 @@ const SubtaskRow = memo(({
         <input
           type="checkbox"
           checked={checked}
-          onChange={() => onToggleCheck(subtask.id)}
+          onClick={(e) => onToggleCheck(subtask.id, e.shiftKey)}
+          onChange={() => {}}
           className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-500 mr-1"
         />
         <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400">

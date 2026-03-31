@@ -13,7 +13,7 @@ interface ProjectRowProps {
   nameWidth: number;
   assigneeWidth: number;
   checked: boolean;
-  onToggleCheck: (project: Project) => void;
+  onToggleCheck: (project: Project, isShift?: boolean) => void;
   onToggleExpand: (id: number) => void;
   expanded: boolean;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
@@ -61,7 +61,8 @@ const ProjectRow = memo(({
         <input
           type="checkbox"
           checked={checked}
-          onChange={() => onToggleCheck(project)}
+          onClick={(e) => onToggleCheck(project, e.shiftKey)}
+          onChange={() => {}}
           className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-500 mr-1"
         />
         <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300">

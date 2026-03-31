@@ -3,40 +3,123 @@ import { Project, Task } from '../../../types/wbs';
 
 export const useWBSSelection = (projects: Project[]) => {
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
+  const [lastCheckedId, setLastCheckedId] = useState<string | null>(null);
 
-  const toggleCheckProject = useCallback((project: Project) => {
-    setCheckedIds(prev => {
-      const isChecked = !prev[`p-${project.id}`];
-      const newChecked = { ...prev };
-      newChecked[`p-${project.id}`] = isChecked;
-      project.tasks.forEach(task => {
-        newChecked[`t-${task.id}`] = isChecked;
-        task.subtasks.forEach(subtask => {
-          newChecked[`s-${subtask.id}`] = isChecked;
+  // 全てのIDを順番に並べたフラットなリスト
+  const allIds = useMemo(() => {
+    const ids: string[] = [];
+    projects.forEach(p => {
+      ids.push(`p-${p.id}`);
+      p.tasks.forEach(t => {
+        ids.push(`t-${t.id}`);
+        t.subtasks.forEach(s => {
+          ids.push(`s-${s.id}`);
         });
       });
-      return newChecked;
     });
-  }, []);
+    return ids;
+  }, [projects]);
 
-  const toggleCheckTask = useCallback((task: Task) => {
+  // 指定されたIDとその子要素すべてにチェック状態を適用するヘルパー
+  const applyCheck = useCallback((newChecked: Record<string, boolean>, id: string, isChecked: boolean) => {
+    newChecked[id] = isChecked;
+    if (id.startsWith('p-')) {
+      const pId = parseInt(id.substring(2));
+      const project = projects.find(p => p.id === pId);
+      if (project) {
+        project.tasks.forEach(task => {
+          newChecked[`t-${task.id}`] = isChecked;
+          task.subtasks.forEach(subtask => {
+            newChecked[`s-${subtask.id}`] = isChecked;
+          });
+        });
+      }
+    } else if (id.startsWith('t-')) {
+      const tId = parseInt(id.substring(2));
+      
+      // taskを探す (全プロジェクトを検索)
+      let foundTask: Task | undefined;
+      for (const p of projects) {
+        const t = p.tasks.find(tk => tk.id === tId);
+        if (t) {
+          foundTask = t;
+          break;
+        }
+      }
+
+      if (foundTask) {
+        foundTask.subtasks.forEach(subtask => {
+          newChecked[`s-${subtask.id}`] = isChecked;
+        });
+      }
+    }
+  }, [projects]);
+
+  // Shiftキー押下時の範囲選択ロジック
+  const handleShiftSelect = useCallback((targetId: string, isChecked: boolean, newChecked: Record<string, boolean>) => {
+    if (lastCheckedId && lastCheckedId !== targetId) {
+      const lastIdx = allIds.indexOf(lastCheckedId);
+      const currentIdx = allIds.indexOf(targetId);
+      if (lastIdx !== -1 && currentIdx !== -1) {
+        const start = Math.min(lastIdx, currentIdx);
+        const end = Math.max(lastIdx, currentIdx);
+        const rangeIds = allIds.slice(start, end + 1);
+        rangeIds.forEach(id => {
+          applyCheck(newChecked, id, isChecked);
+        });
+        return true;
+      }
+    }
+    return false;
+  }, [allIds, lastCheckedId, applyCheck]);
+
+  const toggleCheckProject = useCallback((project: Project, isShift: boolean = false) => {
+    const id = `p-${project.id}`;
     setCheckedIds(prev => {
-      const isChecked = !prev[`t-${task.id}`];
+      const isChecked = !prev[id];
       const newChecked = { ...prev };
-      newChecked[`t-${task.id}`] = isChecked;
-      task.subtasks.forEach(subtask => {
-        newChecked[`s-${subtask.id}`] = isChecked;
-      });
+      
+      const handled = isShift ? handleShiftSelect(id, isChecked, newChecked) : false;
+      if (!handled) {
+        applyCheck(newChecked, id, isChecked);
+      }
+      
       return newChecked;
     });
-  }, []);
+    setLastCheckedId(id);
+  }, [handleShiftSelect, applyCheck]);
 
-  const toggleCheckSubtask = useCallback((subtaskId: number) => {
-    setCheckedIds(prev => ({
-      ...prev,
-      [`s-${subtaskId}`]: !prev[`s-${subtaskId}`]
-    }));
-  }, []);
+  const toggleCheckTask = useCallback((task: Task, isShift: boolean = false) => {
+    const id = `t-${task.id}`;
+    setCheckedIds(prev => {
+      const isChecked = !prev[id];
+      const newChecked = { ...prev };
+      
+      const handled = isShift ? handleShiftSelect(id, isChecked, newChecked) : false;
+      if (!handled) {
+        applyCheck(newChecked, id, isChecked);
+      }
+      
+      return newChecked;
+    });
+    setLastCheckedId(id);
+  }, [handleShiftSelect, applyCheck]);
+
+  const toggleCheckSubtask = useCallback((subtaskId: number, isShift: boolean = false) => {
+    const id = `s-${subtaskId}`;
+    setCheckedIds(prev => {
+      const isChecked = !prev[id];
+      const newChecked = { ...prev };
+      
+      const handled = isShift ? handleShiftSelect(id, isChecked, newChecked) : false;
+      if (!handled) {
+        newChecked[id] = isChecked;
+      }
+      
+      return newChecked;
+    });
+    setLastCheckedId(id);
+  }, [handleShiftSelect]);
 
   const { selectedCounts, totalSelectedCount, selectedIds, minimalIds } = useMemo(() => {
     let pCount = 0;
@@ -82,7 +165,10 @@ export const useWBSSelection = (projects: Project[]) => {
     };
   }, [projects, checkedIds]);
 
-  const clearSelection = useCallback(() => setCheckedIds({}), []);
+  const clearSelection = useCallback(() => {
+    setCheckedIds({});
+    setLastCheckedId(null);
+  }, []);
 
   return {
     checkedIds,

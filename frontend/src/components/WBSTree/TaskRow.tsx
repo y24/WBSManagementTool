@@ -13,7 +13,7 @@ interface TaskRowProps {
   nameWidth: number;
   assigneeWidth: number;
   checked: boolean;
-  onToggleCheck: (task: Task) => void;
+  onToggleCheck: (task: Task, isShift?: boolean) => void;
   onToggleExpand: (id: number) => void;
   expanded: boolean;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
@@ -61,7 +61,8 @@ const TaskRow = memo(({
         <input
           type="checkbox"
           checked={checked}
-          onChange={() => onToggleCheck(task)}
+          onClick={(e) => onToggleCheck(task, e.shiftKey)}
+          onChange={() => {}}
           className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-500 mr-1"
         />
         <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400">
