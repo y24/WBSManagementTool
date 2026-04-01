@@ -27,6 +27,9 @@ interface GanttBarProps {
   ) => void;
   getStatusColor: (statusId: number | null | undefined) => string;
   isExpanded?: boolean;
+  customLabel?: string;
+  isDelayedHighlight?: boolean;
+  isResourceView?: boolean;
 }
 
 const GanttBar: React.FC<GanttBarProps> = ({
@@ -43,6 +46,9 @@ const GanttBar: React.FC<GanttBarProps> = ({
   handleMouseDown,
   getStatusColor,
   isExpanded = false,
+  customLabel,
+  isDelayedHighlight = false,
+  isResourceView = false,
 }) => {
   if ((itemType === 'project' || itemType === 'task') && isExpanded) {
     return null;
@@ -131,12 +137,14 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const subtaskTypeName = isSubtask ? initialData?.subtask_types.find(t => t.id === item.subtask_type_id)?.type_name : null;
   const itemName = itemType === 'project' ? item.project_name : (itemType === 'task' ? item.task_name : subtaskTypeName);
 
+  const showPlannedBar = pStart !== undefined && pWidth !== undefined && !(isResourceView && hasActual);
+
   return (
     <div className="relative w-full h-full min-h-[30px] flex flex-col justify-start">
-      {pStart !== undefined && pWidth !== undefined && (
+      {showPlannedBar && (
         <>
           <div
-            className={`absolute ${hasActual ? 'top-[6px]' : (isSubtask ? 'top-[12px]' : 'top-[10px]')} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70 ${isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''}`}
+            className={`absolute ${hasActual ? 'top-[6px]' : (isSubtask ? 'top-[12px]' : 'top-[10px]')} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70 ${isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''}`}
             style={{ left: `${pStart}px`, width: `${pWidth}px` }}
             onMouseDown={(e) => {
               if (isAutoPlanned) return;
@@ -177,7 +185,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {aStart !== undefined && aWidth !== undefined && (
         <>
           <div
-            className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable')} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''}`}
+            className={`absolute ${isSubtask ? 'top-[12px] h-[16px]' : 'top-[10px] h-[16px]'} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable')} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''}`}
             style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
             title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
             onMouseDown={(e) => {
@@ -247,7 +255,24 @@ const GanttBar: React.FC<GanttBarProps> = ({
           {initialData?.members.find(m => m.id === item.assignee_id)?.member_name}
         </div>
       )}
-      {isDelayed && warningText && (
+      
+      {/* カスタムラベル（担当者ビュー用） */}
+      {customLabel && (aStart !== undefined || pStart !== undefined) && (
+        <div
+          className="absolute text-[11px] text-gray-700 dark:text-gray-300 whitespace-nowrap pointer-events-none drop-shadow-sm z-30"
+          style={{
+            left: `${(aStart !== undefined ? aStart : (pStart || 0)) + 4}px`,
+            top: '13px',
+            maxWidth: `${Math.max((aWidth ?? pWidth ?? 0) - 8, 0)}px`,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          {customLabel}
+        </div>
+      )}
+
+      {isDelayed && warningText && !customLabel && (
         <div
           className="absolute flex items-center z-20 pointer-events-auto cursor-help"
           style={{ top: '10px', left: `${rightEdge + 4}px` }}

@@ -30,6 +30,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showProgressRate: false,
   showMarkers: true,
   isDarkMode: false,
+  viewMode: 'wbs',
 };
 
 function readJson<T extends object>(key: string, fallback: T): T {

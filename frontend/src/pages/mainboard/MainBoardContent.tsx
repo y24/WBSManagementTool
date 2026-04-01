@@ -1,6 +1,7 @@
 import { Dispatch, RefObject, SetStateAction, UIEvent } from 'react';
 import WBSTree from '../../components/WBSTree';
 import GanttChart from '../../components/GanttChart';
+import ResourceBoard from '../../components/ResourceView/ResourceBoard';
 import { DisplayOptions } from '../../components/FilterPanel';
 import { InitialData } from '../../types';
 import { GanttRange, Project } from '../../types/wbs';
@@ -40,6 +41,27 @@ export default function MainBoardContent({
   onTreeScroll,
   onGanttScroll,
 }: MainBoardContentProps) {
+  if (displayOptions.viewMode === 'resource') {
+    return (
+      <div className="flex flex-1 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
+        <ResourceBoard
+          projects={filteredProjects}
+          initialData={initialData}
+          treeWidth={treeWidth}
+          setIsResizing={setIsResizing}
+          listRef={treeRef}
+          ganttRef={ganttRef}
+          dynamicGanttRange={dynamicGanttRange}
+          showTodayHighlight={displayOptions.showTodayHighlight}
+          isDarkMode={displayOptions.isDarkMode}
+          onListScroll={onTreeScroll}
+          onGanttScroll={onGanttScroll}
+          onRefresh={() => onUpdate(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-1 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
       <div

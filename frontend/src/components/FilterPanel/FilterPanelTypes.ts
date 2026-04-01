@@ -19,4 +19,5 @@ export interface DisplayOptions {
   showProgressRate: boolean;
   showMarkers: boolean;
   isDarkMode: boolean;
+  viewMode: 'wbs' | 'resource';
 }

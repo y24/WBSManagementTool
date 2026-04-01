@@ -7,6 +7,7 @@ import { FilterState, DisplayOptions } from './FilterPanel/FilterPanelTypes';
 import FilterControls from './FilterPanel/FilterControls';
 import SearchAndDelayed from './FilterPanel/SearchAndDelayed';
 import ModeSwitcher from './FilterPanel/ModeSwitcher';
+import ViewSwitcher from './FilterPanel/ViewSwitcher';
 import ActionButtons from './FilterPanel/ActionButtons';
 import SettingsDropdown from './FilterPanel/SettingsDropdown';
 import MultiSelect from './MultiSelect';
@@ -104,6 +105,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             リセット
           </button>
         </div>
+
+        <ViewSwitcher
+          displayOptions={displayOptions}
+          setDisplayOptions={setDisplayOptions}
+        />
 
         <ModeSwitcher
           displayOptions={displayOptions}

@@ -1,0 +1,70 @@
+import React from 'react';
+import { ResourceRow } from '../../pages/mainboard/useResourceData';
+
+interface ResourceListProps {
+  data: ResourceRow[];
+  width: number;
+  onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
+  listRef: React.RefObject<HTMLDivElement | null>;
+}
+
+export default function ResourceList({ data, width, onScroll, listRef }: ResourceListProps) {
+  return (
+    <div 
+      className="flex flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 h-full overflow-y-auto overflow-x-hidden"
+      style={{ width: `${width}px` }}
+      onScroll={onScroll}
+      ref={listRef as unknown as React.RefObject<HTMLDivElement>}
+    >
+      <div className="sticky top-0 z-20 flex bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 shadow-sm min-h-[42px]">
+        {/* Header Row */}
+        <div className="flex w-full px-2 py-1 items-center">
+          <div className="flex-1 truncate">担当者名</div>
+          <div className="flex gap-2 shrink-0">
+            <div className="w-12 text-center" title="進行中件数">進行中</div>
+            <div className="w-12 text-center" title="遅延件数">遅延</div>
+            <div className="w-12 text-center" title="今週終了予定">今週終了</div>
+            <div className="w-12 text-center" title="レビュー待ち">レビュー</div>
+            <div className="w-12 text-center" title="今週予定工数(日)">予定工数</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 pb-[100px] bg-slate-50 dark:bg-slate-950">
+        {data.map((row) => (
+          <div key={row.assignee?.id ?? 'unassigned'} className="relative group/row">
+            {/* Header row for the assignee */}
+            <div className="flex items-center h-[37px] border-b border-gray-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 bg-white dark:bg-slate-900">
+              <div className="flex w-full px-2 py-1 items-center">
+                <div className="flex-1 truncate font-medium text-sm text-slate-800 dark:text-slate-200">
+                  {row.assignee?.member_name || '未アサイン'}
+                </div>
+                <div className="flex gap-2 shrink-0 text-xs">
+                  <div className={`w-12 text-center font-medium ${row.inProgressCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                    {row.inProgressCount}
+                  </div>
+                  <div className={`w-12 text-center font-bold ${row.delayedCount > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                    {row.delayedCount}
+                  </div>
+                  <div className={`w-12 text-center font-medium ${row.endingThisWeekCount > 0 ? 'text-amber-500 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                    {row.endingThisWeekCount}
+                  </div>
+                  <div className={`w-12 text-center font-medium ${row.reviewWaitingCount > 0 ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                    {row.reviewWaitingCount}
+                  </div>
+                  <div className={`w-12 text-center font-medium ${(Number(row.plannedEffortThisWeek) || 0) > 1.0 ? 'text-rose-500 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                    {(Number(row.plannedEffortThisWeek) || 0).toFixed(1)}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* One empty row space for each packed track to match Gantt height */}
+            {row.tracks.map((_, i) => (
+              <div key={`space-${i}`} className="h-[37px] border-b border-gray-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/30" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
