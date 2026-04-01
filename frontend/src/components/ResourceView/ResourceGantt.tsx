@@ -8,7 +8,7 @@ import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
 import GanttBar from '../GanttBar';
 
-const RESOURCE_TRACK_HEIGHT = 37;
+const RESOURCE_TRACK_HEIGHT = 32;
 
 interface ResourceGanttProps {
   data: ResourceRow[];

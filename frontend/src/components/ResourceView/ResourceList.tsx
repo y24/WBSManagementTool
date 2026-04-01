@@ -1,7 +1,7 @@
 import React from 'react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
 
-const RESOURCE_TRACK_HEIGHT = 37;
+const RESOURCE_TRACK_HEIGHT = 32;
 
 interface ResourceListProps {
   data: ResourceRow[];
@@ -18,10 +18,10 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
       onScroll={onScroll}
       ref={listRef as unknown as React.RefObject<HTMLDivElement>}
     >
-      <div className="sticky top-0 z-20 flex bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 shadow-sm min-h-[42px] min-w-max">
+      <div className="sticky top-0 z-20 flex bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 shadow-sm h-[38px] min-w-max">
         {/* Header Row */}
-        <div className="flex w-full py-1 items-center">
-          <div className="sticky left-0 z-30 bg-slate-50 dark:bg-slate-900 min-w-[140px] pl-4 pr-4 py-2 flex-1 truncate border-r border-slate-200 dark:border-slate-700">担当者名</div>
+        <div className="flex w-full items-center h-full">
+          <div className="sticky left-0 z-30 bg-slate-50 dark:bg-slate-900 min-w-[140px] pl-4 pr-4 h-full flex items-center flex-1 truncate border-r border-slate-200 dark:border-slate-700">担当者名</div>
           <div className="flex gap-2 shrink-0 pr-2">
             <div className="w-12 text-center" title="進行中件数">進行中</div>
             <div className="w-12 text-center" title="遅延件数">遅延</div>
