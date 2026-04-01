@@ -164,10 +164,18 @@ export default function ResourceGantt({
           />
 
           <div className="relative z-10 pb-[100px]">
-            {data.map((row) => (
-              <div key={row.assignee?.id ?? 'unassigned'} className="relative group/ganttrow">
+            {data.map((row, rowIndex) => (
+              <div
+                key={row.assignee?.id ?? 'unassigned'}
+                className={`relative group/ganttrow border-b ${
+                  rowIndex % 2 === 0
+                    ? 'bg-slate-50/50 border-slate-300/35 dark:bg-slate-900/30 dark:border-slate-700/40'
+                    : 'bg-white/60 border-slate-300/35 dark:bg-slate-950/30 dark:border-slate-700/40'
+                }`}
+              >
+                <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-slate-300/45 via-slate-200/20 to-slate-300/45 dark:from-slate-600/45 dark:via-slate-700/15 dark:to-slate-600/45" />
                 {/* Header row area (Heatmap goes here) */}
-                <div className="relative h-[37px] border-b border-gray-100 dark:border-slate-800/50">
+                <div className="relative h-[37px] border-b border-slate-200/45 dark:border-slate-700/35">
                    {renderHeatmap(row)}
                 </div>
 
@@ -175,7 +183,7 @@ export default function ResourceGantt({
                 {row.tracks.map((track, trackIndex) => (
                   <div 
                     key={`track-${trackIndex}`} 
-                    className="relative h-[37px] border-b border-gray-100 dark:border-slate-800/50 w-full pointer-events-auto"
+                    className="relative h-[37px] border-b border-slate-200/30 dark:border-slate-800/45 w-full pointer-events-auto"
                   >
                     {track.map((subtask) => {
                       const isDelayed = checkIsDelayed(subtask);
