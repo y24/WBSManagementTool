@@ -201,7 +201,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
           {/* 計画レビュー境界ハンドル */}
           {allowBarEdit && isSubtask && rStart !== undefined && !isAutoPlanned && (
             <div
-              className="gantt-review-handle"
+              className="gantt-review-handle pointer-events-auto"
               style={{ 
                 left: `${rStart - 5}px`, 
                 top: hasActual ? '6px' : subtaskBarTopPx, 
@@ -216,7 +216,6 @@ const GanttBar: React.FC<GanttBarProps> = ({
             <div
               className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-tr-sm' : 'rounded-r-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50 pointer-events-auto`}
               style={{ left: `${rStart}px`, width: `${rWidth}px` }}
-              title={!isResourceView ? `レビュー期間: ${reviewDays}日` : undefined}
               onMouseEnter={handleMouseEnter}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
@@ -229,7 +228,6 @@ const GanttBar: React.FC<GanttBarProps> = ({
           <div
               className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} pointer-events-auto`}
             style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
-            title={!isResourceView && item.progress_percent != null ? `${item.progress_percent}%` : undefined}
             onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
@@ -274,7 +272,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
           {/* レビュー境界ハンドル */}
           {allowBarEdit && isSubtask && actualStart && actualEnd && reviewStart && arStart !== undefined && (
             <div
-              className="gantt-review-handle"
+              className="gantt-review-handle pointer-events-auto"
               style={{
                 left: `${arStart - 5}px`,
                 top: subtaskBarTopPx,
@@ -346,8 +344,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
         document.body
       )}
 
-      {/* 詳細ツールチップ（リソースビューのみ） */}
-      {!dragState && isHovered && isResourceView && (
+      {/* 詳細ツールチップ */}
+      {!dragState && isHovered && (
         <GanttTooltip
           item={item}
           itemType={itemType}

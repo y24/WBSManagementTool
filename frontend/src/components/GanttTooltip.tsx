@@ -36,7 +36,10 @@ const GanttTooltip: React.FC<GanttTooltipProps> = ({
 
   // 表示項目の抽出
   const projectName = item.project_name || '-';
-  const subtaskType = itemType === 'subtask' ? getSubtaskTypeName(item.subtask_type_id) : '-';
+  const itemTypeLabel = itemType === 'subtask' 
+    ? getSubtaskTypeName(item.subtask_type_id) 
+    : (itemType === 'task' ? 'タスク' : 'プロジェクト');
+  
   const detail = (itemType === 'subtask' ? item.subtask_detail : item.detail) || '-';
   const statusObj = initialData?.statuses.find(s => s.id === item.status_id);
   const statusName = statusObj?.status_name || '-';
@@ -44,8 +47,12 @@ const GanttTooltip: React.FC<GanttTooltipProps> = ({
   if (!statusColor.startsWith('#')) statusColor = '#' + statusColor;
 
   const progress = item.progress_percent != null ? `${item.progress_percent}%` : null;
-  const pEffort = item.planned_effort_days != null ? `${item.planned_effort_days}日` : '-';
-  const aEffort = item.actual_effort_days != null ? `${item.actual_effort_days}日` : '-';
+  
+  // 工数の抽出 (Subtask は planned_effort_days, Project/Task は planned_effort_total)
+  const pEffortValue = item.planned_effort_days ?? item.planned_effort_total;
+  const aEffortValue = item.actual_effort_days ?? item.actual_effort_total;
+  const pEffort = pEffortValue != null ? `${pEffortValue}日` : '-';
+  const aEffort = aEffortValue != null ? `${aEffortValue}日` : '-';
 
   return createPortal(
     <div
@@ -69,7 +76,7 @@ const GanttTooltip: React.FC<GanttTooltipProps> = ({
 
         <div className="border-t border-slate-100 dark:border-slate-800 pt-2 mt-1.5">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="font-bold text-slate-900 dark:text-white text-[13px]">{subtaskType}</span>
+            <span className="font-bold text-slate-900 dark:text-white text-[13px]">{itemTypeLabel}</span>
             <span className="px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold opacity-80 flex items-center gap-1">
               <span style={{ color: statusColor }}>●</span>
               {statusName}

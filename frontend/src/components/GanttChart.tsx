@@ -215,7 +215,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                       onDoubleClick={(e) => handleRowDoubleClick(e, task, 'task')}
                     >
                       <GanttBar
-                        item={task}
+                        item={{ ...task, project_name: project.project_name }}
                         itemType="task"
                         baseDate={baseDate}
                         cellWidth={CELL_WIDTH}
@@ -241,7 +241,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                           title={isRowEmpty(subtask) ? (typeName ? `ダブルクリックで計画を入力: ${typeName}` : 'ダブルクリックで計画を入力') : undefined}
                         >
                           <GanttBar
-                            item={subtask}
+                            item={{ ...subtask, project_name: project.project_name, task_name: task.task_name }}
                             itemType="subtask"
                             baseDate={baseDate}
                             cellWidth={CELL_WIDTH}

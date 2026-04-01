@@ -24,6 +24,8 @@ export interface Subtask {
   is_auto_effort: boolean;
   workload_percent?: number | null;
   is_deleted: boolean;
+  project_name?: string;
+  task_name?: string;
   
   // Relations mapped by backend (if needed, otherwise manually mapped from initial-data)
   // For now we map using the masters
