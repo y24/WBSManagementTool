@@ -126,13 +126,18 @@ export function useResourceData(
           }
 
           // Planned Effort This Week (Active this week)
-          if (subtask.planned_start_date && subtask.planned_end_date) {
-            if (subtask.planned_start_date <= endOfWeek && subtask.planned_end_date >= startOfWeek) {
+          const startStr = subtask.actual_start_date || subtask.planned_start_date;
+          const endStr = subtask.actual_start_date 
+            ? (subtask.actual_end_date || subtask.actual_start_date) 
+            : (subtask.planned_end_date || subtask.planned_start_date);
+
+          if (startStr && endStr) {
+            if (startStr <= endOfWeek && endStr >= startOfWeek) {
               row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
             }
-          } else if (subtask.planned_start_date && subtask.planned_start_date >= startOfWeek && subtask.planned_start_date <= endOfWeek) {
+          } else if (startStr && startStr >= startOfWeek && startStr <= endOfWeek) {
             row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
-          } else if (subtask.planned_end_date && subtask.planned_end_date >= startOfWeek && subtask.planned_end_date <= endOfWeek) {
+          } else if (endStr && endStr >= startOfWeek && endStr <= endOfWeek) {
             row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
           }
         });

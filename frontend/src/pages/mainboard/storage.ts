@@ -4,10 +4,18 @@ const STORAGE_KEYS = {
   filters: 'wbs_filters',
   expandedProjects: 'wbs_expanded_projects',
   expandedTasks: 'wbs_expanded_tasks',
-  treeWidth: 'wbs_tree_width',
+  treeWidthLegacy: 'wbs_tree_width',
+  treeWidthWbs: 'wbs_tree_width_wbs',
+  treeWidthResource: 'wbs_tree_width_resource',
   ganttScrollLeft: 'wbs_gantt_scroll_left',
   displayOptions: 'wbs_display_options',
 } as const;
+
+type ViewMode = 'wbs' | 'resource';
+
+function getTreeWidthStorageKey(viewMode: ViewMode): string {
+  return viewMode === 'resource' ? STORAGE_KEYS.treeWidthResource : STORAGE_KEYS.treeWidthWbs;
+}
 
 export const createDefaultFilters = (): FilterState => ({
   projectIds: [],
@@ -86,8 +94,12 @@ export function getInitialExpandedTasks(): Record<number, boolean> {
   }
 }
 
-export function getInitialTreeWidth(): number {
-  const width = readNumber(STORAGE_KEYS.treeWidth, 1000);
+export function getInitialTreeWidth(viewMode: ViewMode): number {
+  const modeSpecificKey = getTreeWidthStorageKey(viewMode);
+  const hasModeSpecificValue = localStorage.getItem(modeSpecificKey) !== null;
+  const width = hasModeSpecificValue
+    ? readNumber(modeSpecificKey, 1000)
+    : readNumber(STORAGE_KEYS.treeWidthLegacy, 1000);
   if (typeof window === 'undefined') return width;
 
   const maxWidth = window.innerWidth - 100;
@@ -111,8 +123,8 @@ export function persistExpandedTasks(expandedTasks: Record<number, boolean>): vo
   localStorage.setItem(STORAGE_KEYS.expandedTasks, JSON.stringify(expandedTasks));
 }
 
-export function persistTreeWidth(treeWidth: number): void {
-  localStorage.setItem(STORAGE_KEYS.treeWidth, treeWidth.toString());
+export function persistTreeWidth(treeWidth: number, viewMode: ViewMode): void {
+  localStorage.setItem(getTreeWidthStorageKey(viewMode), treeWidth.toString());
 }
 
 export function persistDisplayOptions(displayOptions: DisplayOptions): void {

@@ -70,25 +70,44 @@ export default function ResourceGantt({
 
   // Heatmap rendering function
   const renderHeatmap = useCallback((row: ResourceRow) => {
-    const capacities = new Map<string, number>();
+    const overlapsByDay = new Map<string, number>();
 
-    // Accumulate planned_effort_days for each day the subtasks span
+    // Count active subtasks per day.
+    // If actual_start_date exists, only actual dates are considered (planned dates are ignored).
     row.subtasks.forEach(task => {
-      if (task.planned_start_date && task.planned_end_date) {
-        const start = task.planned_start_date < task.planned_end_date ? task.planned_start_date : task.planned_end_date;
-        const end = task.planned_start_date < task.planned_end_date ? task.planned_end_date : task.planned_start_date;
-        let d = parseISO(start);
-        const endD = parseISO(end);
-        
-        while (differenceInCalendarDays(endD, d) >= 0) {
-          const dStr = format(d, 'yyyy-MM-dd');
-          capacities.set(dStr, (capacities.get(dStr) || 0) + (task.planned_effort_days || 0));
-          d = addDays(d, 1);
+      const hasActual = !!task.actual_start_date;
+      const startStr = hasActual ? task.actual_start_date : task.planned_start_date;
+      const endStr = hasActual
+        ? (task.actual_end_date || task.actual_start_date)
+        : (task.planned_end_date || task.planned_start_date);
+
+      if (startStr && endStr) {
+        const startDate = parseISO(startStr);
+        const endD = parseISO(endStr);
+        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endD.getTime())) return;
+
+        // Ensure start <= end to avoid issues
+        const realStart = startDate < endD ? startDate : endD;
+        const realEnd = startDate < endD ? endD : startDate;
+        let current = realStart;
+
+        while (differenceInCalendarDays(realEnd, current) >= 0) {
+          const dStr = format(current, 'yyyy-MM-dd');
+          overlapsByDay.set(dStr, (overlapsByDay.get(dStr) || 0) + 1);
+          current = addDays(current, 1);
         }
-      } else if (task.planned_start_date) {
-         capacities.set(task.planned_start_date, (capacities.get(task.planned_start_date) || 0) + (task.planned_effort_days || 0));
-      } else if (task.planned_end_date) {
-         capacities.set(task.planned_end_date, (capacities.get(task.planned_end_date) || 0) + (task.planned_effort_days || 0));
+      } else if (startStr) {
+        const startDate = parseISO(startStr);
+        if (!Number.isNaN(startDate.getTime())) {
+          const dateStr = format(startDate, 'yyyy-MM-dd');
+          overlapsByDay.set(dateStr, (overlapsByDay.get(dateStr) || 0) + 1);
+        }
+      } else if (endStr) {
+        const endDate = parseISO(endStr);
+        if (!Number.isNaN(endDate.getTime())) {
+          const dateStr = format(endDate, 'yyyy-MM-dd');
+          overlapsByDay.set(dateStr, (overlapsByDay.get(dateStr) || 0) + 1);
+        }
       }
     });
 
@@ -97,9 +116,9 @@ export default function ResourceGantt({
 
     for (let i = 0; i < days.length; i++) {
         const dateStr = format(days[i], 'yyyy-MM-dd');
-        const effortSum = capacities.get(dateStr) || 0;
+        const overlapCount = overlapsByDay.get(dateStr) || 0;
         
-        if (effortSum > 1.0) {
+        if (overlapCount > 1) {
             cells.push(
                 <div 
                     key={`heatmap-${dateStr}`}

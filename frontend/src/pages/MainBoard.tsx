@@ -36,7 +36,7 @@ export default function MainBoard() {
   const [expandedProjects, setExpandedProjects] = useState<Record<number, boolean>>(getInitialExpandedProjects);
   const [expandedTasks, setExpandedTasks] = useState<Record<number, boolean>>(getInitialExpandedTasks);
 
-  const [treeWidth, setTreeWidth] = useState(getInitialTreeWidth);
+  const [treeWidth, setTreeWidth] = useState(() => getInitialTreeWidth(displayOptions.viewMode));
   const [isResizing, setIsResizing] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
@@ -95,8 +95,12 @@ export default function MainBoard() {
   }, [expandedTasks]);
 
   useEffect(() => {
-    persistTreeWidth(treeWidth);
+    persistTreeWidth(treeWidth, displayOptions.viewMode);
   }, [treeWidth]);
+
+  useEffect(() => {
+    setTreeWidth(getInitialTreeWidth(displayOptions.viewMode));
+  }, [displayOptions.viewMode]);
 
   useEffect(() => {
     persistDisplayOptions(displayOptions);
