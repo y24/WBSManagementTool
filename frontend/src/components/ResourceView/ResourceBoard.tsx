@@ -14,6 +14,7 @@ interface ResourceBoardProps {
   ganttRef: React.RefObject<HTMLDivElement | null>;
   dynamicGanttRange?: GanttRange;
   showTodayHighlight: boolean;
+  showMarkers: boolean;
   isDarkMode: boolean;
   onListScroll: (e: UIEvent<HTMLDivElement>) => void;
   onGanttScroll: (e: UIEvent<HTMLDivElement>) => void;
@@ -29,6 +30,7 @@ export default function ResourceBoard({
   ganttRef,
   dynamicGanttRange,
   showTodayHighlight,
+  showMarkers,
   isDarkMode,
   onListScroll,
   onGanttScroll,
@@ -68,6 +70,7 @@ export default function ResourceBoard({
             range={dynamicGanttRange}
             initialData={initialData}
             showTodayHighlight={showTodayHighlight}
+            showMarkers={showMarkers}
             isDarkMode={isDarkMode}
             onScroll={onGanttScroll}
             ganttRef={ganttRef}

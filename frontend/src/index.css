@@ -330,8 +330,8 @@ code {
   /* Default 50% opacity */
   border-right: 2px solid var(--highlight-border, rgba(132, 204, 22, 0.5));
   pointer-events: none;
-  z-index: -1;
-  /* Behind bars and rows background */
+  z-index: 1;
+  /* Above grid (z-0) but below bars (z-10) */
 }
 
 /* ═══════════════════════════════════════════

@@ -15,6 +15,7 @@ interface ResourceGanttProps {
   range: GanttRange;
   initialData: InitialData | null;
   showTodayHighlight: boolean;
+  showMarkers: boolean;
   isDarkMode: boolean;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   ganttRef: React.RefObject<HTMLDivElement | null>;
@@ -26,6 +27,7 @@ export default function ResourceGantt({
   range,
   initialData,
   showTodayHighlight,
+  showMarkers,
   isDarkMode,
   onScroll,
   ganttRef,
@@ -157,7 +159,7 @@ export default function ResourceGantt({
             days={days}
             cellWidth={CELL_WIDTH}
             initialData={initialData}
-            showMarkers={true}
+            showMarkers={showMarkers}
             dragState={null}
             tempDates={{}}
             onDateClick={() => {}}
@@ -172,10 +174,7 @@ export default function ResourceGantt({
             range={range}
             hoveredDate={hoveredDate}
             showTodayHighlight={showTodayHighlight}
-            showMarkers={true}
-            showProjectRange={false}
-            projects={[]}
-            getStatusColor={getStatusColor}
+            showMarkers={showMarkers}
             dragState={null}
             tempDates={{}}
           />

@@ -149,6 +149,46 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     }
   }, [baseDate, isRowEmpty, onRefresh]);
 
+  const projectDisplayRanges = useMemo(() => {
+    if (!range.start_date || !projects.length) return {};
+    const baseDate = parseISO(range.start_date);
+
+    return projects.reduce((acc, project) => {
+      const allDates: number[] = [];
+      const collect = (item: any) => {
+        const temp = tempDates[item.id];
+        const dates = {
+          pS: temp?.planned_start_date || item.planned_start_date,
+          pE: temp?.planned_end_date || item.planned_end_date,
+          aS: temp?.actual_start_date || item.actual_start_date,
+          aE: temp?.actual_end_date || item.actual_end_date,
+          rS: temp?.review_start_date || item.review_start_date,
+        };
+        Object.values(dates).forEach(v => {
+          if (v) {
+            const d = parseISO(v as string);
+            if (!isNaN(d.getTime())) allDates.push(d.getTime());
+          }
+        });
+      };
+
+      collect(project);
+      (project.tasks || []).forEach(t => {
+        collect(t);
+        (t.subtasks || []).forEach(s => collect(s));
+      });
+
+      if (allDates.length > 0) {
+        const min = Math.min(...allDates);
+        const max = Math.max(...allDates);
+        const left = differenceInCalendarDays(new Date(min), baseDate) * CELL_WIDTH;
+        const width = (differenceInCalendarDays(new Date(max), new Date(min)) + 1) * CELL_WIDTH;
+        acc[project.id] = { left, width, status_id: project.status_id };
+      }
+      return acc;
+    }, {} as Record<number, { left: number; width: number; status_id?: number | null }>);
+  }, [projects, range.start_date, tempDates]);
+
   const totalWidth = useMemo(() => days.length * CELL_WIDTH, [days]);
   const commonRowClasses = "transition-colors h-[37px]";
 
@@ -179,88 +219,104 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
             hoveredDate={hoveredDate}
             showTodayHighlight={showTodayHighlight}
             showMarkers={showMarkers}
-            showProjectRange={showProjectRange}
-            projects={projects}
-            getStatusColor={getStatusColor}
             dragState={dragState}
             tempDates={tempDates}
           />
 
           {/* 要素行の描画 (z-10) */}
           <div className="relative z-10">
-            {projects.map(project => (
-              <div key={`p-wrapper-${project.id}`} className="relative">
-                <div className={`${commonRowClasses} wbs-row-project`}>
-                  <GanttBar
-                    item={project}
-                    itemType="project"
-                    baseDate={baseDate}
-                    cellWidth={CELL_WIDTH}
-                    initialData={initialData}
-                    tempDates={tempDates}
-                    dragState={dragState}
-                    isDarkMode={!!isDarkMode}
-                    showProgressRate={showProgressRate}
-                    showAssigneeName={showAssigneeName}
-                    handleMouseDown={handleMouseDown}
-                    getStatusColor={getStatusColor}
-                    isExpanded={expandedProjects[project.id] !== false}
-                  />
-                </div>
-
-                {expandedProjects[project.id] !== false && project.tasks.map(task => (
-                  <div key={`t-wrapper-${task.id}`}>
+            {projects.map(project => {
+              const pRange = projectDisplayRanges[project.id];
+              return (
+                <div key={`p-wrapper-${project.id}`} className="relative group/p-wrapper">
+                  {/* プロジェクト期間ハイライト (そのプロジェクトの行範囲内のみ) */}
+                  {showProjectRange && pRange && (
                     <div 
-                      className={`${commonRowClasses} wbs-row-task relative z-10 w-full pointer-events-auto select-none`}
-                      onDoubleClick={(e) => handleRowDoubleClick(e, task, 'task')}
-                    >
-                      <GanttBar
-                        item={{ ...task, project_name: project.project_name }}
-                        itemType="task"
-                        baseDate={baseDate}
-                        cellWidth={CELL_WIDTH}
-                        initialData={initialData}
-                        tempDates={tempDates}
-                        dragState={dragState}
-                        isDarkMode={!!isDarkMode}
-                        showProgressRate={showProgressRate}
-                        showAssigneeName={showAssigneeName}
-                        handleMouseDown={handleMouseDown}
-                        getStatusColor={getStatusColor}
-                        isExpanded={expandedTasks[task.id] !== false}
-                      />
-                    </div>
-
-                    {expandedTasks[task.id] !== false && task.subtasks.map(subtask => {
-                      const typeName = initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name;
-                      return (
-                        <div 
-                          key={`s-${subtask.id}`} 
-                          className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) ? 'wbs-row-empty' : ''}`}
-                          onDoubleClick={(e) => handleRowDoubleClick(e, subtask, 'subtask')}
-                          title={isRowEmpty(subtask) ? (typeName ? `ダブルクリックで計画を入力: ${typeName}` : 'ダブルクリックで計画を入力') : undefined}
-                        >
-                          <GanttBar
-                            item={{ ...subtask, project_name: project.project_name, task_name: task.task_name }}
-                            itemType="subtask"
-                            baseDate={baseDate}
-                            cellWidth={CELL_WIDTH}
-                            initialData={initialData}
-                            tempDates={tempDates}
-                            dragState={dragState}
-                            isDarkMode={!!isDarkMode}
-                            showProgressRate={showProgressRate}
-                            showAssigneeName={showAssigneeName}
-                            handleMouseDown={handleMouseDown}
-                            getStatusColor={getStatusColor}
-                          />
-                        </div>
-                      );
-                    })}
+                      className="wbs-project-range-highlight"
+                      style={{
+                        left: `${pRange.left}px`,
+                        width: `${pRange.width}px`,
+                        top: 0,
+                        bottom: 0,
+                        zIndex: 0, // z-10の要素行よりも背面
+                        '--highlight-bg': `${getStatusColor(pRange.status_id)}26`,
+                        '--highlight-border': `${getStatusColor(pRange.status_id)}73`
+                      } as React.CSSProperties}
+                    />
+                  )}
+                  
+                  <div className={`${commonRowClasses} wbs-row-project relative z-10`}>
+                    <GanttBar
+                      item={project}
+                      itemType="project"
+                      baseDate={baseDate}
+                      cellWidth={CELL_WIDTH}
+                      initialData={initialData}
+                      tempDates={tempDates}
+                      dragState={dragState}
+                      isDarkMode={!!isDarkMode}
+                      showProgressRate={showProgressRate}
+                      showAssigneeName={showAssigneeName}
+                      handleMouseDown={handleMouseDown}
+                      getStatusColor={getStatusColor}
+                      isExpanded={expandedProjects[project.id] !== false}
+                    />
                   </div>
-                ))}
-              </div>
-            ))}
+
+                  {expandedProjects[project.id] !== false && project.tasks.map(task => (
+                    <div key={`t-wrapper-${task.id}`}>
+                      <div 
+                        className={`${commonRowClasses} wbs-row-task relative z-10 w-full pointer-events-auto select-none`}
+                        onDoubleClick={(e) => handleRowDoubleClick(e, task, 'task')}
+                      >
+                        <GanttBar
+                          item={{ ...task, project_name: project.project_name }}
+                          itemType="task"
+                          baseDate={baseDate}
+                          cellWidth={CELL_WIDTH}
+                          initialData={initialData}
+                          tempDates={tempDates}
+                          dragState={dragState}
+                          isDarkMode={!!isDarkMode}
+                          showProgressRate={showProgressRate}
+                          showAssigneeName={showAssigneeName}
+                          handleMouseDown={handleMouseDown}
+                          getStatusColor={getStatusColor}
+                          isExpanded={expandedTasks[task.id] !== false}
+                        />
+                      </div>
+
+                      {expandedTasks[task.id] !== false && task.subtasks.map(subtask => {
+                        const typeName = initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name;
+                        return (
+                          <div 
+                            key={`s-${subtask.id}`} 
+                            className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) ? 'wbs-row-empty' : ''}`}
+                            onDoubleClick={(e) => handleRowDoubleClick(e, subtask, 'subtask')}
+                            title={isRowEmpty(subtask) ? (typeName ? `ダブルクリックで計画を入力: ${typeName}` : 'ダブルクリックで計画を入力') : undefined}
+                          >
+                            <GanttBar
+                              item={{ ...subtask, project_name: project.project_name, task_name: task.task_name }}
+                              itemType="subtask"
+                              baseDate={baseDate}
+                              cellWidth={CELL_WIDTH}
+                              initialData={initialData}
+                              tempDates={tempDates}
+                              dragState={dragState}
+                              isDarkMode={!!isDarkMode}
+                              showProgressRate={showProgressRate}
+                              showAssigneeName={showAssigneeName}
+                              handleMouseDown={handleMouseDown}
+                              getStatusColor={getStatusColor}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

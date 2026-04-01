@@ -53,6 +53,7 @@ export default function MainBoardContent({
           ganttRef={ganttRef}
           dynamicGanttRange={dynamicGanttRange}
           showTodayHighlight={displayOptions.showTodayHighlight}
+          showMarkers={displayOptions.showMarkers}
           isDarkMode={displayOptions.isDarkMode}
           onListScroll={onTreeScroll}
           onGanttScroll={onGanttScroll}
