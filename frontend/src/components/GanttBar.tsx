@@ -1,10 +1,11 @@
- import React from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { parseISO, differenceInCalendarDays, isValid } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
 import { InitialData } from '../types';
 import { ItemType, BarType, DragMode, DragState } from '../hooks/useGanttDrag';
 import { getWarning, calculateReviewCalendarDays } from './WBSTree/utils';
+import GanttTooltip from './GanttTooltip';
 
 interface GanttBarProps {
   item: any;
@@ -50,6 +51,32 @@ const GanttBar: React.FC<GanttBarProps> = ({
   isDelayedHighlight = false,
   isResourceView = false,
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = useCallback((e: React.MouseEvent) => {
+    // ドラッグ中は何もしない
+    if (dragState && dragState.itemId === item.id) return;
+    
+    setMousePos({ x: e.clientX, y: e.clientY });
+    
+    // 少し遅延させて表示（チラつき防止）
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => {
+      setIsHovered(true);
+    }, 500);
+  }, [dragState, item.id]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    setIsHovered(false);
+  }, []);
+
   if ((itemType === 'project' || itemType === 'task') && isExpanded) {
     return null;
   }
@@ -147,12 +174,17 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const warningTopPx = isSubtask && isResourceView ? '8px' : '10px';
 
   return (
-    <div className="relative w-full h-full min-h-[30px] flex flex-col justify-start">
+    <div 
+      className="relative w-full h-full min-h-[30px] flex flex-col justify-start pointer-events-none"
+    >
       {showPlannedBar && (
         <>
           <div
-            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70 ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''}`}
+            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70 ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''} pointer-events-auto`}
             style={{ left: `${pStart}px`, width: `${pWidth}px` }}
+            onMouseEnter={handleMouseEnter}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
             onMouseDown={(e) => {
               if (!allowBarEdit || isAutoPlanned) return;
               handleMouseDown(e, item.id, itemType, 'planned', 'move', { start: plannedStart, end: plannedEnd, reviewDays, name: itemName ?? undefined });
@@ -182,9 +214,12 @@ const GanttBar: React.FC<GanttBarProps> = ({
           )}
           {rStart !== undefined && rWidth !== undefined && (
             <div
-              className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-tr-sm' : 'rounded-r-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50 pointer-events-none`}
+              className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-tr-sm' : 'rounded-r-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50 pointer-events-auto`}
               style={{ left: `${rStart}px`, width: `${rWidth}px` }}
-              title={`レビュー期間: ${reviewDays}日`}
+              title={!isResourceView ? `レビュー期間: ${reviewDays}日` : undefined}
+              onMouseEnter={handleMouseEnter}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
             />
           )}
         </>
@@ -192,9 +227,12 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {aStart !== undefined && aWidth !== undefined && (
         <>
           <div
-              className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''}`}
+              className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} pointer-events-auto`}
             style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
-            title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
+            title={!isResourceView && item.progress_percent != null ? `${item.progress_percent}%` : undefined}
+            onMouseEnter={handleMouseEnter}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
             onMouseDown={(e) => {
               if (!allowBarEdit || isFixedEnd || isAutoActual) return;
               handleMouseDown(e, item.id, itemType, 'actual', 'move', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined });
@@ -286,6 +324,9 @@ const GanttBar: React.FC<GanttBarProps> = ({
           className="absolute flex items-center z-20 pointer-events-auto cursor-help"
           style={{ top: warningTopPx, left: `${rightEdge + 4}px` }}
           title={warningText}
+          onMouseEnter={handleMouseEnter}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
           <AlertTriangle size={14} className="text-amber-500 shrink-0" />
         </div>
@@ -303,6 +344,18 @@ const GanttBar: React.FC<GanttBarProps> = ({
           {temp.tooltipText}
         </div>,
         document.body
+      )}
+
+      {/* 詳細ツールチップ（リソースビューのみ） */}
+      {!dragState && isHovered && isResourceView && (
+        <GanttTooltip
+          item={item}
+          itemType={itemType}
+          mouseX={mousePos.x}
+          mouseY={mousePos.y}
+          initialData={initialData}
+          isVisible={isHovered}
+        />
       )}
     </div>
   );

@@ -205,7 +205,7 @@ export default function ResourceGantt({
                     {track.map((subtask) => {
                       const isDelayed = checkIsDelayed(subtask);
                       return (
-                        <div key={`r-s-${subtask.id}`} className="absolute top-0 left-0 w-full h-full">
+                        <div key={`r-s-${subtask.id}`} className="absolute top-0 left-0 w-full h-full pointer-events-none">
                           <GanttBar
                             item={subtask}
                             itemType="subtask"
