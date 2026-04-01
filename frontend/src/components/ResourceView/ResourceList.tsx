@@ -1,6 +1,8 @@
 import React from 'react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
 
+const RESOURCE_TRACK_HEIGHT = 37;
+
 interface ResourceListProps {
   data: ResourceRow[];
   width: number;
@@ -35,7 +37,7 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
           <div 
             key={row.assignee?.id ?? 'unassigned'} 
             className="flex items-center border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group/row min-w-max"
-            style={{ height: `${(1 + row.tracks.length) * 37}px` }}
+            style={{ height: `${row.tracks.length * RESOURCE_TRACK_HEIGHT}px` }}
           >
             <div className="flex w-full py-1 items-center h-full">
               <div className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[140px] pl-4 pr-4 truncate font-medium text-[15px] text-slate-800 dark:text-slate-200 h-full flex items-center flex-1 border-r border-slate-200 dark:border-slate-700">

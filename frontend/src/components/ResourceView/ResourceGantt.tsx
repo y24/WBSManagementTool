@@ -8,6 +8,8 @@ import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
 import GanttBar from '../GanttBar';
 
+const RESOURCE_TRACK_HEIGHT = 37;
+
 interface ResourceGanttProps {
   data: ResourceRow[];
   range: GanttRange;
@@ -145,7 +147,7 @@ export default function ResourceGantt({
         currentX += CELL_WIDTH;
     }
     return cells;
-  }, [days]);
+  }, [days, isDarkMode]);
 
   return (
     <div className="h-full w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
@@ -189,16 +191,16 @@ export default function ResourceGantt({
                 }`}
               >
                 <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-slate-300/45 via-slate-200/20 to-slate-300/45 dark:from-slate-600/45 dark:via-slate-700/15 dark:to-slate-600/45" />
-                {/* Header row area (Heatmap goes here) */}
-                <div className="relative h-[37px] border-b border-slate-200/45 dark:border-slate-700/35">
-                   {renderHeatmap(row)}
+                <div className="pointer-events-none absolute left-0 right-0 top-0 bottom-0">
+                  {renderHeatmap(row)}
                 </div>
 
                 {/* Tracks Rows */}
                 {row.tracks.map((track, trackIndex) => (
                   <div 
                     key={`track-${trackIndex}`} 
-                    className="relative h-[37px] border-b border-slate-200/30 dark:border-slate-800/45 w-full pointer-events-auto"
+                    className="relative border-b border-slate-200/30 dark:border-slate-800/45 w-full pointer-events-auto"
+                    style={{ height: `${RESOURCE_TRACK_HEIGHT}px` }}
                   >
                     {track.map((subtask) => {
                       const isDelayed = checkIsDelayed(subtask);
