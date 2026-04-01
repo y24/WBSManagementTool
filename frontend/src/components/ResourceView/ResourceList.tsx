@@ -38,10 +38,10 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
             style={{ height: `${(1 + row.tracks.length) * 37}px` }}
           >
             <div className="flex w-full py-1 items-center h-full">
-              <div className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[140px] pl-4 pr-4 truncate font-medium text-sm text-slate-800 dark:text-slate-200 h-full flex items-center flex-1">
+              <div className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[140px] pl-4 pr-4 truncate font-medium text-[15px] text-slate-800 dark:text-slate-200 h-full flex items-center flex-1">
                 {row.assignee?.member_name || '未アサイン'}
               </div>
-              <div className="flex gap-2 shrink-0 text-xs pr-2">
+              <div className="flex gap-2 shrink-0 text-sm pr-2">
                 <div className={`w-12 text-center font-medium ${row.inProgressCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
                   {row.inProgressCount}
                 </div>
