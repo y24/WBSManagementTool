@@ -52,6 +52,7 @@ export function useResourceData(
       .filter(s => ['In Progress', 'In Review'].includes(s.status_name))
       .map(s => s.id);
     const inReviewStatusId = initialData.statuses.find(s => s.status_name === 'In Review')?.id;
+    const removedStatusId = initialData.statuses.find(s => s.status_name === 'Removed')?.id ?? 7;
 
     const assigneeMap = new Map<number | 'unassigned', ResourceRow>();
 
@@ -89,12 +90,17 @@ export function useResourceData(
 
           const typeName = initialData.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name ?? '';
 
+          const isRemoved = subtask.status_id === removedStatusId;
+
           row.subtasks.push({
             ...subtask,
             project_name: project.project_name,
             task_name: task.task_name,
             subtask_type_name: typeName,
           });
+
+          // If removed, don't count towards heatmap metrics
+          if (isRemoved) return;
 
           // In Progress
           if (inProgressStatusIds.includes(subtask.status_id)) {
@@ -136,9 +142,9 @@ export function useResourceData(
               row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
             }
           } else if (startStr && startStr >= startOfWeek && startStr <= endOfWeek) {
-            row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
+             row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
           } else if (endStr && endStr >= startOfWeek && endStr <= endOfWeek) {
-            row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
+             row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
           }
         });
       });

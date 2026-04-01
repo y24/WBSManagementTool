@@ -62,15 +62,18 @@ export default function ResourceGantt({
 
   const doneStatusId = initialData?.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null;
   const newStatusId = initialData?.statuses.find(s => s.status_name === 'New')?.id;
+  const removedStatusId = initialData?.statuses.find(s => s.status_name === 'Removed')?.id ?? 7;
   const todayStr = range.today || new Date().toISOString().split('T')[0];
 
   const checkIsDelayed = useCallback((subtask: ResourceSubtask) => {
+    const status = initialData?.statuses.find(s => s.id === subtask.status_id);
+    if (status?.status_name === 'Removed') return false;
     const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
     const isNew = newStatusId !== undefined && subtask.status_id === newStatusId;
     const isStartDelayed = isNew && !!subtask.planned_start_date && subtask.planned_start_date < todayStr;
     const isEndOverdue = !isDone && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
     return isStartDelayed || isEndOverdue;
-  }, [doneStatusId, newStatusId, todayStr]);
+  }, [doneStatusId, newStatusId, removedStatusId, todayStr]);
 
   // Heatmap rendering function
   const renderHeatmap = useCallback((row: ResourceRow) => {
@@ -79,6 +82,10 @@ export default function ResourceGantt({
     // Count active subtasks per day.
     // If actual_start_date exists, only actual dates are considered (planned dates are ignored).
     row.subtasks.forEach(task => {
+      // Skip removed items from heatmap overlap calculation
+      const status = initialData?.statuses.find(s => s.id === task.status_id);
+      if (status?.status_name === 'Removed') return;
+
       const hasActual = !!task.actual_start_date;
       const startStr = hasActual ? task.actual_start_date : task.planned_start_date;
       const endStr = hasActual
