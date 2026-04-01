@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { format, getDay, isToday, parseISO, differenceInCalendarDays, startOfMonth } from 'date-fns';
+import { format, getDay, isToday, parseISO, differenceInCalendarDays, isValid } from 'date-fns';
 import { InitialData } from '../types';
 import { DragMode, ItemType, BarType } from '../hooks/useGanttDrag';
 
@@ -40,6 +40,14 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
   };
 
   const baseDateStr = days[0] ? format(days[0], 'yyyy-MM-dd') : null;
+  const endDateStr = days.length > 0 ? format(days[days.length - 1], 'yyyy-MM-dd') : null;
+  const markerRange = React.useMemo(() => {
+    if (!baseDateStr || !endDateStr) return null;
+    const start = parseISO(baseDateStr);
+    const end = parseISO(endDateStr);
+    if (!isValid(start) || !isValid(end)) return null;
+    return { start, end };
+  }, [baseDateStr, endDateStr]);
   
   // 月ごとにグループ化
   const monthGroups = React.useMemo(() => {
@@ -110,11 +118,14 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
 
       {/* マーカーラベル描画 (z-50) */}
       {showMarkers && baseDateStr && initialData?.markers?.map(marker => {
+        if (!markerRange) return null;
         const temp = tempDates[marker.id];
         const isDragging = dragState?.itemId === marker.id && dragState?.itemType === 'marker';
         const displayDate = (isDragging && temp?.marker_date) ? temp.marker_date : marker.marker_date;
+        const markerDate = parseISO(displayDate);
+        if (!isValid(markerDate) || markerDate < markerRange.start || markerDate > markerRange.end) return null;
 
-        const left = differenceInCalendarDays(parseISO(displayDate), parseISO(baseDateStr)) * cellWidth;
+        const left = differenceInCalendarDays(markerDate, markerRange.start) * cellWidth;
 
         return (
           <React.Fragment key={`marker-label-${marker.id}`}>

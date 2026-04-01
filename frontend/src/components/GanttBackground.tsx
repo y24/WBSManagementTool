@@ -1,5 +1,5 @@
 import React from 'react';
-import { format, getDay, isToday, parseISO, differenceInCalendarDays } from 'date-fns';
+import { format, getDay, isToday, parseISO, differenceInCalendarDays, isValid } from 'date-fns';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
 
@@ -71,6 +71,14 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
     }, {} as Record<number, { left: number; width: number, status_id?: number | null }>);
   }, [projects, range.start_date, cellWidth]);
 
+  const markerRange = React.useMemo(() => {
+    if (!range.start_date || !range.end_date) return null;
+    const start = parseISO(range.start_date);
+    const end = parseISO(range.end_date);
+    if (!isValid(start) || !isValid(end)) return null;
+    return { start, end };
+  }, [range.start_date, range.end_date]);
+
   return (
     <>
       {/* 背景の縦線 (z-0) */}
@@ -101,12 +109,14 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
 
       {/* マーカー垂直線 (z-25) */}
       {showMarkers && initialData?.markers?.map(m => {
-        if (!range.start_date) return null;
+        if (!range.start_date || !markerRange) return null;
         const temp = tempDates[m.id];
         const isDragging = dragState?.itemId === m.id && dragState?.itemType === 'marker';
         const displayDate = (isDragging && temp?.marker_date) ? temp.marker_date : m.marker_date;
         
         const mDate = parseISO(displayDate);
+        if (!isValid(mDate) || mDate < markerRange.start || mDate > markerRange.end) return null;
+
         const left = differenceInCalendarDays(mDate, parseISO(range.start_date)) * cellWidth;
         return (
           <div
