@@ -332,7 +332,6 @@ export default function MainBoard() {
         onCancel={() => setIsExportModalOpen(false)}
         variant="primary"
         icon={<Download size={20} />}
-        showWarningText={false}
         showBodyIcon={true}
         descriptionPosition="afterButtons"
         footerPosition="beforeButtons"
