@@ -266,7 +266,9 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {/* カスタムラベル（担当者ビュー用） */}
       {customLabel && (aStart !== undefined || pStart !== undefined) && (
         <div
-          className="absolute text-[11px] text-gray-700 dark:text-gray-300 whitespace-nowrap pointer-events-none drop-shadow-sm z-30"
+          className={`absolute text-[11px] whitespace-nowrap pointer-events-none drop-shadow-sm z-30 ${
+            isResourceView ? 'text-white' : 'text-gray-700 dark:text-gray-300'
+          }`}
           style={{
             left: `${(aStart !== undefined ? aStart : (pStart || 0)) + 4}px`,
             top: barLabelTopPx,
