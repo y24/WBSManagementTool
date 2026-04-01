@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, PenTool, LayoutDashboard } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { DisplayOptions } from './FilterPanelTypes';
 
 interface ModeSwitcherProps {
@@ -11,38 +11,56 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
   displayOptions,
   setDisplayOptions
 }) => {
+  const selectedMode = displayOptions.hidePlanningColumns
+    ? 'actual'
+    : displayOptions.isPlanningMode
+      ? 'planned'
+      : 'standard';
+
+  const handleModeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const mode = event.target.value;
+
+    if (mode === 'planned') {
+      setDisplayOptions((prev: DisplayOptions) => ({
+        ...prev,
+        isPlanningMode: true,
+        hidePlanningColumns: false
+      }));
+      return;
+    }
+
+    if (mode === 'actual') {
+      setDisplayOptions((prev: DisplayOptions) => ({
+        ...prev,
+        isPlanningMode: false,
+        hidePlanningColumns: true
+      }));
+      return;
+    }
+
+    setDisplayOptions((prev: DisplayOptions) => ({
+      ...prev,
+      isPlanningMode: false,
+      hidePlanningColumns: false
+    }));
+  };
+
   return (
-    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-gray-200 dark:border-slate-700 shadow-inner h-[36px] items-center">
-      <button
-        onClick={() => setDisplayOptions((prev: DisplayOptions) => ({ ...prev, isPlanningMode: false, hidePlanningColumns: false }))}
-        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${!displayOptions.isPlanningMode && !displayOptions.hidePlanningColumns
-          ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
-          : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
-        title="標準表示"
+    <div className="relative flex items-center h-[36px]">
+      <select
+        value={selectedMode}
+        onChange={handleModeChange}
+        className="h-[36px] pl-3 pr-10 appearance-none rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm"
+        title="表示モード"
       >
-        <Layout size={14} />
-        標準
-      </button>
-      <button
-        onClick={() => setDisplayOptions((prev: DisplayOptions) => ({ ...prev, isPlanningMode: true, hidePlanningColumns: false }))}
-        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${displayOptions.isPlanningMode
-          ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
-          : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
-        title="計画モード"
-      >
-        <PenTool size={14} />
-        計画
-      </button>
-      <button
-        onClick={() => setDisplayOptions((prev: DisplayOptions) => ({ ...prev, hidePlanningColumns: true, isPlanningMode: false }))}
-        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 focus:outline-none ${displayOptions.hidePlanningColumns
-          ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
-          : 'text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
-        title="実績モード"
-      >
-        <LayoutDashboard size={14} />
-        実績
-      </button>
+        <option value="standard">標準</option>
+        <option value="planned">計画入力</option>
+        <option value="actual">実績入力</option>
+      </select>
+      <ChevronDown
+        size={14}
+        className="pointer-events-none absolute right-3 text-slate-500 dark:text-slate-400"
+      />
     </div>
   );
 };

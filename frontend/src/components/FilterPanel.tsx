@@ -106,12 +106,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </button>
         </div>
 
-        <ViewSwitcher
-          displayOptions={displayOptions}
-          setDisplayOptions={setDisplayOptions}
-        />
+        {displayOptions.viewMode === 'wbs' && (
+          <ModeSwitcher
+            displayOptions={displayOptions}
+            setDisplayOptions={setDisplayOptions}
+          />
+        )}
 
-        <ModeSwitcher
+        <ViewSwitcher
           displayOptions={displayOptions}
           setDisplayOptions={setDisplayOptions}
         />
