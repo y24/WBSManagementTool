@@ -19,7 +19,7 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
       <div className="sticky top-0 z-20 flex bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 shadow-sm min-h-[42px] min-w-max">
         {/* Header Row */}
         <div className="flex w-full py-1 items-center">
-          <div className="sticky left-0 z-30 bg-slate-50 dark:bg-slate-900 min-w-[140px] pl-4 pr-4 py-2 flex-1 truncate">担当者名</div>
+          <div className="sticky left-0 z-30 bg-slate-50 dark:bg-slate-900 min-w-[140px] pl-4 pr-4 py-2 flex-1 truncate border-r border-slate-200 dark:border-slate-700">担当者名</div>
           <div className="flex gap-2 shrink-0 pr-2">
             <div className="w-12 text-center" title="進行中件数">進行中</div>
             <div className="w-12 text-center" title="遅延件数">遅延</div>
@@ -38,7 +38,7 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
             style={{ height: `${(1 + row.tracks.length) * 37}px` }}
           >
             <div className="flex w-full py-1 items-center h-full">
-              <div className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[140px] pl-4 pr-4 truncate font-medium text-[15px] text-slate-800 dark:text-slate-200 h-full flex items-center flex-1">
+              <div className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[140px] pl-4 pr-4 truncate font-medium text-[15px] text-slate-800 dark:text-slate-200 h-full flex items-center flex-1 border-r border-slate-200 dark:border-slate-700">
                 {row.assignee?.member_name || '未アサイン'}
               </div>
               <div className="flex gap-2 shrink-0 text-sm pr-2">
