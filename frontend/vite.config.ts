@@ -23,5 +23,25 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          // 関数形式を使用してライブラリを分割（TypeScriptの型エラー回避）
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('recharts')) {
+                return 'vendor-recharts';
+              }
+              if (id.includes('axios') || id.includes('date-fns') || id.includes('lucide-react') || id.includes('@hello-pangea/dnd')) {
+                return 'vendor-utils';
+              }
+            }
+          },
+        },
+      },
+    },
   }
 })

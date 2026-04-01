@@ -9,7 +9,7 @@ import GanttTooltip from './GanttTooltip';
 
 interface GanttBarProps {
   item: any;
-  itemType: ItemType;
+  itemType: 'project' | 'task' | 'subtask';
   baseDate: Date;
   cellWidth: number;
   initialData: InitialData | null;
@@ -53,7 +53,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = useCallback((e: React.MouseEvent) => {
     // ドラッグ中は何もしない

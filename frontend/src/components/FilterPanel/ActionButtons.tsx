@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChartNoAxesGantt, Check, Link2, Download } from 'lucide-react';
 import { FilterState, DisplayOptions } from './FilterPanelTypes';
+import { apiClient } from '../../api/client';
 
 interface ActionButtonsProps {
   filters: FilterState;
@@ -34,7 +35,6 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       <button
         onClick={async () => {
           try {
-            const { apiClient } = await import('../../api/client');
             const response = await apiClient.post<{ token: string }>('/shared-filters', { filter_data: filters });
             const token = response.data.token;
             const url = `${window.location.origin}${window.location.pathname}?share=${token}`;
