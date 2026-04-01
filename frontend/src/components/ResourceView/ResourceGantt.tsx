@@ -184,10 +184,10 @@ export default function ResourceGantt({
             {data.map((row, rowIndex) => (
               <div
                 key={row.assignee?.id ?? 'unassigned'}
-                className={`relative group/ganttrow border-b ${
+                className={`relative group/ganttrow ${
                   rowIndex % 2 === 0
-                    ? 'bg-slate-50/50 border-slate-300/35 dark:bg-slate-900/30 dark:border-slate-700/40'
-                    : 'bg-white/60 border-slate-300/35 dark:bg-slate-950/30 dark:border-slate-700/40'
+                    ? 'bg-slate-50/50 dark:bg-slate-900/30'
+                    : 'bg-white/60 dark:bg-slate-950/30'
                 }`}
               >
                 <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-slate-300/45 via-slate-200/20 to-slate-300/45 dark:from-slate-600/45 dark:via-slate-700/15 dark:to-slate-600/45" />
