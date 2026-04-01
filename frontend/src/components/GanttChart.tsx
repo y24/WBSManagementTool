@@ -154,7 +154,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
   return (
     <div className="h-full w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
-      <div ref={ref} className="h-full overflow-auto relative gantt-body" onScroll={onScroll}>
+      <div ref={ref} className="h-full overflow-y-auto overflow-x-scroll relative gantt-body" onScroll={onScroll}>
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           <GanttHeader
             days={days}

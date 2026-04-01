@@ -187,7 +187,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     <div
       ref={containerRef}
       tabIndex={0} // キーボードイベントを受け取るため
-      className="flex-1 w-full overflow-auto bg-white dark:bg-slate-900 border-r dark:border-slate-800 relative no-scrollbar transition-colors outline-none focus:ring-1 focus:ring-blue-200/50"
+      className="flex-1 w-full overflow-y-auto overflow-x-scroll bg-white dark:bg-slate-900 border-r dark:border-slate-800 relative no-scrollbar transition-colors outline-none focus:ring-1 focus:ring-blue-200/50"
       onScroll={onScroll}
       onKeyDown={(e) => {
         // モーダルが表示されている場合はツリーの操作を無効化する

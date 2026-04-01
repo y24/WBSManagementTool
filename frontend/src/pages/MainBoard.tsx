@@ -42,6 +42,7 @@ export default function MainBoard() {
 
   const treeRef = useRef<HTMLDivElement>(null);
   const ganttRef = useRef<HTMLDivElement>(null);
+  const syncLockRef = useRef<'tree' | 'gantt' | null>(null);
 
   // Real-time synchronization
   useWebSocket((msg) => {
@@ -179,17 +180,56 @@ export default function MainBoard() {
     };
   }, [isResizing]);
 
+  const syncVerticalScroll = (
+    source: HTMLDivElement,
+    target: HTMLDivElement,
+    sourceType: 'tree' | 'gantt',
+    targetType: 'tree' | 'gantt',
+  ) => {
+    if (syncLockRef.current === sourceType) return;
+
+    const sourceMaxScrollTop = source.scrollHeight - source.clientHeight;
+    const targetMaxScrollTop = target.scrollHeight - target.clientHeight;
+
+    if (targetMaxScrollTop <= 0) {
+      if (Math.abs(target.scrollTop) > 0.5) {
+        target.scrollTop = 0;
+      }
+      return;
+    }
+
+    if (sourceMaxScrollTop <= 0) {
+      if (Math.abs(target.scrollTop) > 0.5) {
+        target.scrollTop = 0;
+      }
+      return;
+    }
+
+    const scrollRatio = source.scrollTop / sourceMaxScrollTop;
+    const nextTargetScrollTop = scrollRatio * targetMaxScrollTop;
+
+    if (Math.abs(target.scrollTop - nextTargetScrollTop) > 0.5) {
+      syncLockRef.current = targetType;
+      target.scrollTop = nextTargetScrollTop;
+      requestAnimationFrame(() => {
+        if (syncLockRef.current === targetType) {
+          syncLockRef.current = null;
+        }
+      });
+    }
+  };
+
   const handleTreeScroll = (event: UIEvent<HTMLDivElement>) => {
-    if (ganttRef.current && Math.abs(ganttRef.current.scrollTop - event.currentTarget.scrollTop) > 0.5) {
-      ganttRef.current.scrollTop = event.currentTarget.scrollTop;
+    if (ganttRef.current) {
+      syncVerticalScroll(event.currentTarget, ganttRef.current, 'tree', 'gantt');
     }
   };
 
   const handleGanttScroll = (event: UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollLeft } = event.currentTarget;
+    const { scrollLeft } = event.currentTarget;
 
-    if (treeRef.current && Math.abs(treeRef.current.scrollTop - scrollTop) > 0.5) {
-      treeRef.current.scrollTop = scrollTop;
+    if (treeRef.current) {
+      syncVerticalScroll(event.currentTarget, treeRef.current, 'gantt', 'tree');
     }
 
     persistGanttScrollLeft(scrollLeft);

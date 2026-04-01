@@ -11,7 +11,7 @@ interface ResourceListProps {
 export default function ResourceList({ data, width, onScroll, listRef }: ResourceListProps) {
   return (
     <div 
-      className="flex flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 h-full overflow-y-auto overflow-x-auto"
+      className="flex flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 h-full overflow-y-auto overflow-x-scroll"
       style={{ width: `${width}px` }}
       onScroll={onScroll}
       ref={listRef as unknown as React.RefObject<HTMLDivElement>}
