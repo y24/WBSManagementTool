@@ -66,7 +66,6 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
             <div className="w-12 text-center" title="遅延件数">遅延</div>
             <div className="w-12 text-center" title="今週終了予定">今週終了</div>
             <div className="w-12 text-center" title="レビュー待ち">レビュー</div>
-            <div className="w-12 text-center" title="今週予定工数(日)">予定工数</div>
           </div>
         </div>
       </div>
@@ -94,9 +93,6 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
                 </div>
                 <div className={getStatusClasses(row.reviewWaitingCount, 'review')}>
                   {row.reviewWaitingCount}
-                </div>
-                <div className={`w-12 text-center font-medium ${(Number(row.plannedEffortThisWeek) || 0) > 1.0 ? 'text-rose-500 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500'}`}>
-                  {(Number(row.plannedEffortThisWeek) || 0).toFixed(1)}
                 </div>
               </div>
             </div>

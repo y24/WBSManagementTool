@@ -1,6 +1,30 @@
 import { useMemo } from 'react';
+import { parseISO, differenceInCalendarDays, max, min, addDays, format, isAfter, isBefore } from 'date-fns';
 import { Project, Subtask } from '../../types/wbs';
-import { InitialData, MstMember } from '../../types';
+import { InitialData, MstMember, MstHoliday } from '../../types';
+
+function isWeekend(date: Date) {
+  const day = date.getDay();
+  return day === 0 || day === 6; // 0: Sunday, 6: Saturday
+}
+
+function countWorkDays(start: Date, end: Date, holidays: MstHoliday[]) {
+  if (isAfter(start, end)) return 0;
+  
+  let count = 0;
+  let current = new Date(start);
+  const holidayStrings = new Set(holidays.map(h => h.holiday_date));
+  
+  const daysTotal = differenceInCalendarDays(end, start);
+  for (let i = 0; i <= daysTotal; i++) {
+    const dateStr = format(current, 'yyyy-MM-dd');
+    if (!isWeekend(current) && !holidayStrings.has(dateStr)) {
+      count++;
+    }
+    current = addDays(current, 1);
+  }
+  return count;
+}
 
 export interface ResourceSubtask extends Subtask {
   project_name: string;
@@ -16,7 +40,6 @@ export interface ResourceRow {
   delayedCount: number;
   endingThisWeekCount: number;
   reviewWaitingCount: number;
-  plannedEffortThisWeek: number;
 }
 
 function getWeekBoundaries(dateStr: string) {
@@ -66,7 +89,6 @@ export function useResourceData(
         delayedCount: 0,
         endingThisWeekCount: 0,
         reviewWaitingCount: 0,
-        plannedEffortThisWeek: 0,
       });
     });
 
@@ -78,7 +100,6 @@ export function useResourceData(
       delayedCount: 0,
       endingThisWeekCount: 0,
       reviewWaitingCount: 0,
-      plannedEffortThisWeek: 0,
     });
 
     projects.forEach(project => {
@@ -131,21 +152,7 @@ export function useResourceData(
             row.reviewWaitingCount++;
           }
 
-          // Planned Effort This Week (Active this week)
-          const startStr = subtask.actual_start_date || subtask.planned_start_date;
-          const endStr = subtask.actual_start_date 
-            ? (subtask.actual_end_date || subtask.actual_start_date) 
-            : (subtask.planned_end_date || subtask.planned_start_date);
 
-          if (startStr && endStr) {
-            if (startStr <= endOfWeek && endStr >= startOfWeek) {
-              row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
-            }
-          } else if (startStr && startStr >= startOfWeek && startStr <= endOfWeek) {
-             row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
-          } else if (endStr && endStr >= startOfWeek && endStr <= endOfWeek) {
-             row.plannedEffortThisWeek += (subtask.planned_effort_days || 0);
-          }
         });
       });
     });
