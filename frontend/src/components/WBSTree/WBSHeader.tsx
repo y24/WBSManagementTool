@@ -24,7 +24,7 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
   isPlanningMode = false
 }) => {
   return (
-    <div className="sticky top-0 z-30 flex border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-sm whitespace-nowrap h-[33px] transition-colors">
+    <div className="sticky top-0 z-30 flex border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-sm whitespace-nowrap h-[38px] transition-colors">
       <div
         className={`sticky left-0 z-40 flex items-center bg-slate-100 dark:bg-slate-800 ${commonHeaderClasses}`}
         style={{ width: nameWidth, minWidth: nameWidth }}

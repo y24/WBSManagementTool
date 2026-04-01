@@ -145,7 +145,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
             style={{
               left: `${pRange.left}px`,
               width: `${pRange.width}px`,
-              top: '33px', // ヘッダー高
+              top: '38px', // ヘッダー高
               bottom: 0,
               '--highlight-bg': `${getStatusColor(pRange.status_id)}26`,
               '--highlight-border': `${getStatusColor(pRange.status_id)}73`
