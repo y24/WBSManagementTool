@@ -133,6 +133,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
 
   const isAutoPlanned = (itemType === 'project' || itemType === 'task') && item.is_auto_planned_date;
   const isAutoActual = (itemType === 'project' || itemType === 'task') && item.is_auto_actual_date;
+  const allowBarEdit = !isResourceView;
 
   const subtaskTypeName = isSubtask ? initialData?.subtask_types.find(t => t.id === item.subtask_type_id)?.type_name : null;
   const itemName = itemType === 'project' ? item.project_name : (itemType === 'task' ? item.task_name : subtaskTypeName);
@@ -150,15 +151,15 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {showPlannedBar && (
         <>
           <div
-            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70 ${isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''}`}
+            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70 ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''}`}
             style={{ left: `${pStart}px`, width: `${pWidth}px` }}
             onMouseDown={(e) => {
-              if (isAutoPlanned) return;
+              if (!allowBarEdit || isAutoPlanned) return;
               handleMouseDown(e, item.id, itemType, 'planned', 'move', { start: plannedStart, end: plannedEnd, reviewDays, name: itemName ?? undefined });
             }}
           >
             {/* リサイズハンドル */}
-            {!isAutoPlanned && (
+            {allowBarEdit && !isAutoPlanned && (
               <>
                 <div className="gantt-resize-handle gantt-resize-handle-left" onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'planned', 'resize-left', { start: plannedStart, end: plannedEnd, reviewDays, name: itemName ?? undefined })} />
                 <div className="gantt-resize-handle gantt-resize-handle-right" onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'planned', 'resize-right', { start: plannedStart, end: plannedEnd, reviewDays, name: itemName ?? undefined })} />
@@ -166,7 +167,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
             )}
           </div>
           {/* 計画レビュー境界ハンドル */}
-          {isSubtask && rStart !== undefined && !isAutoPlanned && (
+          {allowBarEdit && isSubtask && rStart !== undefined && !isAutoPlanned && (
             <div
               className="gantt-review-handle"
               style={{ 
@@ -191,22 +192,22 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {aStart !== undefined && aWidth !== undefined && (
         <>
           <div
-              className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable')} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''}`}
+              className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''}`}
             style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
             title={`${item.progress_percent ? item.progress_percent + '%' : ''}`}
             onMouseDown={(e) => {
-              if (isFixedEnd || isAutoActual) return;
+              if (!allowBarEdit || isFixedEnd || isAutoActual) return;
               handleMouseDown(e, item.id, itemType, 'actual', 'move', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined });
             }}
           >
             {/* リサイズハンドル */}
-            {(!isAutoActual) && (
+            {allowBarEdit && (!isAutoActual) && (
               <div
                 className="gantt-resize-handle gantt-resize-handle-left"
                 onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'actual', 'resize-left', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined })}
               />
             )}
-            {(!isAutoActual) && (
+            {allowBarEdit && (!isAutoActual) && (
               <div
                 className={`gantt-resize-handle gantt-resize-handle-right ${isFixedEnd ? 'gantt-resize-forbidden' : ''}`}
                 onMouseDown={(e) => {
@@ -233,7 +234,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
             />
           )}
           {/* レビュー境界ハンドル */}
-          {isSubtask && actualStart && actualEnd && reviewStart && arStart !== undefined && (
+          {allowBarEdit && isSubtask && actualStart && actualEnd && reviewStart && arStart !== undefined && (
             <div
               className="gantt-review-handle"
               style={{
