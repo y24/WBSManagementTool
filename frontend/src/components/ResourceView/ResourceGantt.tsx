@@ -112,6 +112,7 @@ export default function ResourceGantt({
     });
 
     const cells = [];
+    const maxOverlap = Math.max(...Array.from(overlapsByDay.values()), 0);
     let currentX = 0;
 
     for (let i = 0; i < days.length; i++) {
@@ -119,11 +120,25 @@ export default function ResourceGantt({
         const overlapCount = overlapsByDay.get(dateStr) || 0;
         
         if (overlapCount > 1) {
+            const normalized =
+              maxOverlap > 1 ? (overlapCount - 1) / (maxOverlap - 1) : 0;
+            const lightAlpha = 0.04 + (0.16 * normalized);
+            const darkAlpha = 0.06 + (0.19 * normalized);
+            const backgroundColor = isDarkMode
+              ? `rgba(251, 113, 133, ${darkAlpha})`
+              : `rgba(244, 63, 94, ${lightAlpha})`;
+            const borderAlpha = isDarkMode ? darkAlpha * 0.35 : lightAlpha * 0.3;
+
             cells.push(
                 <div 
                     key={`heatmap-${dateStr}`}
-                    className="absolute bg-rose-500/10 dark:bg-rose-500/20 top-0 bottom-0 pointer-events-none"
-                    style={{ left: `${currentX}px`, width: `${CELL_WIDTH}px` }}
+                    className="absolute top-0 bottom-0 pointer-events-none"
+                    style={{
+                      left: `${currentX}px`,
+                      width: `${CELL_WIDTH}px`,
+                      backgroundColor,
+                      boxShadow: `inset 0 0 0 1px rgba(244, 63, 94, ${borderAlpha})`,
+                    }}
                 />
             );
         }
