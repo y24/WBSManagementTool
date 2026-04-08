@@ -248,7 +248,28 @@ export function useResourceData(
       row.tracks = tracks;
     });
 
-    // Remove assignees with 0 subtasks, except unassigned which only is shown if it has subtasks
-    return Array.from(assigneeMap.values()).filter(row => row.subtasks.length > 0);
+    // Remove assignees with 0 subtasks, and sort by counts (In Progress, Delayed, Ending This Week)
+    return Array.from(assigneeMap.values())
+      .filter(row => row.subtasks.length > 0)
+      .sort((a, b) => {
+        // 1. In Progress (Descending)
+        if (b.inProgressCount !== a.inProgressCount) {
+          return b.inProgressCount - a.inProgressCount;
+        }
+        // 2. Delayed (Descending)
+        if (b.delayedCount !== a.delayedCount) {
+          return b.delayedCount - a.delayedCount;
+        }
+        // 3. Ending This Week (Descending)
+        if (b.endingThisWeekCount !== a.endingThisWeekCount) {
+          return b.endingThisWeekCount - a.endingThisWeekCount;
+        }
+        // Stable fallback: name or unassigned status
+        if (!a.assignee && b.assignee) return 1;
+        if (a.assignee && !b.assignee) return -1;
+        const nameA = a.assignee?.member_name || '';
+        const nameB = b.assignee?.member_name || '';
+        return nameA.localeCompare(nameB, 'ja');
+      });
   }, [projects, initialData, todayStr]);
 }
