@@ -46,7 +46,7 @@ const DetailModal = ({
   onSave,
 }: DetailModalProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
-  
+
   // 初期値を保持
   const initialValues = useRef({
     detailValue,
@@ -106,7 +106,7 @@ const DetailModal = ({
   const { label, icon } = TYPE_LABELS[editingType];
 
   return createPortal(
-    <div 
+    <div
       data-modal-active="true"
       className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
     >
@@ -156,34 +156,6 @@ const DetailModal = ({
             />
           </div>
 
-          {/* link_url */}
-          <div>
-            <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-              <Link size={12} className="text-blue-500" />
-              リンク先URL
-              {linkUrlValue && (
-                <a
-                  href={linkUrlValue.startsWith('http') ? linkUrlValue : `https://${linkUrlValue}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-auto flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 normal-case tracking-normal transition-colors"
-                >
-                  <ExternalLink size={11} />
-                  リンクを開く
-                </a>
-              )}
-            </label>
-            <input
-              id="modal-link-url-input"
-              type="text"
-              autoComplete="off"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
-              value={linkUrlValue}
-              onChange={(e) => setLinkUrlValue(e.target.value)}
-              placeholder="https://example.com"
-            />
-          </div>
-
           {/* ticket_id */}
           <div>
             <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -221,6 +193,34 @@ const DetailModal = ({
                 🔗 {ticketUrl}
               </p>
             )}
+          </div>
+
+          {/* link_url */}
+          <div>
+            <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <Link size={12} className="text-blue-500" />
+              リンク先URL
+              {linkUrlValue && (
+                <a
+                  href={linkUrlValue.startsWith('http') ? linkUrlValue : `https://${linkUrlValue}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-auto flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 normal-case tracking-normal transition-colors"
+                >
+                  <ExternalLink size={11} />
+                  リンクを開く
+                </a>
+              )}
+            </label>
+            <input
+              id="modal-link-url-input"
+              type="text"
+              autoComplete="off"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
+              value={linkUrlValue}
+              onChange={(e) => setLinkUrlValue(e.target.value)}
+              placeholder="https://example.com"
+            />
           </div>
 
           {/* memo */}
@@ -309,7 +309,7 @@ const SmallConfirmModal = ({ onConfirm, onCancel }: { onConfirm: () => void; onC
   }, [onConfirm, onCancel]);
 
   return (
-    <div 
+    <div
       data-modal-active="true"
       className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
     >
