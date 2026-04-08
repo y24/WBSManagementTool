@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
+import { format, parseISO } from 'date-fns';
 import { Project, Task, Subtask } from '../../../types/wbs';
 import { InitialData } from '../../../types';
 import { wbsOps } from '../../../api/wbsOperations';
+import { addBusinessDays, getBusinessDaysCount } from '../utils';
 
 interface UseWBSUpdatesProps {
   projects: Project[];
@@ -116,6 +118,71 @@ export const useWBSUpdates = ({
       try {
         const promises = applicableItems.map(item => {
           const updates: any = { [field]: value };
+          
+          // 連動更新ロジック (サブタスク)
+          if (item.type === 'subtask') {
+            const data = findItem(item.type, item.id) as Subtask;
+            if (data) {
+              const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
+              
+              // 1. 作業日数 or レビュー日数が変更された場合 -> 終了日を再計算
+              if (field === 'work_days' || field === 'review_days') {
+                if (data.planned_start_date) {
+                  const start = parseISO(data.planned_start_date);
+                  const wDays = field === 'work_days' ? Number(value) : (Number(data.work_days) || 0);
+                  const rDays = field === 'review_days' ? Number(value) : (Number(data.review_days) || 0);
+                  const totalBD = wDays + rDays;
+                  if (totalBD > 0) {
+                    const newEnd = addBusinessDays(start, totalBD, holidays);
+                    updates.planned_end_date = format(newEnd, 'yyyy-MM-dd');
+                  }
+                }
+              }
+              // 2. 開始日が変更された場合 -> 期間を維持して終了日を再計算
+              else if (field === 'planned_start_date' && value) {
+                if (data.work_days != null) {
+                  const start = parseISO(value);
+                  const wDays = Number(data.work_days) || 0;
+                  const rDays = Number(data.review_days) || 0;
+                  const totalBD = wDays + rDays;
+                  if (totalBD > 0) {
+                    const newEnd = addBusinessDays(start, totalBD, holidays);
+                    updates.planned_end_date = format(newEnd, 'yyyy-MM-dd');
+                  }
+                }
+              }
+              // 3. 終了日が変更された場合 -> 作業日数を再計算
+              else if (field === 'planned_end_date' && value) {
+                if (data.planned_start_date) {
+                  const start = parseISO(data.planned_start_date);
+                  const end = parseISO(value);
+                  const rDays = Number(data.review_days) || 0;
+                  const totalBD = getBusinessDaysCount(start, end, holidays);
+                  updates.work_days = Math.max(0, totalBD - rDays);
+                }
+              }
+            }
+          }
+          // タスク・プロジェクトの連動 (作業日数の更新のみ)
+          else if ((item.type === 'task' || item.type === 'project') && field.includes('planned_')) {
+            const data = findItem(item.type, item.id) as any;
+            if (data) {
+              const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
+              if (field.endsWith('start_date') && value && data.work_days) {
+                const start = parseISO(value);
+                const wDays = Number(data.work_days) || 0;
+                if (wDays > 0) {
+                  const newEnd = addBusinessDays(start, wDays, holidays);
+                  updates.planned_end_date = format(newEnd, 'yyyy-MM-dd');
+                }
+              } else if (field.endsWith('end_date') && value && data.planned_start_date) {
+                const start = parseISO(data.planned_start_date);
+                const end = parseISO(value);
+                updates.work_days = getBusinessDaysCount(start, end, holidays);
+              }
+            }
+          }
+
           if (item.type === 'subtask' && field === 'status_id' && initialData) {
             const doneStatus = initialData.statuses.find(s => s.status_name === 'Done');
             if (doneStatus && value === doneStatus.id) {

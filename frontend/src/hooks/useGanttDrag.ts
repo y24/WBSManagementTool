@@ -217,6 +217,8 @@ export const useGanttDrag = (
 
     const finalTemp = tempDatesRef.current[currentDrag.itemId];
     const moved = movedRef.current;
+    if (!initialData) return;
+    const holidays = initialData.holidays.map(h => h.holiday_date);
 
     setDragState(null);
     dragStateRef.current = null;
@@ -245,6 +247,21 @@ export const useGanttDrag = (
       } else if (currentDrag.barType === 'planned') {
         if (finalTemp.planned_start_date) payload.planned_start_date = finalTemp.planned_start_date;
         if (finalTemp.planned_end_date) payload.planned_end_date = finalTemp.planned_end_date;
+
+        // 作業日数とレビュー日数の連動更新
+        const start = finalTemp.planned_start_date || currentDrag.initialDates.start;
+        const end = finalTemp.planned_end_date || currentDrag.initialDates.end;
+        if (start && end) {
+          const totalBD = getBusinessDaysCount(parseISO(start), parseISO(end), holidays);
+          if (currentDrag.itemType === 'subtask') {
+            const rDays = finalTemp.review_days !== undefined ? finalTemp.review_days : (currentDrag.initialDates.reviewDays || 0);
+            payload.review_days = rDays;
+            payload.work_days = Math.max(0, totalBD - rDays);
+          } else {
+            // タスクやプロジェクトの場合も念のため work_days を更新
+            payload.work_days = totalBD;
+          }
+        }
       } else {
         if (finalTemp.actual_start_date) payload.actual_start_date = finalTemp.actual_start_date;
         if (finalTemp.actual_end_date) payload.actual_end_date = finalTemp.actual_end_date;
@@ -253,7 +270,7 @@ export const useGanttDrag = (
       if (finalTemp.review_start_date !== undefined) {
         payload.review_start_date = finalTemp.review_start_date;
       }
-      if (finalTemp.review_days !== undefined) {
+      if (finalTemp.review_days !== undefined && payload.review_days === undefined) {
         payload.review_days = finalTemp.review_days;
       }
 
