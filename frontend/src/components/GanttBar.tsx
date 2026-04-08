@@ -205,7 +205,10 @@ const GanttBar: React.FC<GanttBarProps> = ({
               style={{ 
                 left: `${rStart - 5}px`, 
                 top: hasActual ? '6px' : subtaskBarTopPx, 
-                height: hasActual ? (isSubtask ? '6px' : '4px') : subtaskBarHeightPx
+                height: hasActual ? (isSubtask ? '6px' : '4px') : subtaskBarHeightPx,
+                // 開始日と重なっている時は、開始日のドラッグハンドル(z-index: 20)を優先するため、
+                // レビューハンドルのz-indexを下げる
+                zIndex: rStart === pStart ? 19 : 25
               }}
               onMouseDown={(e) => {
                 handleMouseDown(e, item.id, itemType, 'planned', 'resize-planned-review', { start: plannedStart, end: plannedEnd, reviewDays, name: itemName ?? undefined });
@@ -214,11 +217,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
           )}
           {rStart !== undefined && rWidth !== undefined && (
             <div
-              className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-tr-sm' : 'rounded-r-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50 pointer-events-auto`}
+              className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-tr-sm' : 'rounded-r-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50 pointer-events-none`}
               style={{ left: `${rStart}px`, width: `${rWidth}px` }}
-              onMouseEnter={handleMouseEnter}
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
             />
           )}
         </>
