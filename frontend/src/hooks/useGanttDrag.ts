@@ -88,9 +88,9 @@ export const useGanttDrag = (
     const namePrefix = name ? `${prefix}${name}: ` : prefix;
 
     if (currentDrag.mode === 'move') {
-      if (start && end) {
+      if (start) {
         const s = parseISO(start);
-        const eDate = parseISO(end);
+        const eDate = end ? parseISO(end) : s;
         const originalBusinessDays = getBusinessDaysCount(s, eDate, holidays);
         const movedStart = addDays(s, deltaDays);
         const movedEnd = addBusinessDays(movedStart, originalBusinessDays, holidays);
@@ -136,8 +136,8 @@ export const useGanttDrag = (
         }
       }
     } else if (currentDrag.mode === 'resize-right') {
-      if (end) {
-        const eDate = parseISO(end);
+      if (end || start) {
+        const eDate = parseISO(end || start!);
         const updated = addDays(eDate, deltaDays);
         const currentStartISO = start || end;
         if (currentStartISO && updated < parseISO(currentStartISO)) return;
