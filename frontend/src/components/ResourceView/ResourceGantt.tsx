@@ -1,9 +1,10 @@
 import React, { useMemo, useCallback } from 'react';
-import { format, differenceInCalendarDays, addDays, parseISO } from 'date-fns';
+import { format, differenceInCalendarDays, addDays, parseISO, subDays, isValid } from 'date-fns';
 import { InitialData } from '../../types';
 import { GanttRange } from '../../types/wbs';
 import { ResourceRow, ResourceSubtask } from '../../pages/mainboard/useResourceData';
 import { CELL_WIDTH } from '../../hooks/useGanttDrag';
+import { calculateReviewCalendarDays } from '../WBSTree/utils';
 import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
 import GanttBar from '../GanttBar';
@@ -93,13 +94,34 @@ export default function ResourceGantt({
         : (task.planned_end_date || task.planned_start_date);
 
       if (startStr && endStr) {
-        const startDate = parseISO(startStr);
-        const endD = parseISO(endStr);
-        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endD.getTime())) return;
+        let startDate = parseISO(startStr);
+        let endDate = parseISO(endStr);
+        
+        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return;
+
+        // レビュー期間を除外
+        if (hasActual) {
+          if (task.review_start_date) {
+            const rsDate = parseISO(task.review_start_date);
+            if (isValid(rsDate)) {
+              // レビュー開始日の前日までを「作業期間」とする
+              endDate = subDays(rsDate, 1);
+            }
+          }
+        } else {
+          if (task.review_days && task.review_days > 0) {
+            const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
+            const r_days_cal = calculateReviewCalendarDays(endDate, task.review_days, holidays);
+            // 終了予定日からレビュー（カレンダー日）分を差し引いた日までを「作業期間」とする
+            endDate = subDays(endDate, r_days_cal);
+          }
+        }
+
+        if (differenceInCalendarDays(endDate, startDate) < 0) return;
 
         // Ensure start <= end to avoid issues
-        const realStart = startDate < endD ? startDate : endD;
-        const realEnd = startDate < endD ? endD : startDate;
+        const realStart = startDate;
+        const realEnd = endDate;
         let current = realStart;
 
         while (differenceInCalendarDays(realEnd, current) >= 0) {
@@ -107,7 +129,8 @@ export default function ResourceGantt({
           overlapsByDay.set(dStr, (overlapsByDay.get(dStr) || 0) + 1);
           current = addDays(current, 1);
         }
-      } else if (startStr) {
+      } else if (startStr && !hasActual) { // 計画の開始日のみ（新規ステータスなど）
+        // レビュー期間の考慮は不要（1日のみなので）
         const startDate = parseISO(startStr);
         if (!Number.isNaN(startDate.getTime())) {
           const dateStr = format(startDate, 'yyyy-MM-dd');
