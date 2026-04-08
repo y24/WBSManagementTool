@@ -82,7 +82,7 @@ export const useWBSTreeActions = ({
       total: totalSelectedCount,
       detail: detailMsg,
       title: '実績値のクリア確認',
-      confirmText: '実績値をクリアする',
+      confirmText: '実績値をクリア',
       variant: 'warning',
       onConfirm: () => executeClearActuals(selectedIds.pIds, selectedIds.tIds, selectedIds.sIds)
     });
