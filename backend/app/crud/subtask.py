@@ -213,6 +213,13 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
             if "actual_end_date" not in update_dict:
                 update_dict["actual_end_date"] = None
 
+        # 5. Clear all progress/actual dates if moving to New (1)
+        if new_status_id == 1:
+            update_dict["progress_percent"] = 0
+            update_dict["actual_start_date"] = None
+            update_dict["actual_end_date"] = None
+            update_dict["review_start_date"] = None
+
         # --- Constraints Safety Checks ---
         # a. actual_start_date vs actual_end_date
         a_start = update_dict.get("actual_start_date") or db_subtask.actual_start_date

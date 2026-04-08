@@ -184,8 +184,16 @@ export const useWBSUpdates = ({
           }
 
           if (item.type === 'subtask' && field === 'status_id' && initialData) {
-            const doneStatus = initialData.statuses.find(s => s.status_name === 'Done');
-            if (doneStatus && value === doneStatus.id) {
+            const newIds = initialData.status_mapping_new?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [1];
+            const doneIds = initialData.status_mapping_done?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [4, 7];
+            const targetStatusId = parseInt(value, 10);
+            
+            if (newIds.includes(targetStatusId)) {
+              updates.progress_percent = 0;
+              updates.actual_start_date = null;
+              updates.actual_end_date = null;
+              updates.review_start_date = null;
+            } else if (doneIds.includes(targetStatusId)) {
               updates.progress_percent = 100;
             }
           }
@@ -207,9 +215,11 @@ export const useWBSUpdates = ({
     let statusOverwriteMsg = '';
     if (field === 'status_id' && initialData) {
       const doneIds = initialData.status_mapping_done?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [4, 7];
+      const newIds = initialData.status_mapping_new?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [1];
       const newStatusId = parseInt(value, 10);
       const isDone = doneIds.includes(newStatusId);
-      const isOngoing = [2, 3].includes(newStatusId); // 2:In Progress, 3:In Review (backend logic)
+      const isNew = newIds.includes(newStatusId);
+      const isOngoing = [2, 3].includes(newStatusId);
 
       const overwriteDetails: string[] = [];
       applicableItems.forEach(item => {
@@ -219,22 +229,37 @@ export const useWBSUpdates = ({
 
         const oldIsDone = doneIds.includes(data.status_id);
 
-        // 1. Progress -> 100% (if currently set and not 100)
-        if (isDone && data.progress_percent !== 100 && data.progress_percent !== 0 && data.progress_percent !== null) {
-          overwriteDetails.push(`進捗率: ${data.progress_percent}% -> 100%`);
-        }
-
-        // 2. actual_end_date (overwritten by backend for Ongoing status)
-        if (isOngoing && data.actual_end_date) {
-          const today = new Date().toISOString().split('T')[0];
-          if (data.actual_end_date !== today) {
-            overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> 今日 (自動更新)`);
+        if (isNew) {
+          if (data.progress_percent !== 0 && data.progress_percent !== null) {
+            overwriteDetails.push(`進捗率: ${data.progress_percent}% -> 0%`);
           }
-        }
+          if (data.actual_start_date) {
+            overwriteDetails.push(`実績開始日: ${data.actual_start_date} -> (消去)`);
+          }
+          if (data.review_start_date) {
+            overwriteDetails.push(`レビュー開始日: ${data.review_start_date} -> (消去)`);
+          }
+          if (data.actual_end_date) {
+            overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> (消去)`);
+          }
+        } else {
+          // 1. Progress -> 100% (if currently set and not 100)
+          if (isDone && data.progress_percent !== 100 && data.progress_percent !== 0 && data.progress_percent !== null) {
+            overwriteDetails.push(`進捗率: ${data.progress_percent}% -> 100%`);
+          }
 
-        // 3. actual_end_date cleared when moving away from Done
-        if (oldIsDone && !isDone && data.actual_end_date) {
-          overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> (消去)`);
+          // 2. actual_end_date (overwritten by backend for Ongoing status)
+          if (isOngoing && data.actual_end_date) {
+            const today = new Date().toISOString().split('T')[0];
+            if (data.actual_end_date !== today) {
+              overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> 今日 (自動更新)`);
+            }
+          }
+
+          // 3. actual_end_date cleared when moving away from Done
+          if (oldIsDone && !isDone && data.actual_end_date) {
+            overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> (消去)`);
+          }
         }
       });
 
