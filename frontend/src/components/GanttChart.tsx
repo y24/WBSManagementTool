@@ -9,6 +9,7 @@ import GanttBar from './GanttBar';
 import GanttHeader from './GanttHeader';
 import GanttBackground from './GanttBackground';
 import { addBusinessDays } from './WBSTree/utils';
+import GanttDateTooltip from './GanttDateTooltip';
 
 interface GanttChartProps {
   projects: Project[];
@@ -41,7 +42,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   onScroll,
   onRefresh
 }, ref) => {
-  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const [hoveredDateInfo, setHoveredDateInfo] = useState<{ date: string; x: number; y: number } | null>(null);
+  const hoveredDate = hoveredDateInfo?.date ?? null;
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isMarkerModalOpen, setIsMarkerModalOpen] = useState(false);
 
@@ -189,6 +191,40 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     }, {} as Record<number, { left: number; width: number; status_id?: number | null }>);
   }, [projects, range.start_date, tempDates]);
 
+  // ホバーされた日のサブタスクを抽出
+  const subtasksOnHoveredDate = useMemo(() => {
+    if (!hoveredDate || !projects.length) return [];
+    
+    const results: (Subtask & { project_name: string; task_name: string })[] = [];
+    const hDate = hoveredDate; // yyyy-MM-dd
+
+    projects.forEach(project => {
+      project.tasks.forEach(task => {
+        task.subtasks.forEach(subtask => {
+          // ドラッグ中の値があればそれを使う
+          const temp = tempDates[subtask.id];
+          const ps = temp?.planned_start_date || subtask.planned_start_date;
+          const pe = temp?.planned_end_date || subtask.planned_end_date;
+          const as = temp?.actual_start_date || subtask.actual_start_date;
+          const ae = temp?.actual_end_date || subtask.actual_end_date;
+
+          const matchPlanned = ps && pe && hDate >= ps && hDate <= pe;
+          const matchActual = as && hDate >= as && (!ae || hDate <= ae);
+
+          if (matchPlanned || matchActual) {
+            results.push({
+              ...subtask,
+              project_name: project.project_name,
+              task_name: task.task_name
+            });
+          }
+        });
+      });
+    });
+
+    return results;
+  }, [projects, hoveredDate, tempDates]);
+
   const totalWidth = useMemo(() => days.length * CELL_WIDTH, [days]);
   const commonRowClasses = "transition-colors h-[37px]";
 
@@ -205,7 +241,13 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
               setSelectedDate(d);
               setIsMarkerModalOpen(true);
             }}
-            setHoveredDate={setHoveredDate}
+            setHoveredDate={(date, x, y) => {
+              if (date && x !== undefined && y !== undefined) {
+                setHoveredDateInfo({ date, x, y });
+              } else {
+                setHoveredDateInfo(null);
+              }
+            }}
             handleMouseDown={handleMouseDown}
             dragState={dragState}
             tempDates={tempDates}
@@ -328,6 +370,17 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
           onSave={handleMarkerSave}
           onDelete={handleMarkerDelete}
           onClose={() => setIsMarkerModalOpen(false)}
+        />
+      )}
+
+      {hoveredDateInfo && (
+        <GanttDateTooltip
+          date={hoveredDateInfo.date}
+          subtasks={subtasksOnHoveredDate}
+          mouseX={hoveredDateInfo.x}
+          mouseY={hoveredDateInfo.y}
+          initialData={initialData}
+          isVisible={true}
         />
       )}
     </div>

@@ -10,7 +10,7 @@ interface GanttHeaderProps {
   initialData: InitialData | null;
   showMarkers: boolean;
   onDateClick: (date: Date) => void;
-  setHoveredDate: (date: string | null) => void;
+  setHoveredDate: (date: string | null, mouseX?: number, mouseY?: number) => void;
   handleMouseDown?: (
     e: React.MouseEvent,
     itemId: number,
@@ -106,7 +106,8 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
               className={`flex-shrink-0 border-r border-gray-200 dark:border-slate-800 flex items-center justify-center text-[10px] cursor-pointer transition-colors relative group/header-cell ${dayClasses} ${isToday(d) ? 'font-bold' : ''}`}
               style={{ width: `${cellWidth}px` }}
               title={holidayInfo?.holiday_name}
-              onMouseEnter={() => setHoveredDate(dateStr)}
+              onMouseEnter={(e) => setHoveredDate(dateStr, e.clientX, e.clientY)}
+              onMouseMove={(e) => setHoveredDate(dateStr, e.clientX, e.clientY)}
               onMouseLeave={() => setHoveredDate(null)}
               onClick={() => onDateClick(d)}
             >
