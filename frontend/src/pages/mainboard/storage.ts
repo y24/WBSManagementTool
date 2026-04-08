@@ -39,6 +39,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showMarkers: true,
   isDarkMode: false,
   viewMode: 'wbs',
+  overlapThreshold: 1,
 };
 
 function readJson<T extends object>(key: string, fallback: T): T {

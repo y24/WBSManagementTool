@@ -55,6 +55,7 @@ export default function MainBoardContent({
           showTodayHighlight={displayOptions.showTodayHighlight}
           showMarkers={displayOptions.showMarkers}
           isDarkMode={displayOptions.isDarkMode}
+          overlapThreshold={displayOptions.overlapThreshold}
           onListScroll={onTreeScroll}
           onGanttScroll={onGanttScroll}
           onRefresh={() => onUpdate(false)}

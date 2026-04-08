@@ -8,6 +8,7 @@ import FilterControls from './FilterPanel/FilterControls';
 import SearchAndDelayed from './FilterPanel/SearchAndDelayed';
 import ModeSwitcher from './FilterPanel/ModeSwitcher';
 import ViewSwitcher from './FilterPanel/ViewSwitcher';
+import OverlapThresholdSelect from './FilterPanel/OverlapThresholdSelect';
 import ActionButtons from './FilterPanel/ActionButtons';
 import SettingsDropdown from './FilterPanel/SettingsDropdown';
 import MultiSelect from './MultiSelect';
@@ -113,10 +114,19 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           />
         )}
 
-        <ViewSwitcher
-          displayOptions={displayOptions}
-          setDisplayOptions={setDisplayOptions}
-        />
+        <div className="flex items-center gap-2">
+          {displayOptions.viewMode === 'resource' && (
+            <OverlapThresholdSelect
+              displayOptions={displayOptions}
+              setDisplayOptions={setDisplayOptions}
+            />
+          )}
+
+          <ViewSwitcher
+            displayOptions={displayOptions}
+            setDisplayOptions={setDisplayOptions}
+          />
+        </div>
 
         <ActionButtons
           filters={filters}

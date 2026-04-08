@@ -20,4 +20,5 @@ export interface DisplayOptions {
   showMarkers: boolean;
   isDarkMode: boolean;
   viewMode: 'wbs' | 'resource';
+  overlapThreshold: number;
 }

@@ -16,6 +16,7 @@ interface ResourceBoardProps {
   showTodayHighlight: boolean;
   showMarkers: boolean;
   isDarkMode: boolean;
+  overlapThreshold: number;
   onListScroll: (e: UIEvent<HTMLDivElement>) => void;
   onGanttScroll: (e: UIEvent<HTMLDivElement>) => void;
   onRefresh: () => void;
@@ -32,6 +33,7 @@ export default function ResourceBoard({
   showTodayHighlight,
   showMarkers,
   isDarkMode,
+  overlapThreshold,
   onListScroll,
   onGanttScroll,
   onRefresh
@@ -72,6 +74,7 @@ export default function ResourceBoard({
             showTodayHighlight={showTodayHighlight}
             showMarkers={showMarkers}
             isDarkMode={isDarkMode}
+            overlapThreshold={overlapThreshold}
             onScroll={onGanttScroll}
             ganttRef={ganttRef}
             onRefresh={onRefresh}

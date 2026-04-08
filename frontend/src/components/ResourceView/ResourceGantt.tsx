@@ -18,6 +18,7 @@ interface ResourceGanttProps {
   showTodayHighlight: boolean;
   showMarkers: boolean;
   isDarkMode: boolean;
+  overlapThreshold: number;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   ganttRef: React.RefObject<HTMLDivElement | null>;
   onRefresh: () => void;
@@ -30,6 +31,7 @@ export default function ResourceGantt({
   showTodayHighlight,
   showMarkers,
   isDarkMode,
+  overlapThreshold,
   onScroll,
   ganttRef,
   onRefresh
@@ -153,9 +155,9 @@ export default function ResourceGantt({
         const dateStr = format(days[i], 'yyyy-MM-dd');
         const overlapCount = overlapsByDay.get(dateStr) || 0;
         
-        if (overlapCount > 1) {
+        if (overlapCount > overlapThreshold) {
             const normalized =
-              maxOverlap > 1 ? (overlapCount - 1) / (maxOverlap - 1) : 0;
+              maxOverlap > overlapThreshold ? (overlapCount - overlapThreshold) / (maxOverlap - overlapThreshold) : 0;
             const lightAlpha = 0.04 + (0.16 * normalized);
             const darkAlpha = 0.06 + (0.19 * normalized);
             const backgroundColor = isDarkMode
@@ -179,7 +181,7 @@ export default function ResourceGantt({
         currentX += CELL_WIDTH;
     }
     return cells;
-  }, [days, isDarkMode]);
+  }, [days, isDarkMode, overlapThreshold]);
 
   return (
     <div className="h-full w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
