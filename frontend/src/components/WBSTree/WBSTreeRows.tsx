@@ -28,6 +28,8 @@ interface WBSTreeRowsProps {
   onEditDetail: (type: any, data: any) => void;
   onFocusChange: (rowId: string, field: string) => void;
   onEditingChange: (isEditing: boolean) => void;
+  isEditing: boolean;
+  onTabNavigation?: (direction: 'next' | 'prev') => void;
 }
 
 const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
@@ -51,7 +53,9 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
   onAddSubtask,
   onEditDetail,
   onFocusChange,
-  onEditingChange
+  onEditingChange,
+  isEditing,
+  onTabNavigation
 }) => {
   return (
     <Droppable droppableId="projects-root" type="PROJECT">
@@ -86,6 +90,8 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                           focusedField={focusedField?.rowId === `p-${project.id}` ? (focusedField.field as any) : null}
                           onFocusChange={onFocusChange}
                           onEditingChange={onEditingChange}
+                          isEditing={isEditing}
+                          onTabNavigation={onTabNavigation}
                         />
                         {rowProvided.placeholder}
                       </div>
@@ -129,6 +135,8 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                                           focusedField={focusedField?.rowId === `t-${task.id}` ? (focusedField.field as any) : null}
                                           onFocusChange={onFocusChange}
                                           onEditingChange={onEditingChange}
+                                          isEditing={isEditing}
+                                          onTabNavigation={onTabNavigation}
                                         />
                                         {rowProvided.placeholder}
                                       </div>
@@ -162,6 +170,8 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                                                     focusedField={focusedField?.rowId === `s-${subtask.id}` ? (focusedField.field as any) : null}
                                                     onFocusChange={onFocusChange}
                                                     onEditingChange={onEditingChange}
+                                                    isEditing={isEditing}
+                                                    onTabNavigation={onTabNavigation}
                                                   />
                                                 </div>
                                               )}

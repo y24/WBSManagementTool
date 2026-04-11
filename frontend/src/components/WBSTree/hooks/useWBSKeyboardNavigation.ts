@@ -224,12 +224,22 @@ export const useWBSKeyboardNavigation = ({
     }
   }, [isEditing, moveFocus, focus, isReadOnly]);
 
+  const moveFocusAndEdit = useCallback((direction: 'next' | 'prev') => {
+    moveFocus(direction);
+    // 次のセルへ移動した後、少し遅延させてから編集モードをONにする
+    // (セルの移動自体が非同期に反映される可能性があるため)
+    setTimeout(() => {
+      setIsEditing(true);
+    }, 10);
+  }, [moveFocus]);
+
   return {
     focus,
     setFocus,
     isEditing,
     setIsEditing,
     handleKeyDown,
+    moveFocusAndEdit,
     visibleRows,
     visibleFields
   };

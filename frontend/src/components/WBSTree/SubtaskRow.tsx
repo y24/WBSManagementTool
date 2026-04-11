@@ -23,6 +23,8 @@ interface SubtaskRowProps {
   focusedField?: string | null;
   onFocusChange?: (rowId: string, field: string) => void;
   onEditingChange?: (editing: boolean) => void;
+  isEditing?: boolean;
+  onTabNavigation?: (direction: 'next' | 'prev') => void;
 }
 
 const SubtaskRow = memo(({
@@ -39,7 +41,9 @@ const SubtaskRow = memo(({
   isPlanningMode = false,
   focusedField,
   onFocusChange,
-  onEditingChange
+  onEditingChange,
+  isEditing: isGlobalEditingByParent,
+  onTabNavigation
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData, true);
   const statusName = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name;
@@ -87,6 +91,8 @@ const SubtaskRow = memo(({
             isFocused={focusedField === 'name'}
             onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'name')}
             onEditingChange={onEditingChange}
+            onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+            isEditing={isGlobalEditingByParent}
           />
           <span className="text-gray-400 dark:text-slate-500 text-xs truncate" title={subtask.subtask_detail || undefined}>
             {subtask.subtask_detail}
@@ -140,6 +146,8 @@ const SubtaskRow = memo(({
           isFocused={focusedField === 'status'}
           onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'status')}
           onEditingChange={onEditingChange}
+          onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+          isEditing={isGlobalEditingByParent}
         />
       </div>
       <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
@@ -162,6 +170,8 @@ const SubtaskRow = memo(({
             isFocused={focusedField === 'progress'}
             onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'progress')}
             onEditingChange={onEditingChange}
+            onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+            isEditing={isGlobalEditingByParent}
           />
         </div>
       </div>
@@ -183,6 +193,8 @@ const SubtaskRow = memo(({
           isFocused={focusedField === 'assignee'}
           onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'assignee')}
           onEditingChange={onEditingChange}
+          onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+          isEditing={isGlobalEditingByParent}
         />
       </div>
       {!hidePlanningColumns && (
@@ -200,6 +212,8 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'work_days'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'work_days')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`}>
@@ -215,6 +229,8 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'review_days'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'review_days')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
@@ -227,6 +243,8 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'planned_start'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_start')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
@@ -239,6 +257,8 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'planned_end'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_end')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`}>
@@ -255,6 +275,8 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'planned_effort'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_effort')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
         </>
@@ -271,6 +293,8 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'actual_start'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_start')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-20 ${dateCellClasses}`}>
@@ -285,6 +309,8 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'review_start'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'review_start')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-20 ${dateCellClasses}`}>
@@ -298,6 +324,8 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'actual_end'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_end')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-16 ${dateCellClasses}`}>
@@ -314,6 +342,8 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'actual_effort'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_effort')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
         </>

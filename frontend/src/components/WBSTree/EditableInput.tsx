@@ -22,6 +22,8 @@ interface EditableInputProps {
   isFocused?: boolean;
   onFocusChange?: (focused: boolean) => void;
   onEditingChange?: (editing: boolean) => void;
+  onTab?: (isShift: boolean) => void;
+  isEditing?: boolean;
 }
 
 /**
@@ -121,7 +123,7 @@ const PopoverEditor = ({
 };
 
 const EditableInput = memo(({
-  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange, placeholder, isFocused, onFocusChange, onEditingChange
+  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange, placeholder, isFocused, onFocusChange, onEditingChange, onTab, isEditing: isGlobalEditing
 }: EditableInputProps) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -132,6 +134,7 @@ const EditableInput = memo(({
   const inputRef = useRef<HTMLInputElement>(null);
   const prevValueRef = useRef(value);
   const shouldSelectOnFocus = useRef(true);
+  const isActuallyReadOnly = !!(readOnly || isAuto);
 
   // 値の初期化と同期
   useEffect(() => {
@@ -161,6 +164,15 @@ const EditableInput = memo(({
     }
     prevValueRef.current = value;
   }, [value, isEditing, type, precision, isAuto, onInputChange, val]);
+
+  // グローバルな編集モードが有効でフォーカスされた場合、自動的に編集開始
+  useEffect(() => {
+    if (isFocused && isGlobalEditing && !isEditing && !isActuallyReadOnly) {
+      setIsEditing(true);
+      if (onEditingChange) onEditingChange(true);
+      isCommittingRef.current = false;
+    }
+  }, [isFocused, isGlobalEditing, isEditing, isActuallyReadOnly, onEditingChange]);
 
   // 更新の確定処理
   const handleCommit = useCallback((newVal: string) => {
@@ -290,13 +302,17 @@ const EditableInput = memo(({
           e.preventDefault();
           handleCommit(val);
         }
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCommit(val);
+        if (onTab) onTab(e.shiftKey);
       }
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isEditing, value, type, val, handleCommit, onEditingChange, onFocusChange]);
 
-  const isActuallyReadOnly = !!(readOnly || isAuto);
 
   // フォーカス中に F2/Enter または文字入力で編集モードに入る (Excelスタイル)
   useEffect(() => {
@@ -427,6 +443,11 @@ const EditableInput = memo(({
         setIsEditing(false);
         if (onEditingChange) onEditingChange(false);
         if (onFocusChange) onFocusChange(true);
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCommit((e.target as HTMLInputElement).value);
+        if (onTab) onTab(e.shiftKey);
       }
     },
     min: min ?? undefined,

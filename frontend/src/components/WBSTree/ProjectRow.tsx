@@ -26,6 +26,8 @@ interface ProjectRowProps {
   focusedField?: string | null;
   onFocusChange?: (rowId: string, field: string) => void;
   onEditingChange?: (editing: boolean) => void;
+  isEditing?: boolean;
+  onTabNavigation?: (direction: 'next' | 'prev') => void;
 }
 
 const ProjectRow = memo(({ 
@@ -45,7 +47,9 @@ const ProjectRow = memo(({
   isPlanningMode = false,
   focusedField,
   onFocusChange,
-  onEditingChange
+  onEditingChange,
+  isEditing: isGlobalEditingByParent,
+  onTabNavigation
 }: ProjectRowProps) => {
   const warning = getWarning(project, initialData);
 
@@ -84,6 +88,8 @@ const ProjectRow = memo(({
             isFocused={focusedField === 'name'}
             onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'name')}
             onEditingChange={onEditingChange}
+            onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+            isEditing={isGlobalEditingByParent}
           />
         </div>
 
@@ -142,6 +148,8 @@ const ProjectRow = memo(({
           isFocused={focusedField === 'status'}
           onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'status')}
           onEditingChange={onEditingChange}
+          onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+          isEditing={isGlobalEditingByParent}
         />
       </div>
       <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
@@ -162,6 +170,8 @@ const ProjectRow = memo(({
             isFocused={focusedField === 'progress'}
             onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'progress')}
             onEditingChange={onEditingChange}
+            onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+            isEditing={isGlobalEditingByParent}
           />
         </div>
       </div>
@@ -183,6 +193,8 @@ const ProjectRow = memo(({
           isFocused={focusedField === 'assignee'}
           onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'assignee')}
           onEditingChange={onEditingChange}
+          onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+          isEditing={isGlobalEditingByParent}
         />
       </div>
       {!hidePlanningColumns && (
@@ -200,6 +212,8 @@ const ProjectRow = memo(({
               isFocused={focusedField === 'planned_start'}
               onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'planned_start')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
@@ -213,6 +227,8 @@ const ProjectRow = memo(({
               isFocused={focusedField === 'planned_end'}
               onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'planned_end')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`}>
@@ -226,6 +242,8 @@ const ProjectRow = memo(({
               isFocused={focusedField === 'planned_effort'}
               onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'planned_effort')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
         </>
@@ -244,6 +262,8 @@ const ProjectRow = memo(({
               isFocused={focusedField === 'actual_start'}
               onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'actual_start')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-20 ${dateCellClasses}`}></div>
@@ -259,6 +279,8 @@ const ProjectRow = memo(({
               isFocused={focusedField === 'actual_end'}
               onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'actual_end')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
           <div className={`w-16 ${dateCellClasses}`}>
@@ -272,6 +294,8 @@ const ProjectRow = memo(({
               isFocused={focusedField === 'actual_effort'}
               onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'actual_effort')}
               onEditingChange={onEditingChange}
+              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              isEditing={isGlobalEditingByParent}
             />
           </div>
         </>

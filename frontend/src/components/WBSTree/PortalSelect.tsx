@@ -13,6 +13,8 @@ interface PortalSelectProps {
   isFocused?: boolean;
   onFocusChange?: (focused: boolean) => void;
   onEditingChange?: (editing: boolean) => void;
+  onTab?: (isShift: boolean) => void;
+  isEditing?: boolean;
 }
 
 const PortalSelect = memo(({ 
@@ -25,7 +27,9 @@ const PortalSelect = memo(({
   highlight,
   isFocused,
   onFocusChange,
-  onEditingChange
+  onEditingChange,
+  onTab,
+  isEditing: isGlobalEditing
 }: PortalSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [shouldFlash, setShouldFlash] = useState(false);
@@ -125,12 +129,28 @@ const PortalSelect = memo(({
           e.preventDefault();
           e.stopPropagation();
           onChange(null);
+        } else if (e.key === 'Tab') {
+          // 非編集時のTab（フォーカスのみ）
+          if (onTab) {
+            e.preventDefault();
+            e.stopPropagation();
+            onTab(e.shiftKey);
+          }
         }
       };
       window.addEventListener('keydown', handleGlobalKey, true);
       return () => window.removeEventListener('keydown', handleGlobalKey, true);
     }
-  }, [isFocused, isOpen, onChange]);
+  }, [isFocused, isOpen, onChange, onTab]);
+
+  // グローバルな編集モードが有効でフォーカスされた場合、自動的にドロップダウンを開く
+  useEffect(() => {
+    if (isFocused && isGlobalEditing && !isOpen) {
+      if (buttonRef.current) {
+        buttonRef.current.click();
+      }
+    }
+  }, [isFocused, isGlobalEditing, isOpen]);
 
   // メニュー開封時に現在の値に合わせて activeIndex を初期化
   useEffect(() => {
@@ -168,6 +188,16 @@ const PortalSelect = memo(({
         setIsOpen(false);
         if (onEditingChange) onEditingChange(false);
         if (onFocusChange) onFocusChange(true);
+      } else if (e.key === 'Tab') {
+        // 編集時（ドロップダウン開封時）のTab
+        e.preventDefault();
+        e.stopPropagation();
+        if (activeIndex >= 0 && activeIndex < options.length) {
+          onChange(options[activeIndex].id);
+        }
+        setIsOpen(false);
+        if (onEditingChange) onEditingChange(false);
+        if (onTab) onTab(e.shiftKey);
       }
     };
 

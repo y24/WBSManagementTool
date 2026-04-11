@@ -82,7 +82,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     hidePlanningColumns,
     isPlanningMode
   });
-  const { focus, setFocus, isEditing, handleKeyDown, setIsEditing } = keyboardNav;
+  const { focus, setFocus, isEditing, handleKeyDown, setIsEditing, moveFocusAndEdit } = keyboardNav;
 
   // focus handle
   const handleCellClick = useCallback((rowId: string, field: string) => {
@@ -204,6 +204,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
             onEditDetail={openDetailModal}
             onFocusChange={handleCellClick}
             onEditingChange={setIsEditing}
+            isEditing={isEditing}
+            onTabNavigation={moveFocusAndEdit}
           />
         </DragDropContext>
 

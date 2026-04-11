@@ -14,9 +14,11 @@ interface StatusSelectProps {
   isFocused?: boolean;
   onFocusChange?: (focused: boolean) => void;
   onEditingChange?: (editing: boolean) => void;
+  onTab?: (isShift: boolean) => void;
+  isEditing?: boolean;
 }
 
-const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, disabledStatusIds = [], isFocused, onFocusChange, onEditingChange }: StatusSelectProps) => {
+const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, disabledStatusIds = [], isFocused, onFocusChange, onEditingChange, onTab, isEditing: isGlobalEditing }: StatusSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [shouldFlash, setShouldFlash] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -129,12 +131,25 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
         setIsOpen(false);
         if (onEditingChange) onEditingChange(false);
         if (onFocusChange) onFocusChange(true);
+      } else if (e.key === 'Tab') {
+        // 編集時（ドロップダウン開封時）のTab: 選択内容を確定して移動
+        e.preventDefault();
+        e.stopPropagation();
+        if (activeIndex >= 0 && activeIndex < initialData.statuses.length) {
+          const targetStatus = initialData.statuses[activeIndex];
+          if (!disabledStatusIds.includes(targetStatus.id)) {
+            onUpdateField(type, id, 'status_id', targetStatus.id);
+          }
+        }
+        setIsOpen(false);
+        if (onEditingChange) onEditingChange(false);
+        if (onTab) onTab(e.shiftKey);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, activeIndex, initialData, disabledStatusIds, onUpdateField, type, id, onEditingChange]);
+  }, [isOpen, activeIndex, initialData, disabledStatusIds, onUpdateField, type, id, onEditingChange, onTab]);
 
   // メニュー開封時に現在のステータスに合わせて activeIndex を初期化
   useEffect(() => {
@@ -166,12 +181,28 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
           if (buttonRef.current) {
             buttonRef.current.click();
           }
+        } else if (e.key === 'Tab') {
+          // 非編集時のTab（フォーカスのみ）: そのまま移動
+          if (onTab) {
+            e.preventDefault();
+            e.stopPropagation();
+            onTab(e.shiftKey);
+          }
         }
       };
       window.addEventListener('keydown', handleGlobalKey, true);
       return () => window.removeEventListener('keydown', handleGlobalKey, true);
     }
-  }, [isFocused, isOpen]);
+  }, [isFocused, isOpen, onTab]);
+
+  // グローバルな編集モードが有効でフォーカスされた場合、自動的にドロップダウンを開く
+  useEffect(() => {
+    if (isFocused && isGlobalEditing && !isOpen) {
+      if (buttonRef.current) {
+        buttonRef.current.click();
+      }
+    }
+  }, [isFocused, isGlobalEditing, isOpen]);
 
   return (
     <>
