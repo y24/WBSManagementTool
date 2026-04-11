@@ -327,13 +327,26 @@ const EditableInput = memo(({
           setIsEditing(true);
           if (onEditingChange) onEditingChange(true);
           isCommittingRef.current = false;
+          return;
+        }
+
+        // Delete: 値をクリア
+        if (e.key === 'Delete') {
+          e.preventDefault();
+          e.stopPropagation();
+          const emptyValue = type === 'text' ? '' : null;
+          setVal(''); // 即座にローカルの表示をクリア
+          onChange(emptyValue);
+          if (onInputChange && type === 'number') {
+            onInputChange(null);
+          }
         }
       };
 
       window.addEventListener('keydown', handleGlobalKey, true);
       return () => window.removeEventListener('keydown', handleGlobalKey, true);
     }
-  }, [isFocused, isEditing, isActuallyReadOnly, onEditingChange]);
+  }, [isFocused, isEditing, isActuallyReadOnly, type, onChange, onInputChange, onEditingChange]);
 
   const displayValueText = () => {
     if (type === 'date') {

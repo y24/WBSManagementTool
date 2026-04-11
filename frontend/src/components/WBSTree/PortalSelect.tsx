@@ -121,12 +121,16 @@ const PortalSelect = memo(({
           if (buttonRef.current) {
             buttonRef.current.click();
           }
+        } else if (e.key === 'Delete') {
+          e.preventDefault();
+          e.stopPropagation();
+          onChange(null);
         }
       };
       window.addEventListener('keydown', handleGlobalKey, true);
       return () => window.removeEventListener('keydown', handleGlobalKey, true);
     }
-  }, [isFocused, isOpen]);
+  }, [isFocused, isOpen, onChange]);
 
   // メニュー開封時に現在の値に合わせて activeIndex を初期化
   useEffect(() => {
