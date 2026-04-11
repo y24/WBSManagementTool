@@ -43,6 +43,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     filters.assigneeIds.length > 0 ||
     filters.subtaskTypeIds.length > 0 ||
     filters.onlyDelayed ||
+    filters.onlyUnplanned ||
     filters.searchTerm !== '';
 
   const secondaryFilterCount = (filters.subtaskTypeIds.length > 0 ? filters.subtaskTypeIds.length : 0) + (filters.searchTerm !== '' ? 1 : 0);

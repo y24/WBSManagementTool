@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, RotateCcw } from 'lucide-react';
+import { Clock, RotateCcw, CalendarMinus } from 'lucide-react';
 import { FilterState } from './FilterPanelTypes';
 
 interface SearchAndDelayedProps {
@@ -17,6 +17,19 @@ const SearchAndDelayed: React.FC<SearchAndDelayedProps> = ({
 }) => {
   return (
     <>
+      <button
+        onClick={() => setFilters((prev: FilterState) => ({ ...prev, onlyUnplanned: !prev.onlyUnplanned }))}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.onlyUnplanned
+          ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 ring-amber-500/10 ring-2'
+          : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-amber-400 hover:text-amber-500'
+          }`}
+        title="未計画タスクを表示"
+        aria-label="未計画タスクを表示"
+      >
+        <CalendarMinus size={16} className={filters.onlyUnplanned ? 'animate-pulse' : ''} />
+        未計画タスク
+      </button>
+
       <button
         onClick={() => setFilters((prev: FilterState) => ({ ...prev, onlyDelayed: !prev.onlyDelayed }))}
         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all text-xs font-bold whitespace-nowrap h-[34px] shadow-sm ${filters.onlyDelayed

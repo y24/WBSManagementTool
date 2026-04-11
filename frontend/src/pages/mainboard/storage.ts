@@ -23,6 +23,7 @@ export const createDefaultFilters = (): FilterState => ({
   assigneeIds: [],
   subtaskTypeIds: [],
   onlyDelayed: false,
+  onlyUnplanned: false,
   searchTerm: '',
 });
 

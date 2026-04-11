@@ -4,6 +4,7 @@ export interface FilterState {
   assigneeIds: number[];
   subtaskTypeIds: number[];
   onlyDelayed: boolean;
+  onlyUnplanned: boolean;
   searchTerm: string;
 }
 

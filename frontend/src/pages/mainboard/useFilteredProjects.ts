@@ -33,6 +33,7 @@ export function useFilteredProjects({
       filters.assigneeIds.length > 0 ||
       filters.subtaskTypeIds.length > 0 ||
       filters.onlyDelayed ||
+      filters.onlyUnplanned ||
       filters.searchTerm !== '';
 
     return data.projects
@@ -83,6 +84,12 @@ export function useFilteredProjects({
                 if (!isStartDelayed && !isEndOverdue) return false;
               }
 
+              if (filters.onlyUnplanned) {
+                const isStartUnplanned = !subtask.planned_start_date;
+                const isEndUnplanned = !subtask.planned_end_date;
+                if (!isStartUnplanned && !isEndUnplanned) return false;
+              }
+
               if (filters.searchTerm) {
                 const term = filters.searchTerm.toLowerCase();
                 const detailMatch = containsSearchTerm(subtask.subtask_detail, term);
@@ -117,6 +124,12 @@ export function useFilteredProjects({
                 const isEndOverdue = !isDone && !!task.planned_end_date && task.planned_end_date < todayStr;
 
                 if (!isStartDelayed && !isEndOverdue) return false;
+              }
+
+              if (filters.onlyUnplanned) {
+                const isStartUnplanned = !task.planned_start_date;
+                const isEndUnplanned = !task.planned_end_date;
+                if (!isStartUnplanned && !isEndUnplanned) return false;
               }
 
               if (filters.searchTerm) {
