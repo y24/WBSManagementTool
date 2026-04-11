@@ -135,27 +135,6 @@ const DetailModal = ({
         {/* Body */}
         <div className="p-6 space-y-5">
 
-          {/* detail */}
-          <div>
-            <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-              <div className="w-1 h-3 bg-blue-500 rounded-full" />
-              詳細 <span className="text-gray-400 dark:text-slate-500 font-normal normal-case">(1行テキスト)</span>
-            </label>
-            <input
-              id="modal-detail-input"
-              type="text"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
-              value={detailValue}
-              autoFocus
-              onFocus={(e) => e.target.select()}
-              onChange={(e) => setDetailValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') onSave();
-              }}
-              placeholder="詳細を入力してください..."
-            />
-          </div>
-
           {/* ticket_id */}
           <div>
             <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -181,6 +160,7 @@ const DetailModal = ({
               autoComplete="off"
               className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
               value={ticketIdValue}
+              autoFocus
               onFocus={(e) => e.target.select()}
               onChange={(e) => {
                 const v = e.target.value.replace(/[^0-9]/g, '');
@@ -193,6 +173,26 @@ const DetailModal = ({
                 🔗 {ticketUrl}
               </p>
             )}
+          </div>
+
+          {/* detail */}
+          <div>
+            <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <div className="w-1 h-3 bg-blue-500 rounded-full" />
+              詳細 <span className="text-gray-400 dark:text-slate-500 font-normal normal-case">(1行テキスト)</span>
+            </label>
+            <input
+              id="modal-detail-input"
+              type="text"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
+              value={detailValue}
+              onFocus={(e) => e.target.select()}
+              onChange={(e) => setDetailValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') onSave();
+              }}
+              placeholder="詳細を入力してください..."
+            />
           </div>
 
           {/* link_url */}
