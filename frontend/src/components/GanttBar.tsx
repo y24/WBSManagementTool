@@ -180,7 +180,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {showPlannedBar && (
         <>
           <div
-            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-300 dark:bg-slate-600 opacity-85 dark:opacity-70 ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''} pointer-events-auto`}
+            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-400 dark:bg-slate-500 opacity-80 dark:opacity-70 ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''} pointer-events-auto`}
             style={{ left: `${pStart}px`, width: `${pWidth}px` }}
             onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouseMove}
@@ -217,7 +217,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
           )}
           {rStart !== undefined && rWidth !== undefined && (
             <div
-              className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-tr-sm' : 'rounded-r-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-gray-400 dark:bg-slate-500 opacity-60 dark:opacity-50 pointer-events-none`}
+              className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-tr-sm' : 'rounded-r-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-white/40 dark:bg-white/10 pointer-events-none`}
               style={{ left: `${rStart}px`, width: `${rWidth}px` }}
             />
           )}
@@ -264,7 +264,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
           </div>
           {arStart !== undefined && arWidth !== undefined && (
             <div
-              className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm bg-black/20 pointer-events-none`}
+              className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm bg-white/30 backdrop-blur-[1px] pointer-events-none`}
               style={{ left: `${arStart}px`, width: `${arWidth}px` }}
               title="レビュー中"
             />
