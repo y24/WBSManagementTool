@@ -73,13 +73,19 @@ export const useWBSKeyboardNavigation = ({
 
     // 基本的なリードオンリーチェック
     if (type === 'project' || type === 'task') {
-      // 名称以外は基本自動計算（プロジェクト・タスク）
-      if (field !== 'name' && field !== 'assignee' && field !== 'status') {
-        // 進捗率は入力可能
-        if (field === 'progress') return false;
-        // それ以外（日付、工数など）はプロジェクト/タスクレベルでは自動計算
-        return true;
-      }
+      const p = data as (Project | Task);
+      // 名称、担当者、ステータスは入力可能
+      if (field === 'name' || field === 'assignee' || field === 'status') return false;
+
+      // 進捗率はプロジェクト・タスクレベルでは常に自動計算のためスキップ
+      if (field === 'progress') return true;
+
+      // 日付は自動設定がONの場合はスキップ（入力不可）
+      if (field === 'planned_start' || field === 'planned_end') return !!p.is_auto_planned_date;
+      if (field === 'actual_start' || field === 'actual_end') return !!p.is_auto_actual_date;
+
+      // それ以外（工数など）は常に自動算出
+      return true;
     }
 
     if (type === 'subtask') {
