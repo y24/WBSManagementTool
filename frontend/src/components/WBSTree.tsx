@@ -87,8 +87,20 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   // focus handle
   const handleCellClick = useCallback((rowId: string, field: string) => {
     setFocus({ rowId, field: field as any });
+    // setTimeoutを使用して、コンポーネントの再描画後にフォーカス状態を確認する。
+    // EditableInputなどがautoFocusでフォーカスを得た場合、ここでのコンテナへのフォーカス強制を回避する。
     setTimeout(() => {
-      containerRef.current?.focus();
+      const active = document.activeElement;
+      const isInteractive = active && (
+        active.tagName === 'INPUT' || 
+        active.tagName === 'SELECT' || 
+        active.tagName === 'TEXTAREA' || 
+        active.tagName === 'BUTTON' ||
+        active.hasAttribute('contenteditable')
+      );
+      if (!isInteractive) {
+        containerRef.current?.focus();
+      }
     }, 0);
   }, [setFocus]);
 
