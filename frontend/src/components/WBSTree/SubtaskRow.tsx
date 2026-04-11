@@ -93,6 +93,7 @@ const SubtaskRow = memo(({
             onEditingChange={onEditingChange}
             onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
             isEditing={isGlobalEditingByParent}
+            nameWidth={nameWidth}
           />
           <span className="text-gray-400 dark:text-slate-500 text-xs truncate" title={subtask.subtask_detail || undefined}>
             {subtask.subtask_detail}
@@ -136,7 +137,7 @@ const SubtaskRow = memo(({
           <Pencil size={14} />
         </button>
       </div>
-      <div className={`w-28 flex items-center ${commonCellClasses}`}>
+      <div className={`w-28 flex items-center ${commonCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
         <StatusSelect
           type="subtask"
           id={subtask.id}
@@ -148,9 +149,10 @@ const SubtaskRow = memo(({
           onEditingChange={onEditingChange}
           onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
           isEditing={isGlobalEditingByParent}
+          nameWidth={nameWidth}
         />
       </div>
-      <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
+      <div className={`w-24 ${dateCellClasses} overflow-hidden`} style={{ scrollMarginLeft: nameWidth }}>
         {(localProgress != null) && (
           <div 
             className="absolute top-0 left-0 h-full bg-green-500/20 dark:bg-green-500/30 transition-all duration-300 pointer-events-none"
@@ -172,12 +174,13 @@ const SubtaskRow = memo(({
             onEditingChange={onEditingChange}
             onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
             isEditing={isGlobalEditingByParent}
+            nameWidth={nameWidth}
           />
         </div>
       </div>
       <div 
         className={`flex items-center ${commonCellClasses}`}
-        style={{ width: assigneeWidth, minWidth: assigneeWidth }}
+        style={{ width: assigneeWidth, minWidth: assigneeWidth, scrollMarginLeft: nameWidth }}
       >
         <PortalSelect
           value={subtask.assignee_id}
@@ -195,11 +198,12 @@ const SubtaskRow = memo(({
           onEditingChange={onEditingChange}
           onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
           isEditing={isGlobalEditingByParent}
+          nameWidth={nameWidth}
         />
       </div>
       {!hidePlanningColumns && (
         <>
-          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`}>
+          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput
               type="number"
               value={subtask.work_days}
@@ -214,9 +218,10 @@ const SubtaskRow = memo(({
               onEditingChange={onEditingChange}
               onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
               isEditing={isGlobalEditingByParent}
+              nameWidth={nameWidth}
             />
           </div>
-          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`}>
+          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput
               type="number"
               value={subtask.review_days}
@@ -231,9 +236,10 @@ const SubtaskRow = memo(({
               onEditingChange={onEditingChange}
               onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
               isEditing={isGlobalEditingByParent}
+              nameWidth={nameWidth}
             />
           </div>
-          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
+          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="date" 
               value={subtask.planned_start_date} 
@@ -245,9 +251,10 @@ const SubtaskRow = memo(({
               onEditingChange={onEditingChange}
               onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
               isEditing={isGlobalEditingByParent}
+              nameWidth={nameWidth}
             />
           </div>
-          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
+          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="date" 
               value={subtask.planned_end_date} 
@@ -259,9 +266,10 @@ const SubtaskRow = memo(({
               onEditingChange={onEditingChange}
               onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
               isEditing={isGlobalEditingByParent}
+              nameWidth={nameWidth}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`}>
+          <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput
               type="number"
               value={subtask.planned_effort_days}
@@ -277,13 +285,14 @@ const SubtaskRow = memo(({
               onEditingChange={onEditingChange}
               onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
               isEditing={isGlobalEditingByParent}
+              nameWidth={nameWidth}
             />
           </div>
         </>
       )}
       {!isPlanningMode && (
         <>
-          <div className={`w-20 ${dateCellClasses}`}>
+          <div className={`w-20 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="date" 
               value={subtask.actual_start_date} 
@@ -295,9 +304,10 @@ const SubtaskRow = memo(({
               onEditingChange={onEditingChange}
               onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
               isEditing={isGlobalEditingByParent}
+              nameWidth={nameWidth}
             />
           </div>
-          <div className={`w-20 ${dateCellClasses}`}>
+          <div className={`w-20 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="date" 
               value={subtask.review_start_date} 
@@ -311,9 +321,10 @@ const SubtaskRow = memo(({
               onEditingChange={onEditingChange}
               onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
               isEditing={isGlobalEditingByParent}
+              nameWidth={nameWidth}
             />
           </div>
-          <div className={`w-20 ${dateCellClasses}`}>
+          <div className={`w-20 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput
               type="date"
               value={subtask.actual_end_date}
@@ -326,9 +337,10 @@ const SubtaskRow = memo(({
               onEditingChange={onEditingChange}
               onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
               isEditing={isGlobalEditingByParent}
+              nameWidth={nameWidth}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses}`}>
+          <div className={`w-16 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput
               type="number"
               value={subtask.actual_effort_days}
@@ -344,6 +356,7 @@ const SubtaskRow = memo(({
               onEditingChange={onEditingChange}
               onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
               isEditing={isGlobalEditingByParent}
+              nameWidth={nameWidth}
             />
           </div>
         </>

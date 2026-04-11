@@ -24,6 +24,7 @@ interface EditableInputProps {
   onEditingChange?: (editing: boolean) => void;
   onTab?: (isShift: boolean) => void;
   isEditing?: boolean;
+  nameWidth?: number;
 }
 
 /**
@@ -123,7 +124,7 @@ const PopoverEditor = ({
 };
 
 const EditableInput = memo(({
-  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange, placeholder, isFocused, onFocusChange, onEditingChange, onTab, isEditing: isGlobalEditing
+  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange, placeholder, isFocused, onFocusChange, onEditingChange, onTab, isEditing: isGlobalEditing, nameWidth
 }: EditableInputProps) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -233,6 +234,29 @@ const EditableInput = memo(({
     if (onEditingChange) onEditingChange(false);
     if (onFocusChange) onFocusChange(true); // 編集終了時にフォーカス状態に戻す
   }, [isEditing, value, onChange, type, min, max, isAuto, onInputChange, onFocusChange, onEditingChange]);
+
+  // フォーカス時に画面外であればスクロール
+  useEffect(() => {
+    if (isFocused && containerRef.current) {
+      const el = containerRef.current;
+      // まず標準のスクロールを実行
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+      // sticky領域（名称列）との重なりをチェックして手動で補正
+      const scrollContainer = el.closest('.overflow-x-scroll');
+      if (scrollContainer && nameWidth) {
+        const elRect = el.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const relativeLeft = elRect.left - containerRect.left;
+
+        // もし要素の左端が名称列の幅より左側にあれば（＝重なっていれば）
+        if (relativeLeft < nameWidth) {
+          // 重なっている分＋10px余裕を持ってスクロール
+          scrollContainer.scrollLeft -= (nameWidth - relativeLeft + 10);
+        }
+      }
+    }
+  }, [isFocused, nameWidth]);
 
   // 入力変更ハンドラ
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

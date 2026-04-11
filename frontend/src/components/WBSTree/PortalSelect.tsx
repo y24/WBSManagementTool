@@ -15,6 +15,7 @@ interface PortalSelectProps {
   onEditingChange?: (editing: boolean) => void;
   onTab?: (isShift: boolean) => void;
   isEditing?: boolean;
+  nameWidth?: number;
 }
 
 const PortalSelect = memo(({ 
@@ -29,7 +30,8 @@ const PortalSelect = memo(({
   onFocusChange,
   onEditingChange,
   onTab,
-  isEditing: isGlobalEditing
+  isEditing: isGlobalEditing,
+  nameWidth
 }: PortalSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [shouldFlash, setShouldFlash] = useState(false);
@@ -214,6 +216,29 @@ const PortalSelect = memo(({
       }
     }
   }, [activeIndex, isOpen]);
+
+  // フォーカス時に画面外であればスクロール
+  useEffect(() => {
+    if (isFocused && buttonRef.current) {
+      const el = buttonRef.current;
+      // まず標準のスクロールを実行
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+      // sticky領域（名称列）との重なりをチェックして手動で補正
+      const scrollContainer = el.closest('.overflow-x-scroll');
+      if (scrollContainer && nameWidth) {
+        const elRect = el.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const relativeLeft = elRect.left - containerRect.left;
+
+        // もし要素の左端が名称列の幅より左側にあれば（＝重なっていれば）
+        if (relativeLeft < nameWidth) {
+          // 重なっている分＋10px余裕を持ってスクロール
+          scrollContainer.scrollLeft -= (nameWidth - relativeLeft + 10);
+        }
+      }
+    }
+  }, [isFocused, nameWidth]);
 
   return (
     <>

@@ -90,6 +90,7 @@ const ProjectRow = memo(({
             onEditingChange={onEditingChange}
             onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
             isEditing={isGlobalEditingByParent}
+            nameWidth={nameWidth}
           />
         </div>
 
@@ -137,7 +138,7 @@ const ProjectRow = memo(({
           <Plus size={14} />
         </button>
       </div>
-      <div className={`w-28 flex items-center ${commonCellClasses}`}>
+      <div className={`w-28 flex items-center ${commonCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
         <StatusSelect 
           type="project"
           id={project.id}
@@ -150,9 +151,10 @@ const ProjectRow = memo(({
           onEditingChange={onEditingChange}
           onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
           isEditing={isGlobalEditingByParent}
+          nameWidth={nameWidth}
         />
       </div>
-      <div className={`w-24 ${dateCellClasses} overflow-hidden`}>
+      <div className={`w-24 ${dateCellClasses} overflow-hidden`} style={{ scrollMarginLeft: nameWidth }}>
         {project.progress_percent != null && (
           <div 
             className="absolute top-0 left-0 h-full bg-blue-500/20 dark:bg-blue-500/30 transition-all duration-300 pointer-events-none"
@@ -172,12 +174,13 @@ const ProjectRow = memo(({
             onEditingChange={onEditingChange}
             onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
             isEditing={isGlobalEditingByParent}
+            nameWidth={nameWidth}
           />
         </div>
       </div>
       <div 
         className={`flex items-center ${commonCellClasses}`}
-        style={{ width: assigneeWidth, minWidth: assigneeWidth }}
+        style={{ width: assigneeWidth, minWidth: assigneeWidth, scrollMarginLeft: nameWidth }}
       >
         <PortalSelect
           value={project.assignee_id}
@@ -195,13 +198,14 @@ const ProjectRow = memo(({
           onEditingChange={onEditingChange}
           onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
           isEditing={isGlobalEditingByParent}
+          nameWidth={nameWidth}
         />
       </div>
       {!hidePlanningColumns && (
         <>
-          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`}></div>
-          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`}></div>
-          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
+          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}></div>
+          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}></div>
+          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="date" 
               value={project.planned_start_date} 
@@ -216,7 +220,7 @@ const ProjectRow = memo(({
               isEditing={isGlobalEditingByParent}
             />
           </div>
-          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`}>
+          <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="date" 
               value={project.planned_end_date} 
@@ -231,7 +235,7 @@ const ProjectRow = memo(({
               isEditing={isGlobalEditingByParent}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`}>
+          <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="number" 
               value={project.planned_effort_total} 
@@ -250,7 +254,7 @@ const ProjectRow = memo(({
       )}
       {!isPlanningMode && (
         <>
-          <div className={`w-20 ${dateCellClasses}`}>
+          <div className={`w-20 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="date" 
               value={project.actual_start_date} 
@@ -266,8 +270,8 @@ const ProjectRow = memo(({
               isEditing={isGlobalEditingByParent}
             />
           </div>
-          <div className={`w-20 ${dateCellClasses}`}></div>
-          <div className={`w-20 ${dateCellClasses}`}>
+          <div className={`w-20 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}></div>
+          <div className={`w-20 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="date" 
               value={project.actual_end_date} 
@@ -283,7 +287,7 @@ const ProjectRow = memo(({
               isEditing={isGlobalEditingByParent}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses}`}>
+          <div className={`w-16 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="number" 
               value={project.actual_effort_total} 
