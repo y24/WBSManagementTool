@@ -14,7 +14,7 @@ interface ProjectRowProps {
   assigneeWidth: number;
   checked: boolean;
   onToggleCheck: (project: Project, isShift?: boolean) => void;
-  onToggleExpand: (id: number) => void;
+  onToggleExpand: (id: number, recursive?: boolean) => void;
   expanded: boolean;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
   onAddTask: (id: number) => void;
@@ -72,7 +72,7 @@ const ProjectRow = memo(({
         <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300">
           <GripVertical size={14} />
         </div>
-        <button onClick={() => onToggleExpand(project.id)} className="p-0.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded transition-colors">
+        <button onClick={(e) => onToggleExpand(project.id, e.ctrlKey)} className="p-0.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded transition-colors">
           {expanded === false ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
         </button>
         {warning && (

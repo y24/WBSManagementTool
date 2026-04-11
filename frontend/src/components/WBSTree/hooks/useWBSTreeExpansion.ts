@@ -41,11 +41,29 @@ export const useWBSTreeExpansion = ({
     setExpandedTasks(newExpandedTasks);
   }, [projects, setExpandedProjects, setExpandedTasks]);
 
-  const toggleProjectExpand = useCallback((id: number) => {
-    setExpandedProjects(prev => ({ ...prev, [id]: !(prev[id] !== false) }));
-  }, [setExpandedProjects]);
+  const toggleProjectExpand = useCallback((id: number, recursive: boolean = false) => {
+    setExpandedProjects(prev => {
+      const isExpanded = prev[id] !== false;
+      const nextState = !isExpanded;
 
-  const toggleTaskExpand = useCallback((id: number) => {
+      if (recursive) {
+        const project = projects.find(p => p.id === id);
+        if (project) {
+          setExpandedTasks(taskPrev => {
+            const newTasks = { ...taskPrev };
+            project.tasks.forEach(t => {
+              newTasks[t.id] = nextState;
+            });
+            return newTasks;
+          });
+        }
+      }
+
+      return { ...prev, [id]: nextState };
+    });
+  }, [projects, setExpandedProjects, setExpandedTasks]);
+
+  const toggleTaskExpand = useCallback((id: number, recursive: boolean = false) => {
     setExpandedTasks(prev => ({ ...prev, [id]: !(prev[id] !== false) }));
   }, [setExpandedTasks]);
 
