@@ -370,6 +370,11 @@ class ShiftDatesRequest(BaseModel):
     subtask_ids: List[int] = []
     new_base_date: date
 
+class ClearPlansActualsRequest(BaseModel):
+    project_ids: List[int] = []
+    task_ids: List[int] = []
+    subtask_ids: List[int] = []
+
 # --- Dashboard ---
 
 class DashboardKPIs(BaseModel):

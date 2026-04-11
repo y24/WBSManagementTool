@@ -342,6 +342,14 @@ def clear_actuals(req: schemas.ClearActualsRequest, db: Session = Depends(get_db
     manager.broadcast_sync({"type": "update", "entity": "batch"})
     return {"status": "ok"}
 
+@router.post("/items/clear-plans-actuals")
+def clear_plans_actuals(req: schemas.ClearPlansActualsRequest, db: Session = Depends(get_db)):
+    success = crud.clear_plans_actuals(db, req)
+    if not success:
+        raise HTTPException(status_code=400, detail="Clear plans and actuals failed")
+    manager.broadcast_sync({"type": "update", "entity": "batch"} )
+    return {"status": "ok"}
+
 @router.post("/items/shift-dates")
 def shift_dates(req: schemas.ShiftDatesRequest, db: Session = Depends(get_db)):
     success = crud.shift_dates(db, req)

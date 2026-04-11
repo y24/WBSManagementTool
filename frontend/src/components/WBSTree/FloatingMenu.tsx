@@ -7,6 +7,7 @@ interface FloatingMenuProps {
   onDelete: () => void;
   onDuplicate: () => void;
   onClearActuals: () => void;
+  onClearPlansActuals: () => void;
   onShiftDates: () => void;
   onClear: () => void;
   menuRendered: boolean;
@@ -18,6 +19,7 @@ const FloatingMenu = ({
   onDelete,
   onDuplicate,
   onClearActuals,
+  onClearPlansActuals,
   onShiftDates,
   onClear,
   menuRendered,
@@ -51,6 +53,14 @@ const FloatingMenu = ({
           >
             <Eraser size={18} className={loading ? 'animate-pulse' : ''} />
             {loading ? 'クリア中...' : '実績クリア'}
+          </button>
+          <button
+            onClick={onClearPlansActuals}
+            disabled={loading}
+            className={`flex items-center gap-2 text-orange-600 hover:text-orange-700 font-bold text-sm transition-all hover:scale-105 active:scale-95 ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            <Eraser size={18} className={loading ? 'animate-pulse' : ''} />
+            {loading ? 'クリア中...' : '計画・実績クリア'}
           </button>
           <button
             onClick={onShiftDates}

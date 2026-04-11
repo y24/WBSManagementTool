@@ -134,7 +134,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     setSaving,
     clearSelection
   });
-  const { isConfirmModalOpen, setIsConfirmModalOpen, confirmData, isShiftDatesModalOpen, setIsShiftDatesModalOpen, currentMinDate, handleDeleteSelected, handleClearActualsSelected, handleDuplicateSelected, handleShiftDatesSelected, executeShiftDates, setConfirmData } = actions;
+  const { isConfirmModalOpen, setIsConfirmModalOpen, confirmData, isShiftDatesModalOpen, setIsShiftDatesModalOpen, currentMinDate, handleDeleteSelected, handleClearActualsSelected, handleClearPlansActualsSelected, handleDuplicateSelected, handleShiftDatesSelected, executeShiftDates, setConfirmData } = actions;
 
   // Updates Hook
   const { handleUpdate, findItem } = useWBSUpdates({ projects, initialData, onUpdate, onLocalUpdate, setSaving, checkedIds, setConfirmData, setIsConfirmModalOpen });
@@ -394,6 +394,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         onDelete={handleDeleteSelected}
         onDuplicate={handleDuplicateSelected}
         onClearActuals={handleClearActualsSelected}
+        onClearPlansActuals={handleClearPlansActualsSelected}
         onShiftDates={handleShiftDatesSelected}
         onClear={() => setCheckedIds({})}
         menuRendered={menuRendered}

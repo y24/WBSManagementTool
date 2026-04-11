@@ -104,6 +104,36 @@ export const useWBSTreeActions = ({
     }
   };
 
+  const handleClearPlansActualsSelected = () => {
+    if (totalSelectedCount === 0) return;
+
+    const detailMsg = `クリア対象の内訳: プロジェクト:${selectedCounts.pCount}, タスク:${selectedCounts.tCount}, サブタスク:${selectedCounts.sCount}\n\n対象の計画開始、計画終了、実績開始、レビュー開始、実績終了、予定工数、実績工数、進捗、ステータスなどがすべて消去・リセットされます。`;
+    setConfirmData({
+      total: totalSelectedCount,
+      detail: detailMsg,
+      title: '計画・実績値のクリア確認',
+      confirmText: '計画・実績値をクリア',
+      variant: 'warning',
+      onConfirm: () => executeClearPlansActuals(selectedIds.pIds, selectedIds.tIds, selectedIds.sIds)
+    });
+    setIsConfirmModalOpen(true);
+  };
+
+  const executeClearPlansActuals = async (pIds: number[], tIds: number[], sIds: number[]) => {
+    setIsConfirmModalOpen(false);
+    setSaving(true);
+    try {
+      await wbsOps.clearPlanAndActuals(pIds, tIds, sIds);
+      clearSelection();
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      alert('クリア中にエラーが発生しました。');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleDuplicateSelected = async () => {
     if (totalSelectedCount === 0) return;
     setSaving(true);
@@ -192,6 +222,7 @@ export const useWBSTreeActions = ({
     currentMinDate,
     handleDeleteSelected,
     handleClearActualsSelected,
+    handleClearPlansActualsSelected,
     handleDuplicateSelected,
     handleShiftDatesSelected,
     executeShiftDates,

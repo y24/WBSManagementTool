@@ -55,6 +55,7 @@ from .wbs import (
     get_wbs_data,
     duplicate_items,
     clear_actuals,
+    clear_plans_actuals,
     shift_dates
 )
 

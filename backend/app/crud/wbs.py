@@ -394,6 +394,113 @@ def clear_actuals(db: Session, req: schemas.ClearActualsRequest):
 
     return True
 
+def clear_plans_actuals(db: Session, req: schemas.ClearPlansActualsRequest):
+    from .recalc import recalculate_task_dates, recalculate_task_status, recalculate_project_dates, recalculate_project_status
+    
+    # Get all projects, tasks, subtasks to be cleared
+    p_ids = set(req.project_ids)
+    t_ids = set(req.task_ids)
+    s_ids = set(req.subtask_ids)
+
+    affected_task_ids = set()
+    affected_project_ids = set()
+
+    # 1. Clear Projects (and their descendants)
+    for pid in p_ids:
+        project = db.query(models.Project).filter(models.Project.id == pid).first()
+        if not project: continue
+        
+        project.planned_start_date = None
+        project.planned_end_date = None
+        project.actual_start_date = None
+        project.actual_end_date = None
+        project.work_days = None
+        project.status_id = 1
+        
+        for task in project.tasks:
+            task.planned_start_date = None
+            task.planned_end_date = None
+            task.actual_start_date = None
+            task.actual_end_date = None
+            task.work_days = None
+            task.status_id = 1
+            for subtask in task.subtasks:
+                subtask.planned_start_date = None
+                subtask.planned_end_date = None
+                subtask.actual_start_date = None
+                subtask.review_start_date = None
+                subtask.actual_end_date = None
+                subtask.planned_effort_days = None
+                subtask.actual_effort_days = None
+                subtask.work_days = None
+                subtask.review_days = None
+                subtask.progress_percent = None
+                subtask.status_id = 1
+                
+    # 2. Clear Tasks (and their subtasks)
+    for tid in t_ids:
+        # If parent project is already being cleared, skip
+        task = db.query(models.Task).filter(models.Task.id == tid).first()
+        if not task or task.project_id in p_ids: continue
+        
+        task.planned_start_date = None
+        task.planned_end_date = None
+        task.actual_start_date = None
+        task.actual_end_date = None
+        task.work_days = None
+        task.status_id = 1
+        for subtask in task.subtasks:
+            subtask.planned_start_date = None
+            subtask.planned_end_date = None
+            subtask.actual_start_date = None
+            subtask.review_start_date = None
+            subtask.actual_end_date = None
+            subtask.planned_effort_days = None
+            subtask.actual_effort_days = None
+            subtask.work_days = None
+            subtask.review_days = None
+            subtask.progress_percent = None
+            subtask.status_id = 1
+        
+        affected_project_ids.add(task.project_id)
+            
+    # 3. Clear Subtasks
+    for sid in s_ids:
+        subtask = db.query(models.Subtask).filter(models.Subtask.id == sid).first()
+        if not subtask: continue
+        
+        # If parent task or project is already being cleared, skip
+        if subtask.task_id in t_ids: continue
+        parent_task = db.query(models.Task).filter(models.Task.id == subtask.task_id).first()
+        if not parent_task or parent_task.project_id in p_ids: continue
+        
+        subtask.planned_start_date = None
+        subtask.planned_end_date = None
+        subtask.actual_start_date = None
+        subtask.review_start_date = None
+        subtask.actual_end_date = None
+        subtask.planned_effort_days = None
+        subtask.actual_effort_days = None
+        subtask.work_days = None
+        subtask.review_days = None
+        subtask.progress_percent = None
+        subtask.status_id = 1
+        
+        affected_task_ids.add(subtask.task_id)
+
+    db.commit()
+    
+    # Trigger recalculations
+    for tid in affected_task_ids:
+        recalculate_task_dates(db, tid)
+        recalculate_task_status(db, tid)
+    
+    for pid in affected_project_ids:
+        recalculate_project_dates(db, pid)
+        recalculate_project_status(db, pid)
+
+    return True
+
 def shift_dates(db: Session, req: schemas.ShiftDatesRequest):
     from ..utils.date_utils import shift_business_days, get_business_days_count, is_business_day
     
