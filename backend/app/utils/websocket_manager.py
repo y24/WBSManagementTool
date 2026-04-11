@@ -1,11 +1,18 @@
+import os
 from typing import List
 from fastapi import WebSocket
 
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        # サーバー側の設定でWebSocketを有効にするか(デフォルトはTrue)
+        self.enabled = os.getenv("ENABLE_WEBSOCKET", "true").lower() == "true"
 
     async def connect(self, websocket: WebSocket):
+        if not self.enabled:
+            # WebSocketが無効な場合は接続を拒否して閉じる
+            await websocket.close(code=1008)  # Policy Violation or just 1000
+            return
         await websocket.accept()
         self.active_connections.append(websocket)
 
@@ -14,6 +21,8 @@ class ConnectionManager:
             self.active_connections.remove(websocket)
 
     async def broadcast(self, message: dict):
+        if not self.enabled:
+            return
         # We use a copy of the list to avoid issues if a connection is removed during iteration
         for connection in list(self.active_connections):
             try:

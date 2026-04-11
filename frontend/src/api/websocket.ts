@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { getInitialData } from './client';
 
 // Use environment variable or derive from current location
 const WS_URL = import.meta.env.VITE_WS_URL || (() => {
@@ -27,7 +28,20 @@ export const useWebSocket = (onMessage: (msg: WSMessage) => void) => {
     onMessageRef.current = onMessage;
   }, [onMessage]);
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
+    if (!isMountedRef.current) return;
+
+    // Check if WebSocket is enabled on the server
+    try {
+      const response = await getInitialData();
+      if (response && response.data && response.data.enable_websocket === false) {
+        console.log('WebSocket is disabled by server setting. Skipping connection.');
+        return;
+      }
+    } catch (err) {
+      console.warn('Could not determine WebSocket status from server, will attempt connection anyway.', err);
+    }
+
     if (!isMountedRef.current) return;
 
     // Clean up existing connection if any

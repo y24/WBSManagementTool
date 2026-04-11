@@ -322,6 +322,7 @@ class InitialData(BaseModel):
     status_mapping_new: Optional[str] = None
     status_mapping_blocked: Optional[str] = None
     status_mapping_done: Optional[str] = None
+    enable_websocket: bool = True
 
 # --- Import ---
 class ImportPreviewRow(BaseModel):

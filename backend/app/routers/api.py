@@ -173,6 +173,7 @@ def get_initial_data(db: Session = Depends(get_db)):
         "status_mapping_new": mapping_new.setting_value if mapping_new else None,
         "status_mapping_blocked": mapping_blocked.setting_value if mapping_blocked else None,
         "status_mapping_done": mapping_done.setting_value if mapping_done else None,
+        "enable_websocket": manager.enabled,
     }
 
 # --- System Settings ---

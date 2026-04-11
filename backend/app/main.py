@@ -1,5 +1,11 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()
+
 from .utils.websocket_manager import manager
 
 app = FastAPI(title="WBS Management Tool API")
@@ -19,6 +25,9 @@ def read_health():
 
 @app.websocket("/api/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    if not manager.enabled:
+        await websocket.close(code=1008)
+        return
     await manager.connect(websocket)
     try:
         while True:
