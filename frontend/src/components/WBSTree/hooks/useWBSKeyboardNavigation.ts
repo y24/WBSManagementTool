@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Project, Task, Subtask } from '../../../types/wbs';
 
 export type WBSField = 
-  | 'name' | 'status' | 'progress' | 'assignee' 
+  | 'name' | 'status' | 'progress' | 'assignee' | 'workload_percent'
   | 'work_days' | 'review_days' | 'planned_start' | 'planned_end' | 'planned_effort'
   | 'actual_start' | 'review_start' | 'actual_end' | 'actual_effort';
 
@@ -31,7 +31,7 @@ export const useWBSKeyboardNavigation = ({
 
   // 全てのフィールド順序
   const allFields: WBSField[] = [
-    'name', 'status', 'progress', 'assignee',
+    'name', 'status', 'progress', 'assignee', 'workload_percent',
     'work_days', 'review_days', 'planned_start', 'planned_end', 'planned_effort',
     'actual_start', 'review_start', 'actual_end', 'actual_effort'
   ];
@@ -39,7 +39,7 @@ export const useWBSKeyboardNavigation = ({
   // 現在のモードで有効なフィールドリスト
   const visibleFields = useMemo(() => {
     return allFields.filter(f => {
-      if (hidePlanningColumns && ['work_days', 'review_days', 'planned_start', 'planned_end', 'planned_effort'].includes(f)) return false;
+      if (hidePlanningColumns && ['workload_percent', 'work_days', 'review_days', 'planned_start', 'planned_end', 'planned_effort'].includes(f)) return false;
       if (isPlanningMode && ['actual_start', 'review_start', 'actual_end', 'actual_effort'].includes(f)) return false;
       return true;
     });
@@ -79,6 +79,9 @@ export const useWBSKeyboardNavigation = ({
 
       // 進捗率はプロジェクト・タスクレベルでは常に自動計算のためスキップ
       if (field === 'progress') return true;
+
+      // 工数比率はサブタスクのみ
+      if (field === 'workload_percent') return true;
 
       // 日付は自動設定がONの場合はスキップ（入力不可）
       if (field === 'planned_start' || field === 'planned_end') return !!p.is_auto_planned_date;

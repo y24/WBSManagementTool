@@ -137,11 +137,9 @@ const EditableInput = memo(({
   const shouldSelectOnFocus = useRef(true);
   const isActuallyReadOnly = !!(readOnly || isAuto);
 
-  // 値の初期化と同期
+  // 外部からの値をローカルステート(val)に同期する
   useEffect(() => {
-    const isValueChanged = prevValueRef.current !== value;
-
-    if ((!isEditing || isAuto) && (isValueChanged || val === '')) {
+    if (!isEditing || isAuto) {
       let initVal = value != null ? String(value) : '';
       if (type === 'date') {
         initVal = formatDateForInput(value);
@@ -149,22 +147,38 @@ const EditableInput = memo(({
         const num = Number(value);
         if (!isNaN(num)) initVal = num.toFixed(precision);
       }
-      setVal(initVal);
-      if (onInputChange && type === 'number') {
-        onInputChange(value != null ? Number(value) : null);
+      
+      // val === '' かつ value に意味のある値が入ってきた際も同期
+      if (prevValueRef.current !== value || (val === '' && value != null && value !== '')) {
+        setVal(initVal);
+        if (onInputChange && type === 'number') {
+          // 数値項目の場合、初期値同期時も親に通知（進捗バーなどの連動用）
+          const num = value != null ? Number(value) : null;
+          onInputChange(num);
+        }
+        if (!isAuto) isCommittingRef.current = false;
       }
-      if (!isAuto) isCommittingRef.current = false;
     }
+  }, [value, isEditing, type, precision, isAuto, onInputChange]);
 
-    // 外部（自動）での値更新を検知してフラッシュさせる
-    if (!isEditing && isValueChanged) {
-      setShouldFlash(true);
-      const timer = setTimeout(() => setShouldFlash(false), 1000);
+  // 外部からの更新検知によるフラッシュアニメーション
+  useEffect(() => {
+    // 編集中のセルはフラッシュさせない。また初期マウント時もフラッシュさせない。
+    const isValueChanged = prevValueRef.current !== undefined && prevValueRef.current !== value;
+    
+    if (isValueChanged) {
+      if (!isEditing) {
+        setShouldFlash(true);
+        const timer = setTimeout(() => setShouldFlash(false), 1000);
+        prevValueRef.current = value;
+        return () => clearTimeout(timer);
+      }
       prevValueRef.current = value;
-      return () => clearTimeout(timer);
+    } else if (prevValueRef.current === undefined) {
+      // 初回マウント時
+      prevValueRef.current = value;
     }
-    prevValueRef.current = value;
-  }, [value, isEditing, type, precision, isAuto, onInputChange, val]);
+  }, [value, isEditing]);
 
   // グローバルな編集モードが有効でフォーカスされた場合、自動的に編集開始
   useEffect(() => {

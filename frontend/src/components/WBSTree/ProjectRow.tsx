@@ -205,6 +205,7 @@ const ProjectRow = memo(({
         <>
           <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}></div>
           <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}></div>
+          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}></div>
           <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput 
               type="date" 

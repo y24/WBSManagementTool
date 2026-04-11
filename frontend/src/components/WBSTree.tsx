@@ -127,7 +127,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
   // Detail Modal Hook
   const detailModal = useDetailModal({ onUpdate, onLocalUpdate, setSaving, checkedIds, setIsConfirmModalOpen, setConfirmData, findItem });
-  const { editingItem, setEditingItem, detailValue, setDetailValue, ticketIdValue, setTicketIdValue, linkUrlValue, setLinkUrlValue, memoValue, setMemoValue, workloadPercentValue, setWorkloadPercentValue, openDetailModal, handleDetailSave } = detailModal;
+  const { editingItem, setEditingItem, detailValue, setDetailValue, ticketIdValue, setTicketIdValue, linkUrlValue, setLinkUrlValue, memoValue, setMemoValue, openDetailModal, handleDetailSave } = detailModal;
 
   // Drag Drop Hook
   const { onDragEnd } = useWBSDragDrop(projects, onUpdate, setSaving);
@@ -228,8 +228,6 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           setMemoValue={setMemoValue}
           linkUrlValue={linkUrlValue}
           setLinkUrlValue={setLinkUrlValue}
-          workloadPercentValue={workloadPercentValue}
-          setWorkloadPercentValue={setWorkloadPercentValue}
           ticketUrlTemplate={initialData?.ticket_url_template}
           onClose={() => setEditingItem(null)}
           onSave={handleDetailSave}

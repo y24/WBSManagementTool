@@ -72,11 +72,17 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
       </div>
       {!hidePlanningColumns && (
         <>
+          <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>工数比率</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>作業日数</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>レビュー日数</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>開始(計画)</div>
           <div className={`w-20 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>終了(計画)</div>
-          <div className={`w-16 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}>予定工数</div>
+          <div 
+            className={`w-16 flex items-center ${commonHeaderClasses} ${planningCellClasses}`}
+            title="予定工数 = (作業日数 × 工数比率) + (レビュー日数 × 50%)&#10;※工数比率はレビュー日数には掛けずに、レビュー日数の工数比率は常に50％とします。"
+          >
+            予定工数
+          </div>
         </>
       )}
       {!isPlanningMode && (

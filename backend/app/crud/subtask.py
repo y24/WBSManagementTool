@@ -48,18 +48,25 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
         if not update_data or any(k in (update_data or {}) for k in ["planned_start_date", "planned_end_date", "workload_percent", "is_auto_effort", "review_days"]):
             if p_end:
                 raw_days = date_utils.get_business_days_count(p_start, p_end, holidays)
-                # 予定工数 = (計画期間の営業日数 * 負荷率) - レビュー日数
-                effort = max(0.0, raw_days * workload_factor - float(p_review or 0))
+                # 予定工数 = (作業日数 * 工数比率) + (レビュー日数 * 50%)
+                # 作業日数 = 計画期間の営業日数 - レビュー日数
+                biz_days = float(raw_days)
+                review_days_val = float(p_review or 0)
+                effort = max(0.0, (biz_days - review_days_val) * workload_factor + review_days_val * 0.5)
                 # 四捨五入して1桁
                 db_subtask.planned_effort_days = Decimal(str(int(effort * 10 + 0.5) / 10.0))
             elif is_turning_on and p_effort is not None:
-                # 工数から終了日を逆算: 予定終了日 = (予定工数 + レビュー日数) / 負荷率
-                total_duration = (float(p_effort) + float(p_review or 0)) / workload_factor
+                # 工数から終了日を逆算:
+                # E = (D_total - D_rev) * W + D_rev * 0.5
+                # D_total = (E - D_rev * 0.5) / W + D_rev
+                review_days_val = float(p_review or 0)
+                total_duration = (float(p_effort) - review_days_val * 0.5) / workload_factor + review_days_val
                 db_subtask.planned_end_date = date_utils.add_business_days(p_start, total_duration, holidays)
         elif update_data and "planned_effort_days" in update_data:
             if p_effort is not None:
                 # 同様に逆算
-                total_duration = (float(p_effort) + float(p_review or 0)) / workload_factor
+                review_days_val = float(p_review or 0)
+                total_duration = (float(p_effort) - review_days_val * 0.5) / workload_factor + review_days_val
                 db_subtask.planned_end_date = date_utils.add_business_days(p_start, total_duration, holidays)
 
     # logic for actual
@@ -75,8 +82,11 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
                 review_start_for_calc = max(a_start, r_start)
                 review_biz_days = date_utils.get_business_days_count(review_start_for_calc, a_end, holidays)
             
-            # 実績工数 = (全体の営業日数 - レビュー営業日数) * 負荷率
-            effort = max(0.0, (raw_days - review_biz_days) * workload_factor)
+            # 実績工数 = (作業日数 * 工数比率) + (レビュー日数 * 50%)
+            # 作業日数 = 全体の営業日数 - レビュー営業日数
+            biz_days = float(raw_days)
+            review_biz_days_val = float(review_biz_days)
+            effort = max(0.0, (biz_days - review_biz_days_val) * workload_factor + review_biz_days_val * 0.5)
             # 四捨五入して1桁
             db_subtask.actual_effort_days = Decimal(str(int(effort * 10 + 0.5) / 10.0))
 

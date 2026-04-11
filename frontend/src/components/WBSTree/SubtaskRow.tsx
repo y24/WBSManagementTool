@@ -206,6 +206,22 @@ const SubtaskRow = memo(({
           <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
             <EditableInput
               type="number"
+              value={subtask.workload_percent}
+              onChange={(v: number | null) => onUpdateField('subtask', subtask.id, 'workload_percent', v)}
+              min={0}
+              suffix="%"
+              highlight={getHighlight('workload_percent', subtask.workload_percent)}
+              isFocused={focusedField === 'workload_percent'}
+              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'workload_percent')}
+              onEditingChange={onEditingChange}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
+              isEditing={isGlobalEditingByParent}
+              nameWidth={nameWidth}
+            />
+          </div>
+          <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
+            <EditableInput
+              type="number"
               value={subtask.work_days}
               onChange={(v: number | null) => onUpdateField('subtask', subtask.id, 'work_days', v)}
               min={0}

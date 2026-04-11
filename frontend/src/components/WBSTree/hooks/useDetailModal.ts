@@ -31,7 +31,6 @@ export const useDetailModal = ({
   const [ticketIdValue, setTicketIdValue] = useState('');
   const [linkUrlValue, setLinkUrlValue] = useState('');
   const [memoValue, setMemoValue] = useState('');
-  const [workloadPercentValue, setWorkloadPercentValue] = useState('100');
 
   const openDetailModal = useCallback((type: EditingType, item: any) => {
     setEditingItem({
@@ -43,7 +42,6 @@ export const useDetailModal = ({
     setTicketIdValue(item.ticket_id != null ? String(item.ticket_id) : '');
     setLinkUrlValue(item.link_url || '');
     setMemoValue(item.memo || '');
-    setWorkloadPercentValue(type === 'subtask' ? String(item.workload_percent || '100') : '100');
   }, []);
 
   const closeDetailModal = useCallback(() => setEditingItem(null), []);
@@ -58,7 +56,6 @@ export const useDetailModal = ({
     };
     if (editingItem.type === 'subtask') {
       updates.subtask_detail = detailValue || null;
-      updates.workload_percent = workloadPercentValue !== '' ? parseInt(workloadPercentValue, 10) : 100;
     } else {
       updates.detail = detailValue || null;
     }
@@ -131,7 +128,6 @@ export const useDetailModal = ({
           { f: 'ticket_id', v: updates.ticket_id },
           { f: 'memo', v: updates.memo },
           { f: item.type === 'subtask' ? 'subtask_detail' : 'detail', v: editingItem.type === 'subtask' ? updates.subtask_detail : updates.detail },
-          { f: 'workload_percent', v: updates.workload_percent }
         ];
 
         return fieldsToCheck.some(check => {
@@ -170,8 +166,6 @@ export const useDetailModal = ({
     setLinkUrlValue,
     memoValue,
     setMemoValue,
-    workloadPercentValue,
-    setWorkloadPercentValue,
     openDetailModal,
     closeDetailModal,
     handleDetailSave
