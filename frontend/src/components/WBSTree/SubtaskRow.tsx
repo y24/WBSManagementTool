@@ -24,7 +24,7 @@ interface SubtaskRowProps {
   onFocusChange?: (rowId: string, field: string) => void;
   onEditingChange?: (editing: boolean) => void;
   isEditing?: boolean;
-  onTabNavigation?: (direction: 'next' | 'prev') => void;
+  onTabNavigation?: (direction: 'next' | 'prev', autoEdit: boolean) => void;
 }
 
 const SubtaskRow = memo(({
@@ -91,7 +91,7 @@ const SubtaskRow = memo(({
             isFocused={focusedField === 'name'}
             onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'name')}
             onEditingChange={onEditingChange}
-            onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+            onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
             isEditing={isGlobalEditingByParent}
             nameWidth={nameWidth}
           />
@@ -147,7 +147,7 @@ const SubtaskRow = memo(({
           isFocused={focusedField === 'status'}
           onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'status')}
           onEditingChange={onEditingChange}
-          onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+          onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
           isEditing={isGlobalEditingByParent}
           nameWidth={nameWidth}
         />
@@ -172,7 +172,7 @@ const SubtaskRow = memo(({
             isFocused={focusedField === 'progress'}
             onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'progress')}
             onEditingChange={onEditingChange}
-            onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+            onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
             isEditing={isGlobalEditingByParent}
             nameWidth={nameWidth}
           />
@@ -196,7 +196,7 @@ const SubtaskRow = memo(({
           isFocused={focusedField === 'assignee'}
           onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'assignee')}
           onEditingChange={onEditingChange}
-          onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+          onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
           isEditing={isGlobalEditingByParent}
           nameWidth={nameWidth}
         />
@@ -216,7 +216,7 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'work_days'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'work_days')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
               nameWidth={nameWidth}
             />
@@ -234,7 +234,7 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'review_days'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'review_days')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
               nameWidth={nameWidth}
             />
@@ -249,7 +249,7 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'planned_start'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_start')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
               nameWidth={nameWidth}
             />
@@ -264,7 +264,7 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'planned_end'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_end')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
               nameWidth={nameWidth}
             />
@@ -283,7 +283,7 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'planned_effort'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_effort')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
               nameWidth={nameWidth}
             />
@@ -302,7 +302,7 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'actual_start'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_start')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
               nameWidth={nameWidth}
             />
@@ -319,7 +319,7 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'review_start'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'review_start')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
               nameWidth={nameWidth}
             />
@@ -335,7 +335,7 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'actual_end'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_end')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
               nameWidth={nameWidth}
             />
@@ -354,7 +354,7 @@ const SubtaskRow = memo(({
               isFocused={focusedField === 'actual_effort'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_effort')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
               nameWidth={nameWidth}
             />

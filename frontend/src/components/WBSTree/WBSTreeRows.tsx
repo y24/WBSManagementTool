@@ -29,7 +29,7 @@ interface WBSTreeRowsProps {
   onFocusChange: (rowId: string, field: string) => void;
   onEditingChange: (isEditing: boolean) => void;
   isEditing: boolean;
-  onTabNavigation?: (direction: 'next' | 'prev') => void;
+  onTabNavigation?: (direction: 'next' | 'prev', autoEdit: boolean) => void;
 }
 
 const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({

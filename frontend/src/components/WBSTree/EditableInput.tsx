@@ -22,7 +22,7 @@ interface EditableInputProps {
   isFocused?: boolean;
   onFocusChange?: (focused: boolean) => void;
   onEditingChange?: (editing: boolean) => void;
-  onTab?: (isShift: boolean) => void;
+  onTab?: (isShift: boolean, editing: boolean) => void;
   isEditing?: boolean;
   nameWidth?: number;
 }
@@ -330,7 +330,7 @@ const EditableInput = memo(({
         e.preventDefault();
         e.stopPropagation();
         handleCommit(val);
-        if (onTab) onTab(e.shiftKey);
+        if (onTab) onTab(e.shiftKey, true);
       }
     };
     window.addEventListener('keydown', handleKeyDown, true);
@@ -471,7 +471,7 @@ const EditableInput = memo(({
         e.preventDefault();
         e.stopPropagation();
         handleCommit((e.target as HTMLInputElement).value);
-        if (onTab) onTab(e.shiftKey);
+        if (onTab) onTab(e.shiftKey, true);
       }
     },
     min: min ?? undefined,

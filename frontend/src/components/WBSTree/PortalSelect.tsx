@@ -13,7 +13,7 @@ interface PortalSelectProps {
   isFocused?: boolean;
   onFocusChange?: (focused: boolean) => void;
   onEditingChange?: (editing: boolean) => void;
-  onTab?: (isShift: boolean) => void;
+  onTab?: (isShift: boolean, editing: boolean) => void;
   isEditing?: boolean;
   nameWidth?: number;
 }
@@ -136,7 +136,7 @@ const PortalSelect = memo(({
           if (onTab) {
             e.preventDefault();
             e.stopPropagation();
-            onTab(e.shiftKey);
+            onTab(e.shiftKey, false);
           }
         }
       };
@@ -199,7 +199,7 @@ const PortalSelect = memo(({
         }
         setIsOpen(false);
         if (onEditingChange) onEditingChange(false);
-        if (onTab) onTab(e.shiftKey);
+        if (onTab) onTab(e.shiftKey, true);
       }
     };
 

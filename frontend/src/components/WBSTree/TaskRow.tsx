@@ -27,7 +27,7 @@ interface TaskRowProps {
   onFocusChange?: (rowId: string, field: string) => void;
   onEditingChange?: (editing: boolean) => void;
   isEditing?: boolean;
-  onTabNavigation?: (direction: 'next' | 'prev') => void;
+  onTabNavigation?: (direction: 'next' | 'prev', autoEdit: boolean) => void;
 }
 
 const TaskRow = memo(({ 
@@ -88,7 +88,7 @@ const TaskRow = memo(({
             isFocused={focusedField === 'name'}
             onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'name')}
             onEditingChange={onEditingChange}
-            onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+            onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
             isEditing={isGlobalEditingByParent}
             nameWidth={nameWidth}
           />
@@ -149,7 +149,7 @@ const TaskRow = memo(({
           isFocused={focusedField === 'status'}
           onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'status')}
           onEditingChange={onEditingChange}
-          onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+          onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
           isEditing={isGlobalEditingByParent}
           nameWidth={nameWidth}
         />
@@ -172,7 +172,7 @@ const TaskRow = memo(({
             isFocused={focusedField === 'progress'}
             onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'progress')}
             onEditingChange={onEditingChange}
-            onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+            onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
             isEditing={isGlobalEditingByParent}
             nameWidth={nameWidth}
           />
@@ -196,7 +196,7 @@ const TaskRow = memo(({
           isFocused={focusedField === 'assignee'}
           onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'assignee')}
           onEditingChange={onEditingChange}
-          onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+          onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
           isEditing={isGlobalEditingByParent}
           nameWidth={nameWidth}
         />
@@ -216,7 +216,7 @@ const TaskRow = memo(({
               isFocused={focusedField === 'planned_start'}
               onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'planned_start')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
             />
           </div>
@@ -231,7 +231,7 @@ const TaskRow = memo(({
               isFocused={focusedField === 'planned_end'}
               onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'planned_end')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
             />
           </div>
@@ -246,7 +246,7 @@ const TaskRow = memo(({
               isFocused={focusedField === 'planned_effort'}
               onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'planned_effort')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
             />
           </div>
@@ -266,7 +266,7 @@ const TaskRow = memo(({
               isFocused={focusedField === 'actual_start'}
               onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'actual_start')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
             />
           </div>
@@ -283,7 +283,7 @@ const TaskRow = memo(({
               isFocused={focusedField === 'actual_end'}
               onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'actual_end')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
             />
           </div>
@@ -298,7 +298,7 @@ const TaskRow = memo(({
               isFocused={focusedField === 'actual_effort'}
               onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'actual_effort')}
               onEditingChange={onEditingChange}
-              onTab={(s) => onTabNavigation?.(s ? 'prev' : 'next')}
+              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
             />
           </div>

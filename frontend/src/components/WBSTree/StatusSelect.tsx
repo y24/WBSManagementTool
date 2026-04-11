@@ -14,7 +14,7 @@ interface StatusSelectProps {
   isFocused?: boolean;
   onFocusChange?: (focused: boolean) => void;
   onEditingChange?: (editing: boolean) => void;
-  onTab?: (isShift: boolean) => void;
+  onTab?: (isShift: boolean, editing: boolean) => void;
   isEditing?: boolean;
   nameWidth?: number;
 }
@@ -144,7 +144,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
         }
         setIsOpen(false);
         if (onEditingChange) onEditingChange(false);
-        if (onTab) onTab(e.shiftKey);
+        if (onTab) onTab(e.shiftKey, true);
       }
     };
 
@@ -210,7 +210,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
           if (onTab) {
             e.preventDefault();
             e.stopPropagation();
-            onTab(e.shiftKey);
+            onTab(e.shiftKey, false);
           }
         }
       };
