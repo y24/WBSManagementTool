@@ -240,11 +240,11 @@ code {
 }
 
 .wbs-cell-planning {
-  background-image: linear-gradient(rgba(100, 100, 100, 0.01), rgba(100, 100, 100, 0.01)) !important;
+  background-image: linear-gradient(rgba(100, 100, 100, 0.03), rgba(100, 100, 100, 0.03)) !important;
 }
 
 :root.dark .wbs-cell-planning {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.01)) !important;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03)) !important;
 }
 
 /* Floating Menu Animation */
