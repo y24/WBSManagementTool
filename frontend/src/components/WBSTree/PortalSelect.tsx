@@ -160,12 +160,14 @@ const PortalSelect = memo(({
           onChange(options[activeIndex].id);
           setIsOpen(false);
           if (onEditingChange) onEditingChange(false);
+          if (onFocusChange) onFocusChange(true);
         }
       } else if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
         setIsOpen(false);
         if (onEditingChange) onEditingChange(false);
+        if (onFocusChange) onFocusChange(true);
       }
     };
 
@@ -242,6 +244,7 @@ const PortalSelect = memo(({
                     onChange(opt.id);
                     setIsOpen(false);
                     if (onEditingChange) onEditingChange(false);
+                    if (onFocusChange) onFocusChange(true);
                   }}
                   onMouseEnter={() => setActiveIndex(index)}
                 >

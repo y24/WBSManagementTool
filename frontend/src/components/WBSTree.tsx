@@ -81,7 +81,10 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   // セルクリック時にコンテナにフォーカスを戻す
   const handleCellClick = useCallback((rowId: string, field: string) => {
     setFocus({ rowId, field: field as any });
-    containerRef.current?.focus();
+    // DOMの更新（編集モード終了など）を待ってからフォーカスを戻す
+    setTimeout(() => {
+      containerRef.current?.focus();
+    }, 0);
   }, [setFocus]);
 
   // Wrap level handlers to update the props

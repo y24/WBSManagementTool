@@ -120,6 +120,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
             onUpdateField(type, id, 'status_id', targetStatus.id);
             setIsOpen(false);
             if (onEditingChange) onEditingChange(false);
+            if (onFocusChange) onFocusChange(true);
           }
         }
       } else if (e.key === 'Escape') {
@@ -127,6 +128,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
         e.stopPropagation();
         setIsOpen(false);
         if (onEditingChange) onEditingChange(false);
+        if (onFocusChange) onFocusChange(true);
       }
     };
 
@@ -232,6 +234,7 @@ const StatusSelect = memo(({ type, id, statusId, initialData, onUpdateField, dis
                     onUpdateField(type, id, 'status_id', s.id);
                     setIsOpen(false);
                     if (onEditingChange) onEditingChange(false);
+                    if (onFocusChange) onFocusChange(true);
                   }}
                   onMouseEnter={() => !isDisabled && setActiveIndex(index)}
                 >
