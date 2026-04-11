@@ -1,17 +1,15 @@
 import React, { useRef, useEffect, useState, forwardRef, useCallback } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DragDropContext } from '@hello-pangea/dnd';
 import { Project } from '../types/wbs';
 import { InitialData } from '../types';
 
 // Sub-components
-import ProjectRow from './WBSTree/ProjectRow';
-import TaskRow from './WBSTree/TaskRow';
-import SubtaskRow from './WBSTree/SubtaskRow';
 import DetailModal from './WBSTree/DetailModal';
 import FloatingMenu from './WBSTree/FloatingMenu';
 import ConfirmModal from './WBSTree/ConfirmModal';
 import ShiftDatesModal from './WBSTree/ShiftDatesModal';
 import WBSHeader from './WBSTree/WBSHeader';
+import WBSTreeRows from './WBSTree/WBSTreeRows';
 
 // Hooks
 import { useWBSSelection } from './WBSTree/hooks/useWBSSelection';
@@ -22,6 +20,8 @@ import { useWBSTreeActions } from './WBSTree/hooks/useWBSTreeActions';
 import { useWBSDragDrop } from './WBSTree/hooks/useWBSDragDrop';
 import { useDetailModal } from './WBSTree/hooks/useDetailModal';
 import { useWBSKeyboardNavigation } from './WBSTree/hooks/useWBSKeyboardNavigation';
+import { useWBSTreeExpansion } from './WBSTree/hooks/useWBSTreeExpansion';
+import { useWBSNewItemEffect } from './WBSTree/hooks/useWBSNewItemEffect';
 
 interface WBSTreeProps {
   projects: Project[];
@@ -57,12 +57,18 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const selection = useWBSSelection(projects);
   const { checkedIds, setCheckedIds, toggleCheckProject, toggleCheckTask, toggleCheckSubtask, totalSelectedCount, selectedIds, selectedCounts, minimalIds, clearSelection } = selection;
 
-  // Tree State Hook (Expansion logic is handled by props passed from App, but resizing and level toggles are here)
-  const treeState = useWBSTreeState(projects);
-  const { nameWidth, assigneeWidth, startResizing } = treeState;
+  // Tree State Hook
+  const { nameWidth, assigneeWidth, startResizing } = useWBSTreeState();
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // 内部的なref統合（propsのrefと自身のref）
+  // Expansion Hook
+  const { handleProjectLevel, handleTaskLevel, handleSubtaskLevel, toggleProjectExpand, toggleTaskExpand } = useWBSTreeExpansion({
+    projects,
+    setExpandedProjects,
+    setExpandedTasks
+  });
+
+  // ref merge
   useEffect(() => {
     if (typeof ref === 'function') ref(containerRef.current);
     else if (ref) (ref as any).current = containerRef.current;
@@ -78,52 +84,13 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   });
   const { focus, setFocus, isEditing, handleKeyDown, setIsEditing } = keyboardNav;
 
-  // セルクリック時にコンテナにフォーカスを戻す
+  // focus handle
   const handleCellClick = useCallback((rowId: string, field: string) => {
     setFocus({ rowId, field: field as any });
-    // DOMの更新（編集モード終了など）を待ってからフォーカスを戻す
     setTimeout(() => {
       containerRef.current?.focus();
     }, 0);
   }, [setFocus]);
-
-  // Wrap level handlers to update the props
-  const handleProjectLevel = () => {
-    const newExpandedProjects: Record<number, boolean> = {};
-    projects.forEach(p => { newExpandedProjects[p.id] = false; });
-    setExpandedProjects(newExpandedProjects);
-    setExpandedTasks({});
-  };
-
-  const handleTaskLevel = () => {
-    const newExpandedProjects: Record<number, boolean> = {};
-    const newExpandedTasks: Record<number, boolean> = {};
-    projects.forEach(p => {
-      newExpandedProjects[p.id] = true;
-      p.tasks.forEach(t => { newExpandedTasks[t.id] = false; });
-    });
-    setExpandedProjects(newExpandedProjects);
-    setExpandedTasks(newExpandedTasks);
-  };
-
-  const handleSubtaskLevel = () => {
-    const newExpandedProjects: Record<number, boolean> = {};
-    const newExpandedTasks: Record<number, boolean> = {};
-    projects.forEach(p => {
-      newExpandedProjects[p.id] = true;
-      p.tasks.forEach(t => { newExpandedTasks[t.id] = true; });
-    });
-    setExpandedProjects(newExpandedProjects);
-    setExpandedTasks(newExpandedTasks);
-  };
-
-  const toggleProjectExpand = useCallback((id: number) => {
-    setExpandedProjects(prev => ({ ...prev, [id]: !(prev[id] !== false) }));
-  }, [setExpandedProjects]);
-
-  const toggleTaskExpand = useCallback((id: number) => {
-    setExpandedTasks(prev => ({ ...prev, [id]: !(prev[id] !== false) }));
-  }, [setExpandedTasks]);
 
   // Actions Hook
   const actions = useWBSTreeActions({
@@ -154,29 +121,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const { onDragEnd } = useWBSDragDrop(projects, onUpdate, setSaving);
 
   // New item scroll effect
-  useEffect(() => {
-    if (lastAddedId) {
-      let attempts = 0;
-      const scrollInterval = setInterval(() => {
-        const element = document.querySelector(`[data-wbs-id="${lastAddedId}"]`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          if (lastAddedId.startsWith('p-') || lastAddedId.startsWith('t-')) {
-            const nameInput = element.querySelector('.flex-1.min-w-0 > div');
-            if (nameInput instanceof HTMLElement) {
-              setTimeout(() => { nameInput.click(); }, 300);
-            }
-          }
-          setLastAddedId(null);
-          clearInterval(scrollInterval);
-        } else if (++attempts > 20) {
-          setLastAddedId(null);
-          clearInterval(scrollInterval);
-        }
-      }, 100);
-      return () => clearInterval(scrollInterval);
-    }
-  }, [projects, lastAddedId, setLastAddedId]);
+  useWBSNewItemEffect(projects, lastAddedId, setLastAddedId);
 
   // Floating menu rendered effect
   useEffect(() => {
@@ -191,17 +136,14 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   return (
     <div
       ref={containerRef}
-      tabIndex={0} // キーボードイベントを受け取るため
+      tabIndex={0}
       className="flex-1 w-full overflow-y-auto overflow-x-scroll bg-white dark:bg-slate-900 border-r dark:border-slate-800 relative no-scrollbar transition-colors outline-none focus:ring-1 focus:ring-blue-200/50"
       onScroll={onScroll}
       onKeyDown={(e) => {
-        // モーダルが表示されている場合はツリーの操作を無効化する
         if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem) return;
         handleKeyDown(e);
       }}
       onClick={(e) => {
-        // インタラクティブな要素（ボタン、入力欄、リンクなど）以外の箇所をクリックした場合、
-        // キーボード操作を継続できるるようメインコンテナにフォーカスを戻す
         const target = e.target as HTMLElement;
         const isInteractive = target.closest('button, input, textarea, a, select, [role="button"]');
         if (!isInteractive) {
@@ -228,141 +170,29 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         />
 
         <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="projects-root" type="PROJECT">
-            {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef} className="min-w-max">
-                {projects.map((project, pIndex) => (
-                  <Draggable key={`p-${project.id}`} draggableId={`p-${project.id}`} index={pIndex}>
-                    {(provided) => (
-                      <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`p-${project.id}`}>
-                        <Droppable droppableId={`project-row-drop-${project.id}`} type="TASK">
-                          {(rowProvided, rowSnapshot) => (
-                            <div 
-                              {...rowProvided.droppableProps} 
-                              ref={rowProvided.innerRef}
-                              className={`transition-all ${rowSnapshot.isDraggingOver ? 'ring-2 ring-blue-500 ring-inset bg-blue-50/20 dark:bg-blue-900/20' : ''}`}
-                            >
-                              <ProjectRow
-                                project={project}
-                                nameWidth={nameWidth}
-                                assigneeWidth={assigneeWidth}
-                                checked={!!checkedIds[`p-${project.id}`]}
-                                onToggleCheck={toggleCheckProject}
-                                onToggleExpand={toggleProjectExpand}
-                                expanded={expandedProjects[project.id] !== false}
-                                onUpdateField={handleUpdate}
-                                onAddTask={handleAddTask}
-                                onEditDetail={openDetailModal}
-                                initialData={initialData}
-                                provided={provided}
-                                hidePlanningColumns={hidePlanningColumns}
-                                isPlanningMode={isPlanningMode}
-                                focusedField={focus?.rowId === `p-${project.id}` ? focus.field : null}
-                                onFocusChange={handleCellClick}
-                                onEditingChange={setIsEditing}
-                              />
-                              {rowProvided.placeholder}
-                            </div>
-                          )}
-                        </Droppable>
-
-                        {expandedProjects[project.id] !== false && (
-                          <Droppable droppableId={`project-${project.id}`} type="TASK">
-                            {(listProvided, listSnapshot) => (
-                              <div 
-                                {...listProvided.droppableProps} 
-                                ref={listProvided.innerRef}
-                                className={listSnapshot.isDraggingOver ? 'bg-blue-50/30 dark:bg-blue-900/10 min-h-[4px]' : ''}
-                              >
-                                {project.tasks.map((task, tIndex) => (
-                                  <Draggable key={`t-${task.id}`} draggableId={`t-${task.id}`} index={tIndex}>
-                                    {(provided) => (
-                                      <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`t-${task.id}`}>
-                                        <Droppable droppableId={`task-row-drop-${task.id}`} type="SUBTASK">
-                                          {(rowProvided, rowSnapshot) => (
-                                            <div 
-                                              {...rowProvided.droppableProps} 
-                                              ref={rowProvided.innerRef}
-                                              className={`transition-all ${rowSnapshot.isDraggingOver ? 'ring-2 ring-blue-500 ring-inset bg-blue-50/20 dark:bg-blue-900/20' : ''}`}
-                                            >
-                                              <TaskRow
-                                                task={task}
-                                                nameWidth={nameWidth}
-                                                assigneeWidth={assigneeWidth}
-                                                checked={!!checkedIds[`t-${task.id}`]}
-                                                onToggleCheck={toggleCheckTask}
-                                                onToggleExpand={toggleTaskExpand}
-                                                expanded={expandedTasks[task.id] !== false}
-                                                onUpdateField={handleUpdate}
-                                                onAddSubtask={handleAddSubtask}
-                                                onEditDetail={openDetailModal}
-                                                initialData={initialData}
-                                                provided={provided}
-                                                hidePlanningColumns={hidePlanningColumns}
-                                                isPlanningMode={isPlanningMode}
-                                                focusedField={focus?.rowId === `t-${task.id}` ? focus.field : null}
-                                                onFocusChange={handleCellClick}
-                                                onEditingChange={setIsEditing}
-                                              />
-                                              {rowProvided.placeholder}
-                                            </div>
-                                          )}
-                                        </Droppable>
-
-                                        {expandedTasks[task.id] !== false && (
-                                          <Droppable droppableId={`task-${task.id}`} type="SUBTASK">
-                                            {(listProvided, listSnapshot) => (
-                                              <div 
-                                                {...listProvided.droppableProps} 
-                                                ref={listProvided.innerRef}
-                                                className={listSnapshot.isDraggingOver ? 'bg-blue-50/30 dark:bg-blue-900/10 min-h-[4px]' : ''}
-                                              >
-                                                {task.subtasks.map((subtask, sIndex) => (
-                                                  <Draggable key={`s-${subtask.id}`} draggableId={`s-${subtask.id}`} index={sIndex}>
-                                                    {(provided) => (
-                                                      <div ref={provided.innerRef} {...provided.draggableProps} data-wbs-id={`s-${subtask.id}`}>
-                                                        <SubtaskRow
-                                                          subtask={subtask}
-                                                          nameWidth={nameWidth}
-                                                          assigneeWidth={assigneeWidth}
-                                                          checked={!!checkedIds[`s-${subtask.id}`]}
-                                                          onToggleCheck={toggleCheckSubtask}
-                                                          initialData={initialData}
-                                                          onUpdateField={handleUpdate}
-                                                          onEditDetail={openDetailModal}
-                                                          provided={provided}
-                                                          hidePlanningColumns={hidePlanningColumns}
-                                                          isPlanningMode={isPlanningMode}
-                                                          focusedField={focus?.rowId === `s-${subtask.id}` ? focus.field : null}
-                                                          onFocusChange={handleCellClick}
-                                                          onEditingChange={setIsEditing}
-                                                        />
-                                                      </div>
-                                                    )}
-                                                  </Draggable>
-                                                ))}
-                                                {listProvided.placeholder}
-                                              </div>
-                                            )}
-                                          </Droppable>
-                                        )}
-                                      </div>
-                                    )}
-                                  </Draggable>
-                                ))}
-                                {listProvided.placeholder}
-                              </div>
-                            )}
-                          </Droppable>
-                        )}
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
+          <WBSTreeRows
+            projects={projects}
+            initialData={initialData}
+            expandedProjects={expandedProjects}
+            expandedTasks={expandedTasks}
+            checkedIds={checkedIds}
+            nameWidth={nameWidth}
+            assigneeWidth={assigneeWidth}
+            hidePlanningColumns={hidePlanningColumns}
+            isPlanningMode={isPlanningMode}
+            focusedField={focus}
+            onToggleCheckProject={toggleCheckProject}
+            onToggleCheckTask={toggleCheckTask}
+            onToggleCheckSubtask={toggleCheckSubtask}
+            onToggleExpandProject={toggleProjectExpand}
+            onToggleExpandTask={toggleTaskExpand}
+            onUpdateField={handleUpdate}
+            onAddTask={handleAddTask}
+            onAddSubtask={handleAddSubtask}
+            onEditDetail={openDetailModal}
+            onFocusChange={handleCellClick}
+            onEditingChange={setIsEditing}
+          />
         </DragDropContext>
 
         {projects.length === 0 && (

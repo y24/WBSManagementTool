@@ -1,48 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Project } from '../../../types/wbs';
 
-export const useWBSTreeState = (projects: Project[]) => {
-  const [expandedProjects, setExpandedProjects] = useState<Record<number, boolean>>({});
-  const [expandedTasks, setExpandedTasks] = useState<Record<number, boolean>>({});
-
-  const toggleProject = useCallback((id: number) => setExpandedProjects(p => ({ ...p, [id]: !(p[id] !== false) })), []);
-  const toggleTask = useCallback((id: number) => setExpandedTasks(t => ({ ...t, [id]: !(t[id] !== false) })), []);
-
-  const handleProjectLevel = useCallback(() => {
-    const newExpandedProjects: Record<number, boolean> = {};
-    projects.forEach(p => {
-      newExpandedProjects[p.id] = false;
-    });
-    setExpandedProjects(newExpandedProjects);
-    setExpandedTasks({});
-  }, [projects]);
-
-  const handleTaskLevel = useCallback(() => {
-    const newExpandedProjects: Record<number, boolean> = {};
-    const newExpandedTasks: Record<number, boolean> = {};
-    projects.forEach(p => {
-      newExpandedProjects[p.id] = true;
-      p.tasks.forEach(t => {
-        newExpandedTasks[t.id] = false;
-      });
-    });
-    setExpandedProjects(newExpandedProjects);
-    setExpandedTasks(newExpandedTasks);
-  }, [projects]);
-
-  const handleSubtaskLevel = useCallback(() => {
-    const newExpandedProjects: Record<number, boolean> = {};
-    const newExpandedTasks: Record<number, boolean> = {};
-    projects.forEach(p => {
-      newExpandedProjects[p.id] = true;
-      p.tasks.forEach(t => {
-        newExpandedTasks[t.id] = true;
-      });
-    });
-    setExpandedProjects(newExpandedProjects);
-    setExpandedTasks(newExpandedTasks);
-  }, [projects]);
-
+export const useWBSTreeState = () => {
   // Resizing logic
   const getInitialWidth = (key: string, defaultWidth: number): number => {
     const saved = localStorage.getItem(key);
@@ -99,17 +57,9 @@ export const useWBSTreeState = (projects: Project[]) => {
   }, [resizingColumn]);
 
   return {
-    expandedProjects,
-    setExpandedProjects,
-    expandedTasks,
-    setExpandedTasks,
-    toggleProject,
-    toggleTask,
-    handleProjectLevel,
-    handleTaskLevel,
-    handleSubtaskLevel,
     nameWidth,
     assigneeWidth,
     startResizing
   };
 };
+
