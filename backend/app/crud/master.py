@@ -167,3 +167,18 @@ def sync_holidays(db: Session, holiday_data: list[dict]):
             
     db.commit()
     return {"updated": updated_count, "added": added_count}
+
+def reorder_statuses(db: Session, ordered_ids: list[int]):
+    for i, item_id in enumerate(ordered_ids):
+        db.query(models.MstStatus).filter(models.MstStatus.id == item_id).update({"sort_order": i})
+    db.commit()
+
+def reorder_subtask_types(db: Session, ordered_ids: list[int]):
+    for i, item_id in enumerate(ordered_ids):
+        db.query(models.MstSubtaskType).filter(models.MstSubtaskType.id == item_id).update({"sort_order": i})
+    db.commit()
+
+def reorder_members(db: Session, ordered_ids: list[int]):
+    for i, item_id in enumerate(ordered_ids):
+        db.query(models.MstMember).filter(models.MstMember.id == item_id).update({"sort_order": i})
+    db.commit()

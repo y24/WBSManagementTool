@@ -1,5 +1,7 @@
 import type { MstStatus } from '../../types';
 import { CheckIcon, PencilIcon, PlusIcon, TrashIcon, XIcon, sectionIconStyle } from './icons';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { GpIcon } from './icons';
 
 interface NewStatus {
   status_name: string;
@@ -22,6 +24,7 @@ interface StatusSectionProps {
   cancelEdit: () => void;
   startEdit: (id: number, field: string, currentValue: string, colorValue?: string) => void;
   deleteItem: (endpoint: string, id: number, name: string) => void;
+  onDragEnd: (result: DropResult) => void;
 }
 
 export function StatusSection({
@@ -40,6 +43,7 @@ export function StatusSection({
   cancelEdit,
   startEdit,
   deleteItem,
+  onDragEnd,
 }: StatusSectionProps) {
   return (
     <section className="master-section">
@@ -77,55 +81,77 @@ export function StatusSection({
         </div>
       )}
 
-      <div className="master-list">
-        {statuses.map((s) => (
-          <div key={s.id} className="master-list-item">
-            <div className="master-list-item-content">
-              <span className="master-color-dot" style={{ backgroundColor: s.color_code }}></span>
-              {isEditing(s.id, 'status') ? (
-                <div className="master-edit-inline">
-                  <input
-                    className={`master-input master-input-sm ${s.is_system_reserved ? 'cursor-not-allowed opacity-75' : ''}`}
-                    value={editValue}
-                    onChange={e => setEditValue(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') saveEdit('/masters/statuses', s.id, { status_name: editValue, color_code: editColorValue });
-                      if (e.key === 'Escape') cancelEdit();
-                    }}
-                    disabled={s.is_system_reserved}
-                    title={s.is_system_reserved ? 'システム予約ステータスの名称は変更できません' : ''}
-                    autoFocus
-                  />
-                  <input
-                    type="color"
-                    className="master-color-input"
-                    value={editColorValue}
-                    onChange={e => setEditColorValue(e.target.value)}
-                  />
-                  <button className="master-confirm-btn" onClick={() => saveEdit('/masters/statuses', s.id, { status_name: editValue, color_code: editColorValue })}>
-                    <CheckIcon />
-                  </button>
-                  <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
-                </div>
-              ) : (
-                <span className="master-item-name">{s.status_name}</span>
-              )}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="statuses-list">
+          {(provided) => (
+            <div 
+              {...provided.droppableProps} 
+              ref={provided.innerRef} 
+              className="master-list"
+            >
+              {statuses.map((s, index) => (
+                <Draggable key={s.id} draggableId={s.id.toString()} index={index}>
+                  {(provided, snapshot) => (
+                    <div 
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={`master-list-item ${snapshot.isDragging ? 'dragging' : ''}`}
+                    >
+                      <div className="master-list-item-content">
+                        <div {...provided.dragHandleProps} className="master-drag-handle mr-2 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                          <GpIcon />
+                        </div>
+                        <span className="master-color-dot" style={{ backgroundColor: s.color_code }}></span>
+                        {isEditing(s.id, 'status') ? (
+                          <div className="master-edit-inline">
+                            <input
+                              className={`master-input master-input-sm ${s.is_system_reserved ? 'cursor-not-allowed opacity-75' : ''}`}
+                              value={editValue}
+                              onChange={e => setEditValue(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') saveEdit('/masters/statuses', s.id, { status_name: editValue, color_code: editColorValue });
+                                if (e.key === 'Escape') cancelEdit();
+                              }}
+                              disabled={s.is_system_reserved}
+                              title={s.is_system_reserved ? 'システム予約ステータスの名称は変更できません' : ''}
+                              autoFocus
+                            />
+                            <input
+                              type="color"
+                              className="master-color-input"
+                              value={editColorValue}
+                              onChange={e => setEditColorValue(e.target.value)}
+                            />
+                            <button className="master-confirm-btn" onClick={() => saveEdit('/masters/statuses', s.id, { status_name: editValue, color_code: editColorValue })}>
+                              <CheckIcon />
+                            </button>
+                            <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
+                          </div>
+                        ) : (
+                          <span className="master-item-name">{s.status_name}</span>
+                        )}
+                      </div>
+                      {!isEditing(s.id, 'status') && (
+                        <div className="master-actions">
+                          <button className="master-action-btn master-edit" onClick={() => startEdit(s.id, 'status', s.status_name, s.color_code)} title="編集">
+                            <PencilIcon />
+                          </button>
+                          {!s.is_system_reserved && (
+                            <button className="master-action-btn master-delete" onClick={() => deleteItem('/masters/statuses', s.id, s.status_name)} title="削除">
+                              <TrashIcon />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
             </div>
-            {!isEditing(s.id, 'status') && (
-              <div className="master-actions">
-                <button className="master-action-btn master-edit" onClick={() => startEdit(s.id, 'status', s.status_name, s.color_code)} title="編集">
-                  <PencilIcon />
-                </button>
-                {!s.is_system_reserved && (
-                  <button className="master-action-btn master-delete" onClick={() => deleteItem('/masters/statuses', s.id, s.status_name)} title="削除">
-                    <TrashIcon />
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </section>
   );
 }

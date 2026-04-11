@@ -1,5 +1,6 @@
 import type { MstSubtaskType } from '../../types';
-import { CheckIcon, PencilIcon, PlusIcon, TrashIcon, XIcon, sectionIconStyle } from './icons';
+import { CheckIcon, PencilIcon, PlusIcon, TrashIcon, XIcon, sectionIconStyle, GpIcon } from './icons';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface NewSubtaskType {
   type_name: string;
@@ -19,6 +20,7 @@ interface SubtaskTypeSectionProps {
   cancelEdit: () => void;
   startEdit: (id: number, field: string, currentValue: string, colorValue?: string) => void;
   deleteItem: (endpoint: string, id: number, name: string) => void;
+  onDragEnd: (result: DropResult) => void;
 }
 
 export function SubtaskTypeSection({
@@ -35,6 +37,7 @@ export function SubtaskTypeSection({
   cancelEdit,
   startEdit,
   deleteItem,
+  onDragEnd,
 }: SubtaskTypeSectionProps) {
   return (
     <section className="master-section">
@@ -66,38 +69,63 @@ export function SubtaskTypeSection({
         </div>
       )}
 
-      <div className="master-list master-list-chips">
-        {subtaskTypes.map((t) => (
-          <div key={t.id} className="master-chip master-chip-blue">
-            {isEditing(t.id, 'subtask_type') ? (
-              <div className="master-edit-inline">
-                <input
-                  className="master-input master-input-sm"
-                  value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') saveEdit('/masters/subtask-types', t.id, { type_name: editValue });
-                    if (e.key === 'Escape') cancelEdit();
-                  }}
-                  autoFocus
-                />
-                <button className="master-confirm-btn" onClick={() => saveEdit('/masters/subtask-types', t.id, { type_name: editValue })}>
-                  <CheckIcon />
-                </button>
-                <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
-              </div>
-            ) : (
-              <>
-                <span className="master-chip-text">{t.type_name}</span>
-                <div className="master-chip-actions">
-                  <button className="master-chip-btn" onClick={() => startEdit(t.id, 'subtask_type', t.type_name)} title="編集"><PencilIcon /></button>
-                  <button className="master-chip-btn master-chip-btn-del" onClick={() => deleteItem('/masters/subtask-types', t.id, t.type_name)} title="削除"><TrashIcon /></button>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="subtask-types-list" direction="horizontal">
+          {(provided) => (
+            <div 
+              {...provided.droppableProps} 
+              ref={provided.innerRef} 
+              className="master-list master-list-chips"
+            >
+              {subtaskTypes.map((t, index) => (
+                <Draggable key={t.id} draggableId={t.id.toString()} index={index}>
+                  {(provided, snapshot) => (
+                    <div 
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className={`master-chip master-chip-blue ${snapshot.isDragging ? 'dragging' : ''}`}
+                    >
+                      {isEditing(t.id, 'subtask_type') ? (
+                        <div className="master-edit-inline" {...(snapshot.isDragging ? { onClick: (e) => e.stopPropagation() } : {})}>
+                          <input
+                            className="master-input master-input-sm"
+                            value={editValue}
+                            onChange={e => setEditValue(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') saveEdit('/masters/subtask-types', t.id, { type_name: editValue });
+                              if (e.key === 'Escape') cancelEdit();
+                            }}
+                            autoFocus
+                          />
+                          <button className="master-confirm-btn" onClick={() => saveEdit('/masters/subtask-types', t.id, { type_name: editValue })}>
+                            <CheckIcon />
+                          </button>
+                          <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="master-drag-handle opacity-40">
+                            <GpIcon />
+                          </div>
+                          <div className="master-chip-main">
+                            <span className="master-chip-text">{t.type_name}</span>
+                            <div className="master-chip-actions">
+                              <button className="master-chip-btn" onClick={() => startEdit(t.id, 'subtask_type', t.type_name)} title="編集"><PencilIcon /></button>
+                              <button className="master-chip-btn master-chip-btn-del" onClick={() => deleteItem('/masters/subtask-types', t.id, t.type_name)} title="削除"><TrashIcon /></button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </section>
   );
 }

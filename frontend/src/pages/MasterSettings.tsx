@@ -8,6 +8,7 @@ import { StatusSection } from '../components/masterSettings/StatusSection';
 import { SubtaskTypeSection } from '../components/masterSettings/SubtaskTypeSection';
 import { SystemSettingsSection } from '../components/masterSettings/SystemSettingsSection';
 import { useWebSocket } from '../api/websocket';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 
 type EditingItem = { id: number; field: string } | null;
 
@@ -119,6 +120,39 @@ export default function MasterSettings() {
     } catch (err) {
       console.error('Delete failed', err);
     }
+  };
+
+  const reorderItems = async (endpoint: string, orderedIds: number[]) => {
+    try {
+      await apiClient.post(`${endpoint}/reorder`, { ordered_ids: orderedIds });
+      fetchData();
+    } catch (err) {
+      console.error('Reorder failed', err);
+    }
+  };
+
+  const onDragEnd = (result: DropResult, type: 'status' | 'subtask_type' | 'member') => {
+    if (!result.destination || !data) return;
+    if (result.destination.index === result.source.index) return;
+
+    let items: any[] = [];
+    let endpoint = '';
+    if (type === 'status') {
+      items = [...data.statuses];
+      endpoint = '/masters/statuses';
+    } else if (type === 'subtask_type') {
+      items = [...data.subtask_types];
+      endpoint = '/masters/subtask-types';
+    } else if (type === 'member') {
+      items = [...data.members];
+      endpoint = '/masters/members';
+    }
+
+    const itemsCopy = Array.from(items);
+    const [reorderedItem] = itemsCopy.splice(result.source.index, 1);
+    itemsCopy.splice(result.destination.index, 0, reorderedItem);
+
+    reorderItems(endpoint, itemsCopy.map(i => i.id));
   };
 
   const createStatus = async () => {
@@ -276,6 +310,7 @@ export default function MasterSettings() {
           cancelEdit={cancelEdit}
           startEdit={startEdit}
           deleteItem={deleteItem}
+          onDragEnd={(res) => onDragEnd(res, 'subtask_type')}
         />
 
         <MemberSection
@@ -292,6 +327,7 @@ export default function MasterSettings() {
           cancelEdit={cancelEdit}
           startEdit={startEdit}
           deleteItem={deleteItem}
+          onDragEnd={(res) => onDragEnd(res, 'member')}
         />
 
         <HolidaySection
@@ -332,6 +368,7 @@ export default function MasterSettings() {
           cancelEdit={cancelEdit}
           startEdit={startEdit}
           deleteItem={deleteItem}
+          onDragEnd={(res) => onDragEnd(res, 'status')}
         />
 
         <StatusMappingSection

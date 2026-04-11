@@ -1,5 +1,6 @@
 import type { MstMember } from '../../types';
-import { CheckIcon, PencilIcon, PlusIcon, TrashIcon, XIcon, sectionIconStyle } from './icons';
+import { CheckIcon, PencilIcon, PlusIcon, TrashIcon, XIcon, sectionIconStyle, GpIcon } from './icons';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface NewMember {
   member_name: string;
@@ -19,6 +20,7 @@ interface MemberSectionProps {
   cancelEdit: () => void;
   startEdit: (id: number, field: string, currentValue: string, colorValue?: string) => void;
   deleteItem: (endpoint: string, id: number, name: string) => void;
+  onDragEnd: (result: DropResult) => void;
 }
 
 export function MemberSection({
@@ -35,6 +37,7 @@ export function MemberSection({
   cancelEdit,
   startEdit,
   deleteItem,
+  onDragEnd,
 }: MemberSectionProps) {
   return (
     <section className="master-section">
@@ -66,38 +69,63 @@ export function MemberSection({
         </div>
       )}
 
-      <div className="master-list master-list-chips">
-        {members.map((m) => (
-          <div key={m.id} className="master-chip master-chip-green">
-            {isEditing(m.id, 'member') ? (
-              <div className="master-edit-inline">
-                <input
-                  className="master-input master-input-sm"
-                  value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') saveEdit('/masters/members', m.id, { member_name: editValue });
-                    if (e.key === 'Escape') cancelEdit();
-                  }}
-                  autoFocus
-                />
-                <button className="master-confirm-btn" onClick={() => saveEdit('/masters/members', m.id, { member_name: editValue })}>
-                  <CheckIcon />
-                </button>
-                <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
-              </div>
-            ) : (
-              <>
-                <span className="master-chip-text">{m.member_name}</span>
-                <div className="master-chip-actions">
-                  <button className="master-chip-btn" onClick={() => startEdit(m.id, 'member', m.member_name)} title="編集"><PencilIcon /></button>
-                  <button className="master-chip-btn master-chip-btn-del" onClick={() => deleteItem('/masters/members', m.id, m.member_name)} title="削除"><TrashIcon /></button>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="members-list" direction="horizontal">
+          {(provided) => (
+            <div 
+              {...provided.droppableProps} 
+              ref={provided.innerRef} 
+              className="master-list master-list-chips"
+            >
+              {members.map((m, index) => (
+                <Draggable key={m.id} draggableId={m.id.toString()} index={index}>
+                  {(provided, snapshot) => (
+                    <div 
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className={`master-chip master-chip-green ${snapshot.isDragging ? 'dragging' : ''}`}
+                    >
+                      {isEditing(m.id, 'member') ? (
+                        <div className="master-edit-inline" {...(snapshot.isDragging ? { onClick: (e) => e.stopPropagation() } : {})}>
+                          <input
+                            className="master-input master-input-sm"
+                            value={editValue}
+                            onChange={e => setEditValue(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') saveEdit('/masters/members', m.id, { member_name: editValue });
+                              if (e.key === 'Escape') cancelEdit();
+                            }}
+                            autoFocus
+                          />
+                          <button className="master-confirm-btn" onClick={() => saveEdit('/masters/members', m.id, { member_name: editValue })}>
+                            <CheckIcon />
+                          </button>
+                          <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="master-drag-handle opacity-40">
+                            <GpIcon />
+                          </div>
+                          <div className="master-chip-main">
+                            <span className="master-chip-text">{m.member_name}</span>
+                            <div className="master-chip-actions">
+                              <button className="master-chip-btn" onClick={() => startEdit(m.id, 'member', m.member_name)} title="編集"><PencilIcon /></button>
+                              <button className="master-chip-btn master-chip-btn-del" onClick={() => deleteItem('/masters/members', m.id, m.member_name)} title="削除"><TrashIcon /></button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </section>
   );
 }

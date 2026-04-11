@@ -216,6 +216,12 @@ def delete_status(status_id: int, db: Session = Depends(get_db)):
     manager.broadcast_sync({"type": "update", "entity": "status"})
     return db_status
 
+@router.post("/masters/statuses/reorder")
+def reorder_statuses(req: schemas.ReorderRequest, db: Session = Depends(get_db)):
+    crud.reorder_statuses(db, req.ordered_ids)
+    manager.broadcast_sync({"type": "update", "entity": "status"})
+    return {"status": "ok"}
+
 # --- SubtaskType Master ---
 @router.post("/masters/subtask-types", response_model=schemas.SubtaskType)
 def create_subtask_type(subtask_type: schemas.SubtaskTypeCreate, db: Session = Depends(get_db)):
@@ -237,6 +243,12 @@ def delete_subtask_type(type_id: int, db: Session = Depends(get_db)):
     manager.broadcast_sync({"type": "update", "entity": "subtask_type"})
     return db_type
 
+@router.post("/masters/subtask-types/reorder")
+def reorder_subtask_types(req: schemas.ReorderRequest, db: Session = Depends(get_db)):
+    crud.reorder_subtask_types(db, req.ordered_ids)
+    manager.broadcast_sync({"type": "update", "entity": "subtask_type"})
+    return {"status": "ok"}
+
 # --- Member Master ---
 @router.post("/masters/members", response_model=schemas.Member)
 def create_member(member: schemas.MemberCreate, db: Session = Depends(get_db)):
@@ -257,6 +269,12 @@ def delete_member(member_id: int, db: Session = Depends(get_db)):
     if not db_member: raise HTTPException(status_code=404, detail="Member not found")
     manager.broadcast_sync({"type": "update", "entity": "member"})
     return db_member
+
+@router.post("/masters/members/reorder")
+def reorder_members(req: schemas.ReorderRequest, db: Session = Depends(get_db)):
+    crud.reorder_members(db, req.ordered_ids)
+    manager.broadcast_sync({"type": "update", "entity": "member"})
+    return {"status": "ok"}
 
 # --- Holiday Master ---
 @router.post("/masters/holidays", response_model=schemas.Holiday)

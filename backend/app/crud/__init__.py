@@ -26,7 +26,10 @@ from .master import (
     create_holiday,
     update_holiday,
     delete_holiday,
-    sync_holidays
+    sync_holidays,
+    reorder_statuses,
+    reorder_subtask_types,
+    reorder_members
 )
 
 from .project import (
