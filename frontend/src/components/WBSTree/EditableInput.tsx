@@ -135,7 +135,9 @@ const EditableInput = memo(({
 
   // 値の初期化と同期
   useEffect(() => {
-    if (!isEditing || isAuto) {
+    const isValueChanged = prevValueRef.current !== value;
+
+    if ((!isEditing || isAuto) && (isValueChanged || val === '')) {
       let initVal = value != null ? String(value) : '';
       if (type === 'date') {
         initVal = formatDateForInput(value);
@@ -151,14 +153,14 @@ const EditableInput = memo(({
     }
 
     // 外部（自動）での値更新を検知してフラッシュさせる
-    if (!isEditing && prevValueRef.current !== value) {
+    if (!isEditing && isValueChanged) {
       setShouldFlash(true);
       const timer = setTimeout(() => setShouldFlash(false), 1000);
       prevValueRef.current = value;
       return () => clearTimeout(timer);
     }
     prevValueRef.current = value;
-  }, [value, isEditing, type, precision, isAuto, onInputChange]);
+  }, [value, isEditing, type, precision, isAuto, onInputChange, val]);
 
   // 更新の確定処理
   const handleCommit = useCallback((newVal: string) => {

@@ -9,6 +9,7 @@ interface UseWBSUpdatesProps {
   projects: Project[];
   initialData: InitialData | null;
   onUpdate: () => void;
+  onLocalUpdate?: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => void;
   setSaving: (saving: boolean) => void;
   checkedIds: Record<string, boolean>;
   setConfirmData: (data: any) => void;
@@ -19,6 +20,7 @@ export const useWBSUpdates = ({
   projects,
   initialData,
   onUpdate,
+  onLocalUpdate,
   setSaving,
   checkedIds,
   setConfirmData,
@@ -197,6 +199,12 @@ export const useWBSUpdates = ({
               updates.progress_percent = 100;
             }
           }
+
+          // 楽観的更新
+          if (onLocalUpdate) {
+            onLocalUpdate(item.type, item.id, updates);
+          }
+
           if (item.type === 'project') return wbsOps.updateProject(item.id, updates);
           if (item.type === 'task') return wbsOps.updateTask(item.id, updates);
           return wbsOps.updateSubtask(item.id, updates);
@@ -206,6 +214,7 @@ export const useWBSUpdates = ({
       } catch (err) {
         console.error(err);
         alert('保存に失敗しました。');
+        onUpdate(); // エラー時はサーバーから最新状態を取得してUIを戻す
       } finally {
         setSaving(false);
       }
@@ -303,7 +312,7 @@ export const useWBSUpdates = ({
     } else {
       await performUpdate();
     }
-  }, [onUpdate, initialData, findItem, checkedIds, setSaving, setIsConfirmModalOpen, setConfirmData]);
+  }, [onUpdate, initialData, findItem, checkedIds, setSaving, setIsConfirmModalOpen, setConfirmData, onLocalUpdate]);
 
   return {
     handleUpdate,

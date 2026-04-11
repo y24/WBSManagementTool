@@ -15,6 +15,7 @@ interface MainBoardContentProps {
   filteredProjects: Project[];
   initialData: InitialData | null;
   onUpdate: (isInitial?: boolean) => Promise<void>;
+  onLocalUpdate: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => void;
   expandedProjects: Record<number, boolean>;
   setExpandedProjects: Dispatch<SetStateAction<Record<number, boolean>>>;
   expandedTasks: Record<number, boolean>;
@@ -33,6 +34,7 @@ export default function MainBoardContent({
   filteredProjects,
   initialData,
   onUpdate,
+  onLocalUpdate,
   expandedProjects,
   setExpandedProjects,
   expandedTasks,
@@ -75,6 +77,7 @@ export default function MainBoardContent({
           projects={filteredProjects}
           initialData={initialData}
           onUpdate={onUpdate}
+          onLocalUpdate={onLocalUpdate}
           expandedProjects={expandedProjects}
           setExpandedProjects={setExpandedProjects}
           expandedTasks={expandedTasks}

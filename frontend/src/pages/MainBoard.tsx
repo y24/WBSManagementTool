@@ -219,6 +219,31 @@ export default function MainBoard() {
     }
   };
 
+  const localUpdate = useCallback((type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => {
+    setData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        projects: prev.projects.map(p => {
+          if (type === 'project' && p.id === id) return { ...p, ...updates };
+          return {
+            ...p,
+            tasks: p.tasks.map(t => {
+              if (type === 'task' && t.id === id) return { ...t, ...updates };
+              return {
+                ...t,
+                subtasks: t.subtasks.map(s => {
+                  if (type === 'subtask' && s.id === id) return { ...s, ...updates };
+                  return s;
+                })
+              };
+            })
+          };
+        })
+      };
+    });
+  }, []);
+
   const handleTreeScroll = (event: UIEvent<HTMLDivElement>) => {
     if (ganttRef.current) {
       syncVerticalScroll(event.currentTarget, ganttRef.current, 'tree', 'gantt');
@@ -313,6 +338,7 @@ export default function MainBoard() {
         filteredProjects={filteredProjects}
         initialData={initialData}
         onUpdate={fetchData}
+        onLocalUpdate={localUpdate}
         expandedProjects={expandedProjects}
         setExpandedProjects={setExpandedProjects}
         expandedTasks={expandedTasks}

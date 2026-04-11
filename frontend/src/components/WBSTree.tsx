@@ -27,6 +27,7 @@ interface WBSTreeProps {
   projects: Project[];
   initialData: InitialData | null;
   onUpdate: () => void;
+  onLocalUpdate?: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => void;
   expandedProjects: Record<number, boolean>;
   setExpandedProjects: React.Dispatch<React.SetStateAction<Record<number, boolean>>>;
   expandedTasks: Record<number, boolean>;
@@ -40,6 +41,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   projects,
   initialData,
   onUpdate,
+  onLocalUpdate,
   expandedProjects,
   setExpandedProjects,
   expandedTasks,
@@ -135,14 +137,14 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const { isConfirmModalOpen, setIsConfirmModalOpen, confirmData, isShiftDatesModalOpen, setIsShiftDatesModalOpen, currentMinDate, handleDeleteSelected, handleClearActualsSelected, handleDuplicateSelected, handleShiftDatesSelected, executeShiftDates, setConfirmData } = actions;
 
   // Updates Hook
-  const { handleUpdate, findItem } = useWBSUpdates({ projects, initialData, onUpdate, setSaving, checkedIds, setConfirmData, setIsConfirmModalOpen });
+  const { handleUpdate, findItem } = useWBSUpdates({ projects, initialData, onUpdate, onLocalUpdate, setSaving, checkedIds, setConfirmData, setIsConfirmModalOpen });
 
   // Creation Hook
   const creation = useWBSCreation(onUpdate, initialData, setExpandedProjects, setExpandedTasks, setSaving);
   const { lastAddedId, setLastAddedId, handleAddTask, handleAddSubtask } = creation;
 
   // Detail Modal Hook
-  const detailModal = useDetailModal({ onUpdate, setSaving, checkedIds, setIsConfirmModalOpen, setConfirmData, findItem });
+  const detailModal = useDetailModal({ onUpdate, onLocalUpdate, setSaving, checkedIds, setIsConfirmModalOpen, setConfirmData, findItem });
   const { editingItem, setEditingItem, detailValue, setDetailValue, ticketIdValue, setTicketIdValue, linkUrlValue, setLinkUrlValue, memoValue, setMemoValue, workloadPercentValue, setWorkloadPercentValue, openDetailModal, handleDetailSave } = detailModal;
 
   // Drag Drop Hook

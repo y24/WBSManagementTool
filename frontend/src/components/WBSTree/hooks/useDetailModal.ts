@@ -5,6 +5,7 @@ import { EditingType } from '../DetailModal';
 
 interface UseDetailModalProps {
   onUpdate: () => void;
+  onLocalUpdate?: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => void;
   setSaving: (saving: boolean) => void;
   checkedIds: Record<string, boolean>;
   setIsConfirmModalOpen: (open: boolean) => void;
@@ -14,6 +15,7 @@ interface UseDetailModalProps {
 
 export const useDetailModal = ({
   onUpdate,
+  onLocalUpdate,
   setSaving,
   checkedIds,
   setIsConfirmModalOpen,
@@ -98,6 +100,11 @@ export const useDetailModal = ({
             delete (itemUpdates as any).workload_percent;
           }
 
+          // 楽観的更新
+          if (onLocalUpdate) {
+            onLocalUpdate(item.type, item.id, itemUpdates);
+          }
+
           if (item.type === 'project') return wbsOps.updateProject(item.id, itemUpdates);
           if (item.type === 'task') return wbsOps.updateTask(item.id, itemUpdates);
           return wbsOps.updateSubtask(item.id, itemUpdates);
@@ -108,6 +115,7 @@ export const useDetailModal = ({
       } catch (err) {
         console.error(err);
         alert('保存に失敗しました');
+        onUpdate(); // エラー時はサーバーから最新状態を取得してUIを戻す
       } finally {
         setSaving(false);
       }
