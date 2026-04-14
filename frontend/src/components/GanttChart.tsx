@@ -1,5 +1,5 @@
 import React, { useMemo, forwardRef, useState, useCallback } from 'react';
-import { format, differenceInCalendarDays, addDays, parseISO, startOfDay, eachDayOfInterval, isSameDay, isWeekend, subDays } from 'date-fns';
+import { format, differenceInCalendarDays, addDays, parseISO, startOfDay, eachDayOfInterval, isSameDay, isWeekend, subDays, startOfWeek } from 'date-fns';
 import { Project, Subtask, Task, GanttRange } from '../types/wbs';
 import { InitialData } from '../types';
 import MarkerModal from './MarkerModal';
@@ -117,12 +117,22 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     // Get the click position relative to the Gantt area
     const rect = e.currentTarget.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
-    const dayIndex = Math.floor(offsetX / getScaleCellWidth('day'));
     
-    // 計画入力は日単位表示（scale === 'day'）の時のみサポートする
-    if (scale !== 'day') return;
+    // 計画入力は日単位表示（scale === 'day'）と週単位表示（scale === 'week'）の時のみサポートする
+    if (scale === 'month') return;
     
-    const clickDate = addDays(baseDate, dayIndex);
+    let clickDate: Date;
+    if (scale === 'day') {
+      const dayIndex = Math.floor(offsetX / getScaleCellWidth('day'));
+      clickDate = addDays(baseDate, dayIndex);
+    } else if (scale === 'week') {
+      const startOfBaseWeek = startOfWeek(baseDate, { weekStartsOn: 1 });
+      const daysFromStart = Math.floor(offsetX / (getScaleCellWidth('week') / 7));
+      clickDate = addDays(startOfBaseWeek, daysFromStart);
+    } else {
+      return;
+    }
+    
     const startDate = clickDate;
     
     // Calculate initial duration based on work_days + review_days
@@ -344,9 +354,9 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                         return (
                           <div 
                             key={`s-${subtask.id}`} 
-                            className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) ? 'wbs-row-empty' : ''}`}
+                            className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) && scale !== 'month' ? 'wbs-row-empty' : ''}`}
                             onDoubleClick={(e) => handleRowDoubleClick(e, subtask, 'subtask')}
-                            title={isRowEmpty(subtask) ? (typeName ? `ダブルクリックで計画を入力: ${typeName}` : 'ダブルクリックで計画を入力') : undefined}
+                            title={isRowEmpty(subtask) && scale !== 'month' ? (typeName ? `ダブルクリックで計画を入力: ${typeName}` : 'ダブルクリックで計画を入力') : undefined}
                           >
                             <GanttBar
                               item={{ ...subtask, project_name: project.project_name, task_name: task.task_name }}
