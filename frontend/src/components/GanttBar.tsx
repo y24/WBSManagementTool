@@ -58,9 +58,9 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const handleMouseEnter = useCallback((e: React.MouseEvent) => {
     // ドラッグ中は何もしない
     if (dragState && dragState.itemId === item.id) return;
-    
+
     setMousePos({ x: e.clientX, y: e.clientY });
-    
+
     // 少し遅延させて表示（チラつき防止）
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     hoverTimer.current = setTimeout(() => {
@@ -174,7 +174,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const warningTopPx = isSubtask && isResourceView ? '8px' : '10px';
 
   return (
-    <div 
+    <div
       className="relative w-full h-full min-h-[30px] flex flex-col justify-start pointer-events-none"
     >
       {showPlannedBar && (
@@ -202,9 +202,9 @@ const GanttBar: React.FC<GanttBarProps> = ({
           {allowBarEdit && isSubtask && rStart !== undefined && !isAutoPlanned && (
             <div
               className="gantt-review-handle pointer-events-auto"
-              style={{ 
-                left: `${rStart - 5}px`, 
-                top: hasActual ? '6px' : subtaskBarTopPx, 
+              style={{
+                left: `${rStart - 5}px`,
+                top: hasActual ? '6px' : subtaskBarTopPx,
                 height: hasActual ? (isSubtask ? '6px' : '4px') : subtaskBarHeightPx,
                 // 開始日と重なっている時は、開始日のドラッグハンドル(z-index: 20)を優先するため、
                 // レビューハンドルのz-indexを下げる
@@ -226,7 +226,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {aStart !== undefined && aWidth !== undefined && (
         <>
           <div
-              className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isSubtask ? '' : 'opacity-60'} ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} pointer-events-auto`}
+            className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isSubtask ? '' : 'opacity-60'} ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} pointer-events-auto`}
             style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
             onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouseMove}
@@ -295,16 +295,17 @@ const GanttBar: React.FC<GanttBarProps> = ({
             transform: 'translateX(-100%)'
           }}
         >
-          {initialData?.members.find(m => m.id === item.assignee_id)?.member_name}
+          {subtaskTypeName
+            ? `(${subtaskTypeName}) ${initialData?.members.find(m => m.id === item.assignee_id)?.member_name || ''}`
+            : initialData?.members.find(m => m.id === item.assignee_id)?.member_name}
         </div>
       )}
-      
+
       {/* カスタムラベル（担当者ビュー用） */}
       {customLabel && (aStart !== undefined || pStart !== undefined) && (
         <div
-          className={`absolute text-[11px] whitespace-nowrap pointer-events-none drop-shadow-sm z-30 ${
-            isResourceView ? 'text-white' : 'text-gray-700 dark:text-gray-300'
-          }`}
+          className={`absolute text-[11px] whitespace-nowrap pointer-events-none drop-shadow-sm z-30 ${isResourceView ? 'text-white' : 'text-gray-700 dark:text-gray-300'
+            }`}
           style={{
             left: `${(aStart !== undefined ? aStart : (pStart || 0)) + 4}px`,
             top: barLabelTopPx,
@@ -332,11 +333,11 @@ const GanttBar: React.FC<GanttBarProps> = ({
 
       {/* ドラッグ中のツールチップを表示 */}
       {isDragging && temp?.tooltipText && typeof document !== 'undefined' && createPortal(
-        <div 
+        <div
           className="gantt-drag-tooltip"
-          style={{ 
-            left: `${temp.mouseX}px`, 
-            top: `${temp.mouseY}px` 
+          style={{
+            left: `${temp.mouseX}px`,
+            top: `${temp.mouseY}px`
           }}
         >
           {temp.tooltipText}
