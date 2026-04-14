@@ -266,8 +266,10 @@ export const useWBSUpdates = ({
           }
 
           // 2. actual_end_date (overwritten by backend for Ongoing status)
-          if (isOngoing && data.actual_end_date) {
-            const today = new Date().toISOString().split('T')[0];
+          // 両方が進行中ステータス（自動更新対象）なら警告不要
+          const oldIsOngoing = [2, 3].includes(data.status_id);
+          if (isOngoing && !oldIsOngoing && data.actual_end_date) {
+            const today = format(new Date(), 'yyyy-MM-dd');
             if (data.actual_end_date !== today) {
               overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> 今日 (自動更新)`);
             }
