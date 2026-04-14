@@ -132,7 +132,7 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
     # 5. Review Delays (Started but exceeding review days, or not started but past review start deadline)
     review_delays_list = []
     for s in all_subtasks_base:
-        if s.status_id == done_id:
+        if s.status_id in (done_id, pending_id):
             continue
         
         if s.review_days:
