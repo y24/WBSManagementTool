@@ -4,12 +4,14 @@ import { Project, Subtask, Task, GanttRange } from '../types/wbs';
 import { InitialData } from '../types';
 import MarkerModal from './MarkerModal';
 import { apiClient } from '../api/client';
-import { useGanttDrag, CELL_WIDTH } from '../hooks/useGanttDrag';
+import { useGanttDrag } from '../hooks/useGanttDrag';
 import GanttBar from './GanttBar';
 import GanttHeader from './GanttHeader';
 import GanttBackground from './GanttBackground';
 import { addBusinessDays } from './WBSTree/utils';
 import GanttDateTooltip from './GanttDateTooltip';
+import { GanttScale } from '../types/wbs';
+import { getScaleCellWidth, getDateX, getDateWidth, getGanttUnits } from '../utils/ganttUtils';
 
 interface GanttChartProps {
   projects: Project[];
@@ -22,6 +24,7 @@ interface GanttChartProps {
   showAssigneeName?: boolean;
   showProgressRate?: boolean;
   showMarkers?: boolean;
+  scale: GanttScale;
   isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
   onRefresh?: () => void;
@@ -38,6 +41,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   showAssigneeName = false,
   showProgressRate = false,
   showMarkers = true,
+  scale,
   isDarkMode = false,
   onScroll,
   onRefresh
@@ -48,19 +52,14 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   const [isMarkerModalOpen, setIsMarkerModalOpen] = useState(false);
 
   // Drag logic
-  const { dragState, tempDates, handleMouseDown } = useGanttDrag(initialData, onRefresh);
+  const { dragState, tempDates, handleMouseDown } = useGanttDrag(initialData, scale, onRefresh);
 
   const days = useMemo(() => {
     if (!range.start_date || !range.end_date) return [];
-    try {
-      const start = parseISO(range.start_date);
-      const end = parseISO(range.end_date);
-      const totalDays = differenceInCalendarDays(end, start) + 1;
-      return Array.from({ length: totalDays }).map((_, i) => addDays(start, i));
-    } catch {
-      return [];
-    }
-  }, [range]);
+    return getGanttUnits(range.start_date, range.end_date, scale);
+  }, [range, scale]);
+
+  const cellWidth = getScaleCellWidth(scale);
 
   const handleMarkerSave = async (name: string, note: string, color: string) => {
     if (!selectedDate) return;
@@ -118,7 +117,10 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     // Get the click position relative to the Gantt area
     const rect = e.currentTarget.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
-    const dayIndex = Math.floor(offsetX / CELL_WIDTH);
+    const dayIndex = Math.floor(offsetX / getScaleCellWidth('day'));
+    
+    // 計画入力は日単位表示（scale === 'day'）の時のみサポートする
+    if (scale !== 'day') return;
     
     const clickDate = addDays(baseDate, dayIndex);
     const startDate = clickDate;
@@ -183,8 +185,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       if (allDates.length > 0) {
         const min = Math.min(...allDates);
         const max = Math.max(...allDates);
-        const left = differenceInCalendarDays(new Date(min), baseDate) * CELL_WIDTH;
-        const width = (differenceInCalendarDays(new Date(max), new Date(min)) + 1) * CELL_WIDTH;
+        const left = getDateX(new Date(min), baseDate, scale);
+        const width = getDateWidth(new Date(min), new Date(max), scale);
         acc[project.id] = { left, width, status_id: project.status_id };
       }
       return acc;
@@ -225,7 +227,12 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     return results;
   }, [projects, hoveredDate, tempDates]);
 
-  const totalWidth = useMemo(() => days.length * CELL_WIDTH, [days]);
+  const totalWidth = useMemo(() => {
+    if (scale === 'day') return days.length * cellWidth;
+    // For week/month, the last unit might end after the range.end_date
+    // So we just use its count * cellWidth
+    return days.length * cellWidth;
+  }, [days, cellWidth, scale]);
   const commonRowClasses = "transition-colors h-[37px]";
 
   return (
@@ -234,7 +241,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           <GanttHeader
             days={days}
-            cellWidth={CELL_WIDTH}
+            cellWidth={cellWidth}
+            scale={scale}
             initialData={initialData}
             showMarkers={showMarkers}
             onDateClick={(d) => {
@@ -255,7 +263,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
           <GanttBackground
             days={days}
-            cellWidth={CELL_WIDTH}
+            cellWidth={cellWidth}
+            scale={scale}
             initialData={initialData}
             range={range}
             hoveredDate={hoveredDate}
@@ -292,7 +301,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                       item={project}
                       itemType="project"
                       baseDate={baseDate}
-                      cellWidth={CELL_WIDTH}
+                      cellWidth={cellWidth}
+                      scale={scale}
                       initialData={initialData}
                       tempDates={tempDates}
                       dragState={dragState}
@@ -315,7 +325,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                           item={{ ...task, project_name: project.project_name }}
                           itemType="task"
                           baseDate={baseDate}
-                          cellWidth={CELL_WIDTH}
+                          cellWidth={cellWidth}
+                          scale={scale}
                           initialData={initialData}
                           tempDates={tempDates}
                           dragState={dragState}
@@ -341,7 +352,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                               item={{ ...subtask, project_name: project.project_name, task_name: task.task_name }}
                               itemType="subtask"
                               baseDate={baseDate}
-                              cellWidth={CELL_WIDTH}
+                              cellWidth={cellWidth}
+                              scale={scale}
                               initialData={initialData}
                               tempDates={tempDates}
                               dragState={dragState}

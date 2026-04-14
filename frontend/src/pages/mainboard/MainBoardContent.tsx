@@ -58,6 +58,7 @@ export default function MainBoardContent({
           showMarkers={displayOptions.showMarkers}
           isDarkMode={displayOptions.isDarkMode}
           overlapThreshold={displayOptions.overlapThreshold}
+          scale={displayOptions.ganttScale}
           onListScroll={onTreeScroll}
           onGanttScroll={onGanttScroll}
           onRefresh={() => onUpdate(false)}
@@ -113,6 +114,7 @@ export default function MainBoardContent({
                 showAssigneeName={displayOptions.showAssigneeName}
                 showProgressRate={displayOptions.showProgressRate}
                 showMarkers={displayOptions.showMarkers}
+                scale={displayOptions.ganttScale}
                 isDarkMode={displayOptions.isDarkMode}
                 onScroll={onGanttScroll}
                 onRefresh={() => onUpdate(false)}

@@ -1,9 +1,10 @@
 import React, { useMemo, useCallback } from 'react';
-import { format, differenceInCalendarDays, addDays, parseISO, subDays, isValid } from 'date-fns';
+import { format, differenceInCalendarDays, addDays, parseISO, subDays, isValid, getDaysInMonth } from 'date-fns';
 import { InitialData } from '../../types';
-import { GanttRange } from '../../types/wbs';
+import { GanttRange, GanttScale } from '../../types/wbs';
 import { ResourceRow, ResourceSubtask } from '../../pages/mainboard/useResourceData';
-import { CELL_WIDTH } from '../../hooks/useGanttDrag';
+import { getScaleCellWidth, getDateX, getGanttUnits } from '../../utils/ganttUtils';
+import { useGanttDrag } from '../../hooks/useGanttDrag';
 import { calculateReviewCalendarDays } from '../WBSTree/utils';
 import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
@@ -19,6 +20,7 @@ interface ResourceGanttProps {
   showMarkers: boolean;
   isDarkMode: boolean;
   overlapThreshold: number;
+  scale: GanttScale;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   ganttRef: React.RefObject<HTMLDivElement | null>;
   onRefresh: () => void;
@@ -32,26 +34,23 @@ export default function ResourceGantt({
   showMarkers,
   isDarkMode,
   overlapThreshold,
+  scale,
   onScroll,
   ganttRef,
   onRefresh
 }: ResourceGanttProps) {
+  const { dragState, tempDates, handleMouseDown } = useGanttDrag(initialData, scale, onRefresh);
   const [hoveredDate, setHoveredDate] = React.useState<string | null>(null);
 
   const days = useMemo(() => {
     if (!range.start_date || !range.end_date) return [];
-    try {
-      const start = parseISO(range.start_date);
-      const end = parseISO(range.end_date);
-      const totalDays = differenceInCalendarDays(end, start) + 1;
-      return Array.from({ length: totalDays }).map((_, i) => addDays(start, i));
-    } catch {
-      return [];
-    }
-  }, [range]);
+    return getGanttUnits(range.start_date, range.end_date, scale);
+  }, [range, scale]);
+
+  const cellWidth = getScaleCellWidth(scale);
 
   const baseDate = useMemo(() => range.start_date ? parseISO(range.start_date) : new Date(), [range.start_date]);
-  const totalWidth = useMemo(() => days.length * CELL_WIDTH, [days]);
+  const totalWidth = useMemo(() => days.length * cellWidth, [days, cellWidth]);
 
   const getStatusColor = useCallback((statusId: number | null | undefined): string => {
     if (statusId === null || statusId === undefined) return isDarkMode ? '#334155' : '#cbd5e1';
@@ -152,12 +151,28 @@ export default function ResourceGantt({
     let currentX = 0;
 
     for (let i = 0; i < days.length; i++) {
-        const dateStr = format(days[i], 'yyyy-MM-dd');
-        const overlapCount = overlapsByDay.get(dateStr) || 0;
+        const unitStart = days[i];
         
-        if (overlapCount > overlapThreshold) {
+        // 当該セルの期間（日単位）をスキャンして最大重複を出す
+        let maxInUnit = 0;
+        if (scale === 'day') {
+          maxInUnit = overlapsByDay.get(format(unitStart, 'yyyy-MM-dd')) || 0;
+        } else if (scale === 'week') {
+          for(let d=0; d<7; d++) {
+            const dateStr = format(addDays(unitStart, d), 'yyyy-MM-dd');
+            maxInUnit = Math.max(maxInUnit, overlapsByDay.get(dateStr) || 0);
+          }
+        } else if (scale === 'month') {
+          const daysInMonth = getDaysInMonth(unitStart);
+          for(let d=0; d<daysInMonth; d++) {
+            const dateStr = format(addDays(unitStart, d), 'yyyy-MM-dd');
+            maxInUnit = Math.max(maxInUnit, overlapsByDay.get(dateStr) || 0);
+          }
+        }
+
+        if (maxInUnit > overlapThreshold) {
             const normalized =
-              maxOverlap > overlapThreshold ? (overlapCount - overlapThreshold) / (maxOverlap - overlapThreshold) : 0;
+              maxOverlap > overlapThreshold ? (maxInUnit - overlapThreshold) / (maxOverlap - overlapThreshold) : 0;
             const lightAlpha = 0.04 + (0.16 * normalized);
             const darkAlpha = 0.06 + (0.19 * normalized);
             const backgroundColor = isDarkMode
@@ -167,21 +182,21 @@ export default function ResourceGantt({
 
             cells.push(
                 <div 
-                    key={`heatmap-${dateStr}`}
+                    key={`heatmap-${format(unitStart, 'yyyy-MM-dd')}`}
                     className="absolute top-0 bottom-0 pointer-events-none"
                     style={{
                       left: `${currentX}px`,
-                      width: `${CELL_WIDTH}px`,
+                      width: `${cellWidth}px`,
                       backgroundColor,
                       boxShadow: `inset 0 0 0 1px rgba(244, 63, 94, ${borderAlpha})`,
                     }}
                 />
             );
         }
-        currentX += CELL_WIDTH;
+        currentX += cellWidth;
     }
     return cells;
-  }, [days, isDarkMode, overlapThreshold]);
+  }, [days, isDarkMode, overlapThreshold, scale, cellWidth]);
 
   return (
     <div className="h-full w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
@@ -189,26 +204,28 @@ export default function ResourceGantt({
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           <GanttHeader
             days={days}
-            cellWidth={CELL_WIDTH}
+            cellWidth={cellWidth}
+            scale={scale}
             initialData={initialData}
             showMarkers={showMarkers}
-            dragState={null}
-            tempDates={{}}
+            dragState={dragState}
+            tempDates={tempDates}
             onDateClick={() => {}}
             setHoveredDate={setHoveredDate}
-            handleMouseDown={() => {}}
+            handleMouseDown={handleMouseDown}
           />
 
           <GanttBackground
             days={days}
-            cellWidth={CELL_WIDTH}
+            cellWidth={cellWidth}
+            scale={scale}
             initialData={initialData}
             range={range}
             hoveredDate={hoveredDate}
             showTodayHighlight={showTodayHighlight}
             showMarkers={showMarkers}
-            dragState={null}
-            tempDates={{}}
+            dragState={dragState}
+            tempDates={tempDates}
           />
 
           <div className="relative z-10 pb-[100px]">
@@ -241,15 +258,16 @@ export default function ResourceGantt({
                             item={subtask}
                             itemType="subtask"
                             baseDate={baseDate}
-                            cellWidth={CELL_WIDTH}
+                            cellWidth={cellWidth}
+                            scale={scale}
                             initialData={initialData}
-                            tempDates={{}}
-                            dragState={null}
+                            tempDates={tempDates}
+                            dragState={dragState}
                             isDarkMode={isDarkMode}
                             showProgressRate={false}
                             showAssigneeName={false}
                             getStatusColor={getStatusColor}
-                            handleMouseDown={() => {}}
+                            handleMouseDown={handleMouseDown}
                             customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
                             isDelayedHighlight={isDelayed}
                             isResourceView={true}

@@ -1,11 +1,13 @@
 import React from 'react';
 import { format, getDay, isToday, parseISO, differenceInCalendarDays, isValid } from 'date-fns';
 import { InitialData } from '../types';
-import { Project } from '../types/wbs';
+import { Project, GanttScale } from '../types/wbs';
+import { getDateX } from '../utils/ganttUtils';
 
 interface GanttBackgroundProps {
   days: Date[];
   cellWidth: number;
+  scale: GanttScale;
   initialData: InitialData | null;
   range: { start_date: string; end_date: string };
   hoveredDate: string | null;
@@ -18,6 +20,7 @@ interface GanttBackgroundProps {
 const GanttBackground: React.FC<GanttBackgroundProps> = ({
   days,
   cellWidth,
+  scale,
   initialData,
   range,
   hoveredDate,
@@ -43,7 +46,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
     <>
       {/* 背景の縦線 (z-0) */}
       <div className="absolute inset-0 flex pointer-events-none z-0">
-        {days.map(d => {
+        {days.map((d, i) => {
           const dow = getDay(d);
           const isSaturday = dow === 6;
           const isSunday = dow === 0;
@@ -51,10 +54,12 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
           const isSundayOrHoliday = isSunday || holidayFlag;
 
           let bgClass = "";
-          if (isSundayOrHoliday) {
-            bgClass = "bg-red-100/40 dark:bg-rose-900/10";
-          } else if (isSaturday) {
-            bgClass = "bg-blue-100/40 dark:bg-blue-900/10";
+          if (scale === 'day') {
+            if (isSundayOrHoliday) {
+              bgClass = "bg-red-100/40 dark:bg-rose-900/10";
+            } else if (isSaturday) {
+              bgClass = "bg-blue-100/40 dark:bg-blue-900/10";
+            }
           }
 
           return (
@@ -77,7 +82,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
         const mDate = parseISO(displayDate);
         if (!isValid(mDate) || mDate < markerRange.start || mDate > markerRange.end) return null;
 
-        const left = differenceInCalendarDays(mDate, parseISO(range.start_date)) * cellWidth;
+        const left = getDateX(mDate, parseISO(range.start_date), scale);
         return (
           <div
             key={`marker-line-${m.id}`}
@@ -91,7 +96,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
       {hoveredDate && (
         <div
           className="absolute top-0 bottom-0 z-25 pointer-events-none border-l border-dashed border-gray-400 opacity-50"
-          style={{ left: `${differenceInCalendarDays(parseISO(hoveredDate), parseISO(range.start_date!)) * cellWidth}px` }}
+          style={{ left: `${getDateX(parseISO(hoveredDate), parseISO(range.start_date!), scale)}px` }}
         />
       )}
 
@@ -100,7 +105,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
         <div
           key={`today-highlight-${d.toISOString()}`}
           className="absolute top-0 bottom-0 border-x border-amber-400/50 bg-amber-400/10 z-20 pointer-events-none"
-          style={{ left: `${i * cellWidth}px`, width: `${cellWidth}px` }}
+          style={{ left: `${getDateX(d, parseISO(range.start_date), scale)}px`, width: `${scale === 'day' ? cellWidth : (cellWidth / 7)}px` }}
         />
       ))}
     </>

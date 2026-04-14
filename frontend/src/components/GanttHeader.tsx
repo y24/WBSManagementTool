@@ -1,12 +1,15 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { format, getDay, isToday, parseISO, differenceInCalendarDays, isValid } from 'date-fns';
+import { format, getDay, isToday, parseISO, differenceInCalendarDays, isValid, startOfWeek, endOfWeek, startOfYear } from 'date-fns';
+import { GanttScale } from '../types/wbs';
+import { getDateX } from '../utils/ganttUtils';
 import { InitialData } from '../types';
 import { DragMode, ItemType, BarType } from '../hooks/useGanttDrag';
 
 interface GanttHeaderProps {
   days: Date[];
   cellWidth: number;
+  scale: GanttScale;
   initialData: InitialData | null;
   showMarkers: boolean;
   onDateClick: (date: Date) => void;
@@ -26,6 +29,7 @@ interface GanttHeaderProps {
 const GanttHeader: React.FC<GanttHeaderProps> = ({
   days,
   cellWidth,
+  scale,
   initialData,
   showMarkers,
   onDateClick,
@@ -49,69 +53,91 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
     return { start, end };
   }, [baseDateStr, endDateStr]);
   
-  // 月ごとにグループ化
-  const monthGroups = React.useMemo(() => {
-    const groups: { month: string; width: number; days: Date[] }[] = [];
+  // 上段ヘッダーのグループ化
+  const topGroups = React.useMemo(() => {
+    const groups: { label: string; width: number; date: Date }[] = [];
     days.forEach(d => {
-      const mKey = format(d, 'yy/MM');
+      let label = "";
+      if (scale === 'day' || scale === 'week') {
+        label = format(d, 'yyyy/MM');
+      } else if (scale === 'month') {
+        label = format(d, 'yyyy');
+      }
+      
       const last = groups[groups.length - 1];
-      if (last && last.month === mKey) {
+      if (last && last.label === label) {
         last.width += cellWidth;
-        last.days.push(d);
       } else {
-        groups.push({ month: mKey, width: cellWidth, days: [d] });
+        groups.push({ label, width: cellWidth, date: d });
       }
     });
     return groups;
-  }, [days, cellWidth]);
+  }, [days, cellWidth, scale]);
 
   return (
     <div className="flex flex-col border-b-[1px] border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-30 bg-slate-100 dark:bg-slate-900 flex-shrink-0 transition-colors" style={{ height: '38px' }}>
       {/* Month Row */}
+      {/* Top Row (Month or Year) */}
       <div className="flex border-b-[1px] border-slate-200 dark:border-slate-800 h-[18px]">
-        {monthGroups.map(g => (
+        {topGroups.map((g, idx) => (
           <div 
-            key={g.month} 
+            key={`${g.label}-${idx}`} 
             className="flex-shrink-0 border-r border-gray-200 dark:border-slate-800 flex items-center bg-slate-50 dark:bg-slate-900"
             style={{ width: `${g.width}px` }}
           >
             <div className="sticky left-0 pl-1 text-[9px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap z-40 bg-slate-50/80 dark:bg-slate-900/80 rounded-r pr-1 backdrop-blur-sm">
-              {g.month}
+              {g.label}
             </div>
           </div>
         ))}
       </div>
 
       {/* Day Row */}
+      {/* Bottom Row (Day, Week, or Month) */}
       <div className="flex h-[20px]">
         {days.map(d => {
-          const dow = getDay(d);
-          const isSaturday = dow === 6;
-          const isSunday = dow === 0;
-          const holidayFlag = isHoliday(d);
-          const isSundayOrHoliday = isSunday || holidayFlag;
-          const dateStr = format(d, 'yyyy-MM-dd');
-          const holidayInfo = initialData?.holidays.find(h => h.holiday_date === dateStr);
-
+          let label = "";
           let dayClasses = "text-gray-500 dark:text-slate-400";
-          if (isSundayOrHoliday) {
-            dayClasses = "bg-red-100/80 dark:bg-rose-900/40 text-red-600 dark:text-rose-400";
-          } else if (isSaturday) {
-            dayClasses = "bg-blue-100/80 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400";
+          let tooltip = "";
+
+          if (scale === 'day') {
+            label = format(d, 'd');
+            const dow = getDay(d);
+            const isSaturday = dow === 6;
+            const isSunday = dow === 0;
+            const holidayFlag = isHoliday(d);
+            const dateStr = format(d, 'yyyy-MM-dd');
+            const holidayInfo = initialData?.holidays.find(h => h.holiday_date === dateStr);
+            tooltip = holidayInfo?.holiday_name || "";
+
+            if (isSunday || holidayFlag) {
+              dayClasses = "bg-red-100/80 dark:bg-rose-900/40 text-red-600 dark:text-rose-400";
+            } else if (isSaturday) {
+              dayClasses = "bg-blue-100/80 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400";
+            }
+          } else if (scale === 'week') {
+            const start = d;
+            const end = endOfWeek(d, { weekStartsOn: 1 });
+            label = `${format(start, 'M/d')} - ${format(end, 'M/d')}`;
+            tooltip = `${format(start, 'yyyy/MM/dd')} - ${format(end, 'yyyy/MM/dd')}`;
+          } else if (scale === 'month') {
+            label = format(d, 'M月');
           }
+
+          const dateStr = format(d, 'yyyy-MM-dd');
 
           return (
             <div
               key={d.toISOString()}
-              className={`flex-shrink-0 border-r border-gray-200 dark:border-slate-800 flex items-center justify-center text-[10px] cursor-pointer transition-colors relative group/header-cell ${dayClasses} ${isToday(d) ? 'font-bold' : ''}`}
+              className={`flex-shrink-0 border-r border-gray-200 dark:border-slate-800 flex items-center justify-center text-[10px] cursor-pointer transition-colors relative group/header-cell ${dayClasses} ${(scale === 'day' && isToday(d)) ? 'font-bold' : ''}`}
               style={{ width: `${cellWidth}px` }}
-              title={holidayInfo?.holiday_name}
+              title={tooltip}
               onMouseEnter={(e) => setHoveredDate(dateStr, e.clientX, e.clientY)}
               onMouseMove={(e) => setHoveredDate(dateStr, e.clientX, e.clientY)}
               onMouseLeave={() => setHoveredDate(null)}
               onClick={() => onDateClick(d)}
             >
-              {format(d, 'd')}
+              {label}
             </div>
           );
         })}
@@ -126,18 +152,19 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
         const markerDate = parseISO(displayDate);
         if (!isValid(markerDate) || markerDate < markerRange.start || markerDate > markerRange.end) return null;
 
-        const left = differenceInCalendarDays(markerDate, markerRange.start) * cellWidth;
+        const left = getDateX(markerDate, markerRange.start, scale);
 
         return (
           <React.Fragment key={`marker-label-${marker.id}`}>
             <div
-              className={`absolute top-0 z-50 pointer-events-auto cursor-ew-resize whitespace-nowrap px-1 py-0.5 rounded text-[9px] font-bold text-white shadow-sm hover:brightness-110 active:brightness-90 select-none ${isDragging ? 'opacity-70 scale-105 ring-2 ring-white ring-offset-1' : ''}`}
+              className={`absolute top-0 z-50 pointer-events-auto ${scale !== 'month' ? 'cursor-ew-resize' : 'cursor-default'} whitespace-nowrap px-1 py-0.5 rounded text-[9px] font-bold text-white shadow-sm hover:brightness-110 active:brightness-90 select-none ${isDragging ? 'opacity-70 scale-105 ring-2 ring-white ring-offset-1' : ''}`}
               style={{ 
                 backgroundColor: marker.color, 
                 left: `${left}px`, 
                 top: '38px', // 38px header height
               }}
               onMouseDown={(e) => {
+                if (scale === 'month') return;
                 handleMouseDown?.(
                   e,
                   marker.id,

@@ -1,9 +1,11 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { parseISO, differenceInCalendarDays, isValid } from 'date-fns';
+import { parseISO, differenceInCalendarDays, isValid, addDays } from 'date-fns';
 import { AlertTriangle } from 'lucide-react';
 import { InitialData } from '../types';
 import { ItemType, BarType, DragMode, DragState } from '../hooks/useGanttDrag';
+import { GanttScale } from '../types/wbs';
+import { getDateX, getDateWidth } from '../utils/ganttUtils';
 import { getWarning, calculateReviewCalendarDays } from './WBSTree/utils';
 import GanttTooltip from './GanttTooltip';
 
@@ -12,6 +14,7 @@ interface GanttBarProps {
   itemType: 'project' | 'task' | 'subtask';
   baseDate: Date;
   cellWidth: number;
+  scale: GanttScale;
   initialData: InitialData | null;
   tempDates: Record<number, any>;
   dragState: DragState | null;
@@ -38,6 +41,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
   itemType,
   baseDate,
   cellWidth,
+  scale,
   initialData,
   tempDates,
   dragState,
@@ -98,8 +102,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
     const pS = parseISO(plannedStart);
     const pE = parseISO(plannedEnd);
     if (isValid(pS) && isValid(pE)) {
-      pStart = differenceInCalendarDays(pS, baseDate) * cellWidth;
-      pWidth = (differenceInCalendarDays(pE, pS) + 1) * cellWidth;
+      pStart = getDateX(pS, baseDate, scale);
+      pWidth = getDateWidth(pS, pE, scale);
     }
   }
 
@@ -110,16 +114,16 @@ const GanttBar: React.FC<GanttBarProps> = ({
     const aS = parseISO(actualStart);
     const aE = actualEnd ? parseISO(actualEnd) : aS;
     if (isValid(aS) && isValid(aE)) {
-      aStart = differenceInCalendarDays(aS, baseDate) * cellWidth;
-      aWidth = (differenceInCalendarDays(aE, aS) + 1) * cellWidth;
+      aStart = getDateX(aS, baseDate, scale);
+      aWidth = getDateWidth(aS, aE, scale);
 
       if (isSubtask && reviewStart) {
         const rS = parseISO(reviewStart);
         if (isValid(rS)) {
           const effectiveRS = rS < aS ? aS : rS;
           const effectiveRE = aE < effectiveRS ? effectiveRS : aE;
-          arStart = differenceInCalendarDays(effectiveRS, baseDate) * cellWidth;
-          arWidth = (differenceInCalendarDays(effectiveRE, effectiveRS) + 1) * cellWidth;
+          arStart = getDateX(effectiveRS, baseDate, scale);
+          arWidth = getDateWidth(effectiveRS, effectiveRE, scale);
         }
       }
     }
@@ -134,11 +138,18 @@ const GanttBar: React.FC<GanttBarProps> = ({
     const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
     const pE = parseISO(plannedEnd);
     const r_days_cal = calculateReviewCalendarDays(pE, reviewDays, holidays);
-    rWidth = r_days_cal * cellWidth;
+    rWidth = r_days_cal * (scale === 'day' ? cellWidth : (cellWidth / 30)); // Approximate for non-day scale
+    // In non-day scale, it's better to calculate from specific dates
+    const pS = parseISO(plannedStart);
+    const rStartObj = new Date(pE);
+    rStartObj.setDate(rStartObj.getDate() - (r_days_cal - 1));
+    
+    rStart = getDateX(rStartObj, baseDate, scale);
+    rWidth = getDateWidth(rStartObj, pE, scale);
 
-    const calcPWidth = (differenceInCalendarDays(pE, parseISO(plannedStart)) + 1) * cellWidth;
+    const calcPWidth = getDateWidth(pS, pE, scale);
     if (rWidth > calcPWidth) rWidth = calcPWidth;
-    rStart = (pStart || 0) + calcPWidth - rWidth;
+    if (rStart < (pStart || 0)) rStart = pStart;
   }
 
   const warningText = getWarning(item, initialData, isSubtask);
@@ -160,7 +171,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
 
   const isAutoPlanned = (itemType === 'project' || itemType === 'task') && item.is_auto_planned_date;
   const isAutoActual = (itemType === 'project' || itemType === 'task') && item.is_auto_actual_date;
-  const allowBarEdit = !isResourceView;
+  const allowBarEdit = !isResourceView && scale !== 'month';
 
   const subtaskTypeName = isSubtask ? initialData?.subtask_types.find(t => t.id === item.subtask_type_id)?.type_name : null;
   const itemName = itemType === 'project' ? item.project_name : (itemType === 'task' ? item.task_name : subtaskTypeName);

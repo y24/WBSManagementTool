@@ -8,6 +8,7 @@ import FilterControls from './FilterPanel/FilterControls';
 import SearchAndDelayed from './FilterPanel/SearchAndDelayed';
 import ModeSwitcher from './FilterPanel/ModeSwitcher';
 import ViewSwitcher from './FilterPanel/ViewSwitcher';
+import GanttScaleSwitcher from './FilterPanel/GanttScaleSwitcher';
 import OverlapThresholdSelect from './FilterPanel/OverlapThresholdSelect';
 import ActionButtons from './FilterPanel/ActionButtons';
 import SettingsDropdown from './FilterPanel/SettingsDropdown';
@@ -124,6 +125,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           )}
 
           <ViewSwitcher
+            displayOptions={displayOptions}
+            setDisplayOptions={setDisplayOptions}
+          />
+
+          <GanttScaleSwitcher
             displayOptions={displayOptions}
             setDisplayOptions={setDisplayOptions}
           />

@@ -1,3 +1,5 @@
+import { GanttScale } from '../../types/wbs';
+
 export interface FilterState {
   projectIds: number[];
   statusIds: number[];
@@ -22,4 +24,5 @@ export interface DisplayOptions {
   isDarkMode: boolean;
   viewMode: 'wbs' | 'resource';
   overlapThreshold: number;
+  ganttScale: GanttScale;
 }

@@ -3,6 +3,8 @@ import { format, parseISO, addDays } from 'date-fns';
 import { apiClient } from '../api/client';
 import { InitialData } from '../types';
 import { addBusinessDays, getBusinessDaysCount, calculateReviewCalendarDays } from '../components/WBSTree/utils';
+import { GanttScale } from '../types/wbs';
+import { getScaleCellWidth } from '../utils/ganttUtils';
 
 export type DragMode = 'move' | 'resize-left' | 'resize-right' | 'resize-review' | 'resize-planned-review' | 'marker-move';
 export type ItemType = 'project' | 'task' | 'subtask' | 'marker';
@@ -27,6 +29,7 @@ export const CELL_WIDTH = 24;
 
 export const useGanttDrag = (
   initialData: InitialData | null,
+  scale: GanttScale,
   onRefresh?: () => void
 ) => {
   const [dragState, setDragState] = useState<DragState | null>(null);
@@ -69,7 +72,9 @@ export const useGanttDrag = (
     if (Math.abs(deltaX) > 3) {
       movedRef.current = true;
     }
-    const deltaDays = Math.round(deltaX / CELL_WIDTH);
+    const cellWidth = getScaleCellWidth(scale);
+    const dayWidth = scale === 'week' ? cellWidth / 7 : (scale === 'month' ? cellWidth / 30 : cellWidth);
+    const deltaDays = Math.round(deltaX / dayWidth);
 
     const holidays = initialData.holidays.map(h => h.holiday_date);
     const { start, end, reviewStart, name } = currentDrag.initialDates;
@@ -209,7 +214,7 @@ export const useGanttDrag = (
       tempDatesRef.current = next;
       return next;
     });
-  }, [initialData]);
+  }, [initialData, scale]);
 
   const handleMouseUp = useCallback(async () => {
     const currentDrag = dragStateRef.current;

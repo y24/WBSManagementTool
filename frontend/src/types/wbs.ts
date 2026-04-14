@@ -1,5 +1,7 @@
 import { MasterBase, MstStatus, MstSubtaskType, MstMember } from './index';
 
+export type GanttScale = 'day' | 'week' | 'month';
+
 export interface Subtask {
   id: number;
   task_id: number;

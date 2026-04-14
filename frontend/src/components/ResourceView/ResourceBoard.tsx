@@ -2,7 +2,7 @@ import React, { UIEvent, useMemo } from 'react';
 import ResourceList from './ResourceList';
 import ResourceGantt from './ResourceGantt';
 import { useResourceData } from '../../pages/mainboard/useResourceData';
-import { Project, GanttRange } from '../../types/wbs';
+import { Project, GanttRange, GanttScale } from '../../types/wbs';
 import { InitialData } from '../../types';
 
 interface ResourceBoardProps {
@@ -17,6 +17,7 @@ interface ResourceBoardProps {
   showMarkers: boolean;
   isDarkMode: boolean;
   overlapThreshold: number;
+  scale: GanttScale;
   onListScroll: (e: UIEvent<HTMLDivElement>) => void;
   onGanttScroll: (e: UIEvent<HTMLDivElement>) => void;
   onRefresh: () => void;
@@ -34,6 +35,7 @@ export default function ResourceBoard({
   showMarkers,
   isDarkMode,
   overlapThreshold,
+  scale,
   onListScroll,
   onGanttScroll,
   onRefresh
@@ -75,6 +77,7 @@ export default function ResourceBoard({
             showMarkers={showMarkers}
             isDarkMode={isDarkMode}
             overlapThreshold={overlapThreshold}
+            scale={scale}
             onScroll={onGanttScroll}
             ganttRef={ganttRef}
             onRefresh={onRefresh}
