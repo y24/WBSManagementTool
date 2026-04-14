@@ -67,26 +67,23 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
             
             t_wbs = schemas.TaskWBS.from_orm(t)
             valid_subtasks = [s for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed")]
-            t_wbs.planned_effort_total = sum((s.planned_effort_days or Decimal('0')) for s in valid_subtasks)
+            
+            # Helper to get weight (fallback to 1 if not entered or 0)
+            def get_subtask_weight(s):
+                return s.planned_effort_days if (s.planned_effort_days and s.planned_effort_days > 0) else Decimal('1')
+
+            t_wbs.planned_effort_total = sum(get_subtask_weight(s) for s in valid_subtasks)
+            # If no subtasks, treat task itself as having 1 day of effort for progress calculation consistency
+            if not valid_subtasks:
+                t_wbs.planned_effort_total = Decimal('1')
             t_wbs.actual_effort_total = sum((s.actual_effort_days or Decimal('0')) for s in valid_subtasks)
             t_wbs.work_days_total = sum((s.work_days or Decimal('0')) for s in valid_subtasks)
             
             # Weighted progress for Task
-            if t_wbs.planned_effort_total > 0:
-                # We use planned_effort_days as weight. 
-                # Note: planned_effort_days already includes workload_percent (effort = duration * workload_percent / 100)
-                weighted_sum = sum((Decimal(str(s.progress_percent or 0)) * (s.planned_effort_days or Decimal('0'))) for s in valid_subtasks)
+            if valid_subtasks:
+                # We use planned_effort_days (with fallback 1) as weight. 
+                weighted_sum = sum((Decimal(str(s.progress_percent or 0)) * get_subtask_weight(s)) for s in valid_subtasks)
                 t_wbs.progress_percent = int(round(float(weighted_sum) / float(t_wbs.planned_effort_total)))
-            elif valid_subtasks:
-                # Fallback: if all subtasks have no planned effort (e.g. no dates), 
-                # use workload_percent as the weight for calculating progress.
-                total_workload = sum(s.workload_percent for s in valid_subtasks)
-                if total_workload > 0:
-                    weighted_sum = sum((s.progress_percent or 0) * s.workload_percent for s in valid_subtasks)
-                    t_wbs.progress_percent = int(round(float(weighted_sum) / float(total_workload)))
-                else:
-                    # Final fallback to simple average
-                    t_wbs.progress_percent = int(round(sum(s.progress_percent or 0 for s in valid_subtasks) / len(valid_subtasks)))
             else:
                 t_wbs.progress_percent = 0
 
