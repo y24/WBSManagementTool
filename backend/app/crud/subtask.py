@@ -52,7 +52,14 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
                 # 作業日数 = 計画期間の営業日数 - レビュー日数
                 biz_days = float(raw_days)
                 review_days_val = float(p_review or 0)
-                effort = max(0.0, (biz_days - review_days_val) * workload_factor + review_days_val * 0.5)
+                
+                # 作業日数の計算: 期間全体がレビュー期間以下の場合は、重複（オーバーラップ）しているとみなして
+                # 作業日数に全期間を割り当てる。これにより同日の作業・レビュー時に工数が 1.5 (1.0 + 0.5) となる。
+                work_days_val = biz_days - review_days_val
+                if biz_days > 0 and biz_days <= review_days_val:
+                    work_days_val = biz_days
+
+                effort = max(0.0, work_days_val * workload_factor + review_days_val * 0.5)
                 # 四捨五入して1桁
                 db_subtask.planned_effort_days = Decimal(str(int(effort * 10 + 0.5) / 10.0))
             elif is_turning_on and p_effort is not None:
@@ -86,7 +93,13 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
             # 作業日数 = 全体の営業日数 - レビュー営業日数
             biz_days = float(raw_days)
             review_biz_days_val = float(review_biz_days)
-            effort = max(0.0, (biz_days - review_biz_days_val) * workload_factor + review_biz_days_val * 0.5)
+
+            # 同様に関係性をチェック
+            work_days_val = biz_days - review_biz_days_val
+            if biz_days > 0 and biz_days <= review_biz_days_val:
+                work_days_val = biz_days
+
+            effort = max(0.0, work_days_val * workload_factor + review_biz_days_val * 0.5)
             # 四捨五入して1桁
             db_subtask.actual_effort_days = Decimal(str(int(effort * 10 + 0.5) / 10.0))
 
