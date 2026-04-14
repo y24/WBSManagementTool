@@ -68,8 +68,9 @@ def update_task(db: Session, task_id: int, task: schemas.TaskUpdate):
         if new_project_id != old_project_id:
             recalculate_project_dates(db, old_project_id)
     
-    # Always recalculate status
-    recalculate_task_status(db, task_id)
+    # Recalculate status only if we didn't explicitly update it
+    if "status_id" not in update_dict:
+        recalculate_task_status(db, task_id)
         
     db.refresh(db_task)
     return db_task

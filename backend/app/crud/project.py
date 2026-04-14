@@ -53,8 +53,9 @@ def update_project(db: Session, project_id: int, project: schemas.ProjectUpdate)
     if db_project.is_auto_planned_date or db_project.is_auto_actual_date:
         recalculate_project_dates(db, project_id)
     
-    # Always recalculate status
-    recalculate_project_status(db, project_id)
+    # Recalculate status only if we didn't explicitly update it
+    if "status_id" not in update_dict:
+        recalculate_project_status(db, project_id)
         
     db.refresh(db_project)
     return db_project
