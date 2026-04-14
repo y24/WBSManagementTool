@@ -1,5 +1,5 @@
-import React from 'react';
-import { Filter, ChevronDown, ChevronUp, Search, Settings2, RotateCcw } from 'lucide-react';
+import React, { useState } from 'react';
+import { Filter, ChevronDown, ChevronUp, Search, Settings2, RotateCcw, Tag } from 'lucide-react';
 import { InitialData } from '../types';
 import { Project } from '../types/wbs';
 export * from './FilterPanel/FilterPanelTypes';
@@ -12,6 +12,7 @@ import OverlapThresholdSelect from './FilterPanel/OverlapThresholdSelect';
 import ActionButtons from './FilterPanel/ActionButtons';
 import SettingsDropdown from './FilterPanel/SettingsDropdown';
 import MultiSelect from './MultiSelect';
+import MarkerListModal from './MarkerListModal';
 
 interface FilterPanelProps {
   filters: FilterState;
@@ -22,6 +23,7 @@ interface FilterPanelProps {
   initialData: InitialData | null;
   onClear: () => void;
   onExport: () => void;
+  onRefresh?: () => void;
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -32,9 +34,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   projects,
   initialData,
   onClear,
-  onExport
+  onExport,
+  onRefresh
 }) => {
-  const [isExpanded, setIsExpanded] = React.useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isMarkerListModalOpen, setIsMarkerListModalOpen] = useState(false);
   const statuses = initialData?.statuses || [];
   const subtaskTypes = initialData?.subtask_types || [];
 
@@ -127,6 +131,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             displayOptions={displayOptions}
             setDisplayOptions={setDisplayOptions}
           />
+          
+          <button
+            onClick={() => setIsMarkerListModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold transition-all shadow-sm focus:outline-none"
+            title="マーカー管理"
+          >
+            <Tag size={14} />
+            マーカー
+          </button>
         </div>
 
         <ActionButtons
@@ -141,6 +154,16 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           setDisplayOptions={setDisplayOptions}
         />
       </div>
+
+      {/* MarkerListModal */}
+      {isMarkerListModalOpen && (
+        <MarkerListModal
+          isOpen={isMarkerListModalOpen}
+          initialData={initialData}
+          onClose={() => setIsMarkerListModalOpen(false)}
+          onRefresh={onRefresh}
+        />
+      )}
 
       {isExpanded && (
         <div className="px-3 pb-3 pt-0 flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-200">

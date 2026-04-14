@@ -327,6 +327,7 @@ export default function MainBoard() {
         initialData={initialData}
         onClear={() => setFilters(createDefaultFilters())}
         onExport={() => setIsExportModalOpen(true)}
+        onRefresh={() => fetchData()}
       />
 
       <MainBoardContent
