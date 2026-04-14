@@ -50,7 +50,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     filters.onlyUnplanned ||
     filters.searchTerm !== '';
 
-  const secondaryFilterCount = (filters.subtaskTypeIds.length > 0 ? filters.subtaskTypeIds.length : 0) + (filters.searchTerm !== '' ? 1 : 0);
+  const secondaryFilterCount = 
+    (filters.subtaskTypeIds.length > 0 ? filters.subtaskTypeIds.length : 0) + 
+    (filters.searchTerm !== '' ? 1 : 0) +
+    (filters.onlyDelayed ? 1 : 0) +
+    (filters.onlyUnplanned ? 1 : 0);
 
   // Removedステータスの自動解除
   React.useEffect(() => {
@@ -80,14 +84,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             projects={projects}
             initialData={initialData}
           />
-
-          <SearchAndDelayed
-            filters={filters}
-            setFilters={setFilters}
-            isFiltered={isFiltered}
-            onClear={onClear}
-          />
-
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold transition-all shadow-sm border ${isExpanded ? 'border-blue-400 ring-2 ring-blue-500/10' : 'border-slate-200 dark:border-slate-700'}`}
@@ -131,7 +127,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             displayOptions={displayOptions}
             setDisplayOptions={setDisplayOptions}
           />
-          
+
           <button
             onClick={() => setIsMarkerListModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold transition-all shadow-sm focus:outline-none"
@@ -169,7 +165,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         <div className="px-3 pb-3 pt-0 flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="w-[18px] mr-2" /> {/* Alignment shim for Filter icon */}
 
-          <div className="flex items-center gap-4 flex-1">
+          <div className="flex items-center gap-2 flex-1">
             {/* Subtask Type Filter moved from FilterControls */}
             <div className="flex items-center gap-2">
               <MultiSelect
@@ -194,6 +190,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                   className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 font-medium shadow-sm"
                 />
               </div>
+            </div>
+
+            <div className="flex items-center gap-2 ml-2">
+              <SearchAndDelayed
+                filters={filters}
+                setFilters={setFilters}
+              />
             </div>
           </div>
         </div>

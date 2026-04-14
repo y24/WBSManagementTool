@@ -5,15 +5,11 @@ import { FilterState } from './FilterPanelTypes';
 interface SearchAndDelayedProps {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
-  isFiltered: boolean;
-  onClear: () => void;
 }
 
 const SearchAndDelayed: React.FC<SearchAndDelayedProps> = ({
   filters,
-  setFilters,
-  isFiltered,
-  onClear
+  setFilters
 }) => {
   return (
     <>
