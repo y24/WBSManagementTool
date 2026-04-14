@@ -189,17 +189,21 @@ export const useWBSUpdates = ({
           }
 
           if (item.type === 'subtask' && field === 'status_id' && initialData) {
-            const newIds = initialData.status_mapping_new?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [1];
-            const doneIds = initialData.status_mapping_done?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [4, 7];
+            const removedStatusId = initialData.statuses.find(s => s.status_name === 'Removed')?.id ?? 7;
             const targetStatusId = parseInt(value, 10);
 
-            if (newIds.includes(targetStatusId)) {
-              updates.progress_percent = 0;
-              updates.actual_start_date = null;
-              updates.actual_end_date = null;
-              updates.review_start_date = null;
-            } else if (doneIds.includes(targetStatusId)) {
-              updates.progress_percent = 100;
+            if (targetStatusId !== removedStatusId) {
+              const newIds = initialData.status_mapping_new?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [1];
+              const doneIds = initialData.status_mapping_done?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [4, 7];
+
+              if (newIds.includes(targetStatusId)) {
+                updates.progress_percent = 0;
+                updates.actual_start_date = null;
+                updates.actual_end_date = null;
+                updates.review_start_date = null;
+              } else if (doneIds.includes(targetStatusId)) {
+                updates.progress_percent = 100;
+              }
             }
           }
 
@@ -226,11 +230,12 @@ export const useWBSUpdates = ({
     // Check for potential date/progress overwrites on status change
     let statusOverwriteMsg = '';
     if (field === 'status_id' && initialData) {
+      const removedStatusId = initialData.statuses.find(s => s.status_name === 'Removed')?.id ?? 7;
       const doneIds = initialData.status_mapping_done?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [4, 7];
       const newIds = initialData.status_mapping_new?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [1];
       const newStatusId = parseInt(value, 10);
-      const isDone = doneIds.includes(newStatusId);
-      const isNew = newIds.includes(newStatusId);
+      const isDone = doneIds.includes(newStatusId) && newStatusId !== removedStatusId;
+      const isNew = newIds.includes(newStatusId) && newStatusId !== removedStatusId;
       const isOngoing = [2, 3].includes(newStatusId);
 
       const overwriteDetails: string[] = [];
@@ -239,7 +244,7 @@ export const useWBSUpdates = ({
         const data = findItem(item.type, item.id) as Subtask | null;
         if (!data) return;
 
-        const oldIsDone = doneIds.includes(data.status_id);
+        const oldIsDone = doneIds.includes(data.status_id) && data.status_id !== removedStatusId;
 
         if (isNew) {
           if (data.progress_percent !== 0 && data.progress_percent !== null) {
@@ -269,7 +274,7 @@ export const useWBSUpdates = ({
           }
 
           // 3. actual_end_date cleared when moving away from Done
-          if (oldIsDone && !isDone && data.actual_end_date) {
+          if (oldIsDone && !isDone && !isOngoing && newStatusId !== 1 && newStatusId !== removedStatusId && data.actual_end_date) {
             overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> (消去)`);
           }
         }
@@ -281,7 +286,6 @@ export const useWBSUpdates = ({
       }
 
       // Check for Removed status visibility
-      const removedStatusId = initialData?.statuses.find((s) => s.status_name === 'Removed')?.id ?? 7;
       if (newStatusId === removedStatusId && !displayOptions.showRemoved) {
         const removedMsg = 'ステータスをRemovedにするとアイテムが非表示になります。';
         if (statusOverwriteMsg) {
