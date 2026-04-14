@@ -297,19 +297,47 @@ const GanttBar: React.FC<GanttBarProps> = ({
           )}
         </>
       )}
-      {isSubtask && showAssigneeName && item.assignee_id && (aStart !== undefined || pStart !== undefined) && (
-        <div
-          className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
-          style={{
-            left: `${(aStart !== undefined ? aStart : (pStart || 0)) - 4}px`,
-            top: barLabelTopPx,
-            transform: 'translateX(-100%)'
-          }}
-        >
-          {subtaskTypeName
-            ? `(${subtaskTypeName}) ${initialData?.members.find(m => m.id === item.assignee_id)?.member_name || ''}`
-            : initialData?.members.find(m => m.id === item.assignee_id)?.member_name}
-        </div>
+      {showAssigneeName && (aStart !== undefined || pStart !== undefined) && (
+        <>
+          {itemType === 'subtask' && item.assignee_id && (
+            <div
+              className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
+              style={{
+                left: `${(aStart !== undefined ? aStart : (pStart || 0)) - 4}px`,
+                top: barLabelTopPx,
+                transform: 'translateX(-100%)'
+              }}
+            >
+              {subtaskTypeName
+                ? `(${subtaskTypeName}) ${initialData?.members.find(m => m.id === item.assignee_id)?.member_name || ''}`
+                : initialData?.members.find(m => m.id === item.assignee_id)?.member_name}
+            </div>
+          )}
+          {itemType === 'task' && (
+            <div
+              className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
+              style={{
+                left: `${(aStart !== undefined ? aStart : (pStart || 0)) - 4}px`,
+                top: barLabelTopPx,
+                transform: 'translateX(-100%)'
+              }}
+            >
+              ({item.task_name}){item.assignee_id ? ` ${initialData?.members.find(m => m.id === item.assignee_id)?.member_name || ''}` : ''}
+            </div>
+          )}
+          {itemType === 'project' && (
+            <div
+              className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
+              style={{
+                left: `${(aStart !== undefined ? aStart : (pStart || 0)) - 4}px`,
+                top: barLabelTopPx,
+                transform: 'translateX(-100%)'
+              }}
+            >
+              {item.project_name}
+            </div>
+          )}
+        </>
       )}
 
       {/* カスタムラベル（担当者ビュー用） */}
