@@ -10,6 +10,7 @@ import ConfirmModal from './WBSTree/ConfirmModal';
 import ShiftDatesModal from './WBSTree/ShiftDatesModal';
 import WBSHeader from './WBSTree/WBSHeader';
 import WBSTreeRows from './WBSTree/WBSTreeRows';
+import { DisplayOptions } from './FilterPanel/FilterPanelTypes';
 
 // Hooks
 import { useWBSSelection } from './WBSTree/hooks/useWBSSelection';
@@ -34,6 +35,7 @@ interface WBSTreeProps {
   setExpandedTasks: React.Dispatch<React.SetStateAction<Record<number, boolean>>>;
   hidePlanningColumns?: boolean;
   isPlanningMode?: boolean;
+  displayOptions: DisplayOptions;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
@@ -48,6 +50,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   setExpandedTasks,
   hidePlanningColumns = false,
   isPlanningMode = false,
+  displayOptions,
   onScroll
 }, ref) => {
   const [saving, setSaving] = useState(false);
@@ -119,7 +122,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const { isConfirmModalOpen, setIsConfirmModalOpen, confirmData, isShiftDatesModalOpen, setIsShiftDatesModalOpen, currentMinDate, handleDeleteSelected, handleClearActualsSelected, handleClearPlansActualsSelected, handleDuplicateSelected, handleShiftDatesSelected, executeShiftDates, setConfirmData } = actions;
 
   // Updates Hook
-  const { handleUpdate, findItem } = useWBSUpdates({ projects, initialData, onUpdate, onLocalUpdate, setSaving, checkedIds, setConfirmData, setIsConfirmModalOpen });
+  const { handleUpdate, findItem } = useWBSUpdates({ projects, initialData, onUpdate, onLocalUpdate, setSaving, checkedIds, setConfirmData, setIsConfirmModalOpen, displayOptions });
 
   // Creation Hook
   const creation = useWBSCreation(onUpdate, initialData, setExpandedProjects, setExpandedTasks, setSaving);

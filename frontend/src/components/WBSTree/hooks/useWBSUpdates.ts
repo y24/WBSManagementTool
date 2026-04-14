@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { format, parseISO } from 'date-fns';
 import { Project, Task, Subtask } from '../../../types/wbs';
 import { InitialData } from '../../../types';
+import { DisplayOptions } from '../../FilterPanel/FilterPanelTypes';
 import { wbsOps } from '../../../api/wbsOperations';
 import { addBusinessDays, getBusinessDaysCount } from '../utils';
 
@@ -14,6 +15,7 @@ interface UseWBSUpdatesProps {
   checkedIds: Record<string, boolean>;
   setConfirmData: (data: any) => void;
   setIsConfirmModalOpen: (open: boolean) => void;
+  displayOptions: DisplayOptions;
 }
 
 export const useWBSUpdates = ({
@@ -24,7 +26,8 @@ export const useWBSUpdates = ({
   setSaving,
   checkedIds,
   setConfirmData,
-  setIsConfirmModalOpen
+  setIsConfirmModalOpen,
+  displayOptions
 }: UseWBSUpdatesProps) => {
 
   const findItem = useCallback((type: 'project' | 'task' | 'subtask', id: number) => {
@@ -120,13 +123,13 @@ export const useWBSUpdates = ({
       try {
         const promises = applicableItems.map(item => {
           const updates: any = { [field]: value };
-          
+
           // 連動更新ロジック (サブタスク)
           if (item.type === 'subtask') {
             const data = findItem(item.type, item.id) as Subtask;
             if (data) {
               const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
-              
+
               // 1. 作業日数 or レビュー日数が変更された場合 -> 終了日を再計算
               if (field === 'work_days' || field === 'review_days') {
                 if (data.planned_start_date) {
@@ -189,7 +192,7 @@ export const useWBSUpdates = ({
             const newIds = initialData.status_mapping_new?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [1];
             const doneIds = initialData.status_mapping_done?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [4, 7];
             const targetStatusId = parseInt(value, 10);
-            
+
             if (newIds.includes(targetStatusId)) {
               updates.progress_percent = 0;
               updates.actual_start_date = null;
@@ -276,6 +279,17 @@ export const useWBSUpdates = ({
       if (uniqueDetails.length > 0) {
         statusOverwriteMsg = `ステータスの変更により、以下のデータが自動更新・消去されます。上書きしてよろしいですか？\n\n${uniqueDetails.join('\n')}`;
       }
+
+      // Check for Removed status visibility
+      const removedStatusId = initialData?.statuses.find((s) => s.status_name === 'Removed')?.id ?? 7;
+      if (newStatusId === removedStatusId && !displayOptions.showRemoved) {
+        const removedMsg = 'ステータスをRemovedにするとアイテムが非表示になります。';
+        if (statusOverwriteMsg) {
+          statusOverwriteMsg = `${removedMsg}\n\n${statusOverwriteMsg}`;
+        } else {
+          statusOverwriteMsg = `${removedMsg}\n変更を適用してよろしいですか？`;
+        }
+      }
     }
 
     if (applicableItems.length > 1 || statusOverwriteMsg) {
@@ -300,7 +314,7 @@ export const useWBSUpdates = ({
         setConfirmData({
           total: applicableItems.length,
           detail: detail,
-          title: statusOverwriteMsg ? '自動入力の確認' : '一括編集の確認',
+          title: '確認',
           confirmText: '更新',
           variant: 'warning',
           onConfirm: performUpdate
@@ -312,7 +326,7 @@ export const useWBSUpdates = ({
     } else {
       await performUpdate();
     }
-  }, [onUpdate, initialData, findItem, checkedIds, setSaving, setIsConfirmModalOpen, setConfirmData, onLocalUpdate]);
+  }, [onUpdate, initialData, findItem, checkedIds, setSaving, setIsConfirmModalOpen, setConfirmData, onLocalUpdate, displayOptions]);
 
   return {
     handleUpdate,
