@@ -7,6 +7,7 @@ import StatusSelect from './StatusSelect';
 import PortalSelect from './PortalSelect';
 import { getWarning, shouldHighlightField } from './utils';
 import { commonRowClasses, commonCellClasses, dateCellClasses, planningCellClasses } from './constants';
+import RichTooltip from '../RichTooltip';
 
 interface SubtaskRowProps {
   subtask: Subtask;
@@ -25,6 +26,8 @@ interface SubtaskRowProps {
   onEditingChange?: (editing: boolean) => void;
   isEditing?: boolean;
   onTabNavigation?: (direction: 'next' | 'prev', autoEdit: boolean) => void;
+  projectName?: string;
+  taskName?: string;
 }
 
 const SubtaskRow = memo(({
@@ -43,7 +46,9 @@ const SubtaskRow = memo(({
   onFocusChange,
   onEditingChange,
   isEditing: isGlobalEditingByParent,
-  onTabNavigation
+  onTabNavigation,
+  projectName,
+  taskName
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData, true);
   const statusName = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name;
@@ -68,7 +73,7 @@ const SubtaskRow = memo(({
           type="checkbox"
           checked={checked}
           onClick={(e) => onToggleCheck(subtask.id, e.shiftKey)}
-          onChange={() => {}}
+          onChange={() => { }}
           className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-500 mr-1"
         />
         <div {...provided.dragHandleProps} className="p-1 cursor-grab active:cursor-grabbing text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400">
@@ -124,9 +129,38 @@ const SubtaskRow = memo(({
             </a>
           )}
           {subtask.memo && (
-            <span title={subtask.memo} className="cursor-help inline-flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 shrink-0 mx-0.5" onClick={() => onEditDetail('subtask', subtask)}>
-              <MessageSquare size={14} />
-            </span>
+            <RichTooltip
+              content={
+                <div className="space-y-2">
+                  <div>
+                    <div className="font-bold text-[14px] text-indigo-600 dark:text-indigo-400 truncate">
+                      {projectName || '-'}
+                    </div>
+                    {taskName && (
+                      <div className="font-medium truncate opacity-90 text-[13px] text-slate-700 dark:text-slate-300">
+                        {taskName}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-2 mt-1.5">
+                    {subtask.subtask_detail && (
+                      <div className="text-slate-500 dark:text-slate-400 text-[12px] leading-relaxed mb-2 font-medium">
+                        {subtask.subtask_detail}
+                      </div>
+                    )}
+                    
+                    <div className="bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 rounded p-2 text-slate-600 dark:text-slate-300 text-[12px] leading-relaxed whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto custom-scrollbar">
+                      {subtask.memo}
+                    </div>
+                  </div>
+                </div>
+              }
+            >
+              <span className="cursor-help inline-flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 shrink-0 mx-0.5" onClick={() => onEditDetail('subtask', subtask)}>
+                <MessageSquare size={14} />
+              </span>
+            </RichTooltip>
           )}
         </div>
         <button
@@ -154,7 +188,7 @@ const SubtaskRow = memo(({
       </div>
       <div className={`w-24 ${dateCellClasses} overflow-hidden`} style={{ scrollMarginLeft: nameWidth }}>
         {(localProgress != null) && (
-          <div 
+          <div
             className="absolute top-0 left-0 h-full bg-green-500/20 dark:bg-green-500/30 transition-all duration-300 pointer-events-none"
             style={{ width: `${localProgress}%` }}
           />
@@ -179,7 +213,7 @@ const SubtaskRow = memo(({
           />
         </div>
       </div>
-      <div 
+      <div
         className={`flex items-center ${commonCellClasses}`}
         style={{ width: assigneeWidth, minWidth: assigneeWidth, scrollMarginLeft: nameWidth }}
       >
@@ -258,12 +292,12 @@ const SubtaskRow = memo(({
             />
           </div>
           <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
-            <EditableInput 
-              type="date" 
-              value={subtask.planned_start_date} 
-              max={subtask.planned_end_date} 
-              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v)} 
-              highlight={getHighlight('planned_start_date', subtask.planned_start_date)} 
+            <EditableInput
+              type="date"
+              value={subtask.planned_start_date}
+              max={subtask.planned_end_date}
+              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_start_date', v)}
+              highlight={getHighlight('planned_start_date', subtask.planned_start_date)}
               isFocused={focusedField === 'planned_start'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_start')}
               onEditingChange={onEditingChange}
@@ -273,12 +307,12 @@ const SubtaskRow = memo(({
             />
           </div>
           <div className={`w-20 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
-            <EditableInput 
-              type="date" 
-              value={subtask.planned_end_date} 
-              min={subtask.planned_start_date} 
-              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v)} 
-              highlight={getHighlight('planned_end_date', subtask.planned_end_date)} 
+            <EditableInput
+              type="date"
+              value={subtask.planned_end_date}
+              min={subtask.planned_start_date}
+              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'planned_end_date', v)}
+              highlight={getHighlight('planned_end_date', subtask.planned_end_date)}
               isFocused={focusedField === 'planned_end'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_end')}
               onEditingChange={onEditingChange}
@@ -311,12 +345,12 @@ const SubtaskRow = memo(({
       {!isPlanningMode && (
         <>
           <div className={`w-20 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
-            <EditableInput 
-              type="date" 
-              value={subtask.actual_start_date} 
-              max={subtask.actual_end_date} 
-              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v)} 
-              highlight={getHighlight('actual_start_date', subtask.actual_start_date)} 
+            <EditableInput
+              type="date"
+              value={subtask.actual_start_date}
+              max={subtask.actual_end_date}
+              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_start_date', v)}
+              highlight={getHighlight('actual_start_date', subtask.actual_start_date)}
               isFocused={focusedField === 'actual_start'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_start')}
               onEditingChange={onEditingChange}
@@ -326,14 +360,14 @@ const SubtaskRow = memo(({
             />
           </div>
           <div className={`w-20 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
-            <EditableInput 
-              type="date" 
-              value={subtask.review_start_date} 
-              min={subtask.actual_start_date} 
-              max={subtask.actual_end_date} 
-              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v)} 
-              highlight={getHighlight('review_start_date', subtask.review_start_date)} 
-              readOnly={subtask.review_days !== null && subtask.review_days !== undefined && Number(subtask.review_days) === 0} 
+            <EditableInput
+              type="date"
+              value={subtask.review_start_date}
+              min={subtask.actual_start_date}
+              max={subtask.actual_end_date}
+              onChange={(v: string) => onUpdateField('subtask', subtask.id, 'review_start_date', v)}
+              highlight={getHighlight('review_start_date', subtask.review_start_date)}
+              readOnly={subtask.review_days !== null && subtask.review_days !== undefined && Number(subtask.review_days) === 0}
               isFocused={focusedField === 'review_start'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'review_start')}
               onEditingChange={onEditingChange}

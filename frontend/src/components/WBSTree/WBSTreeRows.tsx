@@ -92,6 +92,7 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                           onEditingChange={onEditingChange}
                           isEditing={isEditing}
                           onTabNavigation={onTabNavigation}
+                          projectName={project.project_name}
                         />
                         {rowProvided.placeholder}
                       </div>
@@ -137,6 +138,7 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                                           onEditingChange={onEditingChange}
                                           isEditing={isEditing}
                                           onTabNavigation={onTabNavigation}
+                                          projectName={project.project_name}
                                         />
                                         {rowProvided.placeholder}
                                       </div>
@@ -172,6 +174,8 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                                                     onEditingChange={onEditingChange}
                                                     isEditing={isEditing}
                                                     onTabNavigation={onTabNavigation}
+                                                    projectName={project.project_name}
+                                                    taskName={task.task_name}
                                                   />
                                                 </div>
                                               )}

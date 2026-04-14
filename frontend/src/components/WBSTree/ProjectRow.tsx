@@ -7,6 +7,7 @@ import StatusSelect from './StatusSelect';
 import PortalSelect from './PortalSelect';
 import { getWarning, getDisabledStatusIds, shouldHighlightField } from './utils';
 import { commonRowClasses, commonCellClasses, dateCellClasses, planningCellClasses } from './constants';
+import RichTooltip from '../RichTooltip';
 
 interface ProjectRowProps {
   project: Project;
@@ -28,6 +29,7 @@ interface ProjectRowProps {
   onEditingChange?: (editing: boolean) => void;
   isEditing?: boolean;
   onTabNavigation?: (direction: 'next' | 'prev', autoEdit: boolean) => void;
+  projectName?: string;
 }
 
 const ProjectRow = memo(({ 
@@ -49,7 +51,8 @@ const ProjectRow = memo(({
   onFocusChange,
   onEditingChange,
   isEditing: isGlobalEditingByParent,
-  onTabNavigation
+  onTabNavigation,
+  projectName
 }: ProjectRowProps) => {
   const warning = getWarning(project, initialData);
 
@@ -119,9 +122,33 @@ const ProjectRow = memo(({
           </a>
         )}
         {project.memo && (
-          <span title={project.memo} className="cursor-help inline-flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 shrink-0 mx-0.5" onClick={() => onEditDetail('project', project)}>
-            <MessageSquare size={14} />
-          </span>
+          <RichTooltip
+            content={
+              <div className="space-y-2">
+                <div>
+                  <div className="font-bold text-[14px] text-indigo-600 dark:text-indigo-400 truncate">
+                    {project.project_name}
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-2 mt-1.5">
+                  {project.detail && (
+                    <div className="text-slate-500 dark:text-slate-400 text-[12px] leading-relaxed mb-2 font-medium">
+                      {project.detail}
+                    </div>
+                  )}
+                  
+                  <div className="bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 rounded p-2 text-slate-600 dark:text-slate-300 text-[12px] leading-relaxed whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto custom-scrollbar">
+                    {project.memo}
+                  </div>
+                </div>
+              </div>
+            }
+          >
+            <span className="cursor-help inline-flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 shrink-0 mx-0.5" onClick={() => onEditDetail('project', project)}>
+              <MessageSquare size={14} />
+            </span>
+          </RichTooltip>
         )}
         <button
           onClick={() => onEditDetail('project', project)}
