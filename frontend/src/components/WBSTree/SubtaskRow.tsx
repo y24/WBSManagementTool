@@ -175,6 +175,7 @@ const SubtaskRow = memo(({
             onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
             isEditing={isGlobalEditingByParent}
             nameWidth={nameWidth}
+            clearValue={0}
           />
         </div>
       </div>
@@ -217,6 +218,7 @@ const SubtaskRow = memo(({
               onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
               isEditing={isGlobalEditingByParent}
               nameWidth={nameWidth}
+              clearValue={100}
             />
           </div>
           <div className={`w-20 ${commonCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>

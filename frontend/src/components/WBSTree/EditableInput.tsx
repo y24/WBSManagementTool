@@ -25,6 +25,7 @@ interface EditableInputProps {
   onTab?: (isShift: boolean, editing: boolean) => void;
   isEditing?: boolean;
   nameWidth?: number;
+  clearValue?: any;
 }
 
 /**
@@ -124,7 +125,7 @@ const PopoverEditor = ({
 };
 
 const EditableInput = memo(({
-  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange, placeholder, isFocused, onFocusChange, onEditingChange, onTab, isEditing: isGlobalEditing, nameWidth
+  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange, placeholder, isFocused, onFocusChange, onEditingChange, onTab, isEditing: isGlobalEditing, nameWidth, clearValue
 }: EditableInputProps) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -218,7 +219,7 @@ const EditableInput = memo(({
       }
     } else if (type === 'number') {
       if (newVal === '') {
-        valueToSave = null;
+        valueToSave = clearValue !== undefined ? clearValue : null;
       } else {
         let numVal = Number(newVal);
         if (isNaN(numVal)) {
@@ -388,11 +389,11 @@ const EditableInput = memo(({
         if (e.key === 'Delete') {
           e.preventDefault();
           e.stopPropagation();
-          const emptyValue = type === 'text' ? '' : null;
-          setVal(''); // 即座にローカルの表示をクリア
-          onChange(emptyValue);
+          const finalClearValue = clearValue !== undefined ? clearValue : (type === 'text' ? '' : null);
+          setVal(finalClearValue != null ? String(finalClearValue) : ''); // 即座にローカルの表示を更新
+          onChange(finalClearValue);
           if (onInputChange && type === 'number') {
-            onInputChange(null);
+            onInputChange(finalClearValue);
           }
         }
       };
