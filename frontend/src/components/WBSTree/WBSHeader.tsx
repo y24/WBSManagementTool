@@ -61,8 +61,8 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
       </div>
 
       <div className={`w-28 flex-shrink-0 flex items-center ${commonHeaderClasses}`} style={{ height: '38px' }}>ステータス</div>
-      <div className={`w-24 flex-shrink-0 flex items-center ${commonHeaderClasses}`} style={{ height: '38px' }}>進捗</div>
-      <div 
+      <div className={`w-24 flex-shrink-0 flex items-center ${commonHeaderClasses}`} style={{ height: '38px' }} title="上位階層（青文字）は、配下サブタスクの予定工数による加重平均で算出されます。">進捗</div>
+      <div
         className={`flex-shrink-0 flex items-center relative ${commonHeaderClasses}`}
         style={{ width: assigneeWidth, minWidth: assigneeWidth, height: '38px' }}
       >
@@ -94,13 +94,13 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
           {!hidePlanningColumns && (
             <>
               <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`}>工数比率</div>
-              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`}>作業日数</div>
-              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`}>レビュー日数</div>
-              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`}>開始(計画)</div>
-              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`}>終了(計画)</div>
-              <div 
+              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`} title="実作業に割り当てる営業日数。レビュー期間は除きます。">作業日数</div>
+              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`} title="レビューに割り当てる営業日数。この期間の工数は一律50%で計算されます。">レビュー日数</div>
+              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`} title="実作業を開始する予定日。">開始(計画)</div>
+              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`} title="実作業とレビューの全工程を完了する予定日。">終了(計画)</div>
+              <div
                 className={`w-16 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`}
-                title="予定工数 = (作業日数 × 工数比率) + (レビュー日数 × 50%)&#10;※工数比率はレビュー日数には掛けずに、レビュー日数の工数比率は常に50％とします。"
+                title="予定工数 = (作業日数 × 工数比率) + (レビュー日数 × 50%)&#10;※作業日数とレビュー日数が同日の場合は、両方の工数を合算して算出します。"
               >
                 予定工数
               </div>
@@ -108,10 +108,15 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
           )}
           {!isPlanningMode && (
             <>
-              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} !py-0`}>開始(実績)</div>
-              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} !py-0`}>レビュー開始</div>
-              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} !py-0`}>終了(実績)</div>
-              <div className={`w-16 flex-shrink-0 flex items-center ${commonHeaderClasses} !py-0`}>実績工数</div>
+              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} !py-0`} title="作業を開始した日。ステータスが「In Progress」になると自動設定されます。">開始(実績)</div>
+              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} !py-0`} title="レビューを開始した日。ステータスが「In Review」になると自動設定されます。">レビュー開始</div>
+              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} !py-0`} title="全工程が完了した日。ステータスを「Done」にすると自動設定されます。">終了(実績)</div>
+              <div
+                className={`w-16 flex-shrink-0 flex items-center ${commonHeaderClasses} !py-0`}
+                title="実績工数 = (作業期間 × 工数比率) + (レビュー期間 × 50%)&#10;※作業期間とレビュー期間が同日の場合は、両方の工数を合算して算出します。"
+              >
+                実績工数
+              </div>
             </>
           )}
         </div>
