@@ -180,7 +180,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {showPlannedBar && (
         <>
           <div
-            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-400 dark:bg-slate-500 opacity-80 dark:opacity-70 ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''} pointer-events-auto`}
+            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-400 dark:bg-slate-500 ${isSubtask ? 'opacity-80 dark:opacity-70' : 'opacity-40 dark:opacity-30'} ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''} pointer-events-auto`}
             style={{ left: `${pStart}px`, width: `${pWidth}px` }}
             onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouseMove}
@@ -217,7 +217,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
           )}
           {rStart !== undefined && rWidth !== undefined && (
             <div
-              className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-tr-sm' : 'rounded-r-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-white/40 dark:bg-white/10 pointer-events-none`}
+              className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-tr-sm' : 'rounded-r-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : 'h-[16px]'} bg-white/40 dark:bg-white/10 ${isSubtask ? '' : 'opacity-40'} pointer-events-none`}
               style={{ left: `${rStart}px`, width: `${rWidth}px` }}
             />
           )}
@@ -226,7 +226,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {aStart !== undefined && aWidth !== undefined && (
         <>
           <div
-              className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} pointer-events-auto`}
+              className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isSubtask ? '' : 'opacity-60'} ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} pointer-events-auto`}
             style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
             onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouseMove}
