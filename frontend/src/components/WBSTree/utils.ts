@@ -109,7 +109,7 @@ export const getWarning = (item: any, initialData?: InitialData | null, isSubtas
   // 遅延判定
   if (initialData && item.status_id) {
     const status = initialData.statuses.find(s => s.id === item.status_id);
-    if (status && status.status_name !== 'Done' && status.status_name !== 'Removed') {
+    if (status && status.status_name !== 'Done' && status.status_name !== 'Removed' && status.status_name !== 'Pending') {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
