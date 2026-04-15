@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Check, X } from 'lucide-react';
+import { ChevronDown, Check, X, Search } from 'lucide-react';
 
 interface MultiSelectProps {
   values: any[];
@@ -20,11 +20,17 @@ const MultiSelect = memo(({
   dropdownTitle
 }: MultiSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, direction: 'down' as 'up' | 'down' });
 
   const selectedOptions = options.filter(o => values.includes(o.id));
+
+  const filteredOptions = options.filter(opt =>
+    opt.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const toggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -78,6 +84,17 @@ const MultiSelect = memo(({
       window.removeEventListener('scroll', handleEvents, true);
       window.removeEventListener('resize', handleEvents);
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      setSearchTerm('');
+    }
   }, [isOpen]);
 
   const toggleOption = (id: any) => {
@@ -144,8 +161,36 @@ const MultiSelect = memo(({
               )}
             </div>
           </div>
+
+          {/* Search Bar */}
+          <div className="px-3 pb-2 mb-2 border-b border-gray-50 dark:border-slate-800">
+            <div className="relative group/search">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/search:text-blue-500 transition-colors pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="検索..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-8 py-1.5 text-xs bg-gray-50/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50 rounded-lg focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/10 dark:text-slate-200 transition-all font-medium"
+              />
+              {searchTerm && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSearchTerm(''); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="max-h-64 overflow-y-auto overscroll-contain px-1">
-            {options.map((opt) => {
+            {filteredOptions.length === 0 ? (
+              <div className="px-3 py-6 text-center">
+                <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">一致する項目がありません</p>
+              </div>
+            ) : filteredOptions.map((opt) => {
               const isSelected = values.includes(opt.id);
               const isDisabled = opt.disabled;
               return (
