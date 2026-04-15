@@ -26,6 +26,7 @@ interface GanttChartProps {
   showMarkers?: boolean;
   scale: GanttScale;
   colorMode?: 'status' | 'assignee';
+  highlightSameAssignee?: boolean;
   isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
   onRefresh?: () => void;
@@ -44,6 +45,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   showMarkers = true,
   scale,
   colorMode = 'status',
+  highlightSameAssignee = false,
   isDarkMode = false,
   onScroll,
   onRefresh
@@ -52,6 +54,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   const hoveredDate = hoveredDateInfo?.date ?? null;
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isMarkerModalOpen, setIsMarkerModalOpen] = useState(false);
+  const [hoveredAssigneeId, setHoveredAssigneeId] = useState<number | null>(null);
 
   // Drag logic
   const { dragState, tempDates, handleMouseDown } = useGanttDrag(initialData, scale, onRefresh);
@@ -355,6 +358,9 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                       getAssigneeColor={getAssigneeColor}
                       colorMode={colorMode}
                       isExpanded={expandedProjects[project.id] !== false}
+                      highlightSameAssignee={highlightSameAssignee}
+                      hoveredAssigneeId={hoveredAssigneeId}
+                      setHoveredAssigneeId={setHoveredAssigneeId}
                     />
                   </div>
 
@@ -381,6 +387,9 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                           getAssigneeColor={getAssigneeColor}
                           colorMode={colorMode}
                           isExpanded={expandedTasks[task.id] !== false}
+                          highlightSameAssignee={highlightSameAssignee}
+                          hoveredAssigneeId={hoveredAssigneeId}
+                          setHoveredAssigneeId={setHoveredAssigneeId}
                         />
                       </div>
 
@@ -409,6 +418,9 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                               getStatusColor={getStatusColor}
                               getAssigneeColor={getAssigneeColor}
                               colorMode={colorMode}
+                              highlightSameAssignee={highlightSameAssignee}
+                              hoveredAssigneeId={hoveredAssigneeId}
+                              setHoveredAssigneeId={setHoveredAssigneeId}
                             />
                           </div>
                         );

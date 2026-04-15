@@ -26,4 +26,5 @@ export interface DisplayOptions {
   overlapThreshold: number;
   ganttScale: GanttScale;
   colorMode: 'status' | 'assignee';
+  highlightSameAssignee: boolean;
 }

@@ -36,6 +36,9 @@ interface GanttBarProps {
   customLabel?: string;
   isDelayedHighlight?: boolean;
   isResourceView?: boolean;
+  highlightSameAssignee?: boolean;
+  hoveredAssigneeId?: number | null;
+  setHoveredAssigneeId?: (id: number | null) => void;
 }
 
 const GanttBar: React.FC<GanttBarProps> = ({
@@ -58,6 +61,9 @@ const GanttBar: React.FC<GanttBarProps> = ({
   customLabel,
   isDelayedHighlight = false,
   isResourceView = false,
+  highlightSameAssignee = false,
+  hoveredAssigneeId = null,
+  setHoveredAssigneeId,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -73,8 +79,12 @@ const GanttBar: React.FC<GanttBarProps> = ({
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     hoverTimer.current = setTimeout(() => {
       setIsHovered(true);
+      // 同一担当者の強調表示
+      if (highlightSameAssignee && item.assignee_id && setHoveredAssigneeId) {
+        setHoveredAssigneeId(item.assignee_id);
+      }
     }, 500);
-  }, [dragState, item.id]);
+  }, [dragState, item.id, item.assignee_id, highlightSameAssignee, setHoveredAssigneeId]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     setMousePos({ x: e.clientX, y: e.clientY });
@@ -83,7 +93,10 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const handleMouseLeave = useCallback(() => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     setIsHovered(false);
-  }, []);
+    if (highlightSameAssignee && setHoveredAssigneeId) {
+      setHoveredAssigneeId(null);
+    }
+  }, [highlightSameAssignee, setHoveredAssigneeId]);
 
   // プロジェクト/タスクで展開中の場合は、従来は何も表示していなかったが、
   // 手入力（is_auto_planned_date = false）の場合は表示するように変更する。
@@ -202,6 +215,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const barLabelTopPx = isSubtask && isResourceView ? '9px' : '13px';
   const warningTopPx = isSubtask && isResourceView ? '8px' : '10px';
 
+  const isHighlighted = highlightSameAssignee && hoveredAssigneeId !== null && item.assignee_id === hoveredAssigneeId;
+
   return (
     <div
       className="relative w-full h-full min-h-[30px] flex flex-col justify-start pointer-events-none"
@@ -209,7 +224,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {showPlannedBar && (
         <>
           <div
-            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-400 dark:bg-slate-500 ${isSubtask ? 'opacity-80 dark:opacity-70' : 'opacity-40 dark:opacity-30'} ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''} pointer-events-auto`}
+            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-400 dark:bg-slate-500 ${isSubtask ? 'opacity-80 dark:opacity-70' : 'opacity-40 dark:opacity-30'} ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''} ${!hasActual && isHighlighted ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-indigo-400 dark:ring-offset-slate-900 z-30' : ''} pointer-events-auto transition-shadow duration-200`}
             style={{ left: `${pStart}px`, width: `${pWidth}px` }}
             onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouseMove}
@@ -255,7 +270,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {showActualBar && (
         <>
           <div
-            className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isSubtask ? '' : 'opacity-60'} ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} pointer-events-auto`}
+            className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isSubtask ? '' : 'opacity-60'} ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} ${isHighlighted ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-indigo-400 dark:ring-offset-slate-900 z-30' : ''} pointer-events-auto transition-shadow duration-200`}
             style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
             onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouseMove}

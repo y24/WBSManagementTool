@@ -43,6 +43,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   overlapThreshold: 1,
   ganttScale: 'day',
   colorMode: 'status',
+  highlightSameAssignee: false,
 };
 
 function readJson<T extends object>(key: string, fallback: T): T {
