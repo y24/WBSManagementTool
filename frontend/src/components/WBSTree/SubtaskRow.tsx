@@ -28,6 +28,7 @@ interface SubtaskRowProps {
   onTabNavigation?: (direction: 'next' | 'prev', autoEdit: boolean) => void;
   projectName?: string;
   taskName?: string;
+  highlightDelayedTasks?: boolean;
 }
 
 const SubtaskRow = memo(({
@@ -48,7 +49,8 @@ const SubtaskRow = memo(({
   isEditing: isGlobalEditingByParent,
   onTabNavigation,
   projectName,
-  taskName
+  taskName,
+  highlightDelayedTasks = true
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData, true);
   const statusName = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name;
@@ -60,11 +62,27 @@ const SubtaskRow = memo(({
     setLocalProgress(subtask.progress_percent ?? null);
   }, [subtask.progress_percent]);
 
+  const todayStr = React.useMemo(() => new Date().toISOString().split('T')[0], []);
+  const doneStatusId = React.useMemo(() => initialData?.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null, [initialData]);
+  const newStatusId = React.useMemo(() => initialData?.status_mapping_new ? Number.parseInt(initialData.status_mapping_new, 10) : undefined, [initialData]);
+
+  const isDelayed = React.useMemo(() => {
+    if (!highlightDelayedTasks) return false;
+    // If no dates, not delayed
+    if (!subtask.planned_start_date && !subtask.planned_end_date && !subtask.actual_start_date && !subtask.actual_end_date) return false;
+    
+    const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
+    const isNew = newStatusId !== undefined && subtask.status_id === newStatusId;
+    const startDelayed = isNew && !!subtask.planned_start_date && subtask.planned_start_date < todayStr;
+    const endDelayed = !isDone && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
+    return startDelayed || endDelayed;
+  }, [subtask, doneStatusId, newStatusId, todayStr, highlightDelayedTasks]);
+
   const getHighlight = (field: string, value: any) =>
     shouldHighlightField('subtask', field, value, subtask, initialData);
 
   return (
-    <div className={`flex group wbs-row-subtask ${commonRowClasses} ${checked ? 'checked' : ''}`}>
+    <div className={`flex group wbs-row-subtask ${commonRowClasses} ${checked ? 'checked' : ''} ${isDelayed ? 'delayed' : ''}`}>
       <div
         className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 dark:text-slate-400 wbs-cell-subtask transition-colors ${commonCellClasses} ${checked ? 'checked' : 'bg-white dark:bg-slate-900'}`}
         style={{ width: nameWidth, minWidth: nameWidth }}

@@ -44,6 +44,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   ganttScale: 'day',
   colorMode: 'status',
   highlightSameAssignee: false,
+  highlightDelayedTasks: true,
 };
 
 function readJson<T extends object>(key: string, fallback: T): T {

@@ -27,6 +27,7 @@ interface GanttChartProps {
   scale: GanttScale;
   colorMode?: 'status' | 'assignee';
   highlightSameAssignee?: boolean;
+  highlightDelayedTasks?: boolean;
   isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
   onRefresh?: () => void;
@@ -46,6 +47,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   scale,
   colorMode = 'status',
   highlightSameAssignee = false,
+  highlightDelayedTasks = true,
   isDarkMode = false,
   onScroll,
   onRefresh
@@ -138,6 +140,19 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     return !item.planned_start_date && !item.planned_end_date && 
            !item.actual_start_date && !item.actual_end_date;
   }, []);
+
+  const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const doneStatusId = useMemo(() => initialData?.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null, [initialData]);
+  const newStatusId = useMemo(() => initialData?.status_mapping_new ? Number.parseInt(initialData.status_mapping_new, 10) : undefined, [initialData]);
+
+  const isDelayed = useCallback((subtask: Subtask) => {
+    if (isRowEmpty(subtask)) return false;
+    const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
+    const isNew = newStatusId !== undefined && subtask.status_id === newStatusId;
+    const startDelayed = isNew && !!subtask.planned_start_date && subtask.planned_start_date < todayStr;
+    const endDelayed = !isDone && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
+    return startDelayed || endDelayed;
+  }, [isRowEmpty, doneStatusId, newStatusId, todayStr]);
 
   const handleRowDoubleClick = useCallback(async (e: React.MouseEvent, item: Task | Subtask, itemType: 'task' | 'subtask') => {
     // すでに計画か実績が入力されている場合はダブルクリックしても何も反応しなくて良い
@@ -394,11 +409,12 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                       </div>
 
                       {expandedTasks[task.id] !== false && task.subtasks.map(subtask => {
-                        const typeName = initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name;
-                        return (
-                          <div 
-                            key={`s-${subtask.id}`} 
-                            className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) && scale !== 'month' ? 'wbs-row-empty' : ''}`}
+                          const typeName = initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name;
+                          const delayed = highlightDelayedTasks && isDelayed(subtask);
+                          return (
+                            <div 
+                              key={`s-${subtask.id}`} 
+                              className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) && scale !== 'month' ? 'wbs-row-empty' : ''} ${delayed ? 'delayed' : ''}`}
                             onDoubleClick={(e) => handleRowDoubleClick(e, subtask, 'subtask')}
                             title={isRowEmpty(subtask) && scale !== 'month' ? (typeName ? `ダブルクリックで計画を入力: ${typeName}` : 'ダブルクリックで計画を入力') : undefined}
                           >

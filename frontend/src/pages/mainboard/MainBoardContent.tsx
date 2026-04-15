@@ -117,6 +117,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
                 scale={displayOptions.ganttScale}
                 colorMode={displayOptions.colorMode}
                 highlightSameAssignee={displayOptions.highlightSameAssignee}
+                highlightDelayedTasks={displayOptions.highlightDelayedTasks}
                 isDarkMode={displayOptions.isDarkMode}
                 onScroll={onGanttScroll}
                 onRefresh={() => onUpdate(false)}

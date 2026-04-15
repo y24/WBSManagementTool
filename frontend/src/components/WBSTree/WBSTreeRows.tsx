@@ -2,6 +2,7 @@ import React from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { Project, Task, Subtask } from '../../types/wbs';
 import { InitialData } from '../../types';
+import { DisplayOptions } from '../FilterPanel/FilterPanelTypes';
 import ProjectRow from './ProjectRow';
 import TaskRow from './TaskRow';
 import SubtaskRow from './SubtaskRow';
@@ -30,6 +31,7 @@ interface WBSTreeRowsProps {
   onEditingChange: (isEditing: boolean) => void;
   isEditing: boolean;
   onTabNavigation?: (direction: 'next' | 'prev', autoEdit: boolean) => void;
+  displayOptions: DisplayOptions;
 }
 
 const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
@@ -55,7 +57,8 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
   onFocusChange,
   onEditingChange,
   isEditing,
-  onTabNavigation
+  onTabNavigation,
+  displayOptions
 }) => {
   return (
     <Droppable droppableId="projects-root" type="PROJECT">
@@ -176,6 +179,7 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                                                     onTabNavigation={onTabNavigation}
                                                     projectName={project.project_name}
                                                     taskName={task.task_name}
+                                                    highlightDelayedTasks={displayOptions.highlightDelayedTasks}
                                                   />
                                                 </div>
                                               )}

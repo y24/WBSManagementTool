@@ -228,6 +228,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
             onEditingChange={setIsEditing}
             isEditing={isEditing}
             onTabNavigation={moveFocusAndEdit}
+            displayOptions={displayOptions}
           />
         </DragDropContext>
 

@@ -27,4 +27,5 @@ export interface DisplayOptions {
   ganttScale: GanttScale;
   colorMode: 'status' | 'assignee';
   highlightSameAssignee: boolean;
+  highlightDelayedTasks: boolean;
 }

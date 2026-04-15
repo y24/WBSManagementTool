@@ -285,6 +285,22 @@ code {
   background-color: rgba(30, 41, 59, 0.45) !important;
 }
 
+.wbs-row-subtask.delayed {
+  background-color: rgba(251, 191, 36, 0.15) !important;
+}
+
+.wbs-row-subtask.delayed .wbs-cell-subtask {
+  background-color: rgba(251, 191, 36, 0.15) !important;
+}
+
+:root.dark .wbs-row-subtask.delayed {
+  background-color: rgba(217, 119, 6, 0.15) !important;
+}
+
+:root.dark .wbs-row-subtask.delayed .wbs-cell-subtask {
+  background-color: rgba(217, 119, 6, 0.15) !important;
+}
+
 .gantt-body .wbs-row-empty::after {
   content: "";
   position: absolute;
