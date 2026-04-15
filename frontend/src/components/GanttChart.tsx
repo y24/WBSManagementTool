@@ -147,12 +147,16 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
   const isDelayed = useCallback((subtask: Subtask) => {
     if (isRowEmpty(subtask)) return false;
+    const status = initialData?.statuses.find(s => s.id === subtask.status_id);
+    if (status && (status.status_name === 'Done' || status.status_name === 'Removed' || status.status_name === 'Pending')) {
+      return false;
+    }
     const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
     const isNew = newStatusId !== undefined && subtask.status_id === newStatusId;
     const startDelayed = isNew && !!subtask.planned_start_date && subtask.planned_start_date < todayStr;
     const endDelayed = !isDone && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
     return startDelayed || endDelayed;
-  }, [isRowEmpty, doneStatusId, newStatusId, todayStr]);
+  }, [isRowEmpty, doneStatusId, newStatusId, todayStr, initialData]);
 
   const handleRowDoubleClick = useCallback(async (e: React.MouseEvent, item: Task | Subtask, itemType: 'task' | 'subtask') => {
     // すでに計画か実績が入力されている場合はダブルクリックしても何も反応しなくて良い

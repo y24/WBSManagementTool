@@ -71,12 +71,17 @@ const SubtaskRow = memo(({
     // If no dates, not delayed
     if (!subtask.planned_start_date && !subtask.planned_end_date && !subtask.actual_start_date && !subtask.actual_end_date) return false;
     
+    const status = initialData?.statuses.find(s => s.id === subtask.status_id);
+    if (status && (status.status_name === 'Done' || status.status_name === 'Removed' || status.status_name === 'Pending')) {
+      return false;
+    }
+
     const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
     const isNew = newStatusId !== undefined && subtask.status_id === newStatusId;
     const startDelayed = isNew && !!subtask.planned_start_date && subtask.planned_start_date < todayStr;
     const endDelayed = !isDone && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
     return startDelayed || endDelayed;
-  }, [subtask, doneStatusId, newStatusId, todayStr, highlightDelayedTasks]);
+  }, [subtask, doneStatusId, newStatusId, todayStr, highlightDelayedTasks, initialData]);
 
   const getHighlight = (field: string, value: any) =>
     shouldHighlightField('subtask', field, value, subtask, initialData);
