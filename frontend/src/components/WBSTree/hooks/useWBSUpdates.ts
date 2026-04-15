@@ -195,6 +195,7 @@ export const useWBSUpdates = ({
             if (targetStatusId !== removedStatusId) {
               const newIds = initialData.status_mapping_new?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [1];
               const doneIds = initialData.status_mapping_done?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [4, 7];
+              const inReviewStatusId = initialData.statuses.find(s => s.status_name === 'In Review')?.id ?? 3;
 
               if (newIds.includes(targetStatusId)) {
                 updates.progress_percent = 0;
@@ -203,6 +204,11 @@ export const useWBSUpdates = ({
                 updates.review_start_date = null;
               } else if (doneIds.includes(targetStatusId)) {
                 updates.progress_percent = 100;
+              } else if (targetStatusId === inReviewStatusId) {
+                const data = findItem(item.type, item.id) as Subtask;
+                if (data && (data.progress_percent == null || data.progress_percent < 80)) {
+                  updates.progress_percent = 80;
+                }
               }
             }
           }
@@ -246,24 +252,30 @@ export const useWBSUpdates = ({
 
         const oldIsDone = doneIds.includes(data.status_id) && data.status_id !== removedStatusId;
 
-        if (isNew) {
-          if (data.progress_percent !== 0 && data.progress_percent !== null) {
-            overwriteDetails.push(`進捗率: ${data.progress_percent}% -> 0%`);
-          }
-          if (data.actual_start_date) {
-            overwriteDetails.push(`実績開始日: ${data.actual_start_date} -> (消去)`);
-          }
-          if (data.review_start_date) {
-            overwriteDetails.push(`レビュー開始日: ${data.review_start_date} -> (消去)`);
-          }
-          if (data.actual_end_date) {
-            overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> (消去)`);
-          }
-        } else {
-          // 1. Progress -> 100% (if currently set and not 100)
-          if (isDone && data.progress_percent !== 100 && data.progress_percent !== 0 && data.progress_percent !== null) {
-            overwriteDetails.push(`進捗率: ${data.progress_percent}% -> 100%`);
-          }
+          if (isNew) {
+            if (data.progress_percent !== 0 && data.progress_percent != null) {
+              overwriteDetails.push(`進捗率: ${data.progress_percent}% -> 0%`);
+            }
+            if (data.actual_start_date) {
+              overwriteDetails.push(`実績開始日: ${data.actual_start_date} -> (消去)`);
+            }
+            if (data.review_start_date) {
+              overwriteDetails.push(`レビュー開始日: ${data.review_start_date} -> (消去)`);
+            }
+            if (data.actual_end_date) {
+              overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> (消去)`);
+            }
+          } else {
+            // 1. Progress -> 100% (if currently set and not 100)
+            if (isDone && data.progress_percent !== 100 && data.progress_percent !== 0 && data.progress_percent != null) {
+              overwriteDetails.push(`進捗率: ${data.progress_percent}% -> 100% (Done)`);
+            }
+  
+            // Progress -> 80% (In Review)
+            const inReviewStatusId = initialData.statuses.find(s => s.status_name === 'In Review')?.id ?? 3;
+            if (newStatusId === inReviewStatusId && (data.progress_percent != null && data.progress_percent > 0 && data.progress_percent < 80)) {
+              overwriteDetails.push(`進捗率: ${data.progress_percent}% -> 80% (In Review)`);
+            }
 
           // 2. actual_end_date (overwritten by backend for Ongoing status)
           // 両方が進行中ステータス（自動更新対象）なら警告不要
