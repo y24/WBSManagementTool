@@ -77,15 +77,34 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     else if (ref) (ref as any).current = containerRef.current;
   }, [ref]);
 
+  // Actions Hook
+  const actions = useWBSTreeActions({
+    projects,
+    selectedIds,
+    minimalIds,
+    selectedCounts,
+    totalSelectedCount,
+    checkedIds,
+    onUpdate,
+    setSaving,
+    clearSelection
+  });
+  const { isConfirmModalOpen, setIsConfirmModalOpen, confirmData, isShiftDatesModalOpen, setIsShiftDatesModalOpen, currentMinDate, handleDeleteSelected, handleClearActualsSelected, handleClearPlansActualsSelected, handleDuplicateSelected, handleShiftDatesSelected, executeShiftDates, setConfirmData } = actions;
+
+  // Updates Hook
+  const { handleUpdate, findItem } = useWBSUpdates({ projects, initialData, onUpdate, onLocalUpdate, setSaving, checkedIds, setConfirmData, setIsConfirmModalOpen, displayOptions });
+
   // Keyboard Navigation Hook
   const keyboardNav = useWBSKeyboardNavigation({
     projects,
+    initialData,
     expandedProjects,
     expandedTasks,
     hidePlanningColumns,
-    isPlanningMode
+    isPlanningMode,
+    onUpdateField: handleUpdate
   });
-  const { focus, setFocus, isEditing, handleKeyDown, setIsEditing, moveFocusAndEdit } = keyboardNav;
+  const { focus, setFocus, isEditing, handleKeyDown, setIsEditing, moveFocusAndEdit, handleCopy, handlePaste } = keyboardNav;
 
   // focus handle
   const handleCellClick = useCallback((rowId: string, field: string) => {
@@ -106,23 +125,6 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       }
     }, 0);
   }, [setFocus]);
-
-  // Actions Hook
-  const actions = useWBSTreeActions({
-    projects,
-    selectedIds,
-    minimalIds,
-    selectedCounts,
-    totalSelectedCount,
-    checkedIds,
-    onUpdate,
-    setSaving,
-    clearSelection
-  });
-  const { isConfirmModalOpen, setIsConfirmModalOpen, confirmData, isShiftDatesModalOpen, setIsShiftDatesModalOpen, currentMinDate, handleDeleteSelected, handleClearActualsSelected, handleClearPlansActualsSelected, handleDuplicateSelected, handleShiftDatesSelected, executeShiftDates, setConfirmData } = actions;
-
-  // Updates Hook
-  const { handleUpdate, findItem } = useWBSUpdates({ projects, initialData, onUpdate, onLocalUpdate, setSaving, checkedIds, setConfirmData, setIsConfirmModalOpen, displayOptions });
 
   // Creation Hook
   const creation = useWBSCreation(onUpdate, initialData, setExpandedProjects, setExpandedTasks, setSaving);
@@ -148,6 +150,21 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     }
   }, [checkedIds]);
 
+  // モーダルが閉じたときにフォーカスをコンテナに戻す
+  const wasModalOpen = useRef(false);
+  useEffect(() => {
+    const isAnyModalOpen = isConfirmModalOpen || isShiftDatesModalOpen || !!editingItem;
+    if (wasModalOpen.current && !isAnyModalOpen) {
+      // モーダルが閉じた瞬間、少し遅延させてフォーカスを戻す
+      setTimeout(() => {
+        if (focus) {
+          containerRef.current?.focus();
+        }
+      }, 50);
+    }
+    wasModalOpen.current = isAnyModalOpen;
+  }, [isConfirmModalOpen, isShiftDatesModalOpen, editingItem, focus]);
+
   return (
     <div
       ref={containerRef}
@@ -165,6 +182,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           containerRef.current?.focus();
         }
       }}
+      onCopy={handleCopy}
+      onPaste={handlePaste}
     >
       <div className="min-w-max">
         {saving && (

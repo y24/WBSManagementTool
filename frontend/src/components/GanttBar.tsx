@@ -399,4 +399,4 @@ const GanttBar: React.FC<GanttBarProps> = ({
   );
 };
 
-export default GanttBar;
+export default React.memo(GanttBar);

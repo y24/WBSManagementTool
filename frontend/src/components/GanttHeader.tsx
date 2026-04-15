@@ -201,4 +201,4 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
   );
 };
 
-export default GanttHeader;
+export default React.memo(GanttHeader);

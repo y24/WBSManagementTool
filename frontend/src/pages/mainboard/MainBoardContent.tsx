@@ -1,4 +1,4 @@
-import { Dispatch, RefObject, SetStateAction, UIEvent } from 'react';
+import React, { Dispatch, RefObject, SetStateAction, UIEvent } from 'react';
 import WBSTree from '../../components/WBSTree';
 import GanttChart from '../../components/GanttChart';
 import ResourceBoard from '../../components/ResourceView/ResourceBoard';
@@ -25,7 +25,7 @@ interface MainBoardContentProps {
   onGanttScroll: (e: UIEvent<HTMLDivElement>) => void;
 }
 
-export default function MainBoardContent({
+const MainBoardContent: React.FC<MainBoardContentProps> = ({
   displayOptions,
   treeWidth,
   setIsResizing,
@@ -42,7 +42,7 @@ export default function MainBoardContent({
   dynamicGanttRange,
   onTreeScroll,
   onGanttScroll,
-}: MainBoardContentProps) {
+}) => {
   if (displayOptions.viewMode === 'resource') {
     return (
       <div className="flex flex-1 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
@@ -125,4 +125,6 @@ export default function MainBoardContent({
       )}
     </div>
   );
-}
+};
+
+export default React.memo(MainBoardContent);

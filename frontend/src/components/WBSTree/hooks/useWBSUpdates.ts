@@ -46,7 +46,7 @@ export const useWBSUpdates = ({
     return null;
   }, [projects]);
 
-  const handleUpdate = useCallback(async (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => {
+  const handleUpdate = useCallback(async (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any, options?: { forceConfirm?: boolean }) => {
     // Name validation
     if ((field === 'project_name' || field === 'task_name') && (!value || value.trim() === '')) {
       alert('名称を入力してください。');
@@ -298,7 +298,7 @@ export const useWBSUpdates = ({
       }
     }
 
-    if (applicableItems.length > 1 || statusOverwriteMsg) {
+    if (applicableItems.length > 1 || statusOverwriteMsg || options?.forceConfirm) {
       const hasBulkValueOverwrite = applicableItems.length > 1 && applicableItems.some(item => {
         if (item.type === type && item.id === id) return false;
         const data = findItem(item.type, item.id);
@@ -307,12 +307,18 @@ export const useWBSUpdates = ({
         return currentVal != null && currentVal !== '' && currentVal !== 0 && currentVal !== value;
       });
 
-      if (hasBulkValueOverwrite || statusOverwriteMsg) {
+      const isSingleOverwrite = !statusOverwriteMsg && options?.forceConfirm && applicableItems.length === 1;
+      const singleItem = isSingleOverwrite ? findItem(applicableItems[0].type, applicableItems[0].id) : null;
+      const hasSingleValueOverwrite = singleItem && (singleItem as any)[field] != null && (singleItem as any)[field] !== '' && (singleItem as any)[field] !== 0 && (singleItem as any)[field] !== value;
+
+      if (hasBulkValueOverwrite || statusOverwriteMsg || hasSingleValueOverwrite) {
         let detail = '';
         if (hasBulkValueOverwrite && statusOverwriteMsg) {
           detail = `選択された項目のうち、すでに値が入力されているものがあります。また、自動入力による上書きも発生します。\n\n${statusOverwriteMsg}`;
         } else if (hasBulkValueOverwrite) {
           detail = `選択された項目のうち、すでに値が入力されているものがあります。上書きしてよろしいですか？\n(対象項目数: ${applicableItems.length})`;
+        } else if (hasSingleValueOverwrite) {
+          detail = '既に値が入力されています。上書きしてよろしいですか？';
         } else {
           detail = statusOverwriteMsg;
         }

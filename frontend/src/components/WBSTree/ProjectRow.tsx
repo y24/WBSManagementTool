@@ -17,7 +17,7 @@ interface ProjectRowProps {
   onToggleCheck: (project: Project, isShift?: boolean) => void;
   onToggleExpand: (id: number, recursive?: boolean) => void;
   expanded: boolean;
-  onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
+  onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any, options?: { forceConfirm?: boolean }) => void;
   onAddTask: (id: number) => void;
   onEditDetail: (type: 'project', data: Project) => void;
   initialData: InitialData | null;
@@ -337,4 +337,4 @@ const ProjectRow = memo(({
 });
 
 
-export default ProjectRow;
+export default React.memo(ProjectRow);

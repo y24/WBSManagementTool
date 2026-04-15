@@ -125,4 +125,4 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
   );
 };
 
-export default WBSHeader;
+export default React.memo(WBSHeader);

@@ -409,4 +409,4 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   );
 });
 
-export default GanttChart;
+export default React.memo(GanttChart);

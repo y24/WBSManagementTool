@@ -16,7 +16,7 @@ interface SubtaskRowProps {
   checked: boolean;
   onToggleCheck: (id: number, isShift?: boolean) => void;
   initialData: InitialData | null;
-  onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
+  onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any, options?: { forceConfirm?: boolean }) => void;
   onEditDetail: (type: 'subtask', data: Subtask) => void;
   provided: any;
   hidePlanningColumns?: boolean;
@@ -418,4 +418,4 @@ const SubtaskRow = memo(({
 });
 
 
-export default SubtaskRow;
+export default React.memo(SubtaskRow);

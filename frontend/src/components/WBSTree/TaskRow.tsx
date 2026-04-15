@@ -17,7 +17,7 @@ interface TaskRowProps {
   onToggleCheck: (task: Task, isShift?: boolean) => void;
   onToggleExpand: (id: number, recursive?: boolean) => void;
   expanded: boolean;
-  onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any) => void;
+  onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any, options?: { forceConfirm?: boolean }) => void;
   onAddSubtask: (id: number) => void;
   onEditDetail: (type: 'task', data: Task) => void;
   initialData: InitialData | null;
@@ -340,4 +340,4 @@ const TaskRow = memo(({
 });
 
 
-export default TaskRow;
+export default React.memo(TaskRow);

@@ -112,4 +112,4 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
   );
 };
 
-export default GanttBackground;
+export default React.memo(GanttBackground);
