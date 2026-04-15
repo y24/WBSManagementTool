@@ -25,6 +25,7 @@ interface GanttChartProps {
   showProgressRate?: boolean;
   showMarkers?: boolean;
   scale: GanttScale;
+  colorMode?: 'status' | 'assignee';
   isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
   onRefresh?: () => void;
@@ -42,6 +43,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   showProgressRate = false,
   showMarkers = true,
   scale,
+  colorMode = 'status',
   isDarkMode = false,
   onScroll,
   onRefresh
@@ -98,6 +100,34 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     }
     return color;
   }, [initialData, isDarkMode]);
+
+  const getAssigneeColor = useCallback((assigneeId: number | null | undefined): string => {
+    if (!assigneeId) return isDarkMode ? '#334155' : '#cbd5e1';
+    
+    // Muted color palette (Tailwind 500 levels, semi-harmonious)
+    const palette = [
+      '#6366f1', // Indigo 500
+      '#8b5cf6', // Violet 500
+      '#ec4899', // Pink 500
+      '#f43f5e', // Rose 500
+      '#ef4444', // Red 500
+      '#f97316', // Orange 500
+      '#f59e0b', // Amber 500
+      '#eab308', // Yellow 500
+      '#84cc16', // Lime 500
+      '#22c55e', // Green 500
+      '#10b981', // Emerald 500
+      '#14b8a6', // Teal 500
+      '#06b6d4', // Cyan 500
+      '#0ea5e9', // Sky 500
+      '#3b82f6', // Blue 500
+      '#a855f7', // Purple 500
+      '#d946ef', // Fuchsia 500
+    ];
+
+    // Simple deterministic selection
+    return palette[assigneeId % palette.length];
+  }, [isDarkMode]);
 
   const baseDate = useMemo(() => range.start_date ? parseISO(range.start_date) : new Date(), [range.start_date]);
 
@@ -322,6 +352,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                       showAssigneeName={showAssigneeName}
                       handleMouseDown={handleMouseDown}
                       getStatusColor={getStatusColor}
+                      getAssigneeColor={getAssigneeColor}
+                      colorMode={colorMode}
                       isExpanded={expandedProjects[project.id] !== false}
                     />
                   </div>
@@ -346,6 +378,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                           showAssigneeName={showAssigneeName}
                           handleMouseDown={handleMouseDown}
                           getStatusColor={getStatusColor}
+                          getAssigneeColor={getAssigneeColor}
+                          colorMode={colorMode}
                           isExpanded={expandedTasks[task.id] !== false}
                         />
                       </div>
@@ -373,6 +407,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                               showAssigneeName={showAssigneeName}
                               handleMouseDown={handleMouseDown}
                               getStatusColor={getStatusColor}
+                              getAssigneeColor={getAssigneeColor}
+                              colorMode={colorMode}
                             />
                           </div>
                         );

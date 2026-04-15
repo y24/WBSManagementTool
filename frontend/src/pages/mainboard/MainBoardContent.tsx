@@ -115,6 +115,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
                 showProgressRate={displayOptions.showProgressRate}
                 showMarkers={displayOptions.showMarkers}
                 scale={displayOptions.ganttScale}
+                colorMode={displayOptions.colorMode}
                 isDarkMode={displayOptions.isDarkMode}
                 onScroll={onGanttScroll}
                 onRefresh={() => onUpdate(false)}

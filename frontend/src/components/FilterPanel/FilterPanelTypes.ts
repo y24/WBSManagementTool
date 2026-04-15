@@ -25,4 +25,5 @@ export interface DisplayOptions {
   viewMode: 'wbs' | 'resource';
   overlapThreshold: number;
   ganttScale: GanttScale;
+  colorMode: 'status' | 'assignee';
 }

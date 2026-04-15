@@ -42,6 +42,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   viewMode: 'wbs',
   overlapThreshold: 1,
   ganttScale: 'day',
+  colorMode: 'status',
 };
 
 function readJson<T extends object>(key: string, fallback: T): T {

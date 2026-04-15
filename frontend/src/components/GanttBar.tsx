@@ -30,6 +30,8 @@ interface GanttBarProps {
     initialDates: { start?: string; end?: string; reviewStart?: string; reviewDays?: number; name?: string }
   ) => void;
   getStatusColor: (statusId: number | null | undefined) => string;
+  getAssigneeColor: (assigneeId: number | null | undefined) => string;
+  colorMode: 'status' | 'assignee';
   isExpanded?: boolean;
   customLabel?: string;
   isDelayedHighlight?: boolean;
@@ -50,6 +52,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
   showAssigneeName,
   handleMouseDown,
   getStatusColor,
+  getAssigneeColor,
+  colorMode,
   isExpanded = false,
   customLabel,
   isDelayedHighlight = false,
@@ -139,7 +143,10 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const hasActual = showActualBar; // For positioning other elements
 
 
-  const typeColor = getStatusColor(item.status_id);
+
+  const typeColor = colorMode === 'assignee' && item.assignee_id 
+    ? getAssigneeColor(item.assignee_id) 
+    : getStatusColor(item.status_id);
 
   let rStart: number | undefined, rWidth: number | undefined;
   if (isSubtask && plannedStart && plannedEnd && reviewDays && reviewDays > 0) {
