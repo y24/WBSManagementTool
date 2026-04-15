@@ -81,7 +81,12 @@ const GanttBar: React.FC<GanttBarProps> = ({
     setIsHovered(false);
   }, []);
 
-  if ((itemType === 'project' || itemType === 'task') && isExpanded) {
+  // プロジェクト/タスクで展開中の場合は、従来は何も表示していなかったが、
+  // 手入力（is_auto_planned_date = false）の場合は表示するように変更する。
+  const isAutoPlanned = (itemType === 'project' || itemType === 'task') && item.is_auto_planned_date;
+  const isAutoActual = (itemType === 'project' || itemType === 'task') && item.is_auto_actual_date;
+
+  if ((itemType === 'project' || itemType === 'task') && isExpanded && isAutoPlanned && isAutoActual) {
     return null;
   }
 
@@ -129,7 +134,10 @@ const GanttBar: React.FC<GanttBarProps> = ({
     }
   }
 
-  const hasActual = aStart !== undefined && aWidth !== undefined;
+  const showPlannedBar = pStart !== undefined && pWidth !== undefined && (!isAutoPlanned || !isExpanded) && !(isResourceView && (aStart !== undefined && !isAutoActual));
+  const showActualBar = aStart !== undefined && aWidth !== undefined && (!isAutoActual || !isExpanded);
+  const hasActual = showActualBar; // For positioning other elements
+
 
   const typeColor = getStatusColor(item.status_id);
 
@@ -169,14 +177,17 @@ const GanttBar: React.FC<GanttBarProps> = ({
     statusName === 'レビュー中'
   ) && itemType === 'subtask';
 
-  const isAutoPlanned = (itemType === 'project' || itemType === 'task') && item.is_auto_planned_date;
-  const isAutoActual = (itemType === 'project' || itemType === 'task') && item.is_auto_actual_date;
+  // すでに上で計算済みだがここでも定義 (読み取り専用・ドラッグ不可の判定用)
+  const isActuallyAutoPlanned = (itemType === 'project' || itemType === 'task') && item.is_auto_planned_date;
+  const isActuallyAutoActual = (itemType === 'project' || itemType === 'task') && item.is_auto_actual_date;
+
   const allowBarEdit = !isResourceView && scale !== 'month';
 
   const subtaskTypeName = isSubtask ? initialData?.subtask_types.find(t => t.id === item.subtask_type_id)?.type_name : null;
   const itemName = itemType === 'project' ? item.project_name : (itemType === 'task' ? item.task_name : subtaskTypeName);
 
-  const showPlannedBar = pStart !== undefined && pWidth !== undefined && !(isResourceView && hasActual);
+
+  
   const subtaskBarTopClass = isSubtask ? (isResourceView ? 'top-[8px]' : 'top-[12px]') : 'top-[10px]';
   const subtaskBarTopPx = isSubtask ? (isResourceView ? '8px' : '12px') : '10px';
   const subtaskBarHeightClass = isSubtask && isResourceView ? 'h-[18px]' : 'h-[16px]';
@@ -234,7 +245,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
           )}
         </>
       )}
-      {aStart !== undefined && aWidth !== undefined && (
+      {showActualBar && (
         <>
           <div
             className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isSubtask ? '' : 'opacity-60'} ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} pointer-events-auto`}
@@ -297,13 +308,14 @@ const GanttBar: React.FC<GanttBarProps> = ({
           )}
         </>
       )}
-      {showAssigneeName && (aStart !== undefined || pStart !== undefined) && (
+      {showAssigneeName && (showActualBar || showPlannedBar) && (
         <>
+
           {itemType === 'subtask' && item.assignee_id && (
             <div
               className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
               style={{
-                left: `${(aStart !== undefined ? aStart : (pStart || 0)) - 4}px`,
+                left: `${(showActualBar ? aStart! : (pStart || 0)) - 4}px`,
                 top: barLabelTopPx,
                 transform: 'translateX(-100%)'
               }}
@@ -317,7 +329,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
             <div
               className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
               style={{
-                left: `${(aStart !== undefined ? aStart : (pStart || 0)) - 4}px`,
+                left: `${(showActualBar ? aStart! : (pStart || 0)) - 4}px`,
                 top: barLabelTopPx,
                 transform: 'translateX(-100%)'
               }}
@@ -329,7 +341,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
             <div
               className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
               style={{
-                left: `${(aStart !== undefined ? aStart : (pStart || 0)) - 4}px`,
+                left: `${(showActualBar ? aStart! : (pStart || 0)) - 4}px`,
                 top: barLabelTopPx,
                 transform: 'translateX(-100%)'
               }}
@@ -341,17 +353,19 @@ const GanttBar: React.FC<GanttBarProps> = ({
       )}
 
       {/* カスタムラベル（担当者ビュー用） */}
-      {customLabel && (aStart !== undefined || pStart !== undefined) && (
+      {customLabel && (showActualBar || showPlannedBar) && (
         <div
+
           className={`absolute text-[11px] whitespace-nowrap pointer-events-none drop-shadow-sm z-30 ${isResourceView ? 'text-white' : 'text-gray-700 dark:text-gray-300'
             }`}
           style={{
-            left: `${(aStart !== undefined ? aStart : (pStart || 0)) + 4}px`,
+            left: `${(showActualBar ? aStart! : (pStart || 0)) + 4}px`,
             top: barLabelTopPx,
             maxWidth: `${Math.max((aWidth ?? pWidth ?? 0) - 8, 0)}px`,
             overflow: 'hidden',
             textOverflow: 'ellipsis'
           }}
+
         >
           {customLabel}
         </div>

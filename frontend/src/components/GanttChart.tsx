@@ -155,7 +155,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       const endpoint = itemType === 'subtask' ? `/subtasks/${item.id}` : `/tasks/${item.id}`;
       await apiClient.patch(endpoint, {
         planned_start_date: startStr,
-        planned_end_date: endStr
+        planned_end_date: endStr,
+        ...(itemType === 'task' ? { is_auto_planned_date: false } : {})
       });
       if (onRefresh) onRefresh();
     } catch (err) {
