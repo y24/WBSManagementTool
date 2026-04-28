@@ -140,6 +140,12 @@ export default function MainBoard() {
     }
   }, [displayOptions.isDarkMode]);
 
+  useEffect(() => {
+    const handleRefresh = () => fetchData();
+    window.addEventListener('refresh-wbs', handleRefresh);
+    return () => window.removeEventListener('refresh-wbs', handleRefresh);
+  }, [fetchData]);
+
   const filteredProjects = useFilteredProjects({ data, filters, initialData, displayOptions });
   const dynamicGanttRange = useDynamicGanttRange({ data, filteredProjects });
 

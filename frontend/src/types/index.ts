@@ -42,4 +42,5 @@ export interface InitialData {
   status_mapping_new?: string | null;
   status_mapping_blocked?: string | null;
   status_mapping_done?: string | null;
+  enable_websocket: boolean;
 }
