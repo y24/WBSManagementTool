@@ -96,6 +96,7 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                           isEditing={isEditing}
                           onTabNavigation={onTabNavigation}
                           projectName={project.project_name}
+                          showManHours={displayOptions.showManHours}
                         />
                         {rowProvided.placeholder}
                       </div>
@@ -142,6 +143,7 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                                           isEditing={isEditing}
                                           onTabNavigation={onTabNavigation}
                                           projectName={project.project_name}
+                                          showManHours={displayOptions.showManHours}
                                         />
                                         {rowProvided.placeholder}
                                       </div>
@@ -180,6 +182,7 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                                                     projectName={project.project_name}
                                                     taskName={task.task_name}
                                                     highlightDelayedTasks={displayOptions.highlightDelayedTasks}
+                                                    showManHours={displayOptions.showManHours}
                                                   />
                                                 </div>
                                               )}

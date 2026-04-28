@@ -37,6 +37,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showGanttChart: true,
   showAssigneeName: false,
   showProgressRate: false,
+  showManHours: true,
   showMarkers: true,
   isDarkMode: false,
   viewMode: 'wbs',

@@ -29,6 +29,7 @@ interface SubtaskRowProps {
   projectName?: string;
   taskName?: string;
   highlightDelayedTasks?: boolean;
+  showManHours?: boolean;
 }
 
 const SubtaskRow = memo(({
@@ -50,7 +51,8 @@ const SubtaskRow = memo(({
   onTabNavigation,
   projectName,
   taskName,
-  highlightDelayedTasks = true
+  highlightDelayedTasks = true,
+  showManHours = true
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData, true);
   const statusName = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name;
@@ -344,25 +346,27 @@ const SubtaskRow = memo(({
               nameWidth={nameWidth}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
-            <EditableInput
-              type="number"
-              value={subtask.planned_effort_days}
-              onChange={(v: any) => onUpdateField('subtask', subtask.id, 'planned_effort_days', v)}
-              min={0}
-              step={0.1}
-              precision={1}
-              isAuto={subtask.is_auto_effort}
-              onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
-              highlight={getHighlight('planned_effort_days', subtask.planned_effort_days)}
-              isFocused={focusedField === 'planned_effort'}
-              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_effort')}
-              onEditingChange={onEditingChange}
-              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
-              isEditing={isGlobalEditingByParent}
-              nameWidth={nameWidth}
-            />
-          </div>
+          {showManHours && (
+            <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
+              <EditableInput
+                type="number"
+                value={subtask.planned_effort_days}
+                onChange={(v: any) => onUpdateField('subtask', subtask.id, 'planned_effort_days', v)}
+                min={0}
+                step={0.1}
+                precision={1}
+                isAuto={subtask.is_auto_effort}
+                onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
+                highlight={getHighlight('planned_effort_days', subtask.planned_effort_days)}
+                isFocused={focusedField === 'planned_effort'}
+                onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'planned_effort')}
+                onEditingChange={onEditingChange}
+                onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
+                isEditing={isGlobalEditingByParent}
+                nameWidth={nameWidth}
+              />
+            </div>
+          )}
         </>
       )}
       {!isPlanningMode && (
@@ -415,25 +419,27 @@ const SubtaskRow = memo(({
               nameWidth={nameWidth}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
-            <EditableInput
-              type="number"
-              value={subtask.actual_effort_days}
-              onChange={(v: any) => onUpdateField('subtask', subtask.id, 'actual_effort_days', v)}
-              min={0}
-              step={0.1}
-              precision={1}
-              isAuto={subtask.is_auto_effort}
-              onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
-              highlight={getHighlight('actual_effort_days', subtask.actual_effort_days)}
-              isFocused={focusedField === 'actual_effort'}
-              onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_effort')}
-              onEditingChange={onEditingChange}
-              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
-              isEditing={isGlobalEditingByParent}
-              nameWidth={nameWidth}
-            />
-          </div>
+          {showManHours && (
+            <div className={`w-16 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
+              <EditableInput
+                type="number"
+                value={subtask.actual_effort_days}
+                onChange={(v: any) => onUpdateField('subtask', subtask.id, 'actual_effort_days', v)}
+                min={0}
+                step={0.1}
+                precision={1}
+                isAuto={subtask.is_auto_effort}
+                onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_auto_effort', v)}
+                highlight={getHighlight('actual_effort_days', subtask.actual_effort_days)}
+                isFocused={focusedField === 'actual_effort'}
+                onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_effort')}
+                onEditingChange={onEditingChange}
+                onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
+                isEditing={isGlobalEditingByParent}
+                nameWidth={nameWidth}
+              />
+            </div>
+          )}
         </>
       )}
     </div>

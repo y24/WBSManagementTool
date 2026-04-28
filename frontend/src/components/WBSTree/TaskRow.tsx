@@ -30,6 +30,7 @@ interface TaskRowProps {
   isEditing?: boolean;
   onTabNavigation?: (direction: 'next' | 'prev', autoEdit: boolean) => void;
   projectName?: string;
+  showManHours?: boolean;
 }
 
 const TaskRow = memo(({ 
@@ -52,7 +53,8 @@ const TaskRow = memo(({
   onEditingChange,
   isEditing: isGlobalEditingByParent,
   onTabNavigation,
-  projectName
+  projectName,
+  showManHours = true
 }: TaskRowProps) => {
   const warning = getWarning(task, initialData);
 
@@ -270,21 +272,23 @@ const TaskRow = memo(({
               isEditing={isGlobalEditingByParent}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
-            <EditableInput 
-              type="number" 
-              value={task.planned_effort_total} 
-              precision={1} 
-              readOnly={true} 
-              isAuto={true} 
-              onChange={() => {}}
-              isFocused={focusedField === 'planned_effort'}
-              onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'planned_effort')}
-              onEditingChange={onEditingChange}
-              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
-              isEditing={isGlobalEditingByParent}
-            />
-          </div>
+          {showManHours && (
+            <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
+              <EditableInput 
+                type="number" 
+                value={task.planned_effort_total} 
+                precision={1} 
+                readOnly={true} 
+                isAuto={true} 
+                onChange={() => {}}
+                isFocused={focusedField === 'planned_effort'}
+                onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'planned_effort')}
+                onEditingChange={onEditingChange}
+                onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
+                isEditing={isGlobalEditingByParent}
+              />
+            </div>
+          )}
         </>
       )}
       {!isPlanningMode && (
@@ -322,21 +326,23 @@ const TaskRow = memo(({
               isEditing={isGlobalEditingByParent}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
-            <EditableInput 
-              type="number" 
-              value={task.actual_effort_total} 
-              precision={1} 
-              readOnly={true} 
-              isAuto={true} 
-              onChange={() => {}}
-              isFocused={focusedField === 'actual_effort'}
-              onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'actual_effort')}
-              onEditingChange={onEditingChange}
-              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
-              isEditing={isGlobalEditingByParent}
-            />
-          </div>
+          {showManHours && (
+            <div className={`w-16 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
+              <EditableInput 
+                type="number" 
+                value={task.actual_effort_total} 
+                precision={1} 
+                readOnly={true} 
+                isAuto={true} 
+                onChange={() => {}}
+                isFocused={focusedField === 'actual_effort'}
+                onFocusChange={() => onFocusChange?.(`t-${task.id}`, 'actual_effort')}
+                onEditingChange={onEditingChange}
+                onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
+                isEditing={isGlobalEditingByParent}
+              />
+            </div>
+          )}
         </>
       )}
     </div>

@@ -210,6 +210,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           handleSubtaskLevel={handleSubtaskLevel}
           hidePlanningColumns={hidePlanningColumns}
           isPlanningMode={isPlanningMode}
+          showManHours={displayOptions.showManHours}
         />
 
         <DragDropContext onDragEnd={onDragEnd}>

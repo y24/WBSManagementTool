@@ -30,6 +30,7 @@ interface ProjectRowProps {
   isEditing?: boolean;
   onTabNavigation?: (direction: 'next' | 'prev', autoEdit: boolean) => void;
   projectName?: string;
+  showManHours?: boolean;
 }
 
 const ProjectRow = memo(({ 
@@ -52,7 +53,8 @@ const ProjectRow = memo(({
   onEditingChange,
   isEditing: isGlobalEditingByParent,
   onTabNavigation,
-  projectName
+  projectName,
+  showManHours = true
 }: ProjectRowProps) => {
   const warning = getWarning(project, initialData);
 
@@ -267,21 +269,23 @@ const ProjectRow = memo(({
               isEditing={isGlobalEditingByParent}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
-            <EditableInput 
-              type="number" 
-              value={project.planned_effort_total} 
-              precision={1} 
-              readOnly={true} 
-              isAuto={true} 
-              onChange={() => {}}
-              isFocused={focusedField === 'planned_effort'}
-              onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'planned_effort')}
-              onEditingChange={onEditingChange}
-              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
-              isEditing={isGlobalEditingByParent}
-            />
-          </div>
+          {showManHours && (
+            <div className={`w-16 ${dateCellClasses} ${planningCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
+              <EditableInput 
+                type="number" 
+                value={project.planned_effort_total} 
+                precision={1} 
+                readOnly={true} 
+                isAuto={true} 
+                onChange={() => {}}
+                isFocused={focusedField === 'planned_effort'}
+                onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'planned_effort')}
+                onEditingChange={onEditingChange}
+                onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
+                isEditing={isGlobalEditingByParent}
+              />
+            </div>
+          )}
         </>
       )}
       {!isPlanningMode && (
@@ -319,21 +323,23 @@ const ProjectRow = memo(({
               isEditing={isGlobalEditingByParent}
             />
           </div>
-          <div className={`w-16 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
-            <EditableInput 
-              type="number" 
-              value={project.actual_effort_total} 
-              precision={1} 
-              readOnly={true} 
-              isAuto={true} 
-              onChange={() => {}}
-              isFocused={focusedField === 'actual_effort'}
-              onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'actual_effort')}
-              onEditingChange={onEditingChange}
-              onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
-              isEditing={isGlobalEditingByParent}
-            />
-          </div>
+          {showManHours && (
+            <div className={`w-16 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
+              <EditableInput 
+                type="number" 
+                value={project.actual_effort_total} 
+                precision={1} 
+                readOnly={true} 
+                isAuto={true} 
+                onChange={() => {}}
+                isFocused={focusedField === 'actual_effort'}
+                onFocusChange={() => onFocusChange?.(`p-${project.id}`, 'actual_effort')}
+                onEditingChange={onEditingChange}
+                onTab={(s, editing) => onTabNavigation?.(s ? 'prev' : 'next', editing)}
+                isEditing={isGlobalEditingByParent}
+              />
+            </div>
+          )}
         </>
       )}
     </div>

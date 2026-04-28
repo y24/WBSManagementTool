@@ -20,6 +20,7 @@ export interface DisplayOptions {
   showGanttChart: boolean;
   showAssigneeName: boolean;
   showProgressRate: boolean;
+  showManHours: boolean;
   showMarkers: boolean;
   isDarkMode: boolean;
   viewMode: 'wbs' | 'resource';
