@@ -156,7 +156,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   // モーダルが閉じたときにフォーカスをコンテナに戻す
   const wasModalOpen = useRef(false);
   useEffect(() => {
-    const isAnyModalOpen = isConfirmModalOpen || isShiftDatesModalOpen || !!editingItem;
+    const isAnyModalOpen = isConfirmModalOpen || isShiftDatesModalOpen || !!editingItem || bulkCreateConfig.isOpen;
     if (wasModalOpen.current && !isAnyModalOpen) {
       // モーダルが閉じた瞬間、少し遅延させてフォーカスを戻す
       setTimeout(() => {
@@ -166,7 +166,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       }, 50);
     }
     wasModalOpen.current = isAnyModalOpen;
-  }, [isConfirmModalOpen, isShiftDatesModalOpen, editingItem, focus]);
+  }, [isConfirmModalOpen, isShiftDatesModalOpen, editingItem, focus, bulkCreateConfig.isOpen]);
 
   return (
     <div
@@ -175,7 +175,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       className="flex-1 w-full overflow-y-auto overflow-x-scroll bg-white dark:bg-slate-900 border-r dark:border-slate-800 relative no-scrollbar transition-colors outline-none focus:ring-1 focus:ring-blue-200/50"
       onScroll={onScroll}
       onKeyDown={(e) => {
-        if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem) return;
+        if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem || bulkCreateConfig.isOpen) return;
         handleKeyDown(e);
       }}
       onClick={(e) => {
@@ -186,11 +186,11 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         }
       }}
       onCopy={(e) => {
-        if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem) return;
+        if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem || bulkCreateConfig.isOpen) return;
         handleCopy(e);
       }}
       onPaste={(e) => {
-        if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem) return;
+        if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem || bulkCreateConfig.isOpen) return;
         handlePaste(e);
       }}
     >

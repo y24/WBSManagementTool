@@ -32,20 +32,42 @@ const BulkCreateModal = ({ isOpen, onClose, onConfirm, title }: BulkCreateModalP
     onClose();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onClose();
-    } else if (e.key === 'Enter') {
-      handleConfirm();
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // このモーダルがアクティブな間、全てのキーイベントの伝播を完全に止める
+      // stopImmediatePropagation を使うことで、同じ window レベルで登録されている
+      // 他のコンポーネント（StatusSelect等）の捕捉リスナーよりも先に（あるいは同時に）遮断を試みる
+      e.stopImmediatePropagation();
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (e.key === 'Enter') {
+        // Enterの場合は確定処理を行う
+        // e.preventDefault()を呼ぶとinputのEnterイベントも止まるので注意が必要だが、
+        // ここで直接handleConfirmを呼ぶ形式にする
+        e.preventDefault();
+        handleConfirm();
+      }
+    };
+
+    if (isOpen) {
+      // 捕捉フェーズ(true)で登録することで、StatusSelect等の他の捕捉リスナーよりも先に実行を試みる
+      window.addEventListener('keydown', handleGlobalKeyDown, true);
     }
-  };
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown, true);
+    };
+  }, [isOpen, onClose, count]); // countがhandleConfirm内で使われるため依存関係に含める
+
+  // handleKeyDownは不要になったので削除
 
   if (!isOpen) return null;
 
   return createPortal(
     <div 
+      data-modal-active="true"
       className="fixed inset-0 z-[12000] flex items-center justify-center bg-black/50 dark:bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200"
-      onKeyDown={handleKeyDown}
     >
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b dark:border-slate-800 bg-blue-50/30 dark:bg-blue-900/10">
