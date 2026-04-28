@@ -18,7 +18,7 @@ interface ProjectRowProps {
   onToggleExpand: (id: number, recursive?: boolean) => void;
   expanded: boolean;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any, options?: { forceConfirm?: boolean }) => void;
-  onAddTask: (id: number) => void;
+  onAddTask: (id: number, isShift: boolean) => void;
   onEditDetail: (type: 'project', data: Project) => void;
   initialData: InitialData | null;
   provided: any;
@@ -158,9 +158,9 @@ const ProjectRow = memo(({
           <Pencil size={14} />
         </button>
         <button
-          onClick={() => onAddTask(project.id)}
+          onClick={(e) => onAddTask(project.id, e.shiftKey)}
           className="p-1 text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-black/5 dark:hover:bg-white/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
-          title="タスクを追加"
+          title="タスクを追加 (Shift+クリックで一括作成)"
         >
           <Plus size={14} />
         </button>

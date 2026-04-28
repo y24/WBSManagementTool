@@ -8,6 +8,7 @@ import DetailModal from './WBSTree/DetailModal';
 import FloatingMenu from './WBSTree/FloatingMenu';
 import ConfirmModal from './WBSTree/ConfirmModal';
 import ShiftDatesModal from './WBSTree/ShiftDatesModal';
+import BulkCreateModal from './WBSTree/BulkCreateModal';
 import WBSHeader from './WBSTree/WBSHeader';
 import WBSTreeRows from './WBSTree/WBSTreeRows';
 import { DisplayOptions } from './FilterPanel/FilterPanelTypes';
@@ -130,7 +131,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
   // Creation Hook
   const creation = useWBSCreation(onUpdate, initialData, setExpandedProjects, setExpandedTasks, setSaving);
-  const { lastAddedId, setLastAddedId, handleAddTask, handleAddSubtask } = creation;
+  const { lastAddedId, setLastAddedId, onAddTaskClick, onAddSubtaskClick, bulkCreateConfig, setBulkCreateConfig, handleBulkCreateConfirm } = creation;
 
   // Detail Modal Hook
   const detailModal = useDetailModal({ onUpdate, onLocalUpdate, setSaving, checkedIds, setIsConfirmModalOpen, setConfirmData, findItem });
@@ -229,8 +230,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
             onToggleExpandProject={toggleProjectExpand}
             onToggleExpandTask={toggleTaskExpand}
             onUpdateField={handleUpdate}
-            onAddTask={handleAddTask}
-            onAddSubtask={handleAddSubtask}
+            onAddTask={onAddTaskClick}
+            onAddSubtask={onAddSubtaskClick}
             onEditDetail={openDetailModal}
             onFocusChange={handleCellClick}
             onEditingChange={setIsEditing}
@@ -294,6 +295,13 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         variant={confirmData.variant}
         onConfirm={confirmData.onConfirm}
         onCancel={() => setIsConfirmModalOpen(false)}
+      />
+
+      <BulkCreateModal
+        isOpen={bulkCreateConfig.isOpen}
+        onClose={() => setBulkCreateConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={handleBulkCreateConfirm}
+        title={bulkCreateConfig.title}
       />
     </div>
   );

@@ -68,8 +68,9 @@ export default function Header() {
               </button>
             )}
             <button
-              onClick={() => window.dispatchEvent(new CustomEvent('add-project'))}
+              onClick={(e) => window.dispatchEvent(new CustomEvent('add-project', { detail: { isShift: e.shiftKey } }))}
               className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 rounded-md text-sm border border-indigo-200/60 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:text-indigo-700 dark:hover:text-indigo-200 transition-all font-medium group active:scale-95 shadow-sm"
+              title="プロジェクトを追加 (Shift+クリックで一括作成)"
             >
               <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />
               <span>プロジェクト追加</span>

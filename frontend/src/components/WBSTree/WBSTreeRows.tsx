@@ -24,8 +24,8 @@ interface WBSTreeRowsProps {
   onToggleExpandProject: (id: number, recursive?: boolean) => void;
   onToggleExpandTask: (id: number, recursive?: boolean) => void;
   onUpdateField: (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any, options?: { forceConfirm?: boolean }) => void;
-  onAddTask: (projectId: number) => Promise<void>;
-  onAddSubtask: (taskId: number) => Promise<void>;
+  onAddTask: (projectId: number, isShift: boolean) => void;
+  onAddSubtask: (taskId: number, isShift: boolean) => void;
   onEditDetail: (type: any, data: any) => void;
   onFocusChange: (rowId: string, field: string) => void;
   onEditingChange: (isEditing: boolean) => void;
