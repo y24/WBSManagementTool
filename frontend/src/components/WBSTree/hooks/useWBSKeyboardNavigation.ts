@@ -257,7 +257,7 @@ export const useWBSKeyboardNavigation = ({
 
   // クリップボード・コピーイベント (ブラウザの許可ダイアログ回避)
   const handleCopy = useCallback((e: React.ClipboardEvent) => {
-    if (isEditing) return; // 編集中の場合はブラウザのデフォルト挙動（Input内の選択範囲コピー）に任せる
+    if (isEditing || document.querySelector('[data-modal-active="true"]')) return; // 編集中の場合はブラウザのデフォルト挙動に任せる
 
     const currentFocus = focusRef.current;
     if (!currentFocus) return;
@@ -351,7 +351,7 @@ export const useWBSKeyboardNavigation = ({
 
   // クリップボード・貼り付けイベント
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    if (isEditing) return; // 編集中の場合はブラウザのデフォルト挙動に任せる
+    if (isEditing || document.querySelector('[data-modal-active="true"]')) return; // 編集中の場合はブラウザのデフォルト挙動に任せる
 
     const text = e.clipboardData.getData('text/plain');
     if (text) {
@@ -361,7 +361,7 @@ export const useWBSKeyboardNavigation = ({
   }, [isEditing, executePaste]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (isEditing) return;
+    if (isEditing || document.querySelector('[data-modal-active="true"]')) return;
 
     // Ctrl+C, Ctrl+V
     // これらのキーはブラウザの copy/paste イベントを火花させるため、

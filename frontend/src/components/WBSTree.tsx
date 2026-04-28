@@ -182,8 +182,14 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           containerRef.current?.focus();
         }
       }}
-      onCopy={handleCopy}
-      onPaste={handlePaste}
+      onCopy={(e) => {
+        if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem) return;
+        handleCopy(e);
+      }}
+      onPaste={(e) => {
+        if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem) return;
+        handlePaste(e);
+      }}
     >
       <div className="min-w-max">
         {saving && (
