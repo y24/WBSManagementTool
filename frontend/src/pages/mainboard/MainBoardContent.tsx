@@ -16,6 +16,7 @@ interface MainBoardContentProps {
   initialData: InitialData | null;
   onUpdate: (isInitial?: boolean) => Promise<void>;
   onLocalUpdate: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => void;
+  onLocalReorder: (newProjects: Project[]) => void;
   expandedProjects: Record<number, boolean>;
   setExpandedProjects: Dispatch<SetStateAction<Record<number, boolean>>>;
   expandedTasks: Record<number, boolean>;
@@ -35,6 +36,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
   initialData,
   onUpdate,
   onLocalUpdate,
+  onLocalReorder,
   expandedProjects,
   setExpandedProjects,
   expandedTasks,
@@ -79,6 +81,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
           initialData={initialData}
           onUpdate={onUpdate}
           onLocalUpdate={onLocalUpdate}
+          onLocalReorder={onLocalReorder}
           expandedProjects={expandedProjects}
           setExpandedProjects={setExpandedProjects}
           expandedTasks={expandedTasks}

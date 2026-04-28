@@ -154,6 +154,16 @@ export default function MasterSettings() {
     const [reorderedItem] = itemsCopy.splice(result.source.index, 1);
     itemsCopy.splice(result.destination.index, 0, reorderedItem);
 
+    // Optimistic update
+    setData(prev => {
+      if (!prev) return prev;
+      const next = { ...prev };
+      if (type === 'status') next.statuses = itemsCopy;
+      else if (type === 'subtask_type') next.subtask_types = itemsCopy;
+      else if (type === 'member') next.members = itemsCopy;
+      return next;
+    });
+
     reorderItems(endpoint, itemsCopy.map(i => i.id));
   };
 

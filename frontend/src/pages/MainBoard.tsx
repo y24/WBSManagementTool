@@ -251,6 +251,16 @@ export default function MainBoard() {
     });
   }, []);
 
+  const localReorder = useCallback((newProjects: Project[]) => {
+    setData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        projects: newProjects
+      };
+    });
+  }, []);
+
   const handleTreeScroll = (event: UIEvent<HTMLDivElement>) => {
     if (ganttRef.current) {
       syncVerticalScroll(event.currentTarget, ganttRef.current, 'tree', 'gantt');
@@ -334,6 +344,7 @@ export default function MainBoard() {
         initialData={initialData}
         onUpdate={fetchData}
         onLocalUpdate={localUpdate}
+        onLocalReorder={localReorder}
         expandedProjects={expandedProjects}
         setExpandedProjects={setExpandedProjects}
         expandedTasks={expandedTasks}

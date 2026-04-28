@@ -29,6 +29,7 @@ interface WBSTreeProps {
   initialData: InitialData | null;
   onUpdate: () => void;
   onLocalUpdate?: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => void;
+  onLocalReorder?: (newProjects: Project[]) => void;
   expandedProjects: Record<number, boolean>;
   setExpandedProjects: React.Dispatch<React.SetStateAction<Record<number, boolean>>>;
   expandedTasks: Record<number, boolean>;
@@ -44,6 +45,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   initialData,
   onUpdate,
   onLocalUpdate,
+  onLocalReorder,
   expandedProjects,
   setExpandedProjects,
   expandedTasks,
@@ -135,7 +137,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const { editingItem, setEditingItem, detailValue, setDetailValue, ticketIdValue, setTicketIdValue, linkUrlValue, setLinkUrlValue, memoValue, setMemoValue, openDetailModal, handleDetailSave } = detailModal;
 
   // Drag Drop Hook
-  const { onDragEnd } = useWBSDragDrop(projects, onUpdate, setSaving);
+  const { onDragEnd } = useWBSDragDrop(projects, onUpdate, setSaving, onLocalReorder);
 
   // New item scroll effect
   useWBSNewItemEffect(projects, lastAddedId, setLastAddedId);
