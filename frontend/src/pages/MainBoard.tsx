@@ -25,6 +25,7 @@ import {
 import { useWebSocket } from '../api/websocket';
 import ConfirmModal from '../components/WBSTree/ConfirmModal';
 import { Download } from 'lucide-react';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
@@ -55,13 +56,13 @@ export default function MainBoard() {
   const isFetchingRef = useRef(false);
 
   const fetchData = useCallback(
-    async (isInitial = false) => {
+    async (showLoading = false) => {
       // Prevent concurrent WBS fetches
       if (isFetchingRef.current) return;
       isFetchingRef.current = true;
 
       try {
-        if (isInitial || !data) setLoading(true);
+        if (showLoading) setLoading(true);
 
         const wbsRes = await wbsOps.getWBS(
           undefined, // projectIds
@@ -141,7 +142,7 @@ export default function MainBoard() {
   }, [displayOptions.isDarkMode]);
 
   useEffect(() => {
-    const handleRefresh = () => fetchData();
+    const handleRefresh = () => fetchData(true);
     window.addEventListener('refresh-wbs', handleRefresh);
     return () => window.removeEventListener('refresh-wbs', handleRefresh);
   }, [fetchData]);
@@ -308,19 +309,6 @@ export default function MainBoard() {
     }
   };
 
-  if (loading && !data) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
-        <div className="flex flex-col items-center gap-3">
-          <div
-            className="h-14 w-14 animate-spin rounded-full border-4 border-slate-300 border-t-indigo-500 dark:border-slate-700 dark:border-t-indigo-400"
-            aria-hidden="true"
-          />
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading WBS...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col w-full h-full bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
@@ -333,7 +321,7 @@ export default function MainBoard() {
         initialData={initialData}
         onClear={() => setFilters(createDefaultFilters())}
         onExport={() => setIsExportModalOpen(true)}
-        onRefresh={() => fetchData()}
+        onRefresh={() => fetchData(true)}
       />
 
       <MainBoardContent
@@ -374,6 +362,7 @@ export default function MainBoard() {
           </div>
         )}
       />
+      <LoadingOverlay isVisible={loading} />
     </div>
   );
 }

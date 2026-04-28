@@ -10,6 +10,7 @@ import {
 } from '../components/dashboard/DashboardListsSection';
 import { DashboardChartTheme } from '../components/dashboard/constants';
 import { useWebSocket } from '../api/websocket';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -99,6 +100,7 @@ export default function Dashboard() {
   }, [showAllAssignees]);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const res = await wbsOps.getDashboard();
       setData(res.data);
@@ -167,16 +169,6 @@ export default function Dashboard() {
     });
   };
 
-  if (loading || !data) {
-    return (
-      <div className="flex items-center justify-center h-full bg-slate-50 dark:bg-slate-950">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-          <p className="text-slate-500 dark:text-slate-400 text-base font-medium animate-pulse">データを読み込み中...</p>
-        </div>
-      </div>
-    );
-  }
 
   const chartTheme: DashboardChartTheme = {
     gridColor: isDark ? '#334155' : '#e2e8f0',
@@ -197,25 +189,30 @@ export default function Dashboard() {
         </h2>
       </div>
 
-      <DashboardKPISection kpis={data.kpis} />
+      {data && (
+        <>
+          <DashboardKPISection kpis={data.kpis} />
 
-      <DashboardChartsSection data={data} theme={chartTheme} />
+          <DashboardChartsSection data={data} theme={chartTheme} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 pb-8">
-        <DashboardListsSection data={data} />
-        <AssigneeSummarySection
-          ref={assigneeSectionRef}
-          assigneeSummary={data.assignee_summary}
-          showAllAssignees={showAllAssignees}
-          onToggle={handleToggleAssignees}
-        />
-      </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 pb-8">
+            <DashboardListsSection data={data} />
+            <AssigneeSummarySection
+              ref={assigneeSectionRef}
+              assigneeSummary={data.assignee_summary}
+              showAllAssignees={showAllAssignees}
+              onToggle={handleToggleAssignees}
+            />
+          </div>
 
-      <DashboardAnalyticsChartsSection data={data} theme={chartTheme} />
+          <DashboardAnalyticsChartsSection data={data} theme={chartTheme} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
-        <DashboardInsightsSection data={data} />
-      </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
+            <DashboardInsightsSection data={data} />
+          </div>
+        </>
+      )}
+      <LoadingOverlay isVisible={loading} />
     </div>
   );
 }

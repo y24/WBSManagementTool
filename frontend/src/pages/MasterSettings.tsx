@@ -9,6 +9,7 @@ import { SubtaskTypeSection } from '../components/masterSettings/SubtaskTypeSect
 import { SystemSettingsSection } from '../components/masterSettings/SystemSettingsSection';
 import { useWebSocket } from '../api/websocket';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 type EditingItem = { id: number; field: string } | null;
 
@@ -70,6 +71,7 @@ export default function MasterSettings() {
   });
 
   const fetchData = useCallback(() => {
+    setLoading(true);
     getInitialData()
       .then(res => {
         setData(res.data);
@@ -287,9 +289,6 @@ export default function MasterSettings() {
 
   const isEditing = (id: number, field: string) => editing?.id === id && editing?.field === field;
 
-  if (loading) {
-    return <div className="master-loading">マスタデータを読み込み中...</div>;
-  }
 
   return (
     <div className="master-page">
@@ -386,6 +385,7 @@ export default function MasterSettings() {
           saveSetting={saveSetting}
         />
       </div>
+      <LoadingOverlay isVisible={loading} />
     </div>
   );
 }
