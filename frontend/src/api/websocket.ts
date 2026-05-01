@@ -35,7 +35,6 @@ export const useWebSocket = (onMessage: (msg: WSMessage) => void) => {
     try {
       const response = await getInitialData();
       if (response && response.data && response.data.enable_websocket === false) {
-        console.log('WebSocket is disabled by server setting. Skipping connection.');
         return;
       }
     } catch (err) {
@@ -51,11 +50,9 @@ export const useWebSocket = (onMessage: (msg: WSMessage) => void) => {
       socketRef.current = null;
     }
 
-    console.log('Connecting to WebSocket...');
     const socket = new WebSocket(WS_URL);
 
     socket.onopen = () => {
-      console.log('WebSocket Connected');
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
@@ -111,12 +108,10 @@ export const useWebSocket = (onMessage: (msg: WSMessage) => void) => {
         // If the socket is not open, or if we've been away for a while (e.g. 1 minute)
         // trigger a connection check.
         if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
-          console.log('Tab became visible and WebSocket is not open. Reconnecting...');
           connect();
         } else if (timeSinceLastActive > 60000) {
           // If we've been away for more than a minute, even if socket seems open,
           // it might be a ghost connection. 
-          console.log('Tab became visible after long period. Refreshing connection...');
           connect();
         }
         
