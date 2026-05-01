@@ -29,4 +29,5 @@ export interface DisplayOptions {
   colorMode: 'status' | 'assignee';
   highlightSameAssignee: boolean;
   highlightDelayedTasks: boolean;
+  showInterruptionReason: boolean;
 }

@@ -46,6 +46,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   colorMode: 'status',
   highlightSameAssignee: false,
   highlightDelayedTasks: true,
+  showInterruptionReason: false,
 };
 
 function readJson<T extends object>(key: string, fallback: T): T {

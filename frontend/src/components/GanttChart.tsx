@@ -28,6 +28,7 @@ interface GanttChartProps {
   colorMode?: 'status' | 'assignee';
   highlightSameAssignee?: boolean;
   highlightDelayedTasks?: boolean;
+  showInterruptionReason?: boolean;
   isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
   onRefresh?: () => void;
@@ -48,6 +49,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   colorMode = 'status',
   highlightSameAssignee = false,
   highlightDelayedTasks = true,
+  showInterruptionReason = false,
   isDarkMode = false,
   onScroll,
   onRefresh
@@ -442,6 +444,28 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                               hoveredAssigneeId={hoveredAssigneeId}
                               setHoveredAssigneeId={setHoveredAssigneeId}
                             />
+                            {showInterruptionReason && subtask.interruptions?.map(inter => {
+                              const interDate = parseISO(inter.interruption_date);
+                              const x = getDateX(interDate, baseDate, scale);
+                              // 範囲外チェック
+                              if (x < 0 || x > totalWidth) return null;
+                              return (
+                                <div
+                                  key={`inter-${inter.id}`}
+                                  className="absolute top-0 h-full flex items-center pointer-events-none z-20"
+                                  style={{ left: `${x}px` }}
+                                >
+                                  <div className="flex items-center gap-1 px-1.5 py-0.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded shadow-sm ml-1 select-none">
+                                    <span 
+                                      className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]"
+                                      title={inter.reason || undefined}
+                                    >
+                                      ⚠️ {inter.reason || '中断'}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         );
                       })}
