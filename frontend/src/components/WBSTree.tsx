@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, forwardRef, useCallback } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
-import { Project } from '../types/wbs';
+import { Project, Subtask } from '../types/wbs';
 import { InitialData } from '../types';
 
 // Sub-components
@@ -11,6 +11,7 @@ import ShiftDatesModal from './WBSTree/ShiftDatesModal';
 import BulkCreateModal from './WBSTree/BulkCreateModal';
 import WBSHeader from './WBSTree/WBSHeader';
 import WBSTreeRows from './WBSTree/WBSTreeRows';
+import InterruptionListModal from './WBSTree/InterruptionListModal';
 import { DisplayOptions } from './FilterPanel/FilterPanelTypes';
 
 // Hooks
@@ -58,6 +59,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 }, ref) => {
   const [saving, setSaving] = useState(false);
   const [menuRendered, setMenuRendered] = useState(false);
+  const [isInterruptionModalOpen, setIsInterruptionModalOpen] = useState(false);
 
   // Selection Hook
   const selection = useWBSSelection(projects);
@@ -264,8 +266,23 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           ticketUrlTemplate={initialData?.ticket_url_template}
           onClose={() => setEditingItem(null)}
           onSave={handleDetailSave}
+          onOpenInterruption={() => setIsInterruptionModalOpen(true)}
+          disableHotkeys={isInterruptionModalOpen || isConfirmModalOpen || isShiftDatesModalOpen || bulkCreateConfig.isOpen}
         />
       )}
+
+      {isInterruptionModalOpen && editingItem?.type === 'subtask' && (() => {
+        const subtask = findItem('subtask', editingItem.id) as Subtask | null;
+        if (!subtask) return null;
+        return (
+          <InterruptionListModal
+            isOpen={isInterruptionModalOpen}
+            onClose={() => setIsInterruptionModalOpen(false)}
+            subtask={subtask}
+            onRefresh={onUpdate}
+          />
+        );
+      })()}
 
       <FloatingMenu
         totalSelectedCount={totalSelectedCount}

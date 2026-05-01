@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, X, Check, Hash, MessageSquare, ExternalLink, Link, FolderKanban, ListTodo, AlignLeft, AlertTriangle } from 'lucide-react';
+import { FileText, X, Check, Hash, MessageSquare, ExternalLink, Link, FolderKanban, ListTodo, AlignLeft, AlertTriangle, Pause } from 'lucide-react';
 
 export type EditingType = 'project' | 'task' | 'subtask';
 
@@ -18,6 +18,8 @@ interface DetailModalProps {
   ticketUrlTemplate?: string | null;
   onClose: () => void;
   onSave: () => void;
+  onOpenInterruption?: () => void;
+  disableHotkeys?: boolean;
 }
 
 const TYPE_LABELS: Record<EditingType, { label: string; icon: React.ReactNode }> = {
@@ -40,6 +42,8 @@ const DetailModal = ({
   ticketUrlTemplate,
   onClose,
   onSave,
+  onOpenInterruption,
+  disableHotkeys = false,
 }: DetailModalProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -71,9 +75,12 @@ const DetailModal = ({
   // Esc/Enterキーイベントの監視
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (disableHotkeys) return;
+
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         if (showConfirm) {
           setShowConfirm(false);
         } else {
@@ -86,12 +93,13 @@ const DetailModal = ({
 
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         onSave();
       }
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [detailValue, ticketIdValue, linkUrlValue, memoValue, showConfirm, onSave]);
+  }, [detailValue, ticketIdValue, linkUrlValue, memoValue, showConfirm, onSave, disableHotkeys]);
 
   const ticketUrl = ticketUrlTemplate && ticketIdValue
     ? ticketUrlTemplate.replace('{TICKET_ID}', ticketIdValue)
@@ -232,6 +240,21 @@ const DetailModal = ({
               rows={4}
             />
           </div>
+
+          {editingType === 'subtask' && onOpenInterruption && (
+            <div className="pt-2">
+              <button
+                onClick={onOpenInterruption}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 rounded-xl transition-all"
+              >
+                <Pause size={16} />
+                中断・再開の管理
+              </button>
+              <p className="mt-1.5 text-[11px] text-gray-400 dark:text-slate-500 px-1">
+                稼働が中断した期間を設定して、ガントチャート上の表示を分割できます。
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

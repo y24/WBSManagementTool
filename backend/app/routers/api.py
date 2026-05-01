@@ -429,3 +429,32 @@ def get_shared_filter(token: str, db: Session = Depends(get_db)):
         "filter_data": json.loads(db_shared.filter_data)
     }
 
+# --- Subtask Interruptions ---
+@router.get("/subtasks/{subtask_id}/interruptions", response_model=List[schemas.SubtaskInterruption])
+def get_subtask_interruptions(subtask_id: int, db: Session = Depends(get_db)):
+    return crud.get_subtask_interruptions(db, subtask_id)
+
+@router.post("/subtasks/{subtask_id}/interruptions", response_model=schemas.SubtaskInterruption)
+def create_subtask_interruption(subtask_id: int, interruption: schemas.SubtaskInterruptionCreate, db: Session = Depends(get_db)):
+    if subtask_id != interruption.subtask_id:
+        raise HTTPException(status_code=400, detail="Subtask ID mismatch")
+    db_interruption = crud.create_subtask_interruption(db, interruption)
+    manager.broadcast_sync({"type": "update", "entity": "subtask"})
+    return db_interruption
+
+@router.patch("/interruptions/{interruption_id}", response_model=schemas.SubtaskInterruption)
+def update_subtask_interruption(interruption_id: int, interruption: schemas.SubtaskInterruptionUpdate, db: Session = Depends(get_db)):
+    db_interruption = crud.update_subtask_interruption(db, interruption_id, interruption)
+    if not db_interruption:
+        raise HTTPException(status_code=404, detail="Interruption not found")
+    manager.broadcast_sync({"type": "update", "entity": "subtask"})
+    return db_interruption
+
+@router.delete("/interruptions/{interruption_id}")
+def delete_subtask_interruption(interruption_id: int, db: Session = Depends(get_db)):
+    success = crud.delete_subtask_interruption(db, interruption_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Interruption not found")
+    manager.broadcast_sync({"type": "update", "entity": "subtask"})
+    return {"status": "ok"}
+

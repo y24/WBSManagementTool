@@ -129,31 +129,81 @@ const GanttBar: React.FC<GanttBarProps> = ({
     }
   }
 
-  // 実績バーの計算
-  let aStart: number | undefined, aWidth: number | undefined;
-  let arStart: number | undefined, arWidth: number | undefined;
-  if (actualStart) {
-    const aS = parseISO(actualStart);
-    const aE = actualEnd ? parseISO(actualEnd) : aS;
-    if (isValid(aS) && isValid(aE)) {
-      aStart = getDateX(aS, baseDate, scale);
-      aWidth = getDateWidth(aS, aE, scale);
+  // 中断を考慮したセグメント計算
+  const calculateSegments = (start: string, end: string, interruptions: any[]) => {
+    const s = parseISO(start);
+    const e = parseISO(end);
+    if (!isValid(s) || !isValid(e)) return [];
+    
+    // 終了日が開始日より前なら空
+    if (e < s) return [{ start: s, end: s }];
 
-      if (isSubtask && reviewStart) {
-        const rS = parseISO(reviewStart);
-        if (isValid(rS)) {
-          const effectiveRS = rS < aS ? aS : rS;
-          const effectiveRE = aE < effectiveRS ? effectiveRS : aE;
-          arStart = getDateX(effectiveRS, baseDate, scale);
-          arWidth = getDateWidth(effectiveRS, effectiveRE, scale);
+    if (!interruptions || interruptions.length === 0) {
+      return [{ start: s, end: e }];
+    }
+    
+    const sorted = [...interruptions]
+      .filter(i => i.interruption_date)
+      .sort((a, b) => a.interruption_date.localeCompare(b.interruption_date));
+      
+    const segments: { start: Date, end: Date }[] = [];
+    let currentStart = s;
+    
+    for (const inter of sorted) {
+      const iDate = parseISO(inter.interruption_date);
+      if (!isValid(iDate)) continue;
+      
+      // 中断が現在の開始位置より後の場合、そこまでのセグメントを追加
+      if (iDate > currentStart) {
+        const segmentEnd = iDate < e ? iDate : e;
+        segments.push({ start: currentStart, end: segmentEnd });
+        if (segmentEnd === e) {
+          currentStart = e;
+          break;
         }
       }
+      
+      // 再開日があるかチェック
+      if (inter.resumption_date) {
+        const rDate = parseISO(inter.resumption_date);
+        if (isValid(rDate)) {
+          if (rDate > currentStart) {
+            currentStart = rDate;
+          }
+        } else {
+          // 再開日が不正な場合は、この中断で終了
+          currentStart = e;
+          break;
+        }
+      } else {
+        // 再開日が無い場合、この中断以降は表示しない
+        currentStart = e;
+        break;
+      }
+      
+      if (currentStart >= e) break;
     }
-  }
+    
+    if (currentStart < e) {
+      segments.push({ start: currentStart, end: e });
+    }
+    
+    return segments;
+  };
 
-  const showPlannedBar = pStart !== undefined && pWidth !== undefined && (!isAutoPlanned || !isExpanded) && !(isResourceView && (aStart !== undefined && !isAutoActual));
-  const showActualBar = aStart !== undefined && aWidth !== undefined && (!isAutoActual || !isExpanded);
-  const hasActual = showActualBar; // For positioning other elements
+  // 実績セグメントの計算
+  const actualSegments = (actualStart && actualEnd) 
+    ? calculateSegments(actualStart, actualEnd, item.interruptions || [])
+    : (actualStart ? [{ start: parseISO(actualStart), end: parseISO(actualStart) }] : []);
+
+  // レビューセグメントの計算
+  const reviewSegments = (isSubtask && actualStart && actualEnd && reviewStart)
+    ? calculateSegments(reviewStart, actualEnd, item.interruptions || [])
+    : [];
+
+  const showPlannedBar = pStart !== undefined && pWidth !== undefined && (!isAutoPlanned || !isExpanded) && !(isResourceView && (actualSegments.length > 0 && !isAutoActual));
+  const showActualBar = actualSegments.length > 0 && (!isAutoActual || !isExpanded);
+  const hasActual = showActualBar; 
 
 
 
@@ -185,7 +235,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
 
   const rightEdge = Math.max(
     pStart !== undefined && pWidth !== undefined ? pStart + pWidth : 0,
-    aStart !== undefined && aWidth !== undefined ? aStart + aWidth : 0
+    actualSegments.length > 0 ? (getDateX(actualSegments[actualSegments.length-1].end, baseDate, scale) + getDateWidth(actualSegments[actualSegments.length-1].start, actualSegments[actualSegments.length-1].end, scale)) : 0
   );
 
   const isDragging = dragState?.itemId === item.id;
@@ -269,61 +319,73 @@ const GanttBar: React.FC<GanttBarProps> = ({
       )}
       {showActualBar && (
         <>
-          <div
-            className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isSubtask ? '' : 'opacity-60'} ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} ${isHighlighted ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-indigo-400 dark:ring-offset-slate-900 z-30' : ''} pointer-events-auto transition-shadow duration-200`}
-            style={{ left: `${aStart}px`, width: `${aWidth}px`, backgroundColor: typeColor }}
-            onMouseEnter={handleMouseEnter}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            onMouseDown={(e) => {
-              if (!allowBarEdit || isFixedEnd || isAutoActual) return;
-              handleMouseDown(e, item.id, itemType, 'actual', 'move', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined });
-            }}
-          >
-            {/* リサイズハンドル */}
-            {allowBarEdit && (!isAutoActual) && (
+          {actualSegments.map((seg, idx) => {
+            const sX = getDateX(seg.start, baseDate, scale);
+            const sW = getDateWidth(seg.start, seg.end, scale);
+            return (
               <div
-                className="gantt-resize-handle gantt-resize-handle-left"
-                onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'actual', 'resize-left', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined })}
-              />
-            )}
-            {allowBarEdit && (!isAutoActual) && (
-              <div
-                className={`gantt-resize-handle gantt-resize-handle-right ${isFixedEnd ? 'gantt-resize-forbidden' : ''}`}
+                key={`actual-${idx}`}
+                className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isSubtask ? '' : 'opacity-60'} ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} ${isHighlighted ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-indigo-400 dark:ring-offset-slate-900 z-30' : ''} pointer-events-auto transition-shadow duration-200`}
+                style={{ left: `${sX}px`, width: `${sW}px`, backgroundColor: typeColor }}
+                onMouseEnter={handleMouseEnter}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
                 onMouseDown={(e) => {
-                  if (isFixedEnd) {
-                    e.stopPropagation();
-                    return;
-                  }
-                  handleMouseDown(e, item.id, itemType, 'actual', 'resize-right', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined });
+                  if (!allowBarEdit || isFixedEnd || isAutoActual) return;
+                  handleMouseDown(e, item.id, itemType, 'actual', 'move', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined });
                 }}
-              />
-            )}
+              >
+                {/* リサイズハンドル (最初と最後のセグメントのみ) */}
+                {allowBarEdit && (!isAutoActual) && idx === 0 && (
+                  <div
+                    className="gantt-resize-handle gantt-resize-handle-left"
+                    onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'actual', 'resize-left', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined })}
+                  />
+                )}
+                {allowBarEdit && (!isAutoActual) && idx === actualSegments.length - 1 && (
+                  <div
+                    className={`gantt-resize-handle gantt-resize-handle-right ${isFixedEnd ? 'gantt-resize-forbidden' : ''}`}
+                    onMouseDown={(e) => {
+                      if (isFixedEnd) {
+                        e.stopPropagation();
+                        return;
+                      }
+                      handleMouseDown(e, item.id, itemType, 'actual', 'resize-right', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined });
+                    }}
+                  />
+                )}
 
-            {showProgressRate && item.progress_percent !== undefined && item.progress_percent !== null && (
-              <span className="text-[11px] font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)] leading-none pointer-events-none relative z-10">
-                {item.progress_percent}%
-              </span>
-            )}
-          </div>
-          {arStart !== undefined && arWidth !== undefined && (
-            <div
-              className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm bg-white/30 backdrop-blur-[1px] pointer-events-none`}
-              style={{ left: `${arStart}px`, width: `${arWidth}px` }}
-              title="レビュー中"
-            />
-          )}
-          {/* レビュー境界ハンドル */}
-          {allowBarEdit && isSubtask && actualStart && actualEnd && reviewStart && arStart !== undefined && (
+                {showProgressRate && item.progress_percent !== undefined && item.progress_percent !== null && idx === actualSegments.length - 1 && (
+                  <span className="text-[11px] font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)] leading-none pointer-events-none relative z-10">
+                    {item.progress_percent}%
+                  </span>
+                )}
+              </div>
+            );
+          })}
+          
+          {reviewSegments.map((seg, idx) => {
+             const rX = getDateX(seg.start, baseDate, scale);
+             const rW = getDateWidth(seg.start, seg.end, scale);
+             return (
+              <div
+                key={`review-${idx}`}
+                className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm bg-white/30 backdrop-blur-[1px] pointer-events-none`}
+                style={{ left: `${rX}px`, width: `${rW}px` }}
+                title="レビュー中"
+              />
+             );
+          })}
+
+          {/* レビュー境界ハンドル (常に最初のレビューセグメントの開始位置に表示) */}
+          {allowBarEdit && isSubtask && actualStart && actualEnd && reviewStart && reviewSegments.length > 0 && (
             <div
               className="gantt-review-handle pointer-events-auto"
               style={{
-                left: `${arStart - 5}px`,
+                left: `${getDateX(reviewSegments[0].start, baseDate, scale) - 5}px`,
                 top: subtaskBarTopPx,
                 height: subtaskBarHeightPx,
-                // 開始日と重なっている時は、開始日のドラッグハンドル(z-index: 20)を優先するため、
-                // レビューハンドルのz-indexを下げる
-                zIndex: arStart === aStart ? 19 : 25
+                zIndex: getDateX(reviewSegments[0].start, baseDate, scale) === getDateX(actualSegments[0].start, baseDate, scale) ? 19 : 25
               }}
               onMouseDown={(e) => handleMouseDown(e, item.id, itemType, 'actual', 'resize-review', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined })}
             />
@@ -337,7 +399,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
             <div
               className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
               style={{
-                left: `${(showActualBar ? aStart! : (pStart || 0)) - 4}px`,
+                left: `${(actualSegments.length > 0 ? getDateX(actualSegments[0].start, baseDate, scale) : (pStart || 0)) - 4}px`,
                 top: barLabelTopPx,
                 transform: 'translateX(-100%)'
               }}
@@ -351,7 +413,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
             <div
               className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
               style={{
-                left: `${(showActualBar ? aStart! : (pStart || 0)) - 4}px`,
+                left: `${(actualSegments.length > 0 ? getDateX(actualSegments[0].start, baseDate, scale) : (pStart || 0)) - 4}px`,
                 top: barLabelTopPx,
                 transform: 'translateX(-100%)'
               }}
@@ -363,7 +425,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
             <div
               className="absolute text-[11px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap pointer-events-none"
               style={{
-                left: `${(showActualBar ? aStart! : (pStart || 0)) - 4}px`,
+                left: `${(actualSegments.length > 0 ? getDateX(actualSegments[0].start, baseDate, scale) : (pStart || 0)) - 4}px`,
                 top: barLabelTopPx,
                 transform: 'translateX(-100%)'
               }}
@@ -381,9 +443,9 @@ const GanttBar: React.FC<GanttBarProps> = ({
           className={`absolute text-[11px] whitespace-nowrap pointer-events-none drop-shadow-sm z-30 ${isResourceView ? 'text-white' : 'text-gray-700 dark:text-gray-300'
             }`}
           style={{
-            left: `${(showActualBar ? aStart! : (pStart || 0)) + 4}px`,
+            left: `${(actualSegments.length > 0 ? getDateX(actualSegments[0].start, baseDate, scale) : (pStart || 0)) + 4}px`,
             top: barLabelTopPx,
-            maxWidth: `${Math.max((aWidth ?? pWidth ?? 0) - 8, 0)}px`,
+            maxWidth: `${Math.max((actualSegments.length > 0 ? getDateWidth(actualSegments[0].start, actualSegments[actualSegments.length-1].end, scale) : (pWidth ?? 0)) - 8, 0)}px`,
             overflow: 'hidden',
             textOverflow: 'ellipsis'
           }}

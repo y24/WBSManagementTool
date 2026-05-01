@@ -85,3 +85,10 @@ from .marker import (
     delete_marker
 )
 
+from .interruption import (
+    get_subtask_interruptions,
+    create_subtask_interruption,
+    update_subtask_interruption,
+    delete_subtask_interruption
+)
+

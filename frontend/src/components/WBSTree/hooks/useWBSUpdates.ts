@@ -31,7 +31,7 @@ export const useWBSUpdates = ({
 }: UseWBSUpdatesProps) => {
 
   const findItem = useCallback((type: 'project' | 'task' | 'subtask', id: number) => {
-    if (type === 'project') return projects.find(p => p.id === id);
+    if (type === 'project') return projects.find(p => p.id === id) || null;
     for (const p of projects) {
       if (type === 'task') {
         const t = p.tasks.find(t => t.id === id);

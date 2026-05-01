@@ -44,6 +44,7 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
     query = query.options(
         selectinload(models.Project.tasks.and_(task_filter)).selectinload(models.Task.status),
         selectinload(models.Project.tasks.and_(task_filter)).selectinload(models.Task.subtasks.and_(subtask_filter)).selectinload(models.Subtask.status),
+        selectinload(models.Project.tasks.and_(task_filter)).selectinload(models.Task.subtasks.and_(subtask_filter)).selectinload(models.Subtask.interruptions),
         selectinload(models.Project.status)
     )
         

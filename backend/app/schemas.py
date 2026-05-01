@@ -145,6 +145,28 @@ class Subtask(SubtaskBase):
     is_deleted: bool
     created_at: datetime
     updated_at: datetime
+    interruptions: List["SubtaskInterruption"] = []
+    model_config = { "from_attributes": True }
+
+# --- Subtask Interruptions ---
+class SubtaskInterruptionBase(BaseModel):
+    interruption_date: date
+    resumption_date: Optional[date] = None
+    reason: Optional[str] = None
+
+class SubtaskInterruptionCreate(SubtaskInterruptionBase):
+    subtask_id: int
+
+class SubtaskInterruptionUpdate(BaseModel):
+    interruption_date: Optional[date] = None
+    resumption_date: Optional[date] = None
+    reason: Optional[str] = None
+
+class SubtaskInterruption(SubtaskInterruptionBase):
+    id: int
+    subtask_id: int
+    created_at: datetime
+    updated_at: datetime
     model_config = { "from_attributes": True }
 
 # --- Tasks ---

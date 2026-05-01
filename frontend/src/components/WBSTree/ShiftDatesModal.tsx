@@ -52,6 +52,7 @@ const ShiftDatesModal = ({
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         if (showConfirm) {
           setShowConfirm(false);
         } else {
@@ -64,6 +65,7 @@ const ShiftDatesModal = ({
         if (newBaseDate && newBaseDate !== currentMinDate) {
           e.preventDefault();
           e.stopPropagation();
+          e.stopImmediatePropagation();
           onConfirm(newBaseDate);
         }
       }
@@ -161,10 +163,12 @@ const SmallConfirmModal = ({ onConfirm, onCancel }: { onConfirm: () => void; onC
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         onCancel();
       } else if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         onConfirm();
       }
     };

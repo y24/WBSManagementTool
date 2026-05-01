@@ -38,6 +38,7 @@ const ConfirmModal = ({
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         onCancel();
       } else if (e.key === 'Enter') {
         // テキストエリア等の入力要素でEnterを押した場合は決定しないように例外を設ける（将来のため）
@@ -46,6 +47,7 @@ const ConfirmModal = ({
         
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         onConfirm();
       }
     };

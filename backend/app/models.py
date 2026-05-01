@@ -203,6 +203,8 @@ class Subtask(Base):
         CheckConstraint("actual_start_date IS NULL OR review_start_date IS NULL OR review_start_date >= actual_start_date", name="check_subtask_review_start_date"),
     )
 
+    interruptions = relationship("SubtaskInterruption", back_populates="subtask", cascade="all, delete-orphan", order_by="SubtaskInterruption.interruption_date")
+
 class SharedFilter(Base):
     __tablename__ = "shared_filters"
 
@@ -224,4 +226,21 @@ class Marker(Base):
 
     __table_args__ = (
         CheckConstraint("name <> ''", name="check_marker_name_empty"),
+    )
+
+class SubtaskInterruption(Base):
+    __tablename__ = "subtask_interruptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    subtask_id = Column(Integer, ForeignKey("subtasks.id"), nullable=False, index=True)
+    interruption_date = Column(Date, nullable=False)
+    resumption_date = Column(Date, nullable=True)
+    reason = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    subtask = relationship("Subtask", back_populates="interruptions")
+
+    __table_args__ = (
+        CheckConstraint("resumption_date IS NULL OR resumption_date >= interruption_date", name="check_interruption_dates"),
     )

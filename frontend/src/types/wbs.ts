@@ -2,6 +2,16 @@ import { MasterBase, MstStatus, MstSubtaskType, MstMember } from './index';
 
 export type GanttScale = 'day' | 'week' | 'month';
 
+export interface SubtaskInterruption {
+  id: number;
+  subtask_id: number;
+  interruption_date: string;
+  resumption_date?: string | null;
+  reason?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Subtask {
   id: number;
   task_id: number;
@@ -29,8 +39,7 @@ export interface Subtask {
   project_name?: string;
   task_name?: string;
   
-  // Relations mapped by backend (if needed, otherwise manually mapped from initial-data)
-  // For now we map using the masters
+  interruptions?: SubtaskInterruption[];
 }
 
 export interface Task {
