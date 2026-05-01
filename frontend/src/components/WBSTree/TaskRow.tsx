@@ -64,7 +64,7 @@ const TaskRow = memo(({
   return (
     <div className={`flex group wbs-row-task ${commonRowClasses} ${checked ? 'checked' : ''}`}>
       <div
-        className={`sticky left-0 z-20 flex items-center gap-1 font-medium pl-6 text-gray-700 dark:text-slate-200 wbs-cell-task transition-colors ${commonCellClasses} ${checked ? 'checked' : 'bg-white dark:bg-slate-900'}`}
+        className={`sticky left-0 flex items-center gap-1 font-medium pl-6 text-gray-700 dark:text-slate-200 wbs-cell-task transition-colors ${commonCellClasses} bg-white dark:bg-slate-900 ${checked ? 'checked' : ''}`}
         style={{ width: nameWidth, minWidth: nameWidth }}
       >
         <input

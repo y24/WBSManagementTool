@@ -64,7 +64,7 @@ const ProjectRow = memo(({
   return (
     <div className={`flex group wbs-row-project ${commonRowClasses} ${checked ? 'checked' : ''}`}>
       <div
-        className={`sticky left-0 z-20 flex items-center gap-1 font-semibold text-gray-800 dark:text-slate-100 wbs-cell-project transition-colors ${commonCellClasses} ${checked ? 'checked' : 'bg-white dark:bg-slate-900'}`}
+        className={`sticky left-0 flex items-center gap-1 font-semibold text-gray-800 dark:text-slate-100 wbs-cell-project transition-colors ${commonCellClasses} bg-white dark:bg-slate-900 ${checked ? 'checked' : ''}`}
         style={{ width: nameWidth, minWidth: nameWidth }}
       >
         <input

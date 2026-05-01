@@ -135,10 +135,11 @@ code {
 .wbs-cell-project {
   background-color: var(--wbs-project-bg) !important;
   border-right: 1px solid var(--wbs-border-color) !important;
+  z-index: 25 !important;
 }
 
 .group:hover .wbs-cell-project {
-  background-color: var(--wbs-project-hover) !important;
+  background-color: #d2e7ff !important; /* Opaque --wbs-project-hover */
 }
 
 .wbs-row-task {
@@ -152,10 +153,11 @@ code {
 .wbs-cell-task {
   background-color: var(--wbs-task-bg) !important;
   border-right: 1px solid var(--wbs-border-color) !important;
+  z-index: 25 !important;
 }
 
 .group:hover .wbs-cell-task {
-  background-color: var(--wbs-task-hover) !important;
+  background-color: #e2e8f0 !important; /* Opaque --wbs-task-hover */
 }
 
 /* サブタスクは基本線なしだが、一番最後だけは次の項目との区切りとして線を引く */
@@ -179,10 +181,11 @@ code {
 .wbs-cell-subtask {
   background-color: var(--wbs-subtask-bg) !important;
   border-right: 1px solid var(--wbs-border-color) !important;
+  z-index: 25 !important;
 }
 
 .group:hover .wbs-cell-subtask {
-  background-color: var(--wbs-subtask-hover) !important;
+  background-color: #f8fafc !important; /* Opaque --wbs-subtask-hover */
 }
 
 /* Checked state highlight */
@@ -210,28 +213,45 @@ code {
   background-color: rgba(30, 64, 175, 0.35) !important;
 }
 
-.wbs-cell-project.checked,
-.wbs-cell-task.checked,
+.wbs-cell-project.checked {
+  background-color: #c1dafd !important;
+}
+
+.wbs-cell-task.checked {
+  background-color: #ccdef8 !important;
+}
+
 .wbs-cell-subtask.checked {
-  background-color: rgba(59, 130, 246, 0.2) !important;
+  background-color: #ecf3fe !important;
 }
 
-.group:hover .wbs-cell-project.checked,
-.group:hover .wbs-cell-task.checked,
+/* Checked + Hover */
+.group:hover .wbs-cell-project.checked {
+  background-color: #adccf7 !important;
+}
+
+.group:hover .wbs-cell-task.checked {
+  background-color: #b8d1f2 !important;
+}
+
 .group:hover .wbs-cell-subtask.checked {
-  background-color: rgba(59, 130, 246, 0.3) !important;
+  background-color: #d9e8fe !important;
 }
 
+/* Dark Mode states */
 :root.dark .wbs-cell-project.checked,
-:root.dark .wbs-cell-task.checked,
 :root.dark .wbs-cell-subtask.checked {
-  background-color: rgba(30, 64, 175, 0.35) !important;
+  background-color: #1e3164 !important;
+}
+
+:root.dark .wbs-cell-task.checked {
+  background-color: #142558 !important;
 }
 
 :root.dark .group:hover .wbs-cell-project.checked,
 :root.dark .group:hover .wbs-cell-task.checked,
 :root.dark .group:hover .wbs-cell-subtask.checked {
-  background-color: rgba(30, 64, 175, 0.45) !important;
+  background-color: #253970 !important;
 }
 
 /* Common Table utility classes */
@@ -290,15 +310,26 @@ code {
 }
 
 .wbs-row-subtask.delayed .wbs-cell-subtask {
-  background-color: rgba(251, 191, 36, 0.15) !important;
+  background-color: #fef5de !important;
 }
 
-:root.dark .wbs-row-subtask.delayed {
-  background-color: rgba(217, 119, 6, 0.15) !important;
+/* Delayed + Hover */
+.wbs-row-subtask.delayed:hover .wbs-cell-subtask {
+  background-color: #fdf0cf !important;
+}
+
+/* Delayed + Checked */
+.wbs-row-subtask.delayed .wbs-cell-subtask.checked {
+  background-color: #fbe6c1 !important;
 }
 
 :root.dark .wbs-row-subtask.delayed .wbs-cell-subtask {
-  background-color: rgba(217, 119, 6, 0.15) !important;
+  background-color: #2b261d !important;
+}
+
+/* Dark Mode Delayed + Hover/Checked */
+:root.dark .wbs-row-subtask.delayed:hover .wbs-cell-subtask {
+  background-color: #3d3428 !important;
 }
 
 .gantt-body .wbs-row-empty::after {

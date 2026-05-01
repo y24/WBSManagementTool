@@ -91,7 +91,7 @@ const SubtaskRow = memo(({
   return (
     <div className={`flex group wbs-row-subtask ${commonRowClasses} ${checked ? 'checked' : ''} ${isDelayed ? 'delayed' : ''}`}>
       <div
-        className={`sticky left-0 z-20 flex items-center gap-1 pl-12 text-gray-600 dark:text-slate-400 wbs-cell-subtask transition-colors ${commonCellClasses} ${checked ? 'checked' : 'bg-white dark:bg-slate-900'}`}
+        className={`sticky left-0 flex items-center gap-1 pl-12 text-gray-600 dark:text-slate-400 wbs-cell-subtask transition-colors ${commonCellClasses} bg-white dark:bg-slate-900 ${checked ? 'checked' : ''}`}
         style={{ width: nameWidth, minWidth: nameWidth }}
       >
         <input
