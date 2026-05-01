@@ -97,7 +97,9 @@
 ## 5. 定期メンテナンス
 
 ### システムの更新
-ソースコードを更新して再デプロイする場合は、再度 `server_setup.bat` を実行してください。
+ソースコードを更新して再デプロイする場合は、再度 `server_setup.bat` を実行するか、フロントエンドのみの更新であれば以下のスクリプトを使用してください。
+- `rebuild_frontend.ps1` (PowerShell)
+- `rebuild_frontend.bat` (コマンドプロンプト)
 
 ### ログの確認
 - IIS ログ: `%SystemDrive%\inetpub\logs\LogFiles`
