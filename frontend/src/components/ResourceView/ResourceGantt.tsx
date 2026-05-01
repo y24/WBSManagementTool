@@ -62,6 +62,32 @@ export default function ResourceGantt({
     return color;
   }, [initialData, isDarkMode]);
 
+  const getAssigneeColor = useCallback((assigneeId: number | null | undefined): string => {
+    if (!assigneeId) return isDarkMode ? '#334155' : '#cbd5e1';
+    
+    const palette = [
+      '#6366f1', // Indigo 500
+      '#8b5cf6', // Violet 500
+      '#ec4899', // Pink 500
+      '#f43f5e', // Rose 500
+      '#ef4444', // Red 500
+      '#f97316', // Orange 500
+      '#f59e0b', // Amber 500
+      '#eab308', // Yellow 500
+      '#84cc16', // Lime 500
+      '#22c55e', // Green 500
+      '#10b981', // Emerald 500
+      '#14b8a6', // Teal 500
+      '#06b6d4', // Cyan 500
+      '#0ea5e9', // Sky 500
+      '#3b82f6', // Blue 500
+      '#a855f7', // Purple 500
+      '#d946ef', // Fuchsia 500
+    ];
+
+    return palette[assigneeId % palette.length];
+  }, [isDarkMode]);
+
   const doneStatusId = initialData?.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null;
   const newStatusId = initialData?.statuses.find(s => s.status_name === 'New')?.id;
   const removedStatusId = initialData?.statuses.find(s => s.status_name === 'Removed')?.id ?? 7;
@@ -267,6 +293,8 @@ export default function ResourceGantt({
                             showProgressRate={false}
                             showAssigneeName={false}
                             getStatusColor={getStatusColor}
+                            getAssigneeColor={getAssigneeColor}
+                            colorMode="status"
                             handleMouseDown={handleMouseDown}
                             customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
                             isDelayedHighlight={isDelayed}
