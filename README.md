@@ -50,8 +50,16 @@ if (-not (Test-Path .env)) { copy .env.example .env }
 # DBの作成（wbs_dbを自動作成します）
 python setup_db.py
 
-# フェーズ2：モデル情報のDB反映(マイグレーション)と初期データの投入をスクリプトで一括実行
+# フェーズ2：DB反映(マイグレーション)と初期データの投入
+# 一括実行する場合：
 powershell -ExecutionPolicy Bypass -File .\setup_phase2.ps1
+
+# 個別に実行する場合：
+# 1. マイグレーションのみ（モデル変更時など）
+powershell -ExecutionPolicy Bypass -File .\migrate_db.ps1
+
+# 2. 初期データ投入のみ
+powershell -ExecutionPolicy Bypass -File .\seed_db.ps1
 
 # サーバーの起動 ( http://localhost:8000 で動作します )
 uvicorn app.main:app --reload

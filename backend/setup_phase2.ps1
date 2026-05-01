@@ -1,16 +1,12 @@
 # setup_phase2.ps1
 # Run this script to generate your db schema and insert initial seed data.
 
-Write-Host "Activating virtual environment..."
-.\venv\Scripts\activate
+Write-Host "Starting Phase 2 Setup (Migrations and Seeding)..."
 
-Write-Host "Auto-generating Alembic migration scripts..."
-alembic revision --autogenerate -m "Initial Schema"
+# Apply Migrations
+powershell -ExecutionPolicy Bypass -File .\migrate_db.ps1
 
-Write-Host "Applying migrations to the database..."
-alembic upgrade head
-
-Write-Host "Seeding initial master data (status, types, etc)..."
-python seed.py
+# Seed Data
+powershell -ExecutionPolicy Bypass -File .\seed_db.ps1
 
 Write-Host "Phase 2 Database Setup is Complete!"
