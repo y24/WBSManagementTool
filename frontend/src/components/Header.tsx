@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Settings, ListTree, Plus, FileInput, LayoutDashboard, RefreshCw } from 'lucide-react';
+import { Settings, ListTree, Plus, FileInput, LayoutDashboard, RefreshCw, CalendarDays } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getInitialData } from '../api/client';
 
@@ -58,6 +58,13 @@ export default function Header() {
       <div className="flex items-center gap-6">
         {isMainBoard && (
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('gantt-scroll-to-today'))}
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md text-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-all font-medium active:scale-95 shadow-sm"
+              title="今日の日付へ移動"
+            >
+              <CalendarDays size={16} />
+            </button>
             {!enableWebsocket && (
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('refresh-wbs'))}

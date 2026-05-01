@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, UIEvent, useMemo } from 'react';
 import { wbsOps } from '../api/wbsOperations';
 import { apiClient, getInitialData } from '../api/client';
-import { WBSResponse } from '../types/wbs';
+import { WBSResponse, Project } from '../types/wbs';
 import { InitialData } from '../types';
 import FilterPanel, { DisplayOptions, FilterState } from '../components/FilterPanel';
 import MainBoardContent from './mainboard/MainBoardContent';
@@ -26,6 +26,8 @@ import { useWebSocket } from '../api/websocket';
 import ConfirmModal from '../components/WBSTree/ConfirmModal';
 import { Download } from 'lucide-react';
 import LoadingOverlay from '../components/LoadingOverlay';
+import { parseISO } from 'date-fns';
+import { getDateX } from '../utils/ganttUtils';
 
 export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
@@ -149,6 +151,28 @@ export default function MainBoard() {
 
   const filteredProjects = useFilteredProjects({ data, filters, initialData, displayOptions });
   const dynamicGanttRange = useDynamicGanttRange({ data, filteredProjects });
+
+  useEffect(() => {
+    const handleScrollToToday = () => {
+      if (ganttRef.current && dynamicGanttRange?.start_date) {
+        const today = new Date();
+        const baseDate = parseISO(dynamicGanttRange.start_date);
+        const scrollX = getDateX(today, baseDate, displayOptions.ganttScale);
+        
+        // Center the today date in the visible area
+        const containerWidth = ganttRef.current.clientWidth;
+        const targetScroll = Math.max(0, scrollX - containerWidth / 2);
+        
+        ganttRef.current.scrollTo({
+          left: targetScroll,
+          behavior: 'smooth'
+        });
+      }
+    };
+    
+    window.addEventListener('gantt-scroll-to-today', handleScrollToToday);
+    return () => window.removeEventListener('gantt-scroll-to-today', handleScrollToToday);
+  }, [dynamicGanttRange, displayOptions.ganttScale]);
 
   useEffect(() => {
     if (!loading && data && ganttRef.current) {
