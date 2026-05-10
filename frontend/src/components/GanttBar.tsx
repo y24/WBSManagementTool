@@ -234,9 +234,17 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const warningText = getWarning(item, initialData, isSubtask);
   const isDelayed = !!warningText;
 
+  const actualRightEdge = actualSegments.length > 0
+    ? Math.max(
+        ...actualSegments.map((seg) => (
+          getDateX(seg.start, baseDate, scale) + getDateWidth(seg.start, seg.end, scale)
+        ))
+      )
+    : 0;
+
   const rightEdge = Math.max(
     pStart !== undefined && pWidth !== undefined ? pStart + pWidth : 0,
-    actualSegments.length > 0 ? (getDateX(actualSegments[actualSegments.length-1].end, baseDate, scale) + getDateWidth(actualSegments[actualSegments.length-1].start, actualSegments[actualSegments.length-1].end, scale)) : 0
+    actualRightEdge
   );
 
   const isDragging = dragState?.itemId === item.id;
