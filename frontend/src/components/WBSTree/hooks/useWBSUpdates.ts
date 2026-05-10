@@ -18,7 +18,7 @@ const parseStatusMapping = (value: string | null | undefined, fallback: number[]
 interface UseWBSUpdatesProps {
   projects: Project[];
   initialData: InitialData | null;
-  onUpdate: () => void;
+  onUpdate: (options?: { skipStatusAutoRefresh?: boolean }) => void;
   onLocalUpdate?: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => void;
   setSaving: (saving: boolean) => void;
   checkedIds: Record<string, boolean>;
@@ -126,7 +126,7 @@ export const useWBSUpdates = ({
       return true;
     });
 
-    const performUpdate = async () => {
+    const performUpdate = async (applyStatusAutoUpdates = true) => {
       setSaving(true);
       setIsConfirmModalOpen(false);
       try {
@@ -197,7 +197,7 @@ export const useWBSUpdates = ({
             }
           }
 
-          if (item.type === 'subtask' && field === 'status_id' && initialData) {
+          if (applyStatusAutoUpdates && item.type === 'subtask' && field === 'status_id' && initialData) {
             const removedStatusId = initialData.statuses.find(s => s.status_name === 'Removed')?.id ?? 7;
             const targetStatusId = parseInt(value, 10);
 
@@ -227,12 +227,17 @@ export const useWBSUpdates = ({
             onLocalUpdate(item.type, item.id, updates);
           }
 
-          if (item.type === 'project') return wbsOps.updateProject(item.id, updates);
-          if (item.type === 'task') return wbsOps.updateTask(item.id, updates);
-          return wbsOps.updateSubtask(item.id, updates);
+          const requestUpdates = {
+            ...updates,
+            ...(field === 'status_id' && !applyStatusAutoUpdates ? { skip_status_auto_update: true } : {})
+          };
+
+          if (item.type === 'project') return wbsOps.updateProject(item.id, requestUpdates);
+          if (item.type === 'task') return wbsOps.updateTask(item.id, requestUpdates);
+          return wbsOps.updateSubtask(item.id, requestUpdates);
         });
         await Promise.all(promises);
-        onUpdate();
+        onUpdate({ skipStatusAutoRefresh: !applyStatusAutoUpdates });
       } catch (err) {
         console.error(err);
         alert('保存に失敗しました。');
@@ -244,6 +249,7 @@ export const useWBSUpdates = ({
 
     // Check for potential date/progress overwrites on status change
     let statusOverwriteMsg = '';
+    let hasStatusAutoUpdates = false;
     if (field === 'status_id' && initialData) {
       const removedStatusId = initialData.statuses.find(s => s.status_name === 'Removed')?.id ?? 7;
       const doneIds = parseStatusMapping(initialData.status_mapping_done, [4, 7]);
@@ -305,6 +311,7 @@ export const useWBSUpdates = ({
 
       const uniqueDetails = Array.from(new Set(overwriteDetails));
       if (uniqueDetails.length > 0) {
+        hasStatusAutoUpdates = true;
         statusOverwriteMsg = `ステータスの変更により、以下のデータが自動更新・消去されます。上書きしてよろしいですか？\n\n${uniqueDetails.join('\n')}`;
       }
 
@@ -368,8 +375,10 @@ export const useWBSUpdates = ({
           detail: detail,
           title: '確認',
           confirmText: '更新',
+          secondaryActionText: hasStatusAutoUpdates ? '更新しない' : undefined,
           variant: 'warning',
-          onConfirm: performUpdate
+          onConfirm: () => performUpdate(true),
+          onSecondaryAction: hasStatusAutoUpdates ? () => performUpdate(false) : undefined
         });
         setIsConfirmModalOpen(true);
       } else {

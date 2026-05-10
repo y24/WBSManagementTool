@@ -8,7 +8,9 @@ interface ConfirmModalProps {
   title: string;
   description: string;
   confirmText: string;
+  secondaryActionText?: string;
   onConfirm: () => void;
+  onSecondaryAction?: () => void;
   onCancel: () => void;
   variant?: 'danger' | 'warning' | 'primary';
   icon?: React.ReactNode;
@@ -24,7 +26,9 @@ const ConfirmModal = ({
   title, 
   description, 
   confirmText, 
+  secondaryActionText,
   onConfirm, 
+  onSecondaryAction,
   onCancel, 
   variant = 'danger', 
   icon, 
@@ -130,6 +134,14 @@ const ConfirmModal = ({
             >
               キャンセル
             </button>
+            {secondaryActionText && onSecondaryAction && (
+              <button
+                onClick={onSecondaryAction}
+                className="flex-1 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl transition-all active:scale-95"
+              >
+                {secondaryActionText}
+              </button>
+            )}
             <button
               onClick={onConfirm}
               autoFocus={true}

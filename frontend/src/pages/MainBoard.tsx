@@ -29,6 +29,11 @@ import LoadingOverlay from '../components/LoadingOverlay';
 import { parseISO } from 'date-fns';
 import { getDateX } from '../utils/ganttUtils';
 
+type WBSRefreshOptions = boolean | {
+  showLoading?: boolean;
+  skipStatusAutoRefresh?: boolean;
+};
+
 export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
   const [initialData, setInitialData] = useState<InitialData | null>(null);
@@ -51,14 +56,17 @@ export default function MainBoard() {
   useWebSocket((msg) => {
     if (msg.type === 'update' || msg.type === 'connected') {
       console.log(`MainBoard received ${msg.type} signal, refreshing...`);
-      fetchData();
+      fetchData({ skipStatusAutoRefresh: !!msg.skip_status_auto_refresh });
     }
   });
 
   const isFetchingRef = useRef(false);
 
   const fetchData = useCallback(
-    async (showLoading = false) => {
+    async (options: WBSRefreshOptions = false) => {
+      const showLoading = typeof options === 'boolean' ? options : !!options.showLoading;
+      const skipStatusAutoRefresh = typeof options === 'object' && !!options.skipStatusAutoRefresh;
+
       // Prevent concurrent WBS fetches
       if (isFetchingRef.current) return;
       isFetchingRef.current = true;
@@ -69,7 +77,9 @@ export default function MainBoard() {
         const wbsRes = await wbsOps.getWBS(
           undefined, // projectIds
           displayOptions.showDoneProjects,
-          displayOptions.showRemoved
+          displayOptions.showRemoved,
+          8,
+          !skipStatusAutoRefresh
         );
         setData(wbsRes.data);
 

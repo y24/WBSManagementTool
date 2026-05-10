@@ -17,9 +17,11 @@ def read_wbs(
     include_done: bool = False,
     include_removed: bool = False,
     weeks: int = 8,
+    refresh_ongoing_end_dates: bool = True,
     db: Session = Depends(get_db)
 ):
-    crud.refresh_subtasks_actual_end_date(db, project_ids)
+    if refresh_ongoing_end_dates:
+        crud.refresh_subtasks_actual_end_date(db, project_ids)
     projects = crud.get_wbs_data(db, project_ids, include_done, include_removed)
     
     # Dynamic gantt range calculation
@@ -86,7 +88,7 @@ def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)
 def update_project(project_id: int, project: schemas.ProjectUpdate, db: Session = Depends(get_db)):
     db_proj = crud.update_project(db, project_id, project)
     if not db_proj: raise HTTPException(status_code=404, detail="Project not found")
-    manager.broadcast_sync({"type": "update", "entity": "project"})
+    manager.broadcast_sync({"type": "update", "entity": "project", "skip_status_auto_refresh": bool(project.skip_status_auto_update)})
     return db_proj
 
 @router.delete("/projects/{project_id}", response_model=schemas.Project)
@@ -113,7 +115,7 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
 def update_task(task_id: int, task: schemas.TaskUpdate, db: Session = Depends(get_db)):
     db_task = crud.update_task(db, task_id, task)
     if not db_task: raise HTTPException(status_code=404, detail="Task not found")
-    manager.broadcast_sync({"type": "update", "entity": "task"})
+    manager.broadcast_sync({"type": "update", "entity": "task", "skip_status_auto_refresh": bool(task.skip_status_auto_update)})
     return db_task
 
 @router.delete("/tasks/{task_id}", response_model=schemas.Task)
@@ -140,7 +142,7 @@ def create_subtask(subtask: schemas.SubtaskCreate, db: Session = Depends(get_db)
 def update_subtask(subtask_id: int, subtask: schemas.SubtaskUpdate, db: Session = Depends(get_db)):
     db_subtask = crud.update_subtask(db, subtask_id, subtask)
     if not db_subtask: raise HTTPException(status_code=404, detail="Subtask not found")
-    manager.broadcast_sync({"type": "update", "entity": "subtask"})
+    manager.broadcast_sync({"type": "update", "entity": "subtask", "skip_status_auto_refresh": bool(subtask.skip_status_auto_update)})
     return db_subtask
 
 @router.delete("/subtasks/{subtask_id}", response_model=schemas.Subtask)

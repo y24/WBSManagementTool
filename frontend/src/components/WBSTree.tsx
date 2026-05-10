@@ -29,7 +29,7 @@ import { useWBSNewItemEffect } from './WBSTree/hooks/useWBSNewItemEffect';
 interface WBSTreeProps {
   projects: Project[];
   initialData: InitialData | null;
-  onUpdate: () => void;
+  onUpdate: (options?: { skipStatusAutoRefresh?: boolean }) => void;
   onLocalUpdate?: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => void;
   onLocalReorder?: (newProjects: Project[]) => void;
   expandedProjects: Record<number, boolean>;
@@ -312,8 +312,10 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         title={confirmData.title}
         description={confirmData.detail}
         confirmText={confirmData.confirmText}
+        secondaryActionText={confirmData.secondaryActionText}
         variant={confirmData.variant}
         onConfirm={confirmData.onConfirm}
+        onSecondaryAction={confirmData.onSecondaryAction}
         onCancel={() => setIsConfirmModalOpen(false)}
       />
 

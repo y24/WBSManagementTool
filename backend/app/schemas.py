@@ -133,6 +133,7 @@ class SubtaskUpdate(BaseModel):
     is_auto_effort: Optional[bool] = None
     workload_percent: Optional[int] = None
     sort_order: Optional[int] = None
+    skip_status_auto_update: Optional[bool] = False
 
 class Subtask(SubtaskBase):
     id: int
@@ -207,6 +208,7 @@ class TaskUpdate(BaseModel):
     sort_order: Optional[int] = None
     status_id: Optional[int] = None
     assignee_id: Optional[int] = None
+    skip_status_auto_update: Optional[bool] = False
 
 class Task(TaskBase):
     id: int
@@ -264,6 +266,7 @@ class ProjectUpdate(BaseModel):
     sort_order: Optional[int] = None
     status_id: Optional[int] = None
     assignee_id: Optional[int] = None
+    skip_status_auto_update: Optional[bool] = False
 
 class Project(ProjectBase):
     id: int

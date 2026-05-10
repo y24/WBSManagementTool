@@ -33,8 +33,10 @@ export const useWBSTreeActions = ({
     detail: '',
     title: '',
     confirmText: '',
-    variant: 'danger' as 'danger' | 'warning',
-    onConfirm: () => { }
+    secondaryActionText: undefined as string | undefined,
+    variant: 'danger' as 'danger' | 'warning' | 'primary',
+    onConfirm: () => { },
+    onSecondaryAction: undefined as (() => void) | undefined
   });
 
   const handleDeleteSelected = () => {
@@ -46,8 +48,10 @@ export const useWBSTreeActions = ({
       detail: detailMsg,
       title: '項目の削除確認',
       confirmText: '削除を実行',
+      secondaryActionText: undefined,
       variant: 'danger',
-      onConfirm: executeDelete
+      onConfirm: executeDelete,
+      onSecondaryAction: undefined
     });
     setIsConfirmModalOpen(true);
   };
@@ -83,8 +87,10 @@ export const useWBSTreeActions = ({
       detail: detailMsg,
       title: '実績値のクリア確認',
       confirmText: '実績値をクリア',
+      secondaryActionText: undefined,
       variant: 'warning',
-      onConfirm: () => executeClearActuals(selectedIds.pIds, selectedIds.tIds, selectedIds.sIds)
+      onConfirm: () => executeClearActuals(selectedIds.pIds, selectedIds.tIds, selectedIds.sIds),
+      onSecondaryAction: undefined
     });
     setIsConfirmModalOpen(true);
   };
@@ -113,8 +119,10 @@ export const useWBSTreeActions = ({
       detail: detailMsg,
       title: '計画・実績値のクリア確認',
       confirmText: '計画・実績値をクリア',
+      secondaryActionText: undefined,
       variant: 'warning',
-      onConfirm: () => executeClearPlansActuals(selectedIds.pIds, selectedIds.tIds, selectedIds.sIds)
+      onConfirm: () => executeClearPlansActuals(selectedIds.pIds, selectedIds.tIds, selectedIds.sIds),
+      onSecondaryAction: undefined
     });
     setIsConfirmModalOpen(true);
   };

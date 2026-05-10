@@ -35,10 +35,11 @@ def update_project(db: Session, project_id: int, project: schemas.ProjectUpdate)
         return None
     
     update_dict = project.dict(exclude_unset=True)
+    skip_status_auto_update = update_dict.pop("skip_status_auto_update", False)
     
     # Auto-set dates if status is being changed
     new_status_id = update_dict.get("status_id")
-    if new_status_id is not None and new_status_id != db_project.status_id:
+    if not skip_status_auto_update and new_status_id is not None and new_status_id != db_project.status_id:
         done_ids = get_status_ids_by_category(db, "done")
         if new_status_id in done_ids:
             if "actual_end_date" not in update_dict and db_project.actual_end_date is None:

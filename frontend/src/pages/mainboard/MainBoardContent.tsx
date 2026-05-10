@@ -6,6 +6,11 @@ import { DisplayOptions } from '../../components/FilterPanel';
 import { InitialData } from '../../types';
 import { GanttRange, Project } from '../../types/wbs';
 
+type WBSRefreshOptions = boolean | {
+  showLoading?: boolean;
+  skipStatusAutoRefresh?: boolean;
+};
+
 interface MainBoardContentProps {
   displayOptions: DisplayOptions;
   treeWidth: number;
@@ -14,7 +19,7 @@ interface MainBoardContentProps {
   ganttRef: RefObject<HTMLDivElement | null>;
   filteredProjects: Project[];
   initialData: InitialData | null;
-  onUpdate: (isInitial?: boolean) => Promise<void>;
+  onUpdate: (options?: WBSRefreshOptions) => Promise<void>;
   onLocalUpdate: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => void;
   onLocalReorder: (newProjects: Project[]) => void;
   expandedProjects: Record<number, boolean>;

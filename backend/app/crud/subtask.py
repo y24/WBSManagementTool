@@ -204,11 +204,12 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
     
     old_task_id = db_subtask.task_id
     update_dict = subtask.dict(exclude_unset=True)
+    skip_status_auto_update = update_dict.pop("skip_status_auto_update", False)
     
     # Auto-set dates if status is being changed
     # ... (existing status logic) ...
     new_status_id = update_dict.get("status_id")
-    if new_status_id is not None and new_status_id != db_subtask.status_id:
+    if not skip_status_auto_update and new_status_id is not None and new_status_id != db_subtask.status_id:
         done_ids = get_status_ids_by_category(db, "done")
 
         # 1. actual_start_date for In Progress (2), In Review (3) or Done
