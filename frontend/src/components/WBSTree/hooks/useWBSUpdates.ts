@@ -6,6 +6,15 @@ import { DisplayOptions } from '../../FilterPanel/FilterPanelTypes';
 import { wbsOps } from '../../../api/wbsOperations';
 import { addBusinessDays, getBusinessDaysCount } from '../utils';
 
+const parseStatusMapping = (value: string | null | undefined, fallback: number[]): number[] => {
+  const parsed = value
+    ?.split(',')
+    .map(s => parseInt(s.trim(), 10))
+    .filter(n => !Number.isNaN(n));
+
+  return parsed && parsed.length > 0 ? parsed : fallback;
+};
+
 interface UseWBSUpdatesProps {
   projects: Project[];
   initialData: InitialData | null;
@@ -237,8 +246,8 @@ export const useWBSUpdates = ({
     let statusOverwriteMsg = '';
     if (field === 'status_id' && initialData) {
       const removedStatusId = initialData.statuses.find(s => s.status_name === 'Removed')?.id ?? 7;
-      const doneIds = initialData.status_mapping_done?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [4, 7];
-      const newIds = initialData.status_mapping_new?.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)) || [1];
+      const doneIds = parseStatusMapping(initialData.status_mapping_done, [4, 7]);
+      const newIds = parseStatusMapping(initialData.status_mapping_new, [1]);
       const newStatusId = parseInt(value, 10);
       const isDone = doneIds.includes(newStatusId) && newStatusId !== removedStatusId;
       const isNew = newIds.includes(newStatusId) && newStatusId !== removedStatusId;
@@ -306,6 +315,25 @@ export const useWBSUpdates = ({
           statusOverwriteMsg = `${removedMsg}\n\n${statusOverwriteMsg}`;
         } else {
           statusOverwriteMsg = `${removedMsg}\n変更を適用してよろしいですか？`;
+        }
+      }
+
+      // Check for Done project visibility
+      if (isDone && !displayOptions.showDoneProjects) {
+        const affectedProjectCount = applicableItems.filter(item => {
+          if (item.type !== 'project') return false;
+          const data = findItem(item.type, item.id) as Project | null;
+          if (!data) return false;
+          return !doneIds.includes(data.status_id ?? 0);
+        }).length;
+
+        if (affectedProjectCount > 0) {
+          const doneProjectMsg = 'ステータスをDoneにすると、このプロジェクトは現在の表示オプションでは非表示になります。';
+          if (statusOverwriteMsg) {
+            statusOverwriteMsg = `${doneProjectMsg}\n\n${statusOverwriteMsg}`;
+          } else {
+            statusOverwriteMsg = `${doneProjectMsg}\n変更を適用してよろしいですか？`;
+          }
         }
       }
     }
