@@ -55,7 +55,8 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
   
   // 上段ヘッダーのグループ化
   const topGroups = React.useMemo(() => {
-    const groups: { label: string; width: number; date: Date }[] = [];
+    const groups: { label: string; width: number; date: Date; left: number }[] = [];
+    let currentLeft = 0;
     days.forEach(d => {
       let label = "";
       if (scale === 'day' || scale === 'week') {
@@ -68,8 +69,9 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
       if (last && last.label === label) {
         last.width += cellWidth;
       } else {
-        groups.push({ label, width: cellWidth, date: d });
+        groups.push({ label, width: cellWidth, date: d, left: currentLeft });
       }
+      currentLeft += cellWidth;
     });
     return groups;
   }, [days, cellWidth, scale]);
@@ -78,12 +80,12 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
     <div className="flex flex-col border-b-[1px] border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-30 bg-slate-100 dark:bg-slate-900 flex-shrink-0 transition-colors" style={{ height: '38px' }}>
       {/* Month Row */}
       {/* Top Row (Month or Year) */}
-      <div className="flex border-b-[1px] border-slate-200 dark:border-slate-800 h-[18px]">
+      <div className="relative border-b-[1px] border-slate-200 dark:border-slate-800 h-[18px]">
         {topGroups.map((g, idx) => (
           <div 
             key={`${g.label}-${idx}`} 
-            className="flex-shrink-0 border-r border-gray-200 dark:border-slate-800 flex items-center bg-slate-50 dark:bg-slate-900"
-            style={{ width: `${g.width}px` }}
+            className="absolute top-0 bottom-0 border-r border-gray-200 dark:border-slate-800 flex items-center bg-slate-50 dark:bg-slate-900"
+            style={{ left: `${g.left}px`, width: `${g.width}px` }}
           >
             <div className="sticky left-0 pl-1 text-[9px] font-bold text-gray-500 dark:text-slate-400 whitespace-nowrap z-40 bg-slate-50/80 dark:bg-slate-900/80 rounded-r pr-1 backdrop-blur-sm">
               {g.label}
@@ -94,8 +96,8 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
 
       {/* Day Row */}
       {/* Bottom Row (Day, Week, or Month) */}
-      <div className="flex h-[20px]">
-        {days.map(d => {
+      <div className="relative h-[20px]">
+        {days.map((d, i) => {
           let label = "";
           let dayClasses = "text-gray-500 dark:text-slate-400";
           let tooltip = "";
@@ -129,8 +131,8 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
           return (
             <div
               key={d.toISOString()}
-              className={`flex-shrink-0 border-r border-gray-200 dark:border-slate-800 flex items-center justify-center text-[10px] cursor-pointer transition-colors relative group/header-cell ${dayClasses} ${(scale === 'day' && isToday(d)) ? 'font-bold' : ''}`}
-              style={{ width: `${cellWidth}px` }}
+              className={`absolute top-0 bottom-0 border-r border-gray-200 dark:border-slate-800 flex items-center justify-center text-[10px] cursor-pointer transition-colors group/header-cell ${dayClasses} ${(scale === 'day' && isToday(d)) ? 'font-bold' : ''}`}
+              style={{ left: `${i * cellWidth}px`, width: `${cellWidth}px` }}
               title={tooltip}
               onMouseEnter={(e) => setHoveredDate(dateStr, e.clientX, e.clientY)}
               onMouseMove={(e) => setHoveredDate(dateStr, e.clientX, e.clientY)}

@@ -174,7 +174,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
     <div
       ref={containerRef}
       tabIndex={0}
-      className="flex-1 w-full overflow-y-auto overflow-x-scroll bg-white dark:bg-slate-900 border-r dark:border-slate-800 relative no-scrollbar transition-colors outline-none focus:ring-1 focus:ring-blue-200/50"
+      className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-scroll bg-white dark:bg-slate-900 border-r dark:border-slate-800 relative no-scrollbar transition-colors outline-none focus:ring-1 focus:ring-blue-200/50"
       onScroll={onScroll}
       onKeyDown={(e) => {
         if (isConfirmModalOpen || isShiftDatesModalOpen || editingItem || bulkCreateConfig.isOpen) return;
@@ -196,7 +196,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         handlePaste(e);
       }}
     >
-      <div className="min-w-max">
+      <div className="min-w-max min-h-full">
         {saving && (
           <div className="absolute top-1 right-2 z-50">
             <span className="text-[10px] text-blue-500 font-medium">Saving...</span>

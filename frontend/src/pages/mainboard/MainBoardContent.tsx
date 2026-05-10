@@ -47,7 +47,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
 }) => {
   if (displayOptions.viewMode === 'resource') {
     return (
-      <div className="flex flex-1 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
+      <div className="flex flex-1 min-h-0 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
         <ResourceBoard
           projects={filteredProjects}
           initialData={initialData}
@@ -70,9 +70,9 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
   }
 
   return (
-    <div className="flex flex-1 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
+    <div className="flex flex-1 min-h-0 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
       <div
-        className={`flex flex-col relative z-20 overflow-hidden ${displayOptions.showGanttChart ? 'flex-shrink-0' : 'flex-1'}`}
+        className={`flex flex-col min-h-0 relative z-20 overflow-hidden ${displayOptions.showGanttChart ? 'flex-shrink-0' : 'flex-1'}`}
         style={{ width: displayOptions.showGanttChart ? `${treeWidth}px` : '100%' }}
       >
         <WBSTree
@@ -103,7 +103,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
             }}
           />
 
-          <div className="flex-1 bg-slate-50 dark:bg-slate-950 relative overflow-hidden flex flex-col z-10 w-0 transition-colors">
+          <div className="flex-1 min-h-0 bg-slate-50 dark:bg-slate-950 relative overflow-hidden flex flex-col z-10 w-0 transition-colors">
             {dynamicGanttRange && (
               <GanttChart
                 ref={ganttRef}

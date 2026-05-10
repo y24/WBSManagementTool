@@ -219,25 +219,24 @@ export default function MainBoard() {
   ) => {
     if (syncLockRef.current === sourceType) return;
 
-    const sourceMaxScrollTop = source.scrollHeight - source.clientHeight;
-    const targetMaxScrollTop = target.scrollHeight - target.clientHeight;
+    const sourceMaxScrollTop = Math.max(0, source.scrollHeight - source.clientHeight);
+    const targetMaxScrollTop = Math.max(0, target.scrollHeight - target.clientHeight);
 
-    if (targetMaxScrollTop <= 0) {
+    if (sourceMaxScrollTop === 0 || targetMaxScrollTop === 0) {
       if (Math.abs(target.scrollTop) > 0.5) {
+        syncLockRef.current = targetType;
         target.scrollTop = 0;
-      }
-      return;
-    }
-
-    if (sourceMaxScrollTop <= 0) {
-      if (Math.abs(target.scrollTop) > 0.5) {
-        target.scrollTop = 0;
+        requestAnimationFrame(() => {
+          if (syncLockRef.current === targetType) {
+            syncLockRef.current = null;
+          }
+        });
       }
       return;
     }
 
     const scrollRatio = source.scrollTop / sourceMaxScrollTop;
-    const nextTargetScrollTop = scrollRatio * targetMaxScrollTop;
+    const nextTargetScrollTop = Math.min(targetMaxScrollTop, scrollRatio * targetMaxScrollTop);
 
     if (Math.abs(target.scrollTop - nextTargetScrollTop) > 0.5) {
       syncLockRef.current = targetType;
@@ -345,7 +344,7 @@ export default function MainBoard() {
 
 
   return (
-    <div className="flex flex-col w-full h-full bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
+    <div className="flex flex-col w-full h-full min-h-0 bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
       <FilterPanel
         filters={filters}
         setFilters={setFilters}

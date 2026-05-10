@@ -45,7 +45,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
   return (
     <>
       {/* 背景の縦線 (z-0) */}
-      <div className="absolute inset-0 flex pointer-events-none z-0">
+      <div className="absolute inset-0 pointer-events-none z-0">
         {days.map((d, i) => {
           const dow = getDay(d);
           const isSaturday = dow === 6;
@@ -65,8 +65,8 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
           return (
             <div
               key={`bg-${d.toISOString()}`}
-              className={`flex-shrink-0 wbs-cell-border ${bgClass}`}
-              style={{ width: `${cellWidth}px` }}
+              className={`absolute top-0 bottom-0 wbs-cell-border ${bgClass}`}
+              style={{ left: `${i * cellWidth}px`, width: `${cellWidth}px` }}
             />
           );
         })}

@@ -292,6 +292,58 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     return results;
   }, [projects, hoveredDate, tempDates]);
 
+  const visibleRows = useMemo(() => {
+    const rows: Array<
+      | { key: string; itemType: 'project'; project: Project; item: Project }
+      | { key: string; itemType: 'task'; project: Project; task: Task; item: Task }
+      | { key: string; itemType: 'subtask'; project: Project; task: Task; item: Subtask }
+    > = [];
+
+    projects.forEach(project => {
+      rows.push({ key: `p-${project.id}`, itemType: 'project', project, item: project });
+
+      if (expandedProjects[project.id] !== false) {
+        project.tasks.forEach(task => {
+          rows.push({ key: `t-${task.id}`, itemType: 'task', project, task, item: task });
+
+          if (expandedTasks[task.id] !== false) {
+            task.subtasks.forEach(subtask => {
+              rows.push({ key: `s-${subtask.id}`, itemType: 'subtask', project, task, item: subtask });
+            });
+          }
+        });
+      }
+    });
+
+    return rows;
+  }, [projects, expandedProjects, expandedTasks]);
+
+  const projectRowSpans = useMemo(() => {
+    const spans: Record<number, { top: number; height: number }> = {};
+    let rowIndex = 0;
+
+    projects.forEach(project => {
+      const start = rowIndex;
+      rowIndex += 1;
+
+      if (expandedProjects[project.id] !== false) {
+        project.tasks.forEach(task => {
+          rowIndex += 1;
+          if (expandedTasks[task.id] !== false) {
+            rowIndex += task.subtasks.length;
+          }
+        });
+      }
+
+      spans[project.id] = {
+        top: start * 37,
+        height: Math.max(1, rowIndex - start) * 37,
+      };
+    });
+
+    return spans;
+  }, [projects, expandedProjects, expandedTasks]);
+
   const totalWidth = useMemo(() => {
     if (scale === 'day') return days.length * cellWidth;
     // For week/month, the last unit might end after the range.end_date
@@ -301,8 +353,8 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   const commonRowClasses = "transition-colors h-[37px]";
 
   return (
-    <div className="h-full w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
-      <div ref={ref} className="h-full overflow-y-auto overflow-x-scroll relative gantt-body" onScroll={onScroll}>
+    <div className="h-full min-h-0 w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
+      <div ref={ref} className="h-full min-h-0 overflow-y-auto overflow-x-scroll relative gantt-body" onScroll={onScroll}>
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           <GanttHeader
             days={days}
@@ -341,27 +393,33 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
           {/* 要素行の描画 (z-10) */}
           <div className="relative z-10">
-            {projects.map(project => {
+            {showProjectRange && projects.map(project => {
               const pRange = projectDisplayRanges[project.id];
+              const span = projectRowSpans[project.id];
+              if (!pRange || !span) return null;
+
               return (
-                <div key={`p-wrapper-${project.id}`} className="relative group/p-wrapper">
-                  {/* プロジェクト期間ハイライト (そのプロジェクトの行範囲内のみ) */}
-                  {showProjectRange && pRange && (
-                    <div 
-                      className="wbs-project-range-highlight"
-                      style={{
-                        left: `${pRange.left}px`,
-                        width: `${pRange.width}px`,
-                        top: 0,
-                        bottom: 0,
-                        zIndex: 0, // z-10の要素行よりも背面
-                        '--highlight-bg': `${getStatusColor(pRange.status_id)}26`,
-                        '--highlight-border': `${getStatusColor(pRange.status_id)}73`
-                      } as React.CSSProperties}
-                    />
-                  )}
-                  
-                  <div className={`${commonRowClasses} wbs-row-project relative z-10`}>
+                <div 
+                  key={`p-range-${project.id}`}
+                  className="wbs-project-range-highlight"
+                  style={{
+                    left: `${pRange.left}px`,
+                    width: `${pRange.width}px`,
+                    top: `${span.top}px`,
+                    height: `${span.height}px`,
+                    zIndex: 0,
+                    '--highlight-bg': `${getStatusColor(pRange.status_id)}26`,
+                    '--highlight-border': `${getStatusColor(pRange.status_id)}73`
+                  } as React.CSSProperties}
+                />
+              );
+            })}
+
+            {visibleRows.map(row => {
+              if (row.itemType === 'project') {
+                const project = row.project;
+                return (
+                  <div key={row.key} className={`${commonRowClasses} wbs-row-project relative z-10`}>
                     <GanttBar
                       item={project}
                       itemType="project"
@@ -384,93 +442,94 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                       setHoveredAssigneeId={setHoveredAssigneeId}
                     />
                   </div>
+                );
+              }
 
-                  {expandedProjects[project.id] !== false && project.tasks.map(task => (
-                    <div key={`t-wrapper-${task.id}`}>
-                      <div 
-                        className={`${commonRowClasses} wbs-row-task relative z-10 w-full pointer-events-auto select-none`}
-                        onDoubleClick={(e) => handleRowDoubleClick(e, task, 'task')}
+              if (row.itemType === 'task') {
+                const task = row.task;
+                return (
+                  <div 
+                    key={row.key}
+                    className={`${commonRowClasses} wbs-row-task relative z-10 w-full pointer-events-auto select-none`}
+                    onDoubleClick={(e) => handleRowDoubleClick(e, task, 'task')}
+                  >
+                    <GanttBar
+                      item={{ ...task, project_name: row.project.project_name }}
+                      itemType="task"
+                      baseDate={baseDate}
+                      cellWidth={cellWidth}
+                      scale={scale}
+                      initialData={initialData}
+                      tempDates={tempDates}
+                      dragState={dragState}
+                      isDarkMode={!!isDarkMode}
+                      showProgressRate={showProgressRate}
+                      showAssigneeName={showAssigneeName}
+                      handleMouseDown={handleMouseDown}
+                      getStatusColor={getStatusColor}
+                      getAssigneeColor={getAssigneeColor}
+                      colorMode={colorMode}
+                      isExpanded={expandedTasks[task.id] !== false}
+                      highlightSameAssignee={highlightSameAssignee}
+                      hoveredAssigneeId={hoveredAssigneeId}
+                      setHoveredAssigneeId={setHoveredAssigneeId}
+                    />
+                  </div>
+                );
+              }
+
+              const subtask = row.item;
+              const typeName = initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name;
+              const delayed = highlightDelayedTasks && isDelayed(subtask);
+
+              return (
+                <div 
+                  key={row.key}
+                  className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) && scale !== 'month' ? 'wbs-row-empty' : ''} ${delayed ? 'delayed' : ''}`}
+                  onDoubleClick={(e) => handleRowDoubleClick(e, subtask, 'subtask')}
+                  title={isRowEmpty(subtask) && scale !== 'month' ? (typeName ? `ダブルクリックで計画を入力: ${typeName}` : 'ダブルクリックで計画を入力') : undefined}
+                >
+                  <GanttBar
+                    item={{ ...subtask, project_name: row.project.project_name, task_name: row.task.task_name }}
+                    itemType="subtask"
+                    baseDate={baseDate}
+                    cellWidth={cellWidth}
+                    scale={scale}
+                    initialData={initialData}
+                    tempDates={tempDates}
+                    dragState={dragState}
+                    isDarkMode={!!isDarkMode}
+                    showProgressRate={showProgressRate}
+                    showAssigneeName={showAssigneeName}
+                    handleMouseDown={handleMouseDown}
+                    getStatusColor={getStatusColor}
+                    getAssigneeColor={getAssigneeColor}
+                    colorMode={colorMode}
+                    highlightSameAssignee={highlightSameAssignee}
+                    hoveredAssigneeId={hoveredAssigneeId}
+                    setHoveredAssigneeId={setHoveredAssigneeId}
+                  />
+                  {showInterruptionReason && subtask.interruptions?.map(inter => {
+                    const interDate = parseISO(inter.interruption_date);
+                    const x = getDateX(interDate, baseDate, scale);
+                    if (x < 0 || x > totalWidth) return null;
+                    return (
+                      <div
+                        key={`inter-${inter.id}`}
+                        className="absolute top-0 h-full flex items-center pointer-events-none z-20"
+                        style={{ left: `${x}px` }}
                       >
-                        <GanttBar
-                          item={{ ...task, project_name: project.project_name }}
-                          itemType="task"
-                          baseDate={baseDate}
-                          cellWidth={cellWidth}
-                          scale={scale}
-                          initialData={initialData}
-                          tempDates={tempDates}
-                          dragState={dragState}
-                          isDarkMode={!!isDarkMode}
-                          showProgressRate={showProgressRate}
-                          showAssigneeName={showAssigneeName}
-                          handleMouseDown={handleMouseDown}
-                          getStatusColor={getStatusColor}
-                          getAssigneeColor={getAssigneeColor}
-                          colorMode={colorMode}
-                          isExpanded={expandedTasks[task.id] !== false}
-                          highlightSameAssignee={highlightSameAssignee}
-                          hoveredAssigneeId={hoveredAssigneeId}
-                          setHoveredAssigneeId={setHoveredAssigneeId}
-                        />
-                      </div>
-
-                      {expandedTasks[task.id] !== false && task.subtasks.map(subtask => {
-                          const typeName = initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name;
-                          const delayed = highlightDelayedTasks && isDelayed(subtask);
-                          return (
-                            <div 
-                              key={`s-${subtask.id}`} 
-                              className={`${commonRowClasses} wbs-row-subtask relative z-10 w-full pointer-events-auto select-none ${isRowEmpty(subtask) && scale !== 'month' ? 'wbs-row-empty' : ''} ${delayed ? 'delayed' : ''}`}
-                            onDoubleClick={(e) => handleRowDoubleClick(e, subtask, 'subtask')}
-                            title={isRowEmpty(subtask) && scale !== 'month' ? (typeName ? `ダブルクリックで計画を入力: ${typeName}` : 'ダブルクリックで計画を入力') : undefined}
+                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded shadow-sm ml-1 select-none">
+                          <span 
+                            className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]"
+                            title={inter.reason || undefined}
                           >
-                            <GanttBar
-                              item={{ ...subtask, project_name: project.project_name, task_name: task.task_name }}
-                              itemType="subtask"
-                              baseDate={baseDate}
-                              cellWidth={cellWidth}
-                              scale={scale}
-                              initialData={initialData}
-                              tempDates={tempDates}
-                              dragState={dragState}
-                              isDarkMode={!!isDarkMode}
-                              showProgressRate={showProgressRate}
-                              showAssigneeName={showAssigneeName}
-                              handleMouseDown={handleMouseDown}
-                              getStatusColor={getStatusColor}
-                              getAssigneeColor={getAssigneeColor}
-                              colorMode={colorMode}
-                              highlightSameAssignee={highlightSameAssignee}
-                              hoveredAssigneeId={hoveredAssigneeId}
-                              setHoveredAssigneeId={setHoveredAssigneeId}
-                            />
-                            {showInterruptionReason && subtask.interruptions?.map(inter => {
-                              const interDate = parseISO(inter.interruption_date);
-                              const x = getDateX(interDate, baseDate, scale);
-                              // 範囲外チェック
-                              if (x < 0 || x > totalWidth) return null;
-                              return (
-                                <div
-                                  key={`inter-${inter.id}`}
-                                  className="absolute top-0 h-full flex items-center pointer-events-none z-20"
-                                  style={{ left: `${x}px` }}
-                                >
-                                  <div className="flex items-center gap-1 px-1.5 py-0.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded shadow-sm ml-1 select-none">
-                                    <span 
-                                      className="text-[10px] text-slate-500 dark:text-slate-400 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]"
-                                      title={inter.reason || undefined}
-                                    >
-                                      ⚠️ {inter.reason || '中断'}
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
+                            ⚠️ {inter.reason || '中断'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}

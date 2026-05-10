@@ -48,7 +48,7 @@ export default function ResourceBoard({
   return (
     <>
       <div
-        className="flex flex-col relative z-20 overflow-hidden flex-shrink-0"
+        className="flex flex-col min-h-0 relative z-20 overflow-hidden flex-shrink-0"
         style={{ width: `${treeWidth}px` }}
       >
         <ResourceList 
@@ -67,7 +67,7 @@ export default function ResourceBoard({
         }}
       />
 
-      <div className="flex-1 bg-slate-50 dark:bg-slate-950 relative overflow-hidden flex flex-col z-10 w-0 transition-colors">
+      <div className="flex-1 min-h-0 bg-slate-50 dark:bg-slate-950 relative overflow-hidden flex flex-col z-10 w-0 transition-colors">
         {dynamicGanttRange && (
           <ResourceGantt
             data={resourceData}
