@@ -136,6 +136,7 @@ const EditableInput = memo(({
   const inputRef = useRef<HTMLInputElement>(null);
   const prevValueRef = useRef(value);
   const shouldSelectOnFocus = useRef(true);
+  const selectionDragStartedInInputRef = useRef(false);
   const isActuallyReadOnly = !!(readOnly || isAuto);
 
   // 外部からの値をローカルステート(val)に同期する
@@ -308,6 +309,33 @@ const EditableInput = memo(({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isEditing, val, handleCommit]);
 
+  // 入力欄内から文字列選択を開始し、入力欄外でマウスを離した場合も選択範囲とフォーカスを維持する。
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const handleMouseUp = (event: MouseEvent) => {
+      if (!selectionDragStartedInInputRef.current) return;
+      selectionDragStartedInInputRef.current = false;
+
+      const input = inputRef.current;
+      if (!input || isAuto) return;
+
+      if (event.target instanceof Node && input.contains(event.target)) return;
+
+      const selectionStart = input.selectionStart;
+      const selectionEnd = input.selectionEnd;
+      if (selectionStart == null || selectionEnd == null || selectionStart === selectionEnd) return;
+
+      requestAnimationFrame(() => {
+        input.focus({ preventScroll: true });
+        input.setSelectionRange(selectionStart, selectionEnd);
+      });
+    };
+
+    document.addEventListener('mouseup', handleMouseUp, true);
+    return () => document.removeEventListener('mouseup', handleMouseUp, true);
+  }, [isEditing, isAuto]);
+
   // Esc/Enterキーのグローバル監視 (特に自動ON時などでインプットが非活性の場合の対応)
   // 捕捉フェーズ(true)でリッスンすることで、親のモーダル（DetailModal等）の Esc 処理よりも優先させる
   useEffect(() => {
@@ -469,6 +497,11 @@ const EditableInput = memo(({
       }
     },
     onChange: handleInputChange,
+    onMouseDown: (e: React.MouseEvent<HTMLInputElement>) => {
+      if (e.button === 0) {
+        selectionDragStartedInInputRef.current = true;
+      }
+    },
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
       // 親のキーボードナビゲーション（WBSTree）にイベントが伝わらないように止める
       if (['Enter', 'Escape', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {

@@ -183,7 +183,9 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
       onClick={(e) => {
         const target = e.target as HTMLElement;
         const isInteractive = target.closest('button, input, textarea, a, select, [role="button"]');
-        if (!isInteractive) {
+        const active = document.activeElement;
+        const isInputActive = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active instanceof HTMLSelectElement;
+        if (!isInteractive && !isInputActive) {
           containerRef.current?.focus();
         }
       }}
