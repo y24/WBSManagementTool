@@ -153,11 +153,12 @@ const GanttBar: React.FC<GanttBarProps> = ({
       const iDate = parseISO(inter.interruption_date);
       if (!isValid(iDate)) continue;
       
-      // 中断が現在の開始位置より後の場合、そこまでのセグメントを追加
-      if (iDate > currentStart) {
+      // 中断日は作業実績として表示対象に含める。
+      // 開始日と中断日が同じ場合も、その1日分のセグメントを残す。
+      if (iDate >= currentStart) {
         const segmentEnd = iDate < e ? iDate : e;
         segments.push({ start: currentStart, end: segmentEnd });
-        if (segmentEnd === e) {
+        if (segmentEnd.getTime() === e.getTime()) {
           currentStart = e;
           break;
         }
