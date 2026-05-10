@@ -56,7 +56,9 @@ const SubtaskRow = memo(({
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData, true);
   const statusName = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name;
-  const isOngoing = statusName === 'In Progress' || statusName === 'In Review';
+  const shouldTrackActualEndDate =
+    statusName === 'In Progress' ||
+    (statusName === 'In Review' && subtask.review_days != null && Number(subtask.review_days) > 0);
 
   const [localProgress, setLocalProgress] = React.useState<number | null>(subtask.progress_percent ?? null);
 
@@ -410,7 +412,7 @@ const SubtaskRow = memo(({
               min={subtask.actual_start_date}
               onChange={(v: string) => onUpdateField('subtask', subtask.id, 'actual_end_date', v)}
               highlight={getHighlight('actual_end_date', subtask.actual_end_date)}
-              className={isOngoing ? "bg-yellow-100/90 dark:bg-yellow-900/40" : ""}
+              className={shouldTrackActualEndDate ? "bg-yellow-100/90 dark:bg-yellow-900/40" : ""}
               isFocused={focusedField === 'actual_end'}
               onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'actual_end')}
               onEditingChange={onEditingChange}

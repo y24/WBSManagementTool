@@ -15,6 +15,10 @@ const parseStatusMapping = (value: string | null | undefined, fallback: number[]
   return parsed && parsed.length > 0 ? parsed : fallback;
 };
 
+const hasPositiveReviewDays = (reviewDays: unknown): boolean => {
+  return reviewDays != null && Number(reviewDays) > 0;
+};
+
 interface UseWBSUpdatesProps {
   projects: Project[];
   initialData: InitialData | null;
@@ -257,6 +261,7 @@ export const useWBSUpdates = ({
       const newStatusId = parseInt(value, 10);
       const isDone = doneIds.includes(newStatusId) && newStatusId !== removedStatusId;
       const isNew = newIds.includes(newStatusId) && newStatusId !== removedStatusId;
+      const inReviewStatusId = initialData.statuses.find(s => s.status_name === 'In Review')?.id ?? 3;
       const isOngoing = [2, 3].includes(newStatusId);
 
       const overwriteDetails: string[] = [];
@@ -287,7 +292,6 @@ export const useWBSUpdates = ({
             }
   
             // Progress -> 80% (In Review)
-            const inReviewStatusId = initialData.statuses.find(s => s.status_name === 'In Review')?.id ?? 3;
             if (newStatusId === inReviewStatusId && (data.progress_percent != null && data.progress_percent > 0 && data.progress_percent < 80)) {
               overwriteDetails.push(`進捗率: ${data.progress_percent}% -> 80% (In Review)`);
             }
@@ -295,7 +299,9 @@ export const useWBSUpdates = ({
           // 2. actual_end_date (overwritten by backend for Ongoing status)
           // 両方が進行中ステータス（自動更新対象）なら警告不要
           const oldIsOngoing = [2, 3].includes(data.status_id);
-          if (isOngoing && !oldIsOngoing && data.actual_end_date) {
+          const willAutoUpdateActualEnd =
+            newStatusId === 2 || (newStatusId === inReviewStatusId && hasPositiveReviewDays(data.review_days));
+          if (isOngoing && willAutoUpdateActualEnd && !oldIsOngoing && data.actual_end_date) {
             const today = format(new Date(), 'yyyy-MM-dd');
             if (data.actual_end_date !== today) {
               overwriteDetails.push(`実績終了日: ${data.actual_end_date} -> 今日 (自動更新)`);

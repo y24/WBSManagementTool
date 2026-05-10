@@ -8,6 +8,16 @@ from ..utils import date_utils
 from .master import get_holidays
 from .base import get_status_ids_by_category
 
+def _has_positive_review_days(review_days) -> bool:
+    return review_days is not None and float(review_days) > 0
+
+def _should_auto_update_actual_end(status_id: Optional[int], review_days) -> bool:
+    if status_id == 2:
+        return True
+    if status_id == 3:
+        return _has_positive_review_days(review_days)
+    return False
+
 def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_data: Optional[Dict] = None):
     # Check if auto_effort is already set or being set to True
     is_auto = db_subtask.is_auto_effort
@@ -105,8 +115,8 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
 
 def refresh_subtasks_actual_end_date(db: Session, project_ids: Optional[List[int]] = None):
     """
-    Update actual_end_date to today for all subtasks with 'In Progress' or 'In Review' status (ID 2, 3).
-    This ensures that for ongoing tasks, the actual end date tracks today.
+    Update actual_end_date to today for ongoing subtasks.
+    In Review tracks today only when review_days is positive; no-review subtasks preserve their original value.
     """
     query = db.query(models.Subtask).join(models.Task).filter(
         models.Subtask.status_id.in_([2, 3]),
@@ -121,6 +131,8 @@ def refresh_subtasks_actual_end_date(db: Session, project_ids: Optional[List[int
     affected_task_ids = set()
     changed = False
     for s in subtasks:
+        if not _should_auto_update_actual_end(s.status_id, s.review_days):
+            continue
         if s.actual_end_date != today:
             s.actual_end_date = today
             # Ensure actual_start_date is not the future relative to actual_end_date (today)
@@ -162,8 +174,8 @@ def create_subtask(db: Session, subtask: schemas.SubtaskCreate):
     if db_subtask.status_id in ([2, 3] + done_ids) and db_subtask.actual_start_date is None:
         db_subtask.actual_start_date = date.today()
     
-    # 2. actual_end_date for In Progress (2) or In Review (3)
-    if db_subtask.status_id in [2, 3]:
+    # 2. actual_end_date for In Progress (2), or In Review (3) with review_days > 0
+    if _should_auto_update_actual_end(db_subtask.status_id, db_subtask.review_days):
         db_subtask.actual_end_date = date.today()
 
     # 3. actual_end_date for Done
@@ -217,8 +229,9 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
             if "actual_start_date" not in update_dict and db_subtask.actual_start_date is None:
                 update_dict["actual_start_date"] = date.today()
         
-        # 1.5. actual_end_date for In Progress (2) or In Review (3)
-        if new_status_id in [2, 3]:
+        # 1.5. actual_end_date for In Progress (2), or In Review (3) with review_days > 0
+        effective_review_days = update_dict.get("review_days", db_subtask.review_days)
+        if _should_auto_update_actual_end(new_status_id, effective_review_days):
             if "actual_end_date" not in update_dict:
                 update_dict["actual_end_date"] = date.today()
 

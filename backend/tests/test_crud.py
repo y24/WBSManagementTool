@@ -86,3 +86,58 @@ def test_get_wbs_data_with_calculations(db_session):
     assert p_wbs.planned_effort_total == 8
     assert p_wbs.tasks[0].planned_effort_total == 8
     assert p_wbs.tasks[0].is_overlapping == True
+
+def test_in_review_without_review_days_preserves_actual_end_date(db_session):
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))
+    original_end = date(2023, 1, 10)
+    subtask = crud.create_subtask(db_session, schemas.SubtaskCreate(
+        task_id=task.id,
+        status_id=1,
+        subtask_detail="S1",
+        actual_start_date=date(2023, 1, 1),
+        actual_end_date=original_end,
+        review_days=None
+    ))
+
+    updated = crud.update_subtask(db_session, subtask.id, schemas.SubtaskUpdate(status_id=3))
+    assert updated.actual_end_date == original_end
+
+    crud.refresh_subtasks_actual_end_date(db_session, [project.id])
+    db_session.refresh(updated)
+    assert updated.actual_end_date == original_end
+
+def test_in_review_with_zero_review_days_preserves_actual_end_date(db_session):
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))
+    original_end = date(2023, 1, 10)
+    subtask = crud.create_subtask(db_session, schemas.SubtaskCreate(
+        task_id=task.id,
+        status_id=1,
+        subtask_detail="S1",
+        actual_start_date=date(2023, 1, 1),
+        actual_end_date=original_end,
+        review_days=0
+    ))
+
+    updated = crud.update_subtask(db_session, subtask.id, schemas.SubtaskUpdate(status_id=3))
+    assert updated.actual_end_date == original_end
+
+    crud.refresh_subtasks_actual_end_date(db_session, [project.id])
+    db_session.refresh(updated)
+    assert updated.actual_end_date == original_end
+
+def test_in_review_with_positive_review_days_tracks_today(db_session):
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))
+    subtask = crud.create_subtask(db_session, schemas.SubtaskCreate(
+        task_id=task.id,
+        status_id=1,
+        subtask_detail="S1",
+        actual_start_date=date(2023, 1, 1),
+        actual_end_date=date(2023, 1, 10),
+        review_days=1
+    ))
+
+    updated = crud.update_subtask(db_session, subtask.id, schemas.SubtaskUpdate(status_id=3))
+    assert updated.actual_end_date == date.today()
