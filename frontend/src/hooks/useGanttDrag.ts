@@ -159,10 +159,6 @@ export const useGanttDrag = (
           update.planned_end_date = endStr;
         } else {
           update.actual_end_date = endStr;
-          if (reviewStart) {
-            const rs = parseISO(reviewStart);
-            update.review_start_date = format(addDays(rs, deltaDays), 'yyyy-MM-dd');
-          }
         }
       }
     } else if (currentDrag.mode === 'resize-review') {
