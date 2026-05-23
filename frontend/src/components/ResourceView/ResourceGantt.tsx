@@ -105,7 +105,7 @@ export default function ResourceGantt({
   }, [isDarkMode]);
 
   // Heatmap rendering function
-  const renderHeatmap = useCallback((row: ResourceRow) => {
+  const renderHeatmap = useCallback((row: ResourceRow, lane: 'planned' | 'actual') => {
     if (!showResourceOverlapHighlight) return null;
 
     const overlapsByDay = new Map<string, number>();
@@ -178,16 +178,15 @@ export default function ResourceGantt({
       }
     };
 
-    // Count active subtasks per day.
-    // If actual_start_date exists, only actual dates are considered (planned dates are ignored).
+    // Count active subtasks per day by lane.
+    // Planned and actual lanes are evaluated independently so actual-only overlap does not tint planned, and vice versa.
     row.subtasks.forEach(task => {
       // Skip removed items from heatmap overlap calculation
       const status = initialData?.statuses.find(s => s.id === task.status_id);
       if (status?.status_name === 'Removed') return;
 
-      const hasActual = !!task.actual_start_date;
-      const startStr = hasActual ? task.actual_start_date : task.planned_start_date;
-      const endStr = hasActual
+      const startStr = lane === 'actual' ? task.actual_start_date : task.planned_start_date;
+      const endStr = lane === 'actual'
         ? (task.actual_end_date || task.actual_start_date)
         : (task.planned_end_date || task.planned_start_date);
 
@@ -198,7 +197,7 @@ export default function ResourceGantt({
         if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return;
 
         // レビュー期間を除外
-        if (hasActual) {
+        if (lane === 'actual') {
           if (task.review_start_date) {
             const rsDate = parseISO(task.review_start_date);
             if (isValid(rsDate)) {
@@ -220,7 +219,7 @@ export default function ResourceGantt({
         if (differenceInCalendarDays(endDate, startDate) < 0) return;
 
         addDateRangeToHeatmap(startDate, endDate);
-      } else if (startStr && !hasActual) { // 計画の開始日のみ（新規ステータスなど）
+      } else if (startStr) { // 開始日のみ
         // レビュー期間の考慮は不要（1日のみなので）
         const startDate = parseISO(startStr);
         if (!Number.isNaN(startDate.getTime())) {
@@ -423,7 +422,6 @@ export default function ResourceGantt({
                 <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-slate-300/45 via-slate-200/20 to-slate-300/45 dark:from-slate-600/45 dark:via-slate-700/15 dark:to-slate-600/45" />
                 <div className="pointer-events-none absolute left-0 right-0 top-0 bottom-0">
                   {renderUnplannedHighlights(row)}
-                  {renderHeatmap(row)}
                 </div>
                 <div className="sticky left-0 z-[70] h-0 overflow-visible" style={{ width: `${TYPE_COLUMN_WIDTH}px` }}>
                   <div
@@ -457,6 +455,9 @@ export default function ResourceGantt({
                     paddingBottom: hasStackedPlannedTracks ? `${STACKED_LANE_VERTICAL_PADDING}px` : undefined,
                   }}
                 >
+                  <div className="pointer-events-none absolute inset-0">
+                    {renderHeatmap(row, 'planned')}
+                  </div>
                   {(row.plannedTracks.length > 0 ? row.plannedTracks : [[]]).map((track, trackIndex) => (
                     <div
                       key={`planned-track-${trackIndex}`}
@@ -499,6 +500,9 @@ export default function ResourceGantt({
                     paddingBottom: hasStackedActualTracks ? `${STACKED_LANE_VERTICAL_PADDING}px` : undefined,
                   }}
                 >
+                  <div className="pointer-events-none absolute inset-0">
+                    {renderHeatmap(row, 'actual')}
+                  </div>
                   {(row.actualTracks.length > 0 ? row.actualTracks : [[]]).map((track, trackIndex) => (
                     <div
                       key={`actual-track-${trackIndex}`}
