@@ -258,8 +258,8 @@ export default function ResourceGantt({
             const lightAlpha = 0.04 + (0.16 * normalized);
             const darkAlpha = 0.06 + (0.19 * normalized);
             const backgroundColor = isDarkMode
-              ? `rgba(251, 113, 133, ${darkAlpha})`
-              : `rgba(244, 63, 94, ${lightAlpha})`;
+              ? `rgba(251, 191, 36, ${darkAlpha})`
+              : `rgba(245, 158, 11, ${lightAlpha})`;
             const borderAlpha = isDarkMode ? darkAlpha * 0.35 : lightAlpha * 0.3;
 
             cells.push(
@@ -270,7 +270,7 @@ export default function ResourceGantt({
                       left: `${currentX}px`,
                       width: `${cellWidth}px`,
                       backgroundColor,
-                      boxShadow: `inset 0 0 0 1px rgba(244, 63, 94, ${borderAlpha})`,
+                      boxShadow: `inset 0 0 0 1px rgba(245, 158, 11, ${borderAlpha})`,
                     }}
                 />
             );
