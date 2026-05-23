@@ -4,11 +4,13 @@ import { ResourceRow } from '../../pages/mainboard/useResourceData';
 const PLANNED_TRACK_HEIGHT = 32;
 const ACTUAL_TRACK_HEIGHT = 40;
 const STACKED_TRACK_HEIGHT = 24;
+const STACKED_LANE_VERTICAL_PADDING = 5;
 
 const getPlannedTrackHeight = (row: ResourceRow) => row.plannedTracks.length > 1 ? STACKED_TRACK_HEIGHT : PLANNED_TRACK_HEIGHT;
 const getActualTrackHeight = (row: ResourceRow) => row.actualTracks.length > 1 ? STACKED_TRACK_HEIGHT : ACTUAL_TRACK_HEIGHT;
-const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * getPlannedTrackHeight(row);
-const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * getActualTrackHeight(row);
+const getLanePadding = (trackCount: number) => trackCount > 1 ? STACKED_LANE_VERTICAL_PADDING * 2 : 0;
+const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * getPlannedTrackHeight(row) + getLanePadding(row.plannedTracks.length);
+const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * getActualTrackHeight(row) + getLanePadding(row.actualTracks.length);
 const getResourceRowHeight = (row: ResourceRow) => getPlannedLaneHeight(row) + getActualLaneHeight(row);
 
 /**

@@ -13,12 +13,14 @@ import GanttBar from '../GanttBar';
 const PLANNED_TRACK_HEIGHT = 32;
 const ACTUAL_TRACK_HEIGHT = 40;
 const STACKED_TRACK_HEIGHT = 24;
+const STACKED_LANE_VERTICAL_PADDING = 5;
 const TYPE_COLUMN_WIDTH = 52;
 
 const getPlannedTrackHeight = (row: ResourceRow) => row.plannedTracks.length > 1 ? STACKED_TRACK_HEIGHT : PLANNED_TRACK_HEIGHT;
 const getActualTrackHeight = (row: ResourceRow) => row.actualTracks.length > 1 ? STACKED_TRACK_HEIGHT : ACTUAL_TRACK_HEIGHT;
-const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * getPlannedTrackHeight(row);
-const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * getActualTrackHeight(row);
+const getLanePadding = (trackCount: number) => trackCount > 1 ? STACKED_LANE_VERTICAL_PADDING * 2 : 0;
+const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * getPlannedTrackHeight(row) + getLanePadding(row.plannedTracks.length);
+const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * getActualTrackHeight(row) + getLanePadding(row.actualTracks.length);
 
 interface ResourceGanttProps {
   data: ResourceRow[];
@@ -380,7 +382,11 @@ export default function ResourceGantt({
 
                 <div
                   className="resource-lane-planned relative border-b border-slate-300/70 dark:border-slate-700/70 bg-slate-100 dark:bg-slate-900/80 w-full pointer-events-auto"
-                  style={{ height: `${getPlannedLaneHeight(row)}px` }}
+                  style={{
+                    height: `${getPlannedLaneHeight(row)}px`,
+                    paddingTop: hasStackedPlannedTracks ? `${STACKED_LANE_VERTICAL_PADDING}px` : undefined,
+                    paddingBottom: hasStackedPlannedTracks ? `${STACKED_LANE_VERTICAL_PADDING}px` : undefined,
+                  }}
                 >
                   {(row.plannedTracks.length > 0 ? row.plannedTracks : [[]]).map((track, trackIndex) => (
                     <div
@@ -422,7 +428,11 @@ export default function ResourceGantt({
                 </div>
                 <div
                   className="resource-lane-actual relative bg-white dark:bg-slate-950 w-full pointer-events-auto"
-                  style={{ height: `${getActualLaneHeight(row)}px` }}
+                  style={{
+                    height: `${getActualLaneHeight(row)}px`,
+                    paddingTop: hasStackedActualTracks ? `${STACKED_LANE_VERTICAL_PADDING}px` : undefined,
+                    paddingBottom: hasStackedActualTracks ? `${STACKED_LANE_VERTICAL_PADDING}px` : undefined,
+                  }}
                 >
                   {(row.actualTracks.length > 0 ? row.actualTracks : [[]]).map((track, trackIndex) => (
                     <div
