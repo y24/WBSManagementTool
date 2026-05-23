@@ -32,6 +32,7 @@ export interface Subtask {
   ticket_id?: number | null;
   link_url?: string | null;
   memo?: string | null;
+  sync_to_azure_devops?: boolean;
   sort_order: number;
   is_auto_effort: boolean;
   workload_percent?: number | null;
@@ -50,6 +51,7 @@ export interface Task {
   ticket_id?: number | null;
   link_url?: string | null;
   memo?: string | null;
+  sync_to_azure_devops?: boolean;
   planned_start_date?: string | null;
   planned_end_date?: string | null;
   actual_start_date?: string | null;
@@ -76,6 +78,7 @@ export interface Project {
   ticket_id?: number | null;
   link_url?: string | null;
   memo?: string | null;
+  sync_to_azure_devops?: boolean;
   planned_start_date?: string | null;
   planned_end_date?: string | null;
   actual_start_date?: string | null;

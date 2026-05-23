@@ -101,6 +101,7 @@ class SubtaskBase(BaseModel):
     ticket_id: Optional[int] = None
     link_url: Optional[str] = None
     memo: Optional[str] = None
+    sync_to_azure_devops: bool = True
     is_auto_effort: bool = True
     workload_percent: int = 100
     sort_order: int = 0
@@ -130,6 +131,7 @@ class SubtaskUpdate(BaseModel):
     ticket_id: Optional[int] = None
     link_url: Optional[str] = None
     memo: Optional[str] = None
+    sync_to_azure_devops: Optional[bool] = None
     is_auto_effort: Optional[bool] = None
     workload_percent: Optional[int] = None
     sort_order: Optional[int] = None
@@ -177,6 +179,7 @@ class TaskBase(BaseModel):
     ticket_id: Optional[int] = None
     link_url: Optional[str] = None
     memo: Optional[str] = None
+    sync_to_azure_devops: bool = True
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
@@ -198,6 +201,7 @@ class TaskUpdate(BaseModel):
     ticket_id: Optional[int] = None
     link_url: Optional[str] = None
     memo: Optional[str] = None
+    sync_to_azure_devops: Optional[bool] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
@@ -236,6 +240,7 @@ class ProjectBase(BaseModel):
     ticket_id: Optional[int] = None
     link_url: Optional[str] = None
     memo: Optional[str] = None
+    sync_to_azure_devops: bool = True
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
@@ -256,6 +261,7 @@ class ProjectUpdate(BaseModel):
     ticket_id: Optional[int] = None
     link_url: Optional[str] = None
     memo: Optional[str] = None
+    sync_to_azure_devops: Optional[bool] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None

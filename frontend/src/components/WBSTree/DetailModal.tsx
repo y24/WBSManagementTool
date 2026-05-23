@@ -15,6 +15,8 @@ interface DetailModalProps {
   setLinkUrlValue: (v: string) => void;
   memoValue: string;
   setMemoValue: (v: string) => void;
+  syncToAzureDevops: boolean;
+  setSyncToAzureDevops: (v: boolean) => void;
   ticketUrlTemplate?: string | null;
   onClose: () => void;
   onSave: () => void;
@@ -39,6 +41,8 @@ const DetailModal = ({
   setLinkUrlValue,
   memoValue,
   setMemoValue,
+  syncToAzureDevops,
+  setSyncToAzureDevops,
   ticketUrlTemplate,
   onClose,
   onSave,
@@ -53,6 +57,7 @@ const DetailModal = ({
     ticketIdValue,
     linkUrlValue,
     memoValue,
+    syncToAzureDevops,
   });
 
   const isChanged = () => {
@@ -60,7 +65,8 @@ const DetailModal = ({
       detailValue !== initialValues.current.detailValue ||
       ticketIdValue !== initialValues.current.ticketIdValue ||
       linkUrlValue !== initialValues.current.linkUrlValue ||
-      memoValue !== initialValues.current.memoValue
+      memoValue !== initialValues.current.memoValue ||
+      syncToAzureDevops !== initialValues.current.syncToAzureDevops
     );
   };
 
@@ -99,7 +105,7 @@ const DetailModal = ({
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [detailValue, ticketIdValue, linkUrlValue, memoValue, showConfirm, onSave, disableHotkeys]);
+  }, [detailValue, ticketIdValue, linkUrlValue, memoValue, syncToAzureDevops, showConfirm, onSave, disableHotkeys]);
 
   const ticketUrl = ticketUrlTemplate && ticketIdValue
     ? ticketUrlTemplate.replace('{TICKET_ID}', ticketIdValue)
@@ -174,6 +180,17 @@ const DetailModal = ({
               <p className="mt-1 text-xs text-gray-400 dark:text-slate-500 truncate px-1" title={ticketUrl}>
                 🔗 {ticketUrl}
               </p>
+            )}
+            {ticketIdValue && (
+              <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none w-fit">
+                <input
+                  type="checkbox"
+                  checked={!syncToAzureDevops}
+                  onChange={(e) => setSyncToAzureDevops(!e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                />
+                <span className="text-xs text-gray-500 dark:text-slate-400">情報を同期しない</span>
+              </label>
             )}
           </div>
 

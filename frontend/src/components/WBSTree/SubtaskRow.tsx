@@ -30,6 +30,7 @@ interface SubtaskRowProps {
   taskName?: string;
   highlightDelayedTasks?: boolean;
   showManHours?: boolean;
+  hasDuplicateTicketId?: boolean;
 }
 
 const SubtaskRow = memo(({
@@ -52,10 +53,16 @@ const SubtaskRow = memo(({
   projectName,
   taskName,
   highlightDelayedTasks = true,
-  showManHours = true
+  showManHours = true,
+  hasDuplicateTicketId = false
 }: SubtaskRowProps) => {
   const warning = getWarning(subtask, initialData, true);
   const statusName = initialData?.statuses.find(s => s.id === subtask.status_id)?.status_name;
+  const ticketLinkClassName = hasDuplicateTicketId
+    ? 'text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/25 hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 transition-colors shrink-0 p-0.5 rounded'
+    : subtask.sync_to_azure_devops === false
+    ? 'text-gray-400 hover:text-gray-500 dark:text-slate-500 dark:hover:text-slate-400 transition-colors shrink-0 p-0.5'
+    : 'text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/45 border border-blue-100 dark:border-blue-800/60 transition-colors shrink-0 p-0.5 rounded';
   const shouldTrackActualEndDate =
     statusName === 'In Progress' ||
     (statusName === 'In Review' && subtask.review_days != null && Number(subtask.review_days) > 0);
@@ -195,11 +202,11 @@ const SubtaskRow = memo(({
             href={initialData.ticket_url_template.replace('{TICKET_ID}', String(subtask.ticket_id))}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-400 hover:text-indigo-600 transition-colors shrink-0 p-0.5"
-            title={`チケットを開く (#${subtask.ticket_id})`}
+            className={ticketLinkClassName}
+            title={hasDuplicateTicketId ? `同じチケットIDの連携対象があります (#${subtask.ticket_id})` : subtask.sync_to_azure_devops === false ? `チケットを開く (#${subtask.ticket_id}) - 情報を同期しない` : `チケットを開く (#${subtask.ticket_id})`}
             onClick={(e) => e.stopPropagation()}
           >
-            <Link size={14} />
+            {hasDuplicateTicketId ? <AlertTriangle size={14} /> : <Link size={14} />}
           </a>
         )}
       </div>

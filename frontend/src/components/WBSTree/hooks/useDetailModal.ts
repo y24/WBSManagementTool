@@ -31,6 +31,7 @@ export const useDetailModal = ({
   const [ticketIdValue, setTicketIdValue] = useState('');
   const [linkUrlValue, setLinkUrlValue] = useState('');
   const [memoValue, setMemoValue] = useState('');
+  const [syncToAzureDevops, setSyncToAzureDevops] = useState(true);
 
   const openDetailModal = useCallback((type: EditingType, item: any) => {
     setEditingItem({
@@ -42,6 +43,7 @@ export const useDetailModal = ({
     setTicketIdValue(item.ticket_id != null ? String(item.ticket_id) : '');
     setLinkUrlValue(item.link_url || '');
     setMemoValue(item.memo || '');
+    setSyncToAzureDevops(item.sync_to_azure_devops !== false);
   }, []);
 
   const closeDetailModal = useCallback(() => setEditingItem(null), []);
@@ -53,6 +55,7 @@ export const useDetailModal = ({
       ticket_id: ticketIdValue !== '' ? parseInt(ticketIdValue, 10) : null,
       link_url: linkUrlValue || null,
       memo: memoValue || null,
+      sync_to_azure_devops: syncToAzureDevops,
     };
     if (editingItem.type === 'subtask') {
       updates.subtask_detail = detailValue || null;
@@ -166,6 +169,8 @@ export const useDetailModal = ({
     setLinkUrlValue,
     memoValue,
     setMemoValue,
+    syncToAzureDevops,
+    setSyncToAzureDevops,
     openDetailModal,
     closeDetailModal,
     handleDetailSave

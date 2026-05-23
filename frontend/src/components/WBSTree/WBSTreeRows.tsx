@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
-import { Project, Task, Subtask } from '../../types/wbs';
+import { Project, Task } from '../../types/wbs';
 import { InitialData } from '../../types';
 import { DisplayOptions } from '../FilterPanel/FilterPanelTypes';
 import ProjectRow from './ProjectRow';
@@ -60,6 +60,26 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
   onTabNavigation,
   displayOptions
 }) => {
+  const duplicateTicketIds = useMemo(() => {
+    const counts = new Map<number, number>();
+    const addTicketId = (ticketId?: number | null, syncToAzureDevops?: boolean) => {
+      if (ticketId == null || syncToAzureDevops === false) return;
+      counts.set(ticketId, (counts.get(ticketId) || 0) + 1);
+    };
+
+    projects.forEach((project) => {
+      addTicketId(project.ticket_id, project.sync_to_azure_devops);
+      project.tasks.forEach((task) => {
+        addTicketId(task.ticket_id, task.sync_to_azure_devops);
+        task.subtasks.forEach((subtask) => {
+          addTicketId(subtask.ticket_id, subtask.sync_to_azure_devops);
+        });
+      });
+    });
+
+    return new Set(Array.from(counts.entries()).filter(([, count]) => count > 1).map(([ticketId]) => ticketId));
+  }, [projects]);
+
   return (
     <Droppable droppableId="projects-root" type="PROJECT">
       {(provided) => (
@@ -97,6 +117,7 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                           onTabNavigation={onTabNavigation}
                           projectName={project.project_name}
                           showManHours={displayOptions.showManHours}
+                          hasDuplicateTicketId={project.sync_to_azure_devops !== false && project.ticket_id != null && duplicateTicketIds.has(project.ticket_id)}
                         />
                         {rowProvided.placeholder}
                       </div>
@@ -144,6 +165,7 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                                           onTabNavigation={onTabNavigation}
                                           projectName={project.project_name}
                                           showManHours={displayOptions.showManHours}
+                                          hasDuplicateTicketId={task.sync_to_azure_devops !== false && task.ticket_id != null && duplicateTicketIds.has(task.ticket_id)}
                                         />
                                         {rowProvided.placeholder}
                                       </div>
@@ -183,6 +205,7 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                                                     taskName={task.task_name}
                                                     highlightDelayedTasks={displayOptions.highlightDelayedTasks}
                                                     showManHours={displayOptions.showManHours}
+                                                    hasDuplicateTicketId={subtask.sync_to_azure_devops !== false && subtask.ticket_id != null && duplicateTicketIds.has(subtask.ticket_id)}
                                                   />
                                                 </div>
                                               )}
