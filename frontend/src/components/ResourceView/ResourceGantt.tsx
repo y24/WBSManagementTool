@@ -332,6 +332,12 @@ export default function ResourceGantt({
   const renderUnplannedHighlights = useCallback((row: ResourceRow) => {
     if (!highlightResourceUnplanned) return null;
 
+    const holidaySet = new Set(initialData?.holidays.map(h => h.holiday_date) ?? []);
+    const isWeekendOrHoliday = (date: Date): boolean => {
+      const day = date.getDay();
+      return day === 0 || day === 6 || holidaySet.has(format(date, 'yyyy-MM-dd'));
+    };
+
     const plannedDays = new Set<string>();
 
     row.subtasks.forEach(task => {
@@ -372,27 +378,39 @@ export default function ResourceGantt({
       }
 
       let hasPlanInUnit = false;
+      let hasWorkingDayInUnit = false;
 
       if (scale === 'day') {
-        hasPlanInUnit = plannedDays.has(format(unitStart, 'yyyy-MM-dd'));
+        if (!isWeekendOrHoliday(unitStart)) {
+          hasWorkingDayInUnit = true;
+          hasPlanInUnit = plannedDays.has(format(unitStart, 'yyyy-MM-dd'));
+        }
       } else if (scale === 'week') {
         for (let d = 0; d < 7; d++) {
-          if (plannedDays.has(format(addDays(unitStart, d), 'yyyy-MM-dd'))) {
-            hasPlanInUnit = true;
-            break;
+          const checkDate = addDays(unitStart, d);
+          if (!isWeekendOrHoliday(checkDate)) {
+            hasWorkingDayInUnit = true;
+            if (plannedDays.has(format(checkDate, 'yyyy-MM-dd'))) {
+              hasPlanInUnit = true;
+              break;
+            }
           }
         }
       } else if (scale === 'month') {
         const daysInMonth = getDaysInMonth(unitStart);
         for (let d = 0; d < daysInMonth; d++) {
-          if (plannedDays.has(format(addDays(unitStart, d), 'yyyy-MM-dd'))) {
-            hasPlanInUnit = true;
-            break;
+          const checkDate = addDays(unitStart, d);
+          if (!isWeekendOrHoliday(checkDate)) {
+            hasWorkingDayInUnit = true;
+            if (plannedDays.has(format(checkDate, 'yyyy-MM-dd'))) {
+              hasPlanInUnit = true;
+              break;
+            }
           }
         }
       }
 
-      if (!hasPlanInUnit) {
+      if (hasWorkingDayInUnit && !hasPlanInUnit) {
         cells.push(
           <div
             key={`unplanned-${row.assignee?.id ?? 'unassigned'}-${format(unitStart, 'yyyy-MM-dd')}`}
