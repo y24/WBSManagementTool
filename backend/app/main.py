@@ -40,3 +40,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
 from .routers import api
 app.include_router(api.router, prefix="/api")
+
+from .integrations.azure_devops.router import router as devops_router
+app.include_router(devops_router, prefix="/api")

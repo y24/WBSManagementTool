@@ -95,6 +95,7 @@ class Project(Base):
     is_auto_actual_date = Column(Boolean, nullable=False, default=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_deleted = Column(Boolean, nullable=False, default=False)
+    sync_to_azure_devops = Column(Boolean, nullable=False, default=False)
     status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=True, index=True)
     assignee_id = Column(Integer, ForeignKey("mst_members.id"), nullable=True, index=True)
     link_url = Column(Text, nullable=True)
@@ -131,6 +132,7 @@ class Task(Base):
     is_auto_actual_date = Column(Boolean, nullable=False, default=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_deleted = Column(Boolean, nullable=False, default=False)
+    sync_to_azure_devops = Column(Boolean, nullable=False, default=False)
     status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=True, index=True)
     assignee_id = Column(Integer, ForeignKey("mst_members.id"), nullable=True, index=True)
     link_url = Column(Text, nullable=True)
@@ -180,7 +182,8 @@ class Subtask(Base):
     is_auto_effort = Column(Boolean, nullable=False, default=True)
     workload_percent = Column(Integer, nullable=False, default=100)
     is_deleted = Column(Boolean, nullable=False, default=False)
-    
+    sync_to_azure_devops = Column(Boolean, nullable=False, default=False)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -244,3 +247,36 @@ class SubtaskInterruption(Base):
     __table_args__ = (
         CheckConstraint("resumption_date IS NULL OR resumption_date >= interruption_date", name="check_interruption_dates"),
     )
+
+
+# --- Azure DevOps Sync Tables ---
+
+class DevopsSyncState(Base):
+    __tablename__ = "devops_sync_states"
+
+    id = Column(Integer, primary_key=True, index=True)
+    entity_type = Column(String(20), nullable=False)
+    entity_id = Column(Integer, nullable=False)
+    work_item_id = Column(Integer, nullable=True)
+    last_sent_hash = Column(String(64), nullable=True)
+    last_local_updated_at = Column(DateTime(timezone=True), nullable=True)
+    last_devops_rev = Column(Integer, nullable=True)
+    last_synced_at = Column(DateTime(timezone=True), nullable=True)
+    last_success_at = Column(DateTime(timezone=True), nullable=True)
+    last_status = Column(String(50), nullable=True)
+    last_error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("entity_type IN ('project', 'task', 'subtask')", name="check_devops_sync_entity_type"),
+    )
+
+
+class SyncLock(Base):
+    __tablename__ = "sync_locks"
+
+    lock_name = Column(String(100), primary_key=True)
+    locked_at = Column(DateTime(timezone=True), nullable=False)
+    locked_by = Column(String(100), nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
