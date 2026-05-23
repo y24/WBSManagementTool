@@ -3,6 +3,10 @@ import { ResourceRow } from '../../pages/mainboard/useResourceData';
 
 const RESOURCE_TRACK_HEIGHT = 32;
 
+const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * RESOURCE_TRACK_HEIGHT;
+const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * RESOURCE_TRACK_HEIGHT;
+const getResourceRowHeight = (row: ResourceRow) => getPlannedLaneHeight(row) + getActualLaneHeight(row);
+
 /**
  * 進行中、遅延、今週終了、レビューの各列のハイライトスタイルを取得する
  */
@@ -71,33 +75,54 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
       </div>
 
       <div className="flex-1 pb-[100px] bg-slate-50 dark:bg-slate-950">
-        {data.map((row) => (
+        {data.map((row) => {
+          const plannedLaneHeight = getPlannedLaneHeight(row);
+          const actualLaneHeight = getActualLaneHeight(row);
+          const rowHeight = getResourceRowHeight(row);
+          return (
           <div 
             key={row.assignee?.id ?? 'unassigned'} 
             className="flex items-center border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group/row min-w-max"
-            style={{ height: `${row.tracks.length * RESOURCE_TRACK_HEIGHT}px` }}
+            style={{ height: `${rowHeight}px` }}
           >
             <div className="flex w-full py-1 items-center h-full">
               <div className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[140px] pl-4 pr-4 truncate font-medium text-[15px] text-slate-800 dark:text-slate-200 h-full flex items-center flex-1 border-r border-slate-200 dark:border-slate-700">
                 {row.assignee?.member_name || '未アサイン'}
               </div>
-              <div className="flex gap-2 shrink-0 text-sm px-3 items-center">
-                <div className={getStatusClasses(row.inProgressCount, 'inProgress')}>
-                  {row.inProgressCount}
+              <div className="flex shrink-0 text-sm items-stretch h-full">
+                <div className="w-[52px] border-r border-slate-200/70 dark:border-slate-700/70 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                  <div
+                    className="flex items-center justify-center bg-slate-100/70 dark:bg-slate-800/60 border-b border-slate-200/70 dark:border-slate-700/70"
+                    style={{ height: `${plannedLaneHeight}px` }}
+                  >
+                    計画
+                  </div>
+                  <div
+                    className="flex items-center justify-center bg-white dark:bg-slate-900"
+                    style={{ height: `${actualLaneHeight}px` }}
+                  >
+                    実績
+                  </div>
                 </div>
-                <div className={getStatusClasses(row.delayedCount, 'delayed')}>
-                  {row.delayedCount}
-                </div>
-                <div className={getStatusClasses(row.endingThisWeekCount, 'ending')}>
-                  {row.endingThisWeekCount}
-                </div>
-                <div className={getStatusClasses(row.reviewWaitingCount, 'review')}>
-                  {row.reviewWaitingCount}
+                <div className="flex gap-2 shrink-0 px-3 items-center">
+                  <div className={getStatusClasses(row.inProgressCount, 'inProgress')}>
+                    {row.inProgressCount}
+                  </div>
+                  <div className={getStatusClasses(row.delayedCount, 'delayed')}>
+                    {row.delayedCount}
+                  </div>
+                  <div className={getStatusClasses(row.endingThisWeekCount, 'ending')}>
+                    {row.endingThisWeekCount}
+                  </div>
+                  <div className={getStatusClasses(row.reviewWaitingCount, 'review')}>
+                    {row.reviewWaitingCount}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
 
     </div>

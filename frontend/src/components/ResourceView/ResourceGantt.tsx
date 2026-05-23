@@ -12,6 +12,9 @@ import GanttBar from '../GanttBar';
 
 const RESOURCE_TRACK_HEIGHT = 32;
 
+const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * RESOURCE_TRACK_HEIGHT;
+const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * RESOURCE_TRACK_HEIGHT;
+
 interface ResourceGanttProps {
   data: ResourceRow[];
   range: GanttRange;
@@ -107,6 +110,74 @@ export default function ResourceGantt({
   const renderHeatmap = useCallback((row: ResourceRow) => {
     const overlapsByDay = new Map<string, number>();
 
+    const addDateRangeToHeatmap = (startDate: Date, endDate: Date) => {
+      if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return;
+      if (differenceInCalendarDays(endDate, startDate) < 0) return;
+
+      let current = startDate;
+      while (differenceInCalendarDays(endDate, current) >= 0) {
+        const dStr = format(current, 'yyyy-MM-dd');
+        overlapsByDay.set(dStr, (overlapsByDay.get(dStr) || 0) + 1);
+        current = addDays(current, 1);
+      }
+    };
+
+    const addActualWorkSegmentsToHeatmap = (task: ResourceSubtask, endDate: Date) => {
+      if (!task.actual_start_date) return;
+
+      const startDate = parseISO(task.actual_start_date);
+      if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return;
+
+      if (differenceInCalendarDays(endDate, startDate) < 0) return;
+
+      const interruptions = [...(task.interruptions || [])]
+        .filter(interruption => interruption.interruption_date)
+        .sort((a, b) => a.interruption_date.localeCompare(b.interruption_date));
+
+      if (interruptions.length === 0) {
+        addDateRangeToHeatmap(startDate, endDate);
+        return;
+      }
+
+      let currentStart = startDate;
+      let isClosed = false;
+
+      for (const interruption of interruptions) {
+        const interruptionDate = parseISO(interruption.interruption_date);
+        if (!isValid(interruptionDate)) continue;
+
+        if (differenceInCalendarDays(interruptionDate, currentStart) >= 0) {
+          const segmentEnd = differenceInCalendarDays(endDate, interruptionDate) >= 0 ? interruptionDate : endDate;
+          addDateRangeToHeatmap(currentStart, segmentEnd);
+          if (segmentEnd.getTime() === endDate.getTime()) {
+            isClosed = true;
+            break;
+          }
+        }
+
+        if (!interruption.resumption_date) {
+          isClosed = true;
+          break;
+        }
+
+        const resumptionDate = parseISO(interruption.resumption_date);
+        if (!isValid(resumptionDate)) {
+          isClosed = true;
+          break;
+        }
+
+        if (differenceInCalendarDays(resumptionDate, currentStart) > 0) {
+          currentStart = resumptionDate;
+        }
+
+        if (differenceInCalendarDays(currentStart, endDate) >= 0) break;
+      }
+
+      if (!isClosed && differenceInCalendarDays(endDate, currentStart) > 0) {
+        addDateRangeToHeatmap(currentStart, endDate);
+      }
+    };
+
     // Count active subtasks per day.
     // If actual_start_date exists, only actual dates are considered (planned dates are ignored).
     row.subtasks.forEach(task => {
@@ -135,6 +206,8 @@ export default function ResourceGantt({
               endDate = subDays(rsDate, 1);
             }
           }
+          addActualWorkSegmentsToHeatmap(task, endDate);
+          return;
         } else {
           if (task.review_days && task.review_days > 0) {
             const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
@@ -146,16 +219,7 @@ export default function ResourceGantt({
 
         if (differenceInCalendarDays(endDate, startDate) < 0) return;
 
-        // Ensure start <= end to avoid issues
-        const realStart = startDate;
-        const realEnd = endDate;
-        let current = realStart;
-
-        while (differenceInCalendarDays(realEnd, current) >= 0) {
-          const dStr = format(current, 'yyyy-MM-dd');
-          overlapsByDay.set(dStr, (overlapsByDay.get(dStr) || 0) + 1);
-          current = addDays(current, 1);
-        }
+        addDateRangeToHeatmap(startDate, endDate);
       } else if (startStr && !hasActual) { // 計画の開始日のみ（新規ステータスなど）
         // レビュー期間の考慮は不要（1日のみなので）
         const startDate = parseISO(startStr);
@@ -222,7 +286,7 @@ export default function ResourceGantt({
         currentX += cellWidth;
     }
     return cells;
-  }, [days, isDarkMode, overlapThreshold, scale, cellWidth]);
+  }, [days, initialData, isDarkMode, overlapThreshold, scale, cellWidth]);
 
   return (
     <div className="h-full min-h-0 w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
@@ -269,42 +333,88 @@ export default function ResourceGantt({
                   {renderHeatmap(row)}
                 </div>
 
-                {/* Tracks Rows */}
-                {row.tracks.map((track, trackIndex) => (
-                  <div 
-                    key={`track-${trackIndex}`} 
-                    className="relative border-b border-slate-200/30 dark:border-slate-800/45 w-full pointer-events-auto"
-                    style={{ height: `${RESOURCE_TRACK_HEIGHT}px` }}
-                  >
-                    {track.map((subtask) => {
-                      const isDelayed = checkIsDelayed(subtask);
-                      return (
-                        <div key={`r-s-${subtask.id}`} className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                          <GanttBar
-                            item={subtask}
-                            itemType="subtask"
-                            baseDate={baseDate}
-                            cellWidth={cellWidth}
-                            scale={scale}
-                            initialData={initialData}
-                            tempDates={tempDates}
-                            dragState={dragState}
-                            isDarkMode={isDarkMode}
-                            showProgressRate={false}
-                            showAssigneeName={false}
-                            getStatusColor={getStatusColor}
-                            getAssigneeColor={getAssigneeColor}
-                            colorMode="status"
-                            handleMouseDown={handleMouseDown}
-                            customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
-                            isDelayedHighlight={isDelayed}
-                            isResourceView={true}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                <div
+                  className="relative border-b border-slate-200/35 dark:border-slate-800/45 bg-slate-100/35 dark:bg-slate-900/40 w-full pointer-events-auto"
+                  style={{ height: `${getPlannedLaneHeight(row)}px` }}
+                >
+                  {(row.plannedTracks.length > 0 ? row.plannedTracks : [[]]).map((track, trackIndex) => (
+                    <div
+                      key={`planned-track-${trackIndex}`}
+                      className="relative w-full border-b border-slate-200/20 last:border-b-0 dark:border-slate-800/30"
+                      style={{ height: `${RESOURCE_TRACK_HEIGHT}px` }}
+                    >
+                      {track.map((subtask) => {
+                        const isDelayed = checkIsDelayed(subtask);
+                        return (
+                          <div key={`r-planned-${subtask.id}`} className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                            <GanttBar
+                              item={subtask}
+                              itemType="subtask"
+                              baseDate={baseDate}
+                              cellWidth={cellWidth}
+                              scale={scale}
+                              initialData={initialData}
+                              tempDates={tempDates}
+                              dragState={dragState}
+                              isDarkMode={isDarkMode}
+                              showProgressRate={false}
+                              showAssigneeName={false}
+                              getStatusColor={getStatusColor}
+                              getAssigneeColor={getAssigneeColor}
+                              colorMode="status"
+                              handleMouseDown={handleMouseDown}
+                              customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
+                              isDelayedHighlight={isDelayed}
+                              isResourceView={true}
+                              barVisibility="planned"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+                <div
+                  className="relative border-b border-slate-200/45 dark:border-slate-800/55 w-full pointer-events-auto"
+                  style={{ height: `${getActualLaneHeight(row)}px` }}
+                >
+                  {(row.actualTracks.length > 0 ? row.actualTracks : [[]]).map((track, trackIndex) => (
+                    <div
+                      key={`actual-track-${trackIndex}`}
+                      className="relative w-full border-b border-slate-200/20 last:border-b-0 dark:border-slate-800/30"
+                      style={{ height: `${RESOURCE_TRACK_HEIGHT}px` }}
+                    >
+                      {track.map((subtask) => {
+                        const isDelayed = checkIsDelayed(subtask);
+                        return (
+                          <div key={`r-actual-${subtask.id}`} className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                            <GanttBar
+                              item={subtask}
+                              itemType="subtask"
+                              baseDate={baseDate}
+                              cellWidth={cellWidth}
+                              scale={scale}
+                              initialData={initialData}
+                              tempDates={tempDates}
+                              dragState={dragState}
+                              isDarkMode={isDarkMode}
+                              showProgressRate={false}
+                              showAssigneeName={false}
+                              getStatusColor={getStatusColor}
+                              getAssigneeColor={getAssigneeColor}
+                              colorMode="status"
+                              handleMouseDown={handleMouseDown}
+                              customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
+                              isDelayedHighlight={isDelayed}
+                              isResourceView={true}
+                              barVisibility="actual"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

@@ -39,6 +39,7 @@ interface GanttBarProps {
   highlightSameAssignee?: boolean;
   hoveredAssigneeId?: number | null;
   setHoveredAssigneeId?: (id: number | null) => void;
+  barVisibility?: 'both' | 'planned' | 'actual';
 }
 
 const GanttBar: React.FC<GanttBarProps> = ({
@@ -64,6 +65,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
   highlightSameAssignee = false,
   hoveredAssigneeId = null,
   setHoveredAssigneeId,
+  barVisibility = 'both',
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -202,8 +204,10 @@ const GanttBar: React.FC<GanttBarProps> = ({
     ? calculateSegments(reviewStart, actualEnd, item.interruptions || [])
     : [];
 
-  const showPlannedBar = pStart !== undefined && pWidth !== undefined && (!isAutoPlanned || !isExpanded) && !(isResourceView && (actualSegments.length > 0 && !isAutoActual));
-  const showActualBar = actualSegments.length > 0 && (!isAutoActual || !isExpanded);
+  const canShowPlannedBar = barVisibility === 'both' || barVisibility === 'planned';
+  const canShowActualBar = barVisibility === 'both' || barVisibility === 'actual';
+  const showPlannedBar = canShowPlannedBar && pStart !== undefined && pWidth !== undefined && (!isAutoPlanned || !isExpanded);
+  const showActualBar = canShowActualBar && actualSegments.length > 0 && (!isAutoActual || !isExpanded);
   const hasActual = showActualBar; 
 
   const progressPercentValue = Number(item.progress_percent);
@@ -292,6 +296,12 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const warningTopPx = isSubtask && isResourceView ? '8px' : '10px';
 
   const isHighlighted = highlightSameAssignee && hoveredAssigneeId !== null && item.assignee_id === hoveredAssigneeId;
+  const labelLeft = showActualBar && actualSegments.length > 0
+    ? getDateX(actualSegments[0].start, baseDate, scale)
+    : (pStart || 0);
+  const labelWidth = showActualBar && actualSegments.length > 0
+    ? getDateWidth(actualSegments[0].start, actualSegments[actualSegments.length - 1].end, scale)
+    : (pWidth ?? 0);
 
   return (
     <div
@@ -478,9 +488,9 @@ const GanttBar: React.FC<GanttBarProps> = ({
           className={`absolute text-[11px] whitespace-nowrap pointer-events-none drop-shadow-sm z-30 ${isResourceView ? 'text-white' : 'text-gray-700 dark:text-gray-300'
             }`}
           style={{
-            left: `${(actualSegments.length > 0 ? getDateX(actualSegments[0].start, baseDate, scale) : (pStart || 0)) + 4}px`,
+            left: `${labelLeft + 4}px`,
             top: barLabelTopPx,
-            maxWidth: `${Math.max((actualSegments.length > 0 ? getDateWidth(actualSegments[0].start, actualSegments[actualSegments.length-1].end, scale) : (pWidth ?? 0)) - 8, 0)}px`,
+            maxWidth: `${Math.max(labelWidth - 8, 0)}px`,
             overflow: 'hidden',
             textOverflow: 'ellipsis'
           }}

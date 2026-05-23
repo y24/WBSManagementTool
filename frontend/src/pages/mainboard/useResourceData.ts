@@ -36,11 +36,15 @@ export interface ResourceRow {
   assignee: MstMember | null; // null for unassigned
   subtasks: ResourceSubtask[];
   tracks: ResourceSubtask[][]; // Packed rows of non-overlapping subtasks
+  plannedTracks: ResourceSubtask[][];
+  actualTracks: ResourceSubtask[][];
   inProgressCount: number;
   delayedCount: number;
   endingThisWeekCount: number;
   reviewWaitingCount: number;
 }
+
+type DateBounds = { start: number; end: number };
 
 function getWeekBoundaries(dateStr: string) {
   const date = new Date(dateStr);
@@ -85,6 +89,8 @@ export function useResourceData(
         assignee: member,
         subtasks: [],
         tracks: [],
+        plannedTracks: [],
+        actualTracks: [],
         inProgressCount: 0,
         delayedCount: 0,
         endingThisWeekCount: 0,
@@ -96,6 +102,8 @@ export function useResourceData(
       assignee: null,
       subtasks: [],
       tracks: [],
+      plannedTracks: [],
+      actualTracks: [],
       inProgressCount: 0,
       delayedCount: 0,
       endingThisWeekCount: 0,
@@ -157,75 +165,111 @@ export function useResourceData(
       });
     });
 
-    const getBounds = (t: ResourceSubtask) => {
-      // GanttBar renders the colored bar (Actual) if actual_start_date exists.
-      // If it doesn't, it renders the grey bar (Planned).
-      // We must match this logic for packing.
-      
-      const hasActual = !!t.actual_start_date;
-      let startStr = hasActual ? t.actual_start_date : t.planned_start_date;
-      let endStr = hasActual ? (t.actual_end_date || t.actual_start_date) : t.planned_end_date;
-
-      // In Review state in GanttBar might extend the actual bar
-      if (hasActual && t.review_start_date) {
-        // GanttBar doesn't necessarily extend the bar length for review_start_date,
-        // it just overlays a dark part. The total length is still aS to aE.
-      }
-
-      const parse = (s: string | null | undefined): number | null => {
-        if (!s) return null;
-        const day = s.split('T')[0];
-        const d = new Date(`${day}T12:00:00Z`);
-        return isNaN(d.getTime()) ? null : d.getTime();
-      };
-
-      const start = parse(startStr) ?? 9999999999999;
-      const end = parse(endStr) ?? 0;
-
-      return { start, end };
+    const parseDateTime = (s: string | null | undefined): number | null => {
+      if (!s) return null;
+      const day = s.split('T')[0];
+      const d = new Date(`${day}T12:00:00Z`);
+      return isNaN(d.getTime()) ? null : d.getTime();
     };
 
-    // Packing subtasks into tracks for each assignee
-    assigneeMap.forEach(row => {
-      if (row.subtasks.length === 0) return;
+    const getPlannedBounds = (t: ResourceSubtask): DateBounds[] => {
+      const start = parseDateTime(t.planned_start_date);
+      const end = parseDateTime(t.planned_end_date);
+      return start !== null && end !== null ? [{ start, end }] : [];
+    };
 
-      const subtaskEx = row.subtasks.map(s => ({
-        subtask: s,
-        bounds: getBounds(s)
-      }));
+    const getActualBounds = (t: ResourceSubtask): DateBounds[] => {
+      if (!t.actual_start_date) return [];
+
+      const start = parseISO(t.actual_start_date);
+      const end = t.actual_end_date ? parseISO(t.actual_end_date) : start;
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+
+      if (end < start) {
+        const timestamp = parseDateTime(t.actual_start_date);
+        return timestamp !== null ? [{ start: timestamp, end: timestamp }] : [];
+      }
+
+      const interruptions = [...(t.interruptions || [])]
+        .filter(i => i.interruption_date)
+        .sort((a, b) => a.interruption_date.localeCompare(b.interruption_date));
+
+      const segments: DateBounds[] = [];
+      let currentStart = start;
+
+      for (const interruption of interruptions) {
+        const interruptionDate = parseISO(interruption.interruption_date);
+        if (Number.isNaN(interruptionDate.getTime())) continue;
+
+        if (interruptionDate >= currentStart) {
+          const segmentEnd = interruptionDate < end ? interruptionDate : end;
+          segments.push({ start: currentStart.getTime(), end: segmentEnd.getTime() });
+          if (segmentEnd.getTime() === end.getTime()) {
+            currentStart = end;
+            break;
+          }
+        }
+
+        if (!interruption.resumption_date) {
+          currentStart = end;
+          break;
+        }
+
+        const resumptionDate = parseISO(interruption.resumption_date);
+        if (Number.isNaN(resumptionDate.getTime())) {
+          currentStart = end;
+          break;
+        }
+        if (resumptionDate > currentStart) {
+          currentStart = resumptionDate;
+        }
+
+        if (currentStart >= end) break;
+      }
+
+      if (currentStart < end) {
+        segments.push({ start: currentStart.getTime(), end: end.getTime() });
+      }
+
+      if (segments.length === 0 && start.getTime() === end.getTime()) {
+        segments.push({ start: start.getTime(), end: end.getTime() });
+      }
+
+      return segments;
+    };
+
+    const packTracks = (
+      subtasks: ResourceSubtask[],
+      getBounds: (subtask: ResourceSubtask) => DateBounds[]
+    ) => {
+      const subtaskEx = subtasks
+        .map(s => ({
+          subtask: s,
+          bounds: getBounds(s)
+        }))
+        .filter((item): item is { subtask: ResourceSubtask; bounds: DateBounds[] } => item.bounds.length > 0);
 
       // Sort by start date, then ID for stability
       subtaskEx.sort((a, b) => {
-        if (a.bounds.start !== b.bounds.start) return a.bounds.start - b.bounds.start;
+        const aStart = Math.min(...a.bounds.map(bounds => bounds.start));
+        const bStart = Math.min(...b.bounds.map(bounds => bounds.start));
+        if (aStart !== bStart) return aStart - bStart;
         return a.subtask.id - b.subtask.id;
       });
 
       const tracks: ResourceSubtask[][] = [];
-      const trackBounds: { start: number; end: number }[][] = [];
+      const trackBounds: DateBounds[][] = [];
       
       subtaskEx.forEach(item => {
         const { subtask, bounds } = item;
-        // If neither planned nor actual exists, we can't really pack it, but skip for now
-        if (bounds.start > 8000000000000 && bounds.end === 0) {
-          // No dates, add to first track or handle specially.
-          if (tracks.length === 0) {
-            tracks.push([subtask]);
-            trackBounds.push([{ start: 0, end: 0 }]);
-          } else {
-            tracks[0].push(subtask);
-          }
-          return;
-        }
 
         let placed = false;
         for (let i = 0; i < tracks.length; i++) {
           const tBounds = trackBounds[i];
           let hasOverlap = false;
           
-          for (const eb of tBounds) {
-            // Overlap if not completely before OR completely after
-            // Standard condition: (Start1 <= End2) AND (End1 >= Start2)
-            if (bounds.start <= eb.end && bounds.end >= eb.start) {
+          for (const existingBounds of tBounds) {
+            if (bounds.some(newBounds => newBounds.start <= existingBounds.end && newBounds.end >= existingBounds.start)) {
               hasOverlap = true;
               break;
             }
@@ -233,7 +277,7 @@ export function useResourceData(
 
           if (!hasOverlap) {
             tracks[i].push(subtask);
-            tBounds.push(bounds);
+            tBounds.push(...bounds);
             placed = true;
             break;
           }
@@ -241,11 +285,20 @@ export function useResourceData(
 
         if (!placed) {
           tracks.push([subtask]);
-          trackBounds.push([bounds]);
+          trackBounds.push([...bounds]);
         }
       });
 
-      row.tracks = tracks;
+      return tracks;
+    };
+
+    // Packing subtasks into separate planned/actual tracks for each assignee
+    assigneeMap.forEach(row => {
+      if (row.subtasks.length === 0) return;
+
+      row.plannedTracks = packTracks(row.subtasks, getPlannedBounds);
+      row.actualTracks = packTracks(row.subtasks, getActualBounds);
+      row.tracks = row.plannedTracks.length >= row.actualTracks.length ? row.plannedTracks : row.actualTracks;
     });
 
     // Remove assignees with 0 subtasks, and sort by counts (In Progress, Delayed, Ending This Week)
