@@ -357,10 +357,9 @@ export default function ResourceGantt({
             style={{
               left: `${currentX}px`,
               width: `${cellWidth}px`,
-              backgroundColor: isDarkMode ? 'rgba(234, 179, 8, 0.14)' : 'rgba(250, 204, 21, 0.18)',
-              boxShadow: isDarkMode
-                ? 'inset 0 0 0 1px rgba(234, 179, 8, 0.08)'
-                : 'inset 0 0 0 1px rgba(202, 138, 4, 0.08)',
+              background: isDarkMode
+                ? 'repeating-linear-gradient(45deg, rgba(234, 179, 8, 0.18) 0px, rgba(234, 179, 8, 0.18) 2px, transparent 2px, transparent 8px)'
+                : 'repeating-linear-gradient(45deg, rgba(250, 204, 21, 0.35) 0px, rgba(250, 204, 21, 0.35) 2px, transparent 2px, transparent 8px)',
             }}
           />
         );
