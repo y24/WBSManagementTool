@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { format, differenceInCalendarDays, addDays, parseISO, subDays, isValid, getDaysInMonth } from 'date-fns';
+import { format, differenceInCalendarDays, addDays, parseISO, subDays, isValid, getDaysInMonth, startOfDay } from 'date-fns';
 import { InitialData } from '../../types';
 import { GanttRange, GanttScale } from '../../types/wbs';
 import { ResourceRow, ResourceSubtask } from '../../pages/mainboard/useResourceData';
@@ -315,8 +315,19 @@ export default function ResourceGantt({
 
     const cells = [];
     let currentX = 0;
+    const today = startOfDay(new Date());
 
     for (const unitStart of days) {
+      // 今日より前のセルはハイライト対象外
+      let unitEnd = unitStart;
+      if (scale === 'week') unitEnd = addDays(unitStart, 6);
+      else if (scale === 'month') unitEnd = addDays(unitStart, getDaysInMonth(unitStart) - 1);
+
+      if (differenceInCalendarDays(unitEnd, today) < 0) {
+        currentX += cellWidth;
+        continue;
+      }
+
       let hasPlanInUnit = false;
 
       if (scale === 'day') {
@@ -412,10 +423,6 @@ export default function ResourceGantt({
                   <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
                 )}
                 <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-slate-300/45 via-slate-200/20 to-slate-300/45 dark:from-slate-600/45 dark:via-slate-700/15 dark:to-slate-600/45" />
-                <div className="pointer-events-none absolute left-0 right-0 top-0 bottom-0">
-                  {renderUnplannedHighlights(row)}
-                </div>
-
                 <div
                   className="resource-lane-planned relative border-b border-slate-300/70 dark:border-slate-700/70 bg-slate-100 dark:bg-slate-900/80 w-full pointer-events-auto"
                   style={{
@@ -425,6 +432,7 @@ export default function ResourceGantt({
                   }}
                 >
                   <div className="pointer-events-none absolute inset-0">
+                    {renderUnplannedHighlights(row)}
                     {renderHeatmap(row, 'planned')}
                   </div>
                   {(row.plannedTracks.length > 0 ? row.plannedTracks : [[]]).map((track, trackIndex) => (
