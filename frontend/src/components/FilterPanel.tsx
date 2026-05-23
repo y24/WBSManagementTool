@@ -117,7 +117,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         )}
 
         <div className="flex items-center gap-2">
-          {displayOptions.viewMode === 'resource' && (
+          {displayOptions.viewMode === 'resource' && displayOptions.showResourceOverlapHighlight && (
             <OverlapThresholdSelect
               displayOptions={displayOptions}
               setDisplayOptions={setDisplayOptions}

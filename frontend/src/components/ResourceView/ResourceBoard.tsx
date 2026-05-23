@@ -17,6 +17,9 @@ interface ResourceBoardProps {
   showMarkers: boolean;
   isDarkMode: boolean;
   overlapThreshold: number;
+  showResourceTaskType: boolean;
+  showResourceOverlapHighlight: boolean;
+  highlightResourceUnplanned: boolean;
   scale: GanttScale;
   onListScroll: (e: UIEvent<HTMLDivElement>) => void;
   onGanttScroll: (e: UIEvent<HTMLDivElement>) => void;
@@ -35,6 +38,9 @@ export default function ResourceBoard({
   showMarkers,
   isDarkMode,
   overlapThreshold,
+  showResourceTaskType,
+  showResourceOverlapHighlight,
+  highlightResourceUnplanned,
   scale,
   onListScroll,
   onGanttScroll,
@@ -77,6 +83,9 @@ export default function ResourceBoard({
             showMarkers={showMarkers}
             isDarkMode={isDarkMode}
             overlapThreshold={overlapThreshold}
+            showResourceTaskType={showResourceTaskType}
+            showResourceOverlapHighlight={showResourceOverlapHighlight}
+            highlightResourceUnplanned={highlightResourceUnplanned}
             scale={scale}
             onScroll={onGanttScroll}
             ganttRef={ganttRef}

@@ -47,6 +47,9 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   highlightSameAssignee: false,
   highlightDelayedTasks: true,
   showInterruptionReason: false,
+  showResourceTaskType: true,
+  showResourceOverlapHighlight: true,
+  highlightResourceUnplanned: false,
 };
 
 function readJson<T extends object>(key: string, fallback: T): T {

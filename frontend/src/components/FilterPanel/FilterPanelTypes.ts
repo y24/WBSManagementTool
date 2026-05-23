@@ -30,4 +30,7 @@ export interface DisplayOptions {
   highlightSameAssignee: boolean;
   highlightDelayedTasks: boolean;
   showInterruptionReason: boolean;
+  showResourceTaskType: boolean;
+  showResourceOverlapHighlight: boolean;
+  highlightResourceUnplanned: boolean;
 }

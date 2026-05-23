@@ -3,7 +3,7 @@ import { format, differenceInCalendarDays, addDays, parseISO, subDays, isValid, 
 import { InitialData } from '../../types';
 import { GanttRange, GanttScale } from '../../types/wbs';
 import { ResourceRow, ResourceSubtask } from '../../pages/mainboard/useResourceData';
-import { getScaleCellWidth, getDateX, getGanttUnits } from '../../utils/ganttUtils';
+import { getScaleCellWidth, getGanttUnits } from '../../utils/ganttUtils';
 import { useGanttDrag } from '../../hooks/useGanttDrag';
 import { calculateReviewCalendarDays } from '../WBSTree/utils';
 import GanttHeader from '../GanttHeader';
@@ -30,6 +30,9 @@ interface ResourceGanttProps {
   showMarkers: boolean;
   isDarkMode: boolean;
   overlapThreshold: number;
+  showResourceTaskType: boolean;
+  showResourceOverlapHighlight: boolean;
+  highlightResourceUnplanned: boolean;
   scale: GanttScale;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   ganttRef: React.RefObject<HTMLDivElement | null>;
@@ -44,6 +47,9 @@ export default function ResourceGantt({
   showMarkers,
   isDarkMode,
   overlapThreshold,
+  showResourceTaskType,
+  showResourceOverlapHighlight,
+  highlightResourceUnplanned,
   scale,
   onScroll,
   ganttRef,
@@ -100,6 +106,8 @@ export default function ResourceGantt({
 
   // Heatmap rendering function
   const renderHeatmap = useCallback((row: ResourceRow) => {
+    if (!showResourceOverlapHighlight) return null;
+
     const overlapsByDay = new Map<string, number>();
 
     const addDateRangeToHeatmap = (startDate: Date, endDate: Date) => {
@@ -184,7 +192,7 @@ export default function ResourceGantt({
         : (task.planned_end_date || task.planned_start_date);
 
       if (startStr && endStr) {
-        let startDate = parseISO(startStr);
+        const startDate = parseISO(startStr);
         let endDate = parseISO(endStr);
         
         if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return;
@@ -278,7 +286,82 @@ export default function ResourceGantt({
         currentX += cellWidth;
     }
     return cells;
-  }, [days, initialData, isDarkMode, overlapThreshold, scale, cellWidth]);
+  }, [days, initialData, isDarkMode, overlapThreshold, scale, cellWidth, showResourceOverlapHighlight]);
+
+  const renderUnplannedHighlights = useCallback((row: ResourceRow) => {
+    if (!highlightResourceUnplanned) return null;
+
+    const plannedDays = new Set<string>();
+
+    row.subtasks.forEach(task => {
+      const status = initialData?.statuses.find(s => s.id === task.status_id);
+      if (status?.status_name === 'Removed') return;
+
+      const startStr = task.planned_start_date;
+      const endStr = task.planned_end_date || task.planned_start_date;
+      if (!startStr && !endStr) return;
+
+      const startDate = parseISO(startStr || endStr || '');
+      const endDate = parseISO(endStr || startStr || '');
+      if (!isValid(startDate) || !isValid(endDate)) return;
+
+      const rangeStart = differenceInCalendarDays(endDate, startDate) >= 0 ? startDate : endDate;
+      const rangeEnd = differenceInCalendarDays(endDate, startDate) >= 0 ? endDate : startDate;
+      let current = rangeStart;
+
+      while (differenceInCalendarDays(rangeEnd, current) >= 0) {
+        plannedDays.add(format(current, 'yyyy-MM-dd'));
+        current = addDays(current, 1);
+      }
+    });
+
+    const cells = [];
+    let currentX = 0;
+
+    for (const unitStart of days) {
+      let hasPlanInUnit = false;
+
+      if (scale === 'day') {
+        hasPlanInUnit = plannedDays.has(format(unitStart, 'yyyy-MM-dd'));
+      } else if (scale === 'week') {
+        for (let d = 0; d < 7; d++) {
+          if (plannedDays.has(format(addDays(unitStart, d), 'yyyy-MM-dd'))) {
+            hasPlanInUnit = true;
+            break;
+          }
+        }
+      } else if (scale === 'month') {
+        const daysInMonth = getDaysInMonth(unitStart);
+        for (let d = 0; d < daysInMonth; d++) {
+          if (plannedDays.has(format(addDays(unitStart, d), 'yyyy-MM-dd'))) {
+            hasPlanInUnit = true;
+            break;
+          }
+        }
+      }
+
+      if (!hasPlanInUnit) {
+        cells.push(
+          <div
+            key={`unplanned-${row.assignee?.id ?? 'unassigned'}-${format(unitStart, 'yyyy-MM-dd')}`}
+            className="absolute top-0 bottom-0 pointer-events-none"
+            style={{
+              left: `${currentX}px`,
+              width: `${cellWidth}px`,
+              backgroundColor: isDarkMode ? 'rgba(234, 179, 8, 0.14)' : 'rgba(250, 204, 21, 0.18)',
+              boxShadow: isDarkMode
+                ? 'inset 0 0 0 1px rgba(234, 179, 8, 0.08)'
+                : 'inset 0 0 0 1px rgba(202, 138, 4, 0.08)',
+            }}
+          />
+        );
+      }
+
+      currentX += cellWidth;
+    }
+
+    return cells;
+  }, [cellWidth, days, highlightResourceUnplanned, initialData, isDarkMode, scale]);
 
   return (
     <div className="h-full min-h-0 w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
@@ -339,6 +422,7 @@ export default function ResourceGantt({
                 )}
                 <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-slate-300/45 via-slate-200/20 to-slate-300/45 dark:from-slate-600/45 dark:via-slate-700/15 dark:to-slate-600/45" />
                 <div className="pointer-events-none absolute left-0 right-0 top-0 bottom-0">
+                  {renderUnplannedHighlights(row)}
                   {renderHeatmap(row)}
                 </div>
                 <div className="sticky left-0 z-[70] h-0 overflow-visible" style={{ width: `${TYPE_COLUMN_WIDTH}px` }}>
@@ -397,7 +481,7 @@ export default function ResourceGantt({
                               getAssigneeColor={getAssigneeColor}
                               colorMode="status"
                               handleMouseDown={handleMouseDown}
-                              customLabel={subtask.subtask_type_name}
+                              customLabel={showResourceTaskType ? subtask.subtask_type_name : undefined}
                               isResourceView={true}
                               compactResourceBar={hasStackedPlannedTracks}
                               barVisibility="planned"
@@ -439,7 +523,7 @@ export default function ResourceGantt({
                               getAssigneeColor={getAssigneeColor}
                               colorMode="status"
                               handleMouseDown={handleMouseDown}
-                              customLabel={subtask.subtask_type_name}
+                              customLabel={showResourceTaskType ? subtask.subtask_type_name : undefined}
                               isResourceView={true}
                               compactResourceBar={hasStackedActualTracks}
                               barVisibility="actual"
