@@ -140,18 +140,6 @@ const SubtaskRow = memo(({
               title="リンク先を開く"
               onClick={(e) => e.stopPropagation()}
             >
-              <Link size={14} />
-            </a>
-          )}
-          {subtask.ticket_id && initialData?.ticket_url_template && (
-            <a
-              href={initialData.ticket_url_template.replace('{TICKET_ID}', String(subtask.ticket_id))}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-indigo-400 hover:text-indigo-600 transition-colors shrink-0 p-0.5"
-              title={`チケットを開く (#${subtask.ticket_id})`}
-              onClick={(e) => e.stopPropagation()}
-            >
               <ExternalLink size={14} />
             </a>
           )}
@@ -197,6 +185,23 @@ const SubtaskRow = memo(({
         >
           <Pencil size={14} />
         </button>
+      </div>
+      <div
+        className={`flex-shrink-0 flex items-center justify-center ${commonCellClasses}`}
+        style={{ width: 30, minWidth: 30, scrollMarginLeft: nameWidth }}
+      >
+        {subtask.ticket_id && initialData?.ticket_url_template && (
+          <a
+            href={initialData.ticket_url_template.replace('{TICKET_ID}', String(subtask.ticket_id))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-400 hover:text-indigo-600 transition-colors shrink-0 p-0.5"
+            title={`チケットを開く (#${subtask.ticket_id})`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Link size={14} />
+          </a>
+        )}
       </div>
       <div className={`w-28 flex items-center ${commonCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
         <StatusSelect

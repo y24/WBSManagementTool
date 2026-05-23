@@ -62,6 +62,7 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
         />
       </div>
 
+      <div className={`flex-shrink-0 flex items-center justify-center ${commonHeaderClasses}`} style={{ width: 30, minWidth: 30, height: '38px' }}>連携</div>
       <div className={`w-28 flex-shrink-0 flex items-center ${commonHeaderClasses}`} style={{ height: '38px' }}>ステータス</div>
       <div className={`w-24 flex-shrink-0 flex items-center ${commonHeaderClasses}`} style={{ height: '38px' }} title="上位階層（青文字）は、配下サブタスクの予定工数による加重平均で算出されます。">進捗</div>
       <div

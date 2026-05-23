@@ -149,7 +149,7 @@ const DetailModal = ({
                   rel="noopener noreferrer"
                   className="ml-auto flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 normal-case tracking-normal transition-colors"
                 >
-                  <ExternalLink size={11} />
+                  <Link size={11} />
                   チケットを開く
                 </a>
               )}
@@ -201,7 +201,7 @@ const DetailModal = ({
           {/* link_url */}
           <div>
             <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-              <Link size={12} className="text-blue-500" />
+              <ExternalLink size={12} className="text-blue-500" />
               リンク先URL
               {linkUrlValue && (
                 <a
