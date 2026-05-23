@@ -174,3 +174,48 @@ def test_in_review_with_positive_review_days_tracks_today(db_session):
 
     updated = crud.update_subtask(db_session, subtask.id, schemas.SubtaskUpdate(status_id=3))
     assert updated.actual_end_date == date.today()
+
+def test_shift_dates_moves_subtask_interruptions(db_session):
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(
+        db_session,
+        schemas.TaskCreate(
+            project_id=project.id,
+            task_name="T1",
+            planned_start_date=date(2023, 1, 2),
+            planned_end_date=date(2023, 1, 6),
+            is_auto_planned_date=False,
+        ),
+    )
+    subtask = crud.create_subtask(
+        db_session,
+        schemas.SubtaskCreate(
+            task_id=task.id,
+            subtask_detail="S1",
+            planned_start_date=date(2023, 1, 2),
+            planned_end_date=date(2023, 1, 6),
+        ),
+    )
+    interruption = crud.create_subtask_interruption(
+        db_session,
+        schemas.SubtaskInterruptionCreate(
+            subtask_id=subtask.id,
+            interruption_date=date(2023, 1, 5),
+            resumption_date=date(2023, 1, 10),
+            reason="Waiting",
+        ),
+    )
+
+    crud.shift_dates(
+        db_session,
+        schemas.ShiftDatesRequest(
+            project_ids=[],
+            task_ids=[task.id],
+            subtask_ids=[],
+            new_base_date=date(2023, 1, 4),
+        ),
+    )
+
+    db_session.refresh(interruption)
+    assert interruption.interruption_date == date(2023, 1, 9)
+    assert interruption.resumption_date == date(2023, 1, 12)

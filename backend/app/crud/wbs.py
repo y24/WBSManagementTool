@@ -550,6 +550,9 @@ def shift_dates(db: Session, req: schemas.ShiftDatesRequest):
     for s in affected_subtasks:
         for d in [s.planned_start_date, s.planned_end_date, s.actual_start_date, s.review_start_date, s.actual_end_date]:
             if d: all_dates.append(d)
+        for interruption in s.interruptions:
+            for d in [interruption.interruption_date, interruption.resumption_date]:
+                if d: all_dates.append(d)
             
     if not all_dates:
         return False
@@ -601,6 +604,9 @@ def shift_dates(db: Session, req: schemas.ShiftDatesRequest):
         s.actual_start_date = shift_business_days(s.actual_start_date, offset, holidays)
         s.review_start_date = shift_business_days(s.review_start_date, offset, holidays)
         s.actual_end_date = shift_business_days(s.actual_end_date, offset, holidays)
+        for interruption in s.interruptions:
+            interruption.interruption_date = shift_business_days(interruption.interruption_date, offset, holidays)
+            interruption.resumption_date = shift_business_days(interruption.resumption_date, offset, holidays)
         
     db.commit()
 

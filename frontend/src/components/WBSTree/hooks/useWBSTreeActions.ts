@@ -192,6 +192,10 @@ export const useWBSTreeActions = ({
             updateMinDate(s.actual_start_date);
             updateMinDate(s.review_start_date);
             updateMinDate(s.actual_end_date);
+            s.interruptions?.forEach(interruption => {
+              updateMinDate(interruption.interruption_date);
+              updateMinDate(interruption.resumption_date);
+            });
           }
         });
       });
