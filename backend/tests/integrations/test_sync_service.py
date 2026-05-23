@@ -6,11 +6,12 @@ import pytest
 from datetime import date, datetime, timezone
 
 from app import models
+from app.integrations.azure_devops import router as devops_router
 from app.integrations.azure_devops.client import AzureDevOpsMockClient
 from app.integrations.azure_devops.hash_service import compute_date_hash
 from app.integrations.azure_devops.repositories import DevopsSyncStateRepository
 from app.integrations.azure_devops.settings import AzureDevOpsSettings
-from app.integrations.azure_devops.sync_service import run_sync
+from app.integrations.azure_devops.sync_service import SyncResult, SyncSummary, run_sync
 
 
 # ---------------------------------------------------------------------------
@@ -298,3 +299,39 @@ class TestMultiEntitySync:
 
         assert result2.summary.skipped_no_local_change == 1
         assert result2.summary.fetch_targets == 0
+
+
+# ---------------------------------------------------------------------------
+# Tests: API lock lifecycle
+# ---------------------------------------------------------------------------
+
+class TestSyncEndpointLockLifecycle:
+    def test_sync_endpoint_releases_lock_after_success(self, db_session, monkeypatch):
+        def fake_run_sync(db, dry_run=False, settings=None):
+            now = datetime.now(timezone.utc)
+            return SyncResult(
+                job_id=now.strftime("%Y%m%d-%H%M%S"),
+                status="success",
+                started_at=now,
+                finished_at=now,
+                dry_run=dry_run,
+                summary=SyncSummary(),
+                errors=[],
+            )
+
+        monkeypatch.setattr(devops_router, "run_sync", fake_run_sync)
+
+        first = devops_router.sync_to_azure_devops(
+            dry_run=False,
+            _token=None,
+            db=db_session,
+        )
+        assert first.status == "success"
+        assert db_session.query(models.SyncLock).count() == 0
+
+        second = devops_router.sync_to_azure_devops(
+            dry_run=False,
+            _token=None,
+            db=db_session,
+        )
+        assert second.status == "success"

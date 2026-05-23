@@ -97,12 +97,18 @@ def sync_to_azure_devops(
                 status_code=409,
                 detail="Another sync is already running. Try again later.",
             )
+        db.commit()
 
     try:
         result = run_sync(db=db, dry_run=dry_run, settings=settings)
+    except Exception:
+        if not dry_run:
+            db.rollback()
+        raise
     finally:
         if not dry_run:
             lock_repo.release(job_id)
+            db.commit()
 
     return SyncResponse(
         job_id=result.job_id,
