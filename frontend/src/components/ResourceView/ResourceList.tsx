@@ -6,6 +6,7 @@ const PLANNED_TRACK_HEIGHT = 32;
 const ACTUAL_TRACK_HEIGHT = 40;
 const STACKED_TRACK_HEIGHT = 24;
 const STACKED_LANE_VERTICAL_PADDING = 5;
+const TYPE_COLUMN_WIDTH = 52;
 
 const getPlannedTrackHeight = (row: ResourceRow) => row.plannedTracks.length > 1 ? STACKED_TRACK_HEIGHT : PLANNED_TRACK_HEIGHT;
 const getActualTrackHeight = (row: ResourceRow) => row.actualTracks.length > 1 ? STACKED_TRACK_HEIGHT : ACTUAL_TRACK_HEIGHT;
@@ -78,6 +79,13 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
             <div className="w-12 text-center" title="今週終了予定">今週終了</div>
             <div className="w-12 text-center" title="レビュー待ち">レビュー</div>
           </div>
+          <div
+            className="sticky right-0 z-[70] flex h-full shrink-0 items-center justify-center border-l border-slate-300 bg-slate-50 text-xs font-semibold text-slate-500 shadow-[-2px_0_4px_rgba(15,23,42,0.08)] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:shadow-[-2px_0_4px_rgba(0,0,0,0.25)]"
+            style={{ width: `${TYPE_COLUMN_WIDTH}px` }}
+            title="種別"
+          >
+            種別
+          </div>
         </div>
       </div>
 
@@ -119,6 +127,27 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
                   <div className={getStatusClasses(row.reviewWaitingCount, 'review')}>
                     {row.reviewWaitingCount}
                   </div>
+                </div>
+              </div>
+              <div
+                className="sticky right-0 z-30 shrink-0 border-l border-slate-300/80 text-[11px] font-medium text-slate-500 shadow-[-2px_0_4px_rgba(15,23,42,0.08)] dark:border-slate-700/80 dark:text-slate-400 dark:shadow-[-2px_0_4px_rgba(0,0,0,0.25)]"
+                style={{ width: `${TYPE_COLUMN_WIDTH}px` }}
+              >
+                <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-px bg-slate-400 dark:bg-slate-600" />
+                {rowIndex === data.length - 1 && (
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-px bg-slate-400 dark:bg-slate-600" />
+                )}
+                <div
+                  className="flex items-center justify-center border-b border-slate-300/70 bg-slate-100 dark:border-slate-700/70 dark:bg-slate-900/95"
+                  style={{ height: `${getPlannedLaneHeight(row)}px` }}
+                >
+                  計画
+                </div>
+                <div
+                  className="flex items-center justify-center bg-white dark:bg-slate-950 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50"
+                  style={{ height: `${getActualLaneHeight(row)}px` }}
+                >
+                  実績
                 </div>
               </div>
             </div>
