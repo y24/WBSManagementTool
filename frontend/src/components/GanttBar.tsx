@@ -34,6 +34,8 @@ interface GanttBarProps {
   colorMode: 'status' | 'assignee';
   isExpanded?: boolean;
   customLabel?: string;
+  projectName?: string;
+  taskName?: string;
   isDelayedHighlight?: boolean;
   isResourceView?: boolean;
   compactResourceBar?: boolean;
@@ -66,6 +68,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
   isDelayedHighlight = false,
   isResourceView = false,
   compactResourceBar = false,
+  projectName,
+  taskName,
   highlightSameAssignee = false,
   hoveredAssigneeId = null,
   setHoveredAssigneeId,
@@ -110,6 +114,13 @@ const GanttBar: React.FC<GanttBarProps> = ({
   // 手入力（is_auto_planned_date = false）の場合は表示するように変更する。
   const isAutoPlanned = (itemType === 'project' || itemType === 'task') && item.is_auto_planned_date;
   const isAutoActual = (itemType === 'project' || itemType === 'task') && item.is_auto_actual_date;
+  const tooltipItem = (projectName || taskName)
+    ? {
+        ...item,
+        ...(projectName ? { project_name: projectName } : {}),
+        ...(taskName ? { task_name: taskName } : {}),
+      }
+    : item;
 
   if ((itemType === 'project' || itemType === 'task') && isExpanded && isAutoPlanned && isAutoActual) {
     return null;
@@ -117,8 +128,10 @@ const GanttBar: React.FC<GanttBarProps> = ({
 
   const isSubtask = itemType === 'subtask';
 
-  // ドラッグ中の反映があればそれを使う
-  const temp = tempDates[item.id];
+  const isCurrentDragItem = dragState?.itemId === item.id && dragState?.itemType === itemType;
+
+  // ドラッグ中の反映があればそれを使う。ID は階層間で重複し得るため、対象種別も必ず見る。
+  const temp = isCurrentDragItem ? tempDates[item.id] : undefined;
   const plannedStart = temp?.planned_start_date || item.planned_start_date;
   const plannedEnd = temp?.planned_end_date || item.planned_end_date;
   const actualStart = temp?.actual_start_date || item.actual_start_date;
@@ -274,7 +287,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
     actualRightEdge
   );
 
-  const isDragging = dragState?.itemId === item.id;
+  const isDragging = isCurrentDragItem;
   const statusName = initialData?.statuses.find(s => s.id === item.status_id)?.status_name;
   const isFixedEnd = (
     statusName === 'In Progress' ||
@@ -538,7 +551,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {/* 詳細ツールチップ */}
       {!dragState && isHovered && (
         <GanttTooltip
-          item={item}
+          item={tooltipItem}
           itemType={itemType}
           mouseX={mousePos.x}
           mouseY={mousePos.y}
@@ -550,4 +563,48 @@ const GanttBar: React.FC<GanttBarProps> = ({
   );
 };
 
-export default React.memo(GanttBar);
+const getActiveTemp = (props: GanttBarProps) => {
+  const { dragState, item, itemType, tempDates } = props;
+  return dragState?.itemId === item.id && dragState?.itemType === itemType
+    ? tempDates[item.id]
+    : undefined;
+};
+
+const areGanttBarPropsEqual = (prev: GanttBarProps, next: GanttBarProps) => {
+  const prevIsDragging = prev.dragState?.itemId === prev.item.id && prev.dragState?.itemType === prev.itemType;
+  const nextIsDragging = next.dragState?.itemId === next.item.id && next.dragState?.itemType === next.itemType;
+
+  return (
+    prev.item === next.item &&
+    prev.itemType === next.itemType &&
+    prev.baseDate === next.baseDate &&
+    prev.cellWidth === next.cellWidth &&
+    prev.scale === next.scale &&
+    prev.initialData === next.initialData &&
+    getActiveTemp(prev) === getActiveTemp(next) &&
+    Boolean(prev.dragState) === Boolean(next.dragState) &&
+    prevIsDragging === nextIsDragging &&
+    prev.isDarkMode === next.isDarkMode &&
+    prev.showProgressRate === next.showProgressRate &&
+    prev.showAssigneeName === next.showAssigneeName &&
+    prev.handleMouseDown === next.handleMouseDown &&
+    prev.getStatusColor === next.getStatusColor &&
+    prev.getAssigneeColor === next.getAssigneeColor &&
+    prev.colorMode === next.colorMode &&
+    prev.isExpanded === next.isExpanded &&
+    prev.customLabel === next.customLabel &&
+    prev.projectName === next.projectName &&
+    prev.taskName === next.taskName &&
+    prev.isDelayedHighlight === next.isDelayedHighlight &&
+    prev.isResourceView === next.isResourceView &&
+    prev.compactResourceBar === next.compactResourceBar &&
+    prev.highlightSameAssignee === next.highlightSameAssignee &&
+    prev.hoveredAssigneeId === next.hoveredAssigneeId &&
+    prev.setHoveredAssigneeId === next.setHoveredAssigneeId &&
+    prev.barVisibility === next.barVisibility &&
+    prev.overridePlannedBarColor === next.overridePlannedBarColor &&
+    prev.overrideActualBarColor === next.overrideActualBarColor
+  );
+};
+
+export default React.memo(GanttBar, areGanttBarPropsEqual);

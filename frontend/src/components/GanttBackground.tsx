@@ -112,4 +112,28 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
   );
 };
 
-export default React.memo(GanttBackground);
+const getActiveMarkerTemp = (props: GanttBackgroundProps) => {
+  const { dragState, tempDates } = props;
+  return dragState?.itemType === 'marker' ? tempDates[dragState.itemId] : undefined;
+};
+
+const areGanttBackgroundPropsEqual = (prev: GanttBackgroundProps, next: GanttBackgroundProps) => {
+  const prevMarkerDragId = prev.dragState?.itemType === 'marker' ? prev.dragState.itemId : null;
+  const nextMarkerDragId = next.dragState?.itemType === 'marker' ? next.dragState.itemId : null;
+
+  return (
+    prev.days === next.days &&
+    prev.cellWidth === next.cellWidth &&
+    prev.scale === next.scale &&
+    prev.initialData === next.initialData &&
+    prev.range.start_date === next.range.start_date &&
+    prev.range.end_date === next.range.end_date &&
+    prev.hoveredDate === next.hoveredDate &&
+    prev.showTodayHighlight === next.showTodayHighlight &&
+    prev.showMarkers === next.showMarkers &&
+    prevMarkerDragId === nextMarkerDragId &&
+    getActiveMarkerTemp(prev) === getActiveMarkerTemp(next)
+  );
+};
+
+export default React.memo(GanttBackground, areGanttBackgroundPropsEqual);

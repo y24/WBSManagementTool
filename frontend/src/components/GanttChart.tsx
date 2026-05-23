@@ -225,13 +225,12 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     return projects.reduce((acc, project) => {
       const allDates: number[] = [];
       const collect = (item: any) => {
-        const temp = tempDates[item.id];
         const dates = {
-          pS: temp?.planned_start_date || item.planned_start_date,
-          pE: temp?.planned_end_date || item.planned_end_date,
-          aS: temp?.actual_start_date || item.actual_start_date,
-          aE: temp?.actual_end_date || item.actual_end_date,
-          rS: temp?.review_start_date || item.review_start_date,
+          pS: item.planned_start_date,
+          pE: item.planned_end_date,
+          aS: item.actual_start_date,
+          aE: item.actual_end_date,
+          rS: item.review_start_date,
         };
         Object.values(dates).forEach(v => {
           if (v) {
@@ -256,7 +255,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       }
       return acc;
     }, {} as Record<number, { left: number; width: number; status_id?: number | null }>);
-  }, [projects, range.start_date, tempDates]);
+  }, [projects, range.start_date, scale]);
 
   // ホバーされた日のサブタスクを抽出
   const subtasksOnHoveredDate = useMemo(() => {
@@ -454,8 +453,9 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                     onDoubleClick={(e) => handleRowDoubleClick(e, task, 'task')}
                   >
                     <GanttBar
-                      item={{ ...task, project_name: row.project.project_name }}
+                      item={task}
                       itemType="task"
+                      projectName={row.project.project_name}
                       baseDate={baseDate}
                       cellWidth={cellWidth}
                       scale={scale}
@@ -490,8 +490,10 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                   title={isRowEmpty(subtask) && scale !== 'month' ? (typeName ? `ダブルクリックで計画を入力: ${typeName}` : 'ダブルクリックで計画を入力') : undefined}
                 >
                   <GanttBar
-                    item={{ ...subtask, project_name: row.project.project_name, task_name: row.task.task_name }}
+                    item={subtask}
                     itemType="subtask"
+                    projectName={row.project.project_name}
+                    taskName={row.task.task_name}
                     baseDate={baseDate}
                     cellWidth={cellWidth}
                     scale={scale}

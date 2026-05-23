@@ -39,6 +39,8 @@ export const useGanttDrag = (
   const dragStateRef = useRef<DragState | null>(null);
   const tempDatesRef = useRef<Record<number, any>>({});
   const movedRef = useRef(false);
+  const frameRef = useRef<number | null>(null);
+  const latestPointerRef = useRef<{ clientX: number; clientY: number } | null>(null);
 
   const handleMouseDown = useCallback((
     e: React.MouseEvent,
@@ -64,11 +66,11 @@ export const useGanttDrag = (
     document.body.classList.add('user-select-none');
   }, []);
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
+  const updateDragPosition = useCallback((clientX: number, clientY: number) => {
     const currentDrag = dragStateRef.current;
     if (!currentDrag || !initialData) return;
 
-    const deltaX = e.clientX - currentDrag.startX;
+    const deltaX = clientX - currentDrag.startX;
     if (Math.abs(deltaX) > 3) {
       movedRef.current = true;
     }
@@ -80,8 +82,8 @@ export const useGanttDrag = (
     const { start, end, reviewStart, name } = currentDrag.initialDates;
     const update: any = { 
       barType: currentDrag.barType,
-      mouseX: e.clientX,
-      mouseY: e.clientY
+      mouseX: clientX,
+      mouseY: clientY
     };
     let tooltipText = "";
     let prefix = "";
@@ -200,10 +202,11 @@ export const useGanttDrag = (
     update.tooltipText = tooltipText;
 
     setTempDates(prev => {
+      const prevItem = prev[currentDrag.itemId];
       const next = {
         ...prev,
         [currentDrag.itemId]: {
-          ...prev[currentDrag.itemId],
+          ...prevItem,
           ...update
         }
       };
@@ -212,9 +215,25 @@ export const useGanttDrag = (
     });
   }, [initialData, scale]);
 
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    latestPointerRef.current = { clientX: e.clientX, clientY: e.clientY };
+    if (frameRef.current !== null) return;
+
+    frameRef.current = window.requestAnimationFrame(() => {
+      frameRef.current = null;
+      const latestPointer = latestPointerRef.current;
+      if (!latestPointer) return;
+      updateDragPosition(latestPointer.clientX, latestPointer.clientY);
+    });
+  }, [updateDragPosition]);
+
   const handleMouseUp = useCallback(async () => {
     const currentDrag = dragStateRef.current;
     if (!currentDrag) return;
+
+    if (latestPointerRef.current) {
+      updateDragPosition(latestPointerRef.current.clientX, latestPointerRef.current.clientY);
+    }
 
     const finalTemp = tempDatesRef.current[currentDrag.itemId];
     const moved = movedRef.current;
@@ -223,6 +242,11 @@ export const useGanttDrag = (
 
     setDragState(null);
     dragStateRef.current = null;
+    latestPointerRef.current = null;
+    if (frameRef.current !== null) {
+      window.cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+    }
     setTempDates({});
     tempDatesRef.current = {};
     document.body.classList.remove('user-select-none');
@@ -281,7 +305,7 @@ export const useGanttDrag = (
       console.error('Failed to update period:', err);
       alert('期間の更新に失敗しました。');
     }
-  }, [onRefresh]);
+  }, [onRefresh, updateDragPosition]);
 
   useEffect(() => {
     if (dragState) {
@@ -294,6 +318,10 @@ export const useGanttDrag = (
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
     };
   }, [dragState, handleMouseMove, handleMouseUp]);
 

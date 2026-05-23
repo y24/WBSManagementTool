@@ -203,4 +203,24 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
   );
 };
 
-export default React.memo(GanttHeader);
+const getActiveMarkerTemp = (props: GanttHeaderProps) => {
+  const { dragState, tempDates } = props;
+  return dragState?.itemType === 'marker' ? tempDates[dragState.itemId] : undefined;
+};
+
+const areGanttHeaderPropsEqual = (prev: GanttHeaderProps, next: GanttHeaderProps) => {
+  const prevMarkerDragId = prev.dragState?.itemType === 'marker' ? prev.dragState.itemId : null;
+  const nextMarkerDragId = next.dragState?.itemType === 'marker' ? next.dragState.itemId : null;
+
+  return (
+    prev.days === next.days &&
+    prev.cellWidth === next.cellWidth &&
+    prev.scale === next.scale &&
+    prev.initialData === next.initialData &&
+    prev.showMarkers === next.showMarkers &&
+    prevMarkerDragId === nextMarkerDragId &&
+    getActiveMarkerTemp(prev) === getActiveMarkerTemp(next)
+  );
+};
+
+export default React.memo(GanttHeader, areGanttHeaderPropsEqual);
