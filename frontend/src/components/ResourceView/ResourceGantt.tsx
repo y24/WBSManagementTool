@@ -10,10 +10,15 @@ import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
 import GanttBar from '../GanttBar';
 
-const RESOURCE_TRACK_HEIGHT = 32;
+const PLANNED_TRACK_HEIGHT = 32;
+const ACTUAL_TRACK_HEIGHT = 40;
+const STACKED_TRACK_HEIGHT = 24;
+const TYPE_COLUMN_WIDTH = 52;
 
-const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * RESOURCE_TRACK_HEIGHT;
-const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * RESOURCE_TRACK_HEIGHT;
+const getPlannedTrackHeight = (row: ResourceRow) => row.plannedTracks.length > 1 ? STACKED_TRACK_HEIGHT : PLANNED_TRACK_HEIGHT;
+const getActualTrackHeight = (row: ResourceRow) => row.actualTracks.length > 1 ? STACKED_TRACK_HEIGHT : ACTUAL_TRACK_HEIGHT;
+const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * getPlannedTrackHeight(row);
+const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * getActualTrackHeight(row);
 
 interface ResourceGanttProps {
   data: ResourceRow[];
@@ -290,7 +295,12 @@ export default function ResourceGantt({
 
   return (
     <div className="h-full min-h-0 w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
-      <div ref={ganttRef} className="h-full min-h-0 overflow-y-auto overflow-x-scroll relative gantt-body" onScroll={onScroll}>
+      <div
+        ref={ganttRef}
+        className="h-full min-h-0 overflow-y-auto overflow-x-scroll relative gantt-body"
+        style={{ scrollbarGutter: 'stable' }}
+        onScroll={onScroll}
+      >
         <div style={{ width: `${totalWidth}px`, minWidth: '100%', position: 'relative', minHeight: '100%' }}>
           <GanttHeader
             days={days}
@@ -304,6 +314,13 @@ export default function ResourceGantt({
             setHoveredDate={setHoveredDate}
             handleMouseDown={handleMouseDown}
           />
+          <div
+            className="sticky left-0 top-0 z-40 flex h-[38px] items-center justify-center border-r border-b border-slate-300 bg-slate-50 text-xs font-semibold text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+            style={{ width: `${TYPE_COLUMN_WIDTH}px`, marginTop: '-38px' }}
+            title="種別"
+          >
+            種別
+          </div>
 
           <GanttBackground
             days={days}
@@ -319,29 +336,57 @@ export default function ResourceGantt({
           />
 
           <div className="relative z-10 pb-[100px]">
-            {data.map((row, rowIndex) => (
+            {data.map((row, rowIndex) => {
+              const plannedTrackHeight = getPlannedTrackHeight(row);
+              const actualTrackHeight = getActualTrackHeight(row);
+              const hasStackedPlannedTracks = row.plannedTracks.length > 1;
+              const hasStackedActualTracks = row.actualTracks.length > 1;
+              return (
               <div
                 key={row.assignee?.id ?? 'unassigned'}
-                className={`relative group/ganttrow ${
-                  rowIndex % 2 === 0
-                    ? 'bg-slate-50/50 dark:bg-slate-900/30'
-                    : 'bg-white/60 dark:bg-slate-950/30'
-                }`}
+                className="relative group/ganttrow"
               >
+                <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
+                {rowIndex === data.length - 1 && (
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
+                )}
                 <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-slate-300/45 via-slate-200/20 to-slate-300/45 dark:from-slate-600/45 dark:via-slate-700/15 dark:to-slate-600/45" />
                 <div className="pointer-events-none absolute left-0 right-0 top-0 bottom-0">
                   {renderHeatmap(row)}
                 </div>
+                <div className="sticky left-0 z-40 h-0 overflow-visible" style={{ width: `${TYPE_COLUMN_WIDTH}px` }}>
+                  <div
+                    className="relative border-r border-slate-300/80 text-[11px] font-medium text-slate-500 shadow-[2px_0_4px_rgba(15,23,42,0.08)] dark:border-slate-700/80 dark:text-slate-400 dark:shadow-[2px_0_4px_rgba(0,0,0,0.25)]"
+                    style={{ width: `${TYPE_COLUMN_WIDTH}px` }}
+                  >
+                    <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-px bg-slate-400 dark:bg-slate-600" />
+                    {rowIndex === data.length - 1 && (
+                      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-px bg-slate-400 dark:bg-slate-600" />
+                    )}
+                    <div
+                      className="flex items-center justify-center border-b border-slate-300/70 bg-slate-100 dark:border-slate-700/70 dark:bg-slate-900/95"
+                      style={{ height: `${getPlannedLaneHeight(row)}px` }}
+                    >
+                      計画
+                    </div>
+                    <div
+                      className="flex items-center justify-center bg-white dark:bg-slate-950"
+                      style={{ height: `${getActualLaneHeight(row)}px` }}
+                    >
+                      実績
+                    </div>
+                  </div>
+                </div>
 
                 <div
-                  className="relative border-b border-slate-200/35 dark:border-slate-800/45 bg-slate-100/35 dark:bg-slate-900/40 w-full pointer-events-auto"
+                  className="relative border-b border-slate-300/70 dark:border-slate-700/70 bg-slate-100 dark:bg-slate-900/80 w-full pointer-events-auto"
                   style={{ height: `${getPlannedLaneHeight(row)}px` }}
                 >
                   {(row.plannedTracks.length > 0 ? row.plannedTracks : [[]]).map((track, trackIndex) => (
                     <div
                       key={`planned-track-${trackIndex}`}
                       className="relative w-full border-b border-slate-200/20 last:border-b-0 dark:border-slate-800/30"
-                      style={{ height: `${RESOURCE_TRACK_HEIGHT}px` }}
+                      style={{ height: `${plannedTrackHeight}px` }}
                     >
                       {track.map((subtask) => {
                         const isDelayed = checkIsDelayed(subtask);
@@ -366,6 +411,7 @@ export default function ResourceGantt({
                               customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
                               isDelayedHighlight={isDelayed}
                               isResourceView={true}
+                              compactResourceBar={hasStackedPlannedTracks}
                               barVisibility="planned"
                             />
                           </div>
@@ -375,14 +421,14 @@ export default function ResourceGantt({
                   ))}
                 </div>
                 <div
-                  className="relative border-b border-slate-200/45 dark:border-slate-800/55 w-full pointer-events-auto"
+                  className="relative bg-white dark:bg-slate-950 w-full pointer-events-auto"
                   style={{ height: `${getActualLaneHeight(row)}px` }}
                 >
                   {(row.actualTracks.length > 0 ? row.actualTracks : [[]]).map((track, trackIndex) => (
                     <div
                       key={`actual-track-${trackIndex}`}
                       className="relative w-full border-b border-slate-200/20 last:border-b-0 dark:border-slate-800/30"
-                      style={{ height: `${RESOURCE_TRACK_HEIGHT}px` }}
+                      style={{ height: `${actualTrackHeight}px` }}
                     >
                       {track.map((subtask) => {
                         const isDelayed = checkIsDelayed(subtask);
@@ -407,6 +453,7 @@ export default function ResourceGantt({
                               customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
                               isDelayedHighlight={isDelayed}
                               isResourceView={true}
+                              compactResourceBar={hasStackedActualTracks}
                               barVisibility="actual"
                             />
                           </div>
@@ -416,7 +463,8 @@ export default function ResourceGantt({
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

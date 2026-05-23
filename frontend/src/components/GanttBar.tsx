@@ -36,6 +36,7 @@ interface GanttBarProps {
   customLabel?: string;
   isDelayedHighlight?: boolean;
   isResourceView?: boolean;
+  compactResourceBar?: boolean;
   highlightSameAssignee?: boolean;
   hoveredAssigneeId?: number | null;
   setHoveredAssigneeId?: (id: number | null) => void;
@@ -62,6 +63,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
   customLabel,
   isDelayedHighlight = false,
   isResourceView = false,
+  compactResourceBar = false,
   highlightSameAssignee = false,
   hoveredAssigneeId = null,
   setHoveredAssigneeId,
@@ -288,12 +290,14 @@ const GanttBar: React.FC<GanttBarProps> = ({
 
 
   
-  const subtaskBarTopClass = isSubtask ? (isResourceView ? 'top-[8px]' : 'top-[12px]') : 'top-[10px]';
-  const subtaskBarTopPx = isSubtask ? (isResourceView ? '8px' : '12px') : '10px';
+  const resourceBarTop = compactResourceBar ? '3px' : '8px';
+  const resourceBarLabelTop = compactResourceBar ? '4px' : '9px';
+  const subtaskBarTopClass = isSubtask ? (isResourceView ? (compactResourceBar ? 'top-[3px]' : 'top-[8px]') : 'top-[12px]') : 'top-[10px]';
+  const subtaskBarTopPx = isSubtask ? (isResourceView ? resourceBarTop : '12px') : '10px';
   const subtaskBarHeightClass = isSubtask && isResourceView ? 'h-[18px]' : 'h-[16px]';
   const subtaskBarHeightPx = isSubtask && isResourceView ? '18px' : '16px';
-  const barLabelTopPx = isSubtask && isResourceView ? '9px' : '13px';
-  const warningTopPx = isSubtask && isResourceView ? '8px' : '10px';
+  const barLabelTopPx = isSubtask && isResourceView ? resourceBarLabelTop : '13px';
+  const warningTopPx = isSubtask && isResourceView ? resourceBarTop : '10px';
 
   const isHighlighted = highlightSameAssignee && hoveredAssigneeId !== null && item.assignee_id === hoveredAssigneeId;
   const labelLeft = showActualBar && actualSegments.length > 0

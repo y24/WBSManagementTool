@@ -1,10 +1,14 @@
 import React from 'react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
 
-const RESOURCE_TRACK_HEIGHT = 32;
+const PLANNED_TRACK_HEIGHT = 32;
+const ACTUAL_TRACK_HEIGHT = 40;
+const STACKED_TRACK_HEIGHT = 24;
 
-const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * RESOURCE_TRACK_HEIGHT;
-const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * RESOURCE_TRACK_HEIGHT;
+const getPlannedTrackHeight = (row: ResourceRow) => row.plannedTracks.length > 1 ? STACKED_TRACK_HEIGHT : PLANNED_TRACK_HEIGHT;
+const getActualTrackHeight = (row: ResourceRow) => row.actualTracks.length > 1 ? STACKED_TRACK_HEIGHT : ACTUAL_TRACK_HEIGHT;
+const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * getPlannedTrackHeight(row);
+const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * getActualTrackHeight(row);
 const getResourceRowHeight = (row: ResourceRow) => getPlannedLaneHeight(row) + getActualLaneHeight(row);
 
 /**
@@ -57,11 +61,11 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
   return (
     <div 
       className="flex flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 h-full overflow-y-auto overflow-x-scroll"
-      style={{ width: `${width}px` }}
+      style={{ width: `${width}px`, scrollbarGutter: 'stable' }}
       onScroll={onScroll}
       ref={listRef as unknown as React.RefObject<HTMLDivElement>}
     >
-      <div className="sticky top-0 z-20 flex bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 shadow-sm h-[38px] min-w-max">
+      <div className="sticky top-0 z-20 flex shrink-0 bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 shadow-sm h-[38px] min-h-[38px] min-w-max">
         {/* Header Row */}
         <div className="flex w-full items-center h-full">
           <div className="sticky left-0 z-30 bg-slate-50 dark:bg-slate-900 min-w-[140px] pl-4 pr-4 h-full flex items-center flex-1 truncate border-r border-slate-200 dark:border-slate-700">担当者名</div>
@@ -75,35 +79,23 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
       </div>
 
       <div className="flex-1 pb-[100px] bg-slate-50 dark:bg-slate-950">
-        {data.map((row) => {
-          const plannedLaneHeight = getPlannedLaneHeight(row);
-          const actualLaneHeight = getActualLaneHeight(row);
+        {data.map((row, rowIndex) => {
           const rowHeight = getResourceRowHeight(row);
           return (
           <div 
             key={row.assignee?.id ?? 'unassigned'} 
-            className="flex items-center border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group/row min-w-max"
+            className="relative flex items-center bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group/row min-w-max"
             style={{ height: `${rowHeight}px` }}
           >
-            <div className="flex w-full py-1 items-center h-full">
+            <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
+            {rowIndex === data.length - 1 && (
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
+            )}
+            <div className="flex w-full items-center h-full">
               <div className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[140px] pl-4 pr-4 truncate font-medium text-[15px] text-slate-800 dark:text-slate-200 h-full flex items-center flex-1 border-r border-slate-200 dark:border-slate-700">
                 {row.assignee?.member_name || '未アサイン'}
               </div>
               <div className="flex shrink-0 text-sm items-stretch h-full">
-                <div className="w-[52px] border-r border-slate-200/70 dark:border-slate-700/70 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                  <div
-                    className="flex items-center justify-center bg-slate-100/70 dark:bg-slate-800/60 border-b border-slate-200/70 dark:border-slate-700/70"
-                    style={{ height: `${plannedLaneHeight}px` }}
-                  >
-                    計画
-                  </div>
-                  <div
-                    className="flex items-center justify-center bg-white dark:bg-slate-900"
-                    style={{ height: `${actualLaneHeight}px` }}
-                  >
-                    実績
-                  </div>
-                </div>
                 <div className="flex gap-2 shrink-0 px-3 items-center">
                   <div className={getStatusClasses(row.inProgressCount, 'inProgress')}>
                     {row.inProgressCount}
