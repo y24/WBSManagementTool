@@ -281,6 +281,12 @@ code {
 }
 
 /* ガントチャート領域のオーバーライド - 背面の線を透過させる */
+.gantt-body .wbs-row-project,
+.gantt-body .wbs-row-task,
+.gantt-body .wbs-row-subtask {
+  border-bottom: 1px solid var(--wbs-row-border-color) !important;
+}
+
 .gantt-body .wbs-row-project {
   background-color: rgba(219, 234, 254, 0.45) !important;
 }

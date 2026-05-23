@@ -317,7 +317,7 @@ export default function ResourceGantt({
             handleMouseDown={handleMouseDown}
           />
           <div
-            className="sticky left-0 top-0 z-40 flex h-[38px] items-center justify-center border-r border-b border-slate-300 bg-slate-50 text-xs font-semibold text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+            className="sticky left-0 top-0 z-[70] flex h-[38px] items-center justify-center border-r border-b border-slate-300 bg-slate-50 text-xs font-semibold text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
             style={{ width: `${TYPE_COLUMN_WIDTH}px`, marginTop: '-38px' }}
             title="種別"
           >
@@ -337,7 +337,7 @@ export default function ResourceGantt({
             tempDates={tempDates}
           />
 
-          <div className="relative z-10 pb-[100px]">
+          <div className="relative pb-[100px]">
             {data.map((row, rowIndex) => {
               const plannedTrackHeight = getPlannedTrackHeight(row);
               const actualTrackHeight = getActualTrackHeight(row);
@@ -356,7 +356,7 @@ export default function ResourceGantt({
                 <div className="pointer-events-none absolute left-0 right-0 top-0 bottom-0">
                   {renderHeatmap(row)}
                 </div>
-                <div className="sticky left-0 z-40 h-0 overflow-visible" style={{ width: `${TYPE_COLUMN_WIDTH}px` }}>
+                <div className="sticky left-0 z-[70] h-0 overflow-visible" style={{ width: `${TYPE_COLUMN_WIDTH}px` }}>
                   <div
                     className="relative border-r border-slate-300/80 text-[11px] font-medium text-slate-500 shadow-[2px_0_4px_rgba(15,23,42,0.08)] dark:border-slate-700/80 dark:text-slate-400 dark:shadow-[2px_0_4px_rgba(0,0,0,0.25)]"
                     style={{ width: `${TYPE_COLUMN_WIDTH}px` }}
