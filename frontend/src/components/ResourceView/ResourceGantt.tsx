@@ -379,7 +379,7 @@ export default function ResourceGantt({
                 </div>
 
                 <div
-                  className="relative border-b border-slate-300/70 dark:border-slate-700/70 bg-slate-100 dark:bg-slate-900/80 w-full pointer-events-auto"
+                  className="resource-lane-planned relative border-b border-slate-300/70 dark:border-slate-700/70 bg-slate-100 dark:bg-slate-900/80 w-full pointer-events-auto"
                   style={{ height: `${getPlannedLaneHeight(row)}px` }}
                 >
                   {(row.plannedTracks.length > 0 ? row.plannedTracks : [[]]).map((track, trackIndex) => (
@@ -421,7 +421,7 @@ export default function ResourceGantt({
                   ))}
                 </div>
                 <div
-                  className="relative bg-white dark:bg-slate-950 w-full pointer-events-auto"
+                  className="resource-lane-actual relative bg-white dark:bg-slate-950 w-full pointer-events-auto"
                   style={{ height: `${getActualLaneHeight(row)}px` }}
                 >
                   {(row.actualTracks.length > 0 ? row.actualTracks : [[]]).map((track, trackIndex) => (
