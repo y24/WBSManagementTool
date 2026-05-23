@@ -397,7 +397,7 @@ export default function ResourceGantt({
                               getAssigneeColor={getAssigneeColor}
                               colorMode="status"
                               handleMouseDown={handleMouseDown}
-                              customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
+                              customLabel={subtask.subtask_type_name}
                               isResourceView={true}
                               compactResourceBar={hasStackedPlannedTracks}
                               barVisibility="planned"
@@ -439,7 +439,7 @@ export default function ResourceGantt({
                               getAssigneeColor={getAssigneeColor}
                               colorMode="status"
                               handleMouseDown={handleMouseDown}
-                              customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
+                              customLabel={subtask.subtask_type_name}
                               isResourceView={true}
                               compactResourceBar={hasStackedActualTracks}
                               barVisibility="actual"
