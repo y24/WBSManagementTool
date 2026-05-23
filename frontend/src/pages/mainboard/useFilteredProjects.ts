@@ -28,6 +28,7 @@ export function useFilteredProjects({
     const removedStatusId = initialData?.statuses.find((status) => status.status_name === 'Removed')?.id ?? 7;
     const newStatusId = initialData?.statuses.find((status) => status.status_name === 'New')?.id;
     const pendingStatusId = initialData?.statuses.find((status) => status.status_name === 'Pending')?.id;
+    const subtaskTypeNameById = new Map(initialData?.subtask_types.map((type) => [type.id, type.type_name]) ?? []);
 
     const hasConditions =
       filters.statusIds.length > 0 ||
@@ -95,8 +96,7 @@ export function useFilteredProjects({
               if (filters.searchTerm) {
                 const term = filters.searchTerm.toLowerCase();
                 const detailMatch = containsSearchTerm(subtask.subtask_detail, term);
-                const typeName =
-                  initialData?.subtask_types.find((type) => type.id === subtask.subtask_type_id)?.type_name ?? '';
+                const typeName = subtaskTypeNameById.get(subtask.subtask_type_id) ?? '';
                 const typeMatch = containsSearchTerm(typeName, term);
                 if (!detailMatch && !typeMatch) return false;
               }

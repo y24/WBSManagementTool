@@ -75,6 +75,28 @@ export default function ResourceGantt({
 
   const baseDate = useMemo(() => range.start_date ? parseISO(range.start_date) : new Date(), [range.start_date]);
   const totalWidth = useMemo(() => days.length * cellWidth, [days, cellWidth]);
+  const removedStatusId = useMemo(
+    () => initialData?.statuses.find(status => status.status_name === 'Removed')?.id,
+    [initialData],
+  );
+  const holidaySet = useMemo(
+    () => new Set(initialData?.holidays.map(holiday => holiday.holiday_date) ?? []),
+    [initialData],
+  );
+  const unitDateKeys = useMemo(() => {
+    return days.map(unitStart => {
+      const unitDates: string[] = [];
+      const unitLength = scale === 'week' ? 7 : scale === 'month' ? getDaysInMonth(unitStart) : 1;
+      for (let d = 0; d < unitLength; d++) {
+        unitDates.push(format(addDays(unitStart, d), 'yyyy-MM-dd'));
+      }
+      return {
+        key: format(unitStart, 'yyyy-MM-dd'),
+        dates: unitDates,
+        end: unitLength === 1 ? unitStart : addDays(unitStart, unitLength - 1),
+      };
+    });
+  }, [days, scale]);
 
   const getStatusColor = useCallback((statusId: number | null | undefined): string => {
     if (statusId === null || statusId === undefined) return isDarkMode ? '#334155' : '#cbd5e1';
@@ -224,8 +246,7 @@ export default function ResourceGantt({
     // Planned and actual lanes are evaluated independently so actual-only overlap does not tint planned, and vice versa.
     row.subtasks.forEach(task => {
       // Skip removed items from heatmap overlap calculation
-      const status = initialData?.statuses.find(s => s.id === task.status_id);
-      if (status?.status_name === 'Removed') return;
+      if (removedStatusId !== undefined && task.status_id === removedStatusId) return;
 
       const startStr = lane === 'actual' ? task.actual_start_date : task.planned_start_date;
       const endStr = lane === 'actual'
@@ -279,26 +300,14 @@ export default function ResourceGantt({
 
     const cells = [];
     const maxOverlap = Math.max(...Array.from(overlapsByDay.values()), 0);
-    let currentX = 0;
 
-    for (let i = 0; i < days.length; i++) {
-        const unitStart = days[i];
-        
+    for (let i = 0; i < unitDateKeys.length; i++) {
+        const unit = unitDateKeys[i];
+
         // 当該セルの期間（日単位）をスキャンして最大重複を出す
         let maxInUnit = 0;
-        if (scale === 'day') {
-          maxInUnit = overlapsByDay.get(format(unitStart, 'yyyy-MM-dd')) || 0;
-        } else if (scale === 'week') {
-          for(let d=0; d<7; d++) {
-            const dateStr = format(addDays(unitStart, d), 'yyyy-MM-dd');
-            maxInUnit = Math.max(maxInUnit, overlapsByDay.get(dateStr) || 0);
-          }
-        } else if (scale === 'month') {
-          const daysInMonth = getDaysInMonth(unitStart);
-          for(let d=0; d<daysInMonth; d++) {
-            const dateStr = format(addDays(unitStart, d), 'yyyy-MM-dd');
-            maxInUnit = Math.max(maxInUnit, overlapsByDay.get(dateStr) || 0);
-          }
+        for (const dateStr of unit.dates) {
+          maxInUnit = Math.max(maxInUnit, overlapsByDay.get(dateStr) || 0);
         }
 
         if (maxInUnit > overlapThreshold) {
@@ -313,10 +322,10 @@ export default function ResourceGantt({
 
             cells.push(
                 <div 
-                    key={`heatmap-${format(unitStart, 'yyyy-MM-dd')}`}
+                    key={`heatmap-${unit.key}`}
                     className="absolute top-0 bottom-0 pointer-events-none"
                     style={{
-                      left: `${currentX}px`,
+                      left: `${i * cellWidth}px`,
                       width: `${cellWidth}px`,
                       backgroundColor,
                       boxShadow: `inset 0 0 0 1px rgba(245, 158, 11, ${borderAlpha})`,
@@ -324,15 +333,13 @@ export default function ResourceGantt({
                 />
             );
         }
-        currentX += cellWidth;
     }
     return cells;
-  }, [days, initialData, isDarkMode, overlapThreshold, scale, cellWidth, showResourceOverlapHighlight]);
+  }, [cellWidth, initialData, isDarkMode, overlapThreshold, removedStatusId, showResourceOverlapHighlight, unitDateKeys]);
 
   const renderUnplannedHighlights = useCallback((row: ResourceRow) => {
     if (!highlightResourceUnplanned) return null;
 
-    const holidaySet = new Set(initialData?.holidays.map(h => h.holiday_date) ?? []);
     const isWeekendOrHoliday = (date: Date): boolean => {
       const day = date.getDay();
       return day === 0 || day === 6 || holidaySet.has(format(date, 'yyyy-MM-dd'));
@@ -341,8 +348,7 @@ export default function ResourceGantt({
     const plannedDays = new Set<string>();
 
     row.subtasks.forEach(task => {
-      const status = initialData?.statuses.find(s => s.id === task.status_id);
-      if (status?.status_name === 'Removed') return;
+      if (removedStatusId !== undefined && task.status_id === removedStatusId) return;
 
       const startStr = task.planned_start_date;
       const endStr = task.planned_end_date || task.planned_start_date;
@@ -363,49 +369,25 @@ export default function ResourceGantt({
     });
 
     const cells = [];
-    let currentX = 0;
     const today = startOfDay(new Date());
 
-    for (const unitStart of days) {
+    for (let i = 0; i < unitDateKeys.length; i++) {
+      const unit = unitDateKeys[i];
       // 今日より前のセルはハイライト対象外
-      let unitEnd = unitStart;
-      if (scale === 'week') unitEnd = addDays(unitStart, 6);
-      else if (scale === 'month') unitEnd = addDays(unitStart, getDaysInMonth(unitStart) - 1);
-
-      if (differenceInCalendarDays(unitEnd, today) < 0) {
-        currentX += cellWidth;
+      if (differenceInCalendarDays(unit.end, today) < 0) {
         continue;
       }
 
       let hasPlanInUnit = false;
       let hasWorkingDayInUnit = false;
 
-      if (scale === 'day') {
-        if (!isWeekendOrHoliday(unitStart)) {
+      for (let d = 0; d < unit.dates.length; d++) {
+        const checkDate = addDays(days[i], d);
+        if (!isWeekendOrHoliday(checkDate)) {
           hasWorkingDayInUnit = true;
-          hasPlanInUnit = plannedDays.has(format(unitStart, 'yyyy-MM-dd'));
-        }
-      } else if (scale === 'week') {
-        for (let d = 0; d < 7; d++) {
-          const checkDate = addDays(unitStart, d);
-          if (!isWeekendOrHoliday(checkDate)) {
-            hasWorkingDayInUnit = true;
-            if (plannedDays.has(format(checkDate, 'yyyy-MM-dd'))) {
-              hasPlanInUnit = true;
-              break;
-            }
-          }
-        }
-      } else if (scale === 'month') {
-        const daysInMonth = getDaysInMonth(unitStart);
-        for (let d = 0; d < daysInMonth; d++) {
-          const checkDate = addDays(unitStart, d);
-          if (!isWeekendOrHoliday(checkDate)) {
-            hasWorkingDayInUnit = true;
-            if (plannedDays.has(format(checkDate, 'yyyy-MM-dd'))) {
-              hasPlanInUnit = true;
-              break;
-            }
+          if (plannedDays.has(unit.dates[d])) {
+            hasPlanInUnit = true;
+            break;
           }
         }
       }
@@ -413,10 +395,10 @@ export default function ResourceGantt({
       if (hasWorkingDayInUnit && !hasPlanInUnit) {
         cells.push(
           <div
-            key={`unplanned-${row.assignee?.id ?? 'unassigned'}-${format(unitStart, 'yyyy-MM-dd')}`}
+            key={`unplanned-${row.assignee?.id ?? 'unassigned'}-${unit.key}`}
             className="absolute top-0 bottom-0 pointer-events-none"
             style={{
-              left: `${currentX}px`,
+              left: `${i * cellWidth}px`,
               width: `${cellWidth}px`,
               background: isDarkMode
                 ? 'repeating-linear-gradient(45deg, rgba(234, 179, 8, 0.18) 0px, rgba(234, 179, 8, 0.18) 2px, transparent 2px, transparent 8px)'
@@ -425,12 +407,10 @@ export default function ResourceGantt({
           />
         );
       }
-
-      currentX += cellWidth;
     }
 
     return cells;
-  }, [cellWidth, days, highlightResourceUnplanned, initialData, isDarkMode, scale]);
+  }, [cellWidth, days, highlightResourceUnplanned, holidaySet, isDarkMode, removedStatusId, unitDateKeys]);
 
   return (
     <div className="h-full min-h-0 w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">

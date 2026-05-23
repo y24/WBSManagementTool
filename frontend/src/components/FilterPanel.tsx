@@ -25,6 +25,7 @@ interface FilterPanelProps {
   onClear: () => void;
   onExport: () => void;
   onRefresh?: () => void;
+  onViewModeSwitchStart?: (viewMode: DisplayOptions['viewMode']) => void;
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -36,7 +37,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   initialData,
   onClear,
   onExport,
-  onRefresh
+  onRefresh,
+  onViewModeSwitchStart,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMarkerListModalOpen, setIsMarkerListModalOpen] = useState(false);
@@ -127,6 +129,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           <ViewSwitcher
             displayOptions={displayOptions}
             setDisplayOptions={setDisplayOptions}
+            onViewModeSwitchStart={onViewModeSwitchStart}
           />
 
           <GanttScaleSwitcher

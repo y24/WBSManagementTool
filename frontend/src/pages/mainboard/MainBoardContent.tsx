@@ -1,4 +1,4 @@
-import React, { Dispatch, RefObject, SetStateAction, UIEvent } from 'react';
+import React, { Dispatch, RefObject, SetStateAction, UIEvent, useRef } from 'react';
 import WBSTree from '../../components/WBSTree';
 import GanttChart from '../../components/GanttChart';
 import ResourceBoard from '../../components/ResourceView/ResourceBoard';
@@ -20,7 +20,7 @@ interface MainBoardContentProps {
   filteredProjects: Project[];
   initialData: InitialData | null;
   onUpdate: (options?: WBSRefreshOptions) => Promise<void>;
-  onLocalUpdate: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, any>) => void;
+  onLocalUpdate: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, unknown>) => void;
   onLocalReorder: (newProjects: Project[]) => void;
   expandedProjects: Record<number, boolean>;
   setExpandedProjects: Dispatch<SetStateAction<Record<number, boolean>>>;
@@ -50,16 +50,28 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
   onTreeScroll,
   onGanttScroll,
 }) => {
-  if (displayOptions.viewMode === 'resource') {
-    return (
-      <div className="flex flex-1 min-h-0 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
+  const isResourceView = displayOptions.viewMode === 'resource';
+  const mountedViewsRef = useRef({
+    wbs: !isResourceView,
+    resource: isResourceView,
+  });
+  const inactiveTreeRef = useRef<HTMLDivElement | null>(null);
+  const inactiveGanttRef = useRef<HTMLDivElement | null>(null);
+
+  mountedViewsRef.current.wbs ||= !isResourceView;
+  mountedViewsRef.current.resource ||= isResourceView;
+
+  return (
+    <div className="flex flex-1 min-h-0 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
+      {mountedViewsRef.current.resource && (
+        <div className={`contents ${isResourceView ? '' : 'hidden'}`} aria-hidden={!isResourceView}>
         <ResourceBoard
           projects={filteredProjects}
           initialData={initialData}
           treeWidth={treeWidth}
           setIsResizing={setIsResizing}
-          listRef={treeRef}
-          ganttRef={ganttRef}
+          listRef={isResourceView ? treeRef : inactiveTreeRef}
+          ganttRef={isResourceView ? ganttRef : inactiveGanttRef}
           dynamicGanttRange={dynamicGanttRange}
           showTodayHighlight={displayOptions.showTodayHighlight}
           showMarkers={displayOptions.showMarkers}
@@ -74,18 +86,17 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
           onGanttScroll={onGanttScroll}
           onRefresh={() => onUpdate(false)}
         />
-      </div>
-    );
-  }
+        </div>
+      )}
 
-  return (
-    <div className="flex flex-1 min-h-0 w-full bg-white dark:bg-slate-900 relative overflow-hidden select-none transition-colors">
+      {mountedViewsRef.current.wbs && (
+        <div className={`contents ${!isResourceView ? '' : 'hidden'}`} aria-hidden={isResourceView}>
       <div
         className={`flex flex-col min-h-0 relative z-20 overflow-hidden ${displayOptions.showGanttChart ? 'flex-shrink-0' : 'flex-1'}`}
         style={{ width: displayOptions.showGanttChart ? `${treeWidth}px` : '100%' }}
       >
         <WBSTree
-          ref={treeRef}
+          ref={!isResourceView ? treeRef : inactiveTreeRef}
           projects={filteredProjects}
           initialData={initialData}
           onUpdate={onUpdate}
@@ -115,7 +126,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
           <div className="flex-1 min-h-0 bg-slate-50 dark:bg-slate-950 relative overflow-hidden flex flex-col z-10 w-0 transition-colors">
             {dynamicGanttRange && (
               <GanttChart
-                ref={ganttRef}
+                ref={!isResourceView ? ganttRef : inactiveGanttRef}
                 projects={filteredProjects}
                 initialData={initialData}
                 range={dynamicGanttRange}
@@ -138,6 +149,8 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
             )}
           </div>
         </>
+      )}
+        </div>
       )}
     </div>
   );

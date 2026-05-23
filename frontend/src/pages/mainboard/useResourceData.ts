@@ -1,30 +1,7 @@
 import { useMemo } from 'react';
-import { parseISO, differenceInCalendarDays, max, min, addDays, format, isAfter, isBefore } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { Project, Subtask } from '../../types/wbs';
-import { InitialData, MstMember, MstHoliday } from '../../types';
-
-function isWeekend(date: Date) {
-  const day = date.getDay();
-  return day === 0 || day === 6; // 0: Sunday, 6: Saturday
-}
-
-function countWorkDays(start: Date, end: Date, holidays: MstHoliday[]) {
-  if (isAfter(start, end)) return 0;
-  
-  let count = 0;
-  let current = new Date(start);
-  const holidayStrings = new Set(holidays.map(h => h.holiday_date));
-  
-  const daysTotal = differenceInCalendarDays(end, start);
-  for (let i = 0; i <= daysTotal; i++) {
-    const dateStr = format(current, 'yyyy-MM-dd');
-    if (!isWeekend(current) && !holidayStrings.has(dateStr)) {
-      count++;
-    }
-    current = addDays(current, 1);
-  }
-  return count;
-}
+import { InitialData, MstMember } from '../../types';
 
 export interface ResourceSubtask extends Subtask {
   project_name: string;
@@ -74,12 +51,15 @@ export function useResourceData(
     const { startOfWeek, endOfWeek } = getWeekBoundaries(todayStr);
 
     const doneStatusId = initialData.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null;
-    const newStatusId = initialData.statuses.find(s => s.status_name === 'New')?.id;
+    const statusIdByName = new Map(initialData.statuses.map(status => [status.status_name, status.id]));
+    const subtaskTypeNameById = new Map(initialData.subtask_types.map(type => [type.id, type.type_name]));
+    const newStatusId = statusIdByName.get('New');
     const inProgressStatusIds = initialData.statuses
       .filter(s => ['In Progress', 'In Review'].includes(s.status_name))
       .map(s => s.id);
-    const inReviewStatusId = initialData.statuses.find(s => s.status_name === 'In Review')?.id;
-    const removedStatusId = initialData.statuses.find(s => s.status_name === 'Removed')?.id ?? 7;
+    const inProgressStatusSet = new Set(inProgressStatusIds);
+    const inReviewStatusId = statusIdByName.get('In Review');
+    const removedStatusId = statusIdByName.get('Removed') ?? 7;
 
     const assigneeMap = new Map<number | 'unassigned', ResourceRow>();
 
@@ -117,7 +97,7 @@ export function useResourceData(
           const row = assigneeMap.get(assigneeKey);
           if (!row) return; // Should not happen unless bad initial data
 
-          const typeName = initialData.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name ?? '';
+          const typeName = subtaskTypeNameById.get(subtask.subtask_type_id) ?? '';
 
           const isRemoved = subtask.status_id === removedStatusId;
 
@@ -132,7 +112,7 @@ export function useResourceData(
           if (isRemoved) return;
 
           // In Progress
-          if (inProgressStatusIds.includes(subtask.status_id)) {
+          if (inProgressStatusSet.has(subtask.status_id)) {
             row.inProgressCount++;
           }
 

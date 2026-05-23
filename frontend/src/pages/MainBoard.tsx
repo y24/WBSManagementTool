@@ -38,6 +38,8 @@ export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
   const [initialData, setInitialData] = useState<InitialData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewSwitchLoading, setViewSwitchLoading] = useState(false);
+  const [pendingViewMode, setPendingViewMode] = useState<DisplayOptions['viewMode'] | null>(null);
 
   const [filters, setFilters] = useState<FilterState>(getInitialFilters);
   const [displayOptions, setDisplayOptions] = useState<DisplayOptions>(getInitialDisplayOptions);
@@ -51,6 +53,7 @@ export default function MainBoard() {
   const treeRef = useRef<HTMLDivElement>(null);
   const ganttRef = useRef<HTMLDivElement>(null);
   const syncLockRef = useRef<'tree' | 'gantt' | null>(null);
+  const viewSwitchFrameRefs = useRef<number[]>([]);
 
   // Real-time synchronization
   useWebSocket((msg) => {
@@ -93,7 +96,7 @@ export default function MainBoard() {
         setLoading(false);
       }
     },
-    [data, initialData, displayOptions],
+    [displayOptions.showDoneProjects, displayOptions.showRemoved],
   );
 
   useEffect(() => {
@@ -119,6 +122,28 @@ export default function MainBoard() {
   useEffect(() => {
     persistDisplayOptions(displayOptions);
   }, [displayOptions]);
+
+  useEffect(() => {
+    if (!viewSwitchLoading || pendingViewMode !== displayOptions.viewMode) return;
+
+    viewSwitchFrameRefs.current.forEach((frameId) => cancelAnimationFrame(frameId));
+    viewSwitchFrameRefs.current = [];
+
+    const firstFrameId = requestAnimationFrame(() => {
+      const secondFrameId = requestAnimationFrame(() => {
+        setViewSwitchLoading(false);
+        setPendingViewMode(null);
+        viewSwitchFrameRefs.current = [];
+      });
+      viewSwitchFrameRefs.current = [secondFrameId];
+    });
+    viewSwitchFrameRefs.current = [firstFrameId];
+
+    return () => {
+      viewSwitchFrameRefs.current.forEach((frameId) => cancelAnimationFrame(frameId));
+      viewSwitchFrameRefs.current = [];
+    };
+  }, [displayOptions.viewMode, pendingViewMode, viewSwitchLoading]);
 
   useEffect(() => {
     fetchData(true);
@@ -352,6 +377,11 @@ export default function MainBoard() {
     }
   };
 
+  const handleViewModeSwitchStart = useCallback((viewMode: DisplayOptions['viewMode']) => {
+    setPendingViewMode(viewMode);
+    setViewSwitchLoading(true);
+  }, []);
+
 
   return (
     <div className="flex flex-col w-full h-full min-h-0 bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
@@ -365,6 +395,7 @@ export default function MainBoard() {
         onClear={() => setFilters(createDefaultFilters())}
         onExport={() => setIsExportModalOpen(true)}
         onRefresh={() => fetchData(true)}
+        onViewModeSwitchStart={handleViewModeSwitchStart}
       />
 
       <MainBoardContent
@@ -406,7 +437,7 @@ export default function MainBoard() {
           </div>
         )}
       />
-      <LoadingOverlay isVisible={loading} />
+      <LoadingOverlay isVisible={loading || viewSwitchLoading} delay={viewSwitchLoading ? 0 : undefined} />
     </div>
   );
 }
