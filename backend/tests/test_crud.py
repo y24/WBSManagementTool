@@ -8,6 +8,39 @@ def test_create_project(db_session):
     assert db_project.project_name == "Test Project"
     assert db_project.id is not None
 
+def test_link_url_columns_are_unbounded_text():
+    assert isinstance(models.Project.__table__.c.link_url.type, models.Text)
+    assert isinstance(models.Task.__table__.c.link_url.type, models.Text)
+    assert isinstance(models.Subtask.__table__.c.link_url.type, models.Text)
+
+def test_create_and_update_long_link_url(db_session):
+    long_url = "https://example.com/" + ("a" * 700)
+    project = crud.create_project(
+        db_session,
+        schemas.ProjectCreate(project_name="Long URL Project", link_url=long_url),
+    )
+    assert project.link_url == long_url
+
+    task = crud.create_task(
+        db_session,
+        schemas.TaskCreate(project_id=project.id, task_name="Long URL Task", link_url=long_url),
+    )
+    assert task.link_url == long_url
+
+    subtask = crud.create_subtask(
+        db_session,
+        schemas.SubtaskCreate(task_id=task.id, subtask_detail="Long URL Subtask", link_url=long_url),
+    )
+    assert subtask.link_url == long_url
+
+    updated_url = "https://example.com/" + ("b" * 900)
+    updated_subtask = crud.update_subtask(
+        db_session,
+        subtask.id,
+        schemas.SubtaskUpdate(link_url=updated_url),
+    )
+    assert updated_subtask.link_url == updated_url
+
 def test_create_task_and_recalculate_dates(db_session):
     # 1. Create project
     project_in = schemas.ProjectCreate(project_name="Test Project", is_auto_planned_date=True)
