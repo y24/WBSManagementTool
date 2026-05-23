@@ -104,7 +104,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
       {showTodayHighlight && days.map((d, i) => isToday(d) && (
         <div
           key={`today-highlight-${d.toISOString()}`}
-          className="absolute top-0 bottom-0 border-x border-slate-400/50 bg-slate-400/10 z-20 pointer-events-none"
+          className="absolute top-0 bottom-0 border-x border-amber-400/30 bg-amber-400/10 z-20 pointer-events-none"
           style={{ left: `${getDateX(d, parseISO(range.start_date), scale)}px`, width: `${scale === 'day' ? cellWidth : (cellWidth / 7)}px` }}
         />
       ))}
