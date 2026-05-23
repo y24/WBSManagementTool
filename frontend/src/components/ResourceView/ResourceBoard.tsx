@@ -20,6 +20,7 @@ interface ResourceBoardProps {
   showResourceTaskType: boolean;
   showResourceOverlapHighlight: boolean;
   highlightResourceUnplanned: boolean;
+  colorByTask: boolean;
   scale: GanttScale;
   onListScroll: (e: UIEvent<HTMLDivElement>) => void;
   onGanttScroll: (e: UIEvent<HTMLDivElement>) => void;
@@ -41,6 +42,7 @@ export default function ResourceBoard({
   showResourceTaskType,
   showResourceOverlapHighlight,
   highlightResourceUnplanned,
+  colorByTask,
   scale,
   onListScroll,
   onGanttScroll,
@@ -86,6 +88,7 @@ export default function ResourceBoard({
             showResourceTaskType={showResourceTaskType}
             showResourceOverlapHighlight={showResourceOverlapHighlight}
             highlightResourceUnplanned={highlightResourceUnplanned}
+            colorByTask={colorByTask}
             scale={scale}
             onScroll={onGanttScroll}
             ganttRef={ganttRef}

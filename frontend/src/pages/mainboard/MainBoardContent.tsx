@@ -68,6 +68,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
           showResourceTaskType={displayOptions.showResourceTaskType}
           showResourceOverlapHighlight={displayOptions.showResourceOverlapHighlight}
           highlightResourceUnplanned={displayOptions.highlightResourceUnplanned}
+          colorByTask={displayOptions.colorByTask}
           scale={displayOptions.ganttScale}
           onListScroll={onTreeScroll}
           onGanttScroll={onGanttScroll}

@@ -10,6 +10,13 @@ import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
 import GanttBar from '../GanttBar';
 
+const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+  const result = /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
+    : null;
+};
+
 const PLANNED_TRACK_HEIGHT = 32;
 const ACTUAL_TRACK_HEIGHT = 40;
 const STACKED_TRACK_HEIGHT = 24;
@@ -32,6 +39,7 @@ interface ResourceGanttProps {
   showResourceTaskType: boolean;
   showResourceOverlapHighlight: boolean;
   highlightResourceUnplanned: boolean;
+  colorByTask: boolean;
   scale: GanttScale;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   ganttRef: React.RefObject<HTMLDivElement | null>;
@@ -49,6 +57,7 @@ export default function ResourceGantt({
   showResourceTaskType,
   showResourceOverlapHighlight,
   highlightResourceUnplanned,
+  colorByTask,
   scale,
   onScroll,
   ganttRef,
@@ -102,6 +111,40 @@ export default function ResourceGantt({
 
     return palette[assigneeId % palette.length];
   }, [isDarkMode]);
+
+  const taskColorPalette = [
+    // 隣接する色相が大きく異なるよう配置。落ち着いたトーン（Tableau 10 準拠）
+    '#4e79a7', // blue
+    '#f28e2b', // orange
+    '#59a14f', // green
+    '#e05759', // red
+    '#76b7b2', // teal
+    '#c4a030', // gold
+    '#b07aa1', // purple
+    '#d37295', // pink
+    '#6a9cc5', // sky blue
+    '#d47840', // warm orange
+    '#4e9050', // mid green
+    '#c44e52', // deep red
+    '#46a09c', // deep teal
+    '#8870c0', // indigo
+    '#c47030', // amber
+    '#54a07a', // emerald
+    '#c46090', // deep pink
+  ];
+
+  const getSubtaskColor = useCallback((subtaskId: number | null | undefined): string => {
+    if (!subtaskId) return isDarkMode ? '#334155' : '#cbd5e1';
+    return taskColorPalette[subtaskId % taskColorPalette.length];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDarkMode]);
+
+  const getSubtaskColorLight = useCallback((subtaskId: number | null | undefined): string => {
+    const base = getSubtaskColor(subtaskId);
+    const rgb = hexToRgb(base);
+    if (!rgb) return base;
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`;
+  }, [getSubtaskColor]);
 
   // Heatmap rendering function
   const renderHeatmap = useCallback((row: ResourceRow, lane: 'planned' | 'actual') => {
@@ -462,6 +505,7 @@ export default function ResourceGantt({
                               isResourceView={true}
                               compactResourceBar={hasStackedPlannedTracks}
                               barVisibility="planned"
+                              overridePlannedBarColor={colorByTask ? getSubtaskColorLight(subtask.id) : undefined}
                             />
                           </div>
                       ))}
@@ -507,6 +551,7 @@ export default function ResourceGantt({
                               isResourceView={true}
                               compactResourceBar={hasStackedActualTracks}
                               barVisibility="actual"
+                              overrideActualBarColor={colorByTask ? getSubtaskColor(subtask.id) : undefined}
                             />
                           </div>
                       ))}

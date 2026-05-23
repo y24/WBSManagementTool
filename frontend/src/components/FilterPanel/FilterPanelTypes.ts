@@ -33,4 +33,5 @@ export interface DisplayOptions {
   showResourceTaskType: boolean;
   showResourceOverlapHighlight: boolean;
   highlightResourceUnplanned: boolean;
+  colorByTask: boolean;
 }

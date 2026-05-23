@@ -41,6 +41,8 @@ interface GanttBarProps {
   hoveredAssigneeId?: number | null;
   setHoveredAssigneeId?: (id: number | null) => void;
   barVisibility?: 'both' | 'planned' | 'actual';
+  overridePlannedBarColor?: string;
+  overrideActualBarColor?: string;
 }
 
 const GanttBar: React.FC<GanttBarProps> = ({
@@ -68,6 +70,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
   hoveredAssigneeId = null,
   setHoveredAssigneeId,
   barVisibility = 'both',
+  overridePlannedBarColor,
+  overrideActualBarColor,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -314,8 +318,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {showPlannedBar && (
         <>
           <div
-            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} bg-gray-400 dark:bg-slate-500 ${isSubtask ? 'opacity-80 dark:opacity-70' : 'opacity-40 dark:opacity-30'} ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''} ${!hasActual && isHighlighted ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-indigo-400 dark:ring-offset-slate-900 z-30' : ''} pointer-events-auto transition-shadow duration-200`}
-            style={{ left: `${pStart}px`, width: `${pWidth}px` }}
+            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} ${overridePlannedBarColor ? '' : 'bg-gray-400 dark:bg-slate-500'} ${overridePlannedBarColor ? '' : (isSubtask ? 'opacity-80 dark:opacity-70' : 'opacity-40 dark:opacity-30')} ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset dark:ring-red-400' : ''} ${!hasActual && isHighlighted ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-indigo-400 dark:ring-offset-slate-900 z-30' : ''} pointer-events-auto transition-shadow duration-200`}
+            style={{ left: `${pStart}px`, width: `${pWidth}px`, ...(overridePlannedBarColor ? { backgroundColor: overridePlannedBarColor } : {}) }}
             onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
@@ -367,7 +371,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
               <div
                 key={`actual-${idx}`}
                 className={`absolute ${subtaskBarTopClass} ${subtaskBarHeightClass} rounded-sm shadow-sm flex items-center justify-center overflow-hidden ${isSubtask ? '' : 'opacity-60'} ${!allowBarEdit ? '' : (isFixedEnd ? 'cursor-not-allowed gantt-resize-forbidden' : (isAutoActual ? '' : 'gantt-bar-draggable'))} ${isDragging && dragState?.barType === 'actual' ? 'gantt-bar-dragging' : ''} ${isDelayedHighlight ? 'ring-2 ring-red-500 ring-inset z-20 dark:ring-red-400' : ''} ${isHighlighted ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-indigo-400 dark:ring-offset-slate-900 z-30' : ''} pointer-events-auto transition-shadow duration-200`}
-                style={{ left: `${sX}px`, width: `${sW}px`, backgroundColor: typeColor }}
+                style={{ left: `${sX}px`, width: `${sW}px`, backgroundColor: overrideActualBarColor ?? typeColor }}
                 onMouseEnter={handleMouseEnter}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}

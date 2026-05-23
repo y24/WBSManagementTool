@@ -50,6 +50,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showResourceTaskType: true,
   showResourceOverlapHighlight: true,
   highlightResourceUnplanned: false,
+  colorByTask: false,
 };
 
 function readJson<T extends object>(key: string, fallback: T): T {
