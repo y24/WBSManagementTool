@@ -25,9 +25,7 @@ def upgrade() -> None:
             "sync_to_azure_devops",
             server_default=sa.text("true"),
         )
-        op.execute(
-            f"UPDATE {table_name} SET sync_to_azure_devops = true WHERE ticket_id IS NOT NULL"
-        )
+        op.execute(f"UPDATE {table_name} SET sync_to_azure_devops = false")
 
 
 def downgrade() -> None:
