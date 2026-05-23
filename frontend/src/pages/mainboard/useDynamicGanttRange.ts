@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { addDays, format, subDays } from 'date-fns';
+import { addDays, endOfMonth, format, subDays } from 'date-fns';
 import { GanttRange, Project, WBSResponse } from '../../types/wbs';
 
 interface UseDynamicGanttRangeParams {
@@ -45,12 +45,12 @@ export function useDynamicGanttRange({ data, filteredProjects }: UseDynamicGantt
     const maxDate = new Date(Math.max(...allDates.map((date) => date.getTime())));
 
     const startDate = subDays(new Date(Math.min(minDate.getTime(), today.getTime())), 7);
-    const targetEndDate = new Date(
+    const targetEndDate = endOfMonth(new Date(
       Math.max(
         addDays(maxDate, 14).getTime(),
         addDays(today, 8 * 7).getTime(),
       ),
-    );
+    ));
 
     return {
       start_date: format(startDate, 'yyyy-MM-dd'),
