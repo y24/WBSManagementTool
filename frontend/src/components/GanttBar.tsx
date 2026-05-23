@@ -283,7 +283,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const isActuallyAutoPlanned = (itemType === 'project' || itemType === 'task') && item.is_auto_planned_date;
   const isActuallyAutoActual = (itemType === 'project' || itemType === 'task') && item.is_auto_actual_date;
 
-  const allowBarEdit = !isResourceView && scale !== 'month';
+  const allowBarEdit = scale !== 'month';
 
   const subtaskTypeName = isSubtask ? initialData?.subtask_types.find(t => t.id === item.subtask_type_id)?.type_name : null;
   const itemName = itemType === 'project' ? item.project_name : (itemType === 'task' ? item.task_name : subtaskTypeName);
