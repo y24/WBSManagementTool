@@ -168,7 +168,7 @@ const TaskRow = memo(({
         </button>
         <button
           onClick={(e) => onAddSubtask(task.id, e.shiftKey)}
-          className="p-1 text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-black/5 dark:hover:bg-white/5 rounded opacity-0 group-hover:opacity-100 transition-all shrink-0"
+          className="p-1 text-gray-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-black/5 dark:hover:bg-white/5 rounded transition-all shrink-0"
           title="サブタスクを追加 (Shift+クリックで一括作成)"
         >
           <Plus size={14} />

@@ -206,6 +206,23 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const showActualBar = actualSegments.length > 0 && (!isAutoActual || !isExpanded);
   const hasActual = showActualBar; 
 
+  const progressPercentValue = Number(item.progress_percent);
+  const hasProgressPercent = item.progress_percent !== undefined && item.progress_percent !== null && Number.isFinite(progressPercentValue);
+  const clampedProgressPercent = hasProgressPercent ? Math.min(Math.max(progressPercentValue, 0), 100) : 0;
+  const actualSegmentWidths = actualSegments.map((seg) => getDateWidth(seg.start, seg.end, scale));
+  const totalActualSegmentWidth = actualSegmentWidths.reduce((sum, width) => sum + Math.max(width, 0), 0);
+  const actualProgressWidth = totalActualSegmentWidth * (clampedProgressPercent / 100);
+
+  const getActualProgressSegmentWidth = (segmentIndex: number, segmentWidth: number) => {
+    if (!hasProgressPercent || totalActualSegmentWidth <= 0) return 0;
+
+    const precedingWidth = actualSegmentWidths
+      .slice(0, segmentIndex)
+      .reduce((sum, width) => sum + Math.max(width, 0), 0);
+
+    return Math.min(Math.max(actualProgressWidth - precedingWidth, 0), segmentWidth);
+  };
+
 
 
   const typeColor = colorMode === 'assignee' && item.assignee_id 
@@ -330,7 +347,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
         <>
           {actualSegments.map((seg, idx) => {
             const sX = getDateX(seg.start, baseDate, scale);
-            const sW = getDateWidth(seg.start, seg.end, scale);
+            const sW = actualSegmentWidths[idx] ?? getDateWidth(seg.start, seg.end, scale);
+            const progressSegmentWidth = getActualProgressSegmentWidth(idx, sW);
             return (
               <div
                 key={`actual-${idx}`}
@@ -368,6 +386,14 @@ const GanttBar: React.FC<GanttBarProps> = ({
                   <span className="text-[11px] font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)] leading-none pointer-events-none relative z-10">
                     {item.progress_percent}%
                   </span>
+                )}
+
+                {progressSegmentWidth > 0 && (
+                  <div
+                    className="absolute left-0 bottom-0 h-[3px] rounded-b-sm bg-black/30 dark:bg-black/40 pointer-events-none z-[5]"
+                    style={{ width: `${progressSegmentWidth}px` }}
+                    aria-hidden="true"
+                  />
                 )}
               </div>
             );
