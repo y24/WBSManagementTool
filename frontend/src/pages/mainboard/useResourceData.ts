@@ -305,6 +305,10 @@ export function useResourceData(
     return Array.from(assigneeMap.values())
       .filter(row => row.subtasks.length > 0)
       .sort((a, b) => {
+        // 未アサインは常に先頭に固定する
+        if (!a.assignee && b.assignee) return -1;
+        if (a.assignee && !b.assignee) return 1;
+
         // 1. In Progress (Descending)
         if (b.inProgressCount !== a.inProgressCount) {
           return b.inProgressCount - a.inProgressCount;
@@ -317,9 +321,7 @@ export function useResourceData(
         if (b.endingThisWeekCount !== a.endingThisWeekCount) {
           return b.endingThisWeekCount - a.endingThisWeekCount;
         }
-        // Stable fallback: name or unassigned status
-        if (!a.assignee && b.assignee) return 1;
-        if (a.assignee && !b.assignee) return -1;
+        // Stable fallback: name
         const nameA = a.assignee?.member_name || '';
         const nameB = b.assignee?.member_name || '';
         return nameA.localeCompare(nameB, 'ja');

@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
 
 const PLANNED_TRACK_HEIGHT = 32;
@@ -94,8 +95,15 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
             )}
             <div className="flex w-full items-center h-full">
-              <div className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[140px] pl-4 pr-4 truncate font-medium text-[15px] text-slate-800 dark:text-slate-200 h-full flex items-center flex-1 border-r border-slate-200 dark:border-slate-700">
-                {row.assignee?.member_name || '未アサイン'}
+              <div className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[140px] pl-4 pr-4 font-medium text-[15px] text-slate-800 dark:text-slate-200 h-full flex items-center gap-1.5 flex-1 border-r border-slate-200 dark:border-slate-700">
+                <span className="truncate">{row.assignee?.member_name || '未アサイン'}</span>
+                {!row.assignee && (
+                  <AlertTriangle
+                    size={14}
+                    className="shrink-0 text-amber-500"
+                    aria-label="未アサイン"
+                  />
+                )}
               </div>
               <div className="flex shrink-0 text-sm items-stretch h-full">
                 <div className="flex gap-2 shrink-0 px-3 items-center">
