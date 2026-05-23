@@ -145,10 +145,14 @@ export const useWBSUpdates = ({
 
               // 1. 作業日数 or レビュー日数が変更された場合 -> 終了日を再計算
               if (field === 'work_days' || field === 'review_days') {
+                // 作業日数が入力されたとき、レビュー日数が未設定なら 0 を自動セット
+                if (field === 'work_days' && (data.review_days == null)) {
+                  updates.review_days = 0;
+                }
                 if (data.planned_start_date) {
                   const start = parseISO(data.planned_start_date);
                   const wDays = field === 'work_days' ? Number(value) : (Number(data.work_days) || 0);
-                  const rDays = field === 'review_days' ? Number(value) : (Number(data.review_days) || 0);
+                  const rDays = field === 'review_days' ? Number(value) : (Number(data.review_days) ?? 0);
                   const totalBD = wDays + rDays;
                   if (totalBD > 0) {
                     const newEnd = addBusinessDays(start, totalBD, holidays);
