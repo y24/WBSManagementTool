@@ -98,21 +98,6 @@ export default function ResourceGantt({
     return palette[assigneeId % palette.length];
   }, [isDarkMode]);
 
-  const doneStatusId = initialData?.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null;
-  const newStatusId = initialData?.statuses.find(s => s.status_name === 'New')?.id;
-  const removedStatusId = initialData?.statuses.find(s => s.status_name === 'Removed')?.id ?? 7;
-  const todayStr = range.today || new Date().toISOString().split('T')[0];
-
-  const checkIsDelayed = useCallback((subtask: ResourceSubtask) => {
-    const status = initialData?.statuses.find(s => s.id === subtask.status_id);
-    if (status?.status_name === 'Removed') return false;
-    const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
-    const isNew = newStatusId !== undefined && subtask.status_id === newStatusId;
-    const isStartDelayed = isNew && !!subtask.planned_start_date && subtask.planned_start_date < todayStr;
-    const isEndOverdue = !isDone && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
-    return isStartDelayed || isEndOverdue;
-  }, [doneStatusId, newStatusId, removedStatusId, todayStr]);
-
   // Heatmap rendering function
   const renderHeatmap = useCallback((row: ResourceRow) => {
     const overlapsByDay = new Map<string, number>();
@@ -394,9 +379,7 @@ export default function ResourceGantt({
                       className="relative w-full border-b border-slate-200/20 last:border-b-0 dark:border-slate-800/30"
                       style={{ height: `${plannedTrackHeight}px` }}
                     >
-                      {track.map((subtask) => {
-                        const isDelayed = checkIsDelayed(subtask);
-                        return (
+                      {track.map((subtask) => (
                           <div key={`r-planned-${subtask.id}`} className="absolute top-0 left-0 w-full h-full pointer-events-none">
                             <GanttBar
                               item={subtask}
@@ -415,14 +398,12 @@ export default function ResourceGantt({
                               colorMode="status"
                               handleMouseDown={handleMouseDown}
                               customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
-                              isDelayedHighlight={isDelayed}
                               isResourceView={true}
                               compactResourceBar={hasStackedPlannedTracks}
                               barVisibility="planned"
                             />
                           </div>
-                        );
-                      })}
+                      ))}
                     </div>
                   ))}
                 </div>
@@ -440,9 +421,7 @@ export default function ResourceGantt({
                       className="relative w-full border-b border-slate-200/20 last:border-b-0 dark:border-slate-800/30"
                       style={{ height: `${actualTrackHeight}px` }}
                     >
-                      {track.map((subtask) => {
-                        const isDelayed = checkIsDelayed(subtask);
-                        return (
+                      {track.map((subtask) => (
                           <div key={`r-actual-${subtask.id}`} className="absolute top-0 left-0 w-full h-full pointer-events-none">
                             <GanttBar
                               item={subtask}
@@ -461,14 +440,12 @@ export default function ResourceGantt({
                               colorMode="status"
                               handleMouseDown={handleMouseDown}
                               customLabel={`${initialData?.subtask_types.find(t => t.id === subtask.subtask_type_id)?.type_name || ''} : ${subtask.project_name || ''}`}
-                              isDelayedHighlight={isDelayed}
                               isResourceView={true}
                               compactResourceBar={hasStackedActualTracks}
                               barVisibility="actual"
                             />
                           </div>
-                        );
-                      })}
+                      ))}
                     </div>
                   ))}
                 </div>
