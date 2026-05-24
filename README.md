@@ -1,5 +1,5 @@
 # Web版WBS管理ツール
-Excelで行っているWBS管理をWeb化し、複数プロジェクトの横断管理や直感的なガントチャート描画を提供する社内向けツールです。
+Excelで行っているWBS管理をWeb化し、複数プロジェクトの横断管理や直感的なガントチャート描画を提供するツールです。
 
 ## 必要要件
 このプロジェクトをローカル環境で動かすには、以下のソフトウェアがインストールされている必要があります。
@@ -10,9 +10,9 @@ Excelで行っているWBS管理をWeb化し、複数プロジェクトの横断
 
 ---
 
-## セットアップ手順（Windows環境向け）
+## セットアップ手順
 
-### 1. データベースのセットアップ
+### 1. DB・バックエンドのセットアップ
 PostgreSQLがローカルで動作していることを確認します。
 
 #### 接続情報の設定（.env）
@@ -20,17 +20,7 @@ PostgreSQLがローカルで動作していることを確認します。
 1.  `backend/.env.example` をコピーして `backend/.env` を作成します。
 2.  作成した `.env` ファイルを開き、環境に合わせて接続要件を編集します。
 
-初期設定（.env.example）の内容：
-* DB_HOST=localhost
-* DB_PORT=5432
-* DB_USER=postgres
-* DB_PASS=admin
-* DB_NAME=wbs_db
-
-#### データベース構築の実行コマンド
-Pythonのスクリプトを用いて、自動で空のデータベースを作成します。（※後で仮想環境が有効な状態で実行します）
-
-### 2. バックエンド（FastAPI）のセットアップ
+### バックエンドのセットアップ
 PowerShellを開き、プロジェクトのルートディレクトリで以下のコマンドを実行します。
 
 ```powershell
@@ -42,7 +32,7 @@ python -m venv venv
 .\venv\Scripts\activate
 
 # 必要なライブラリのインストール
-pip install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic pydantic-settings httpx python-dotenv pandas openpyxl python-multipart
+pip install .
 
 # 設定ファイルの準備（.envがない場合）
 if (-not (Test-Path .env)) { copy .env.example .env }
@@ -50,20 +40,17 @@ if (-not (Test-Path .env)) { copy .env.example .env }
 # DBの作成（wbs_dbを自動作成します）
 python setup_db.py
 
-# フェーズ2：DB反映(マイグレーション)と初期データの投入
-# 1. マイグレーション（モデル変更時など）
+# DBのマイグレーション（モデル変更時など）
 powershell -ExecutionPolicy Bypass -File .\migrate_db.ps1
 
-# 2. 初期データ投入
+# 初期データ投入
 powershell -ExecutionPolicy Bypass -File .\seed_db.ps1
 
 # サーバーの起動 ( http://localhost:8000 で動作します )
 uvicorn app.main:app --reload
 ```
 
-> **注意:** 別のターミナルを開き直した際は、必ず `.\venv\Scripts\activate` を実行してからコマンドを実行してください。
-
-### 3. フロントエンド（React）のセットアップ
+### 2. フロントエンドのセットアップ
 新しいPowerShellウィンドウを開き、プロジェクトのルートディレクトリで以下のコマンドを実行します。
 
 ```powershell
@@ -77,6 +64,9 @@ npm install
 npm run dev
 ```
 
+### Windows Server / IIS へのデプロイ
+Windows Server および IIS を利用した社内公開・常時稼働の手順は、[IIS セットアップガイド](IIS_Setup_Guide.md) に詳細をまとめています。
+
 ---
 
 ## ディレクトリ構成
@@ -84,16 +74,9 @@ npm run dev
 * `frontend/` : React + Vite + Tailwind CSS によるフロントエンドアプリのソースコード
 * `docs/` : 要件定義書、UI設計書、API仕様書などのドキュメント群
 
-## 開発ガイドライン (AGENTS.md)
-プロジェクトの細かな実装方針、UI/UXの設計ルール、やってはいけないこと等の「暗黙知」については、[AGENTS.md](AGENTS.md) にまとめてあります。
-新規開発や機能修正を行う際は、必ず事前に目を通してください。
-
 ## 利用ガイド (USER_GUIDE.md)
 一般的な操作方法や機能の詳細は、[利用ガイド](docs/USER_GUIDE.md) を参照してください。
 初めて利用するユーザーや、操作方法を確認したい場合に役立ちます。
-
-## Windows Server / IIS へのデプロイ
-Windows Server および IIS を利用した社内公開・常時稼働の手順は、[IIS セットアップガイド](IIS_Setup_Guide.md) に詳細をまとめています。
 
 ### フロントエンドの再ビルド（更新時）
 ソースコードの変更を反映させるためにフロントエンドのみを再ビルドする場合は、以下のスクリプトを使用できます。
@@ -101,7 +84,3 @@ Windows Server および IIS を利用した社内公開・常時稼働の手順
 *   `rebuild_frontend.bat` (コマンドプロンプト)
 
 これらのスクリプトは、フロントエンドのディレクトリへ移動し、`npm run build` を実行して最新のソースコードをビルドします。
-
-## 今後の拡張（未実装機能）
-* Azure DevOps等の外部チケットシステム連携
-* Active Directory/SSOによる認証連携の追加やユーザ別・グループ別の閲覧制御
