@@ -32,6 +32,7 @@ interface ResourceGanttProps {
   isDarkMode: boolean;
   showResourceTaskType: boolean;
   showResourceScopeMask: boolean;
+  highlightResourceDelayedTasks: boolean;
   loadScopeEndDate?: string;
   actualLoadScopeStartDate?: string;
   scale: GanttScale;
@@ -49,6 +50,7 @@ export default function ResourceGantt({
   isDarkMode,
   showResourceTaskType,
   showResourceScopeMask,
+  highlightResourceDelayedTasks,
   loadScopeEndDate,
   actualLoadScopeStartDate,
   scale,
@@ -291,7 +293,6 @@ export default function ResourceGantt({
                           style={{ height: `${overlaidTrackHeight}px` }}
                         >
                           {track.map((subtask: ResourceSubtask) => {
-                            const overdueColor = isDarkMode ? '#f87171' : '#e24b4a';
                             const isStartDelayed =
                               newStatusId !== null &&
                               subtask.status_id === newStatusId &&
@@ -304,15 +305,9 @@ export default function ResourceGantt({
                               !!subtask.planned_end_date &&
                               subtask.planned_end_date < todayStr;
 
-                            const ghostColor = isStartDelayed
-                              ? overdueColor
-                              : isDarkMode
-                                ? 'rgba(100, 116, 139, 0.28)'
-                                : 'rgba(180, 175, 165, 0.35)';
-
-                            const overrideActualBarColor = isEndOverdue
-                              ? overdueColor
-                              : undefined;
+                            const ghostColor = isDarkMode
+                              ? 'rgba(100, 116, 139, 0.28)'
+                              : 'rgba(180, 175, 165, 0.35)';
                             const isDelayed = isStartDelayed || isEndOverdue;
 
                             return (
@@ -339,6 +334,7 @@ export default function ResourceGantt({
                                     compactResourceBar={hasStackedTracks}
                                     customLabel={isStartDelayed && showResourceTaskType ? `${subtask.project_name} ${subtask.subtask_type_name}` : undefined}
                                     showCustomLabelWarning={isStartDelayed}
+                                    isDelayedHighlight={highlightResourceDelayedTasks && isStartDelayed}
                                     barVisibility="planned"
                                     overridePlannedBarColor={ghostColor}
                                   />
@@ -363,10 +359,10 @@ export default function ResourceGantt({
                                     handleMouseDown={handleMouseDown}
                                     customLabel={showResourceTaskType ? `${subtask.project_name} ${subtask.subtask_type_name}` : undefined}
                                     showCustomLabelWarning={isDelayed}
+                                    isDelayedHighlight={highlightResourceDelayedTasks && isEndOverdue}
                                     isResourceView={true}
                                     compactResourceBar={hasStackedTracks}
                                     barVisibility="actual"
-                                    overrideActualBarColor={overrideActualBarColor}
                                   />
                                 </div>
                               </React.Fragment>

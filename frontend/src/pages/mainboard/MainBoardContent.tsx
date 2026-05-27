@@ -78,6 +78,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
           isDarkMode={displayOptions.isDarkMode}
           showResourceTaskType={displayOptions.showResourceTaskType}
           showResourceScopeMask={displayOptions.showResourceScopeMask}
+          highlightResourceDelayedTasks={displayOptions.highlightResourceDelayedTasks}
           resourceLoadScope={displayOptions.resourceLoadScope}
           scale={displayOptions.ganttScale}
           onListScroll={onTreeScroll}
