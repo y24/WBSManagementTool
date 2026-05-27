@@ -239,7 +239,7 @@ const SettingsDropdown: React.FC<SettingsDropdownProps> = ({
                 <div className="space-y-2">
                   <label className="flex items-center justify-between cursor-pointer group px-1 py-1 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md transition-colors">
                     <span className="text-xs font-medium text-gray-600 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-                      タスク種別を表示
+                      プロジェクト名・タスク種別を表示
                     </span>
                     <div className="relative inline-flex items-center cursor-pointer">
                       <input

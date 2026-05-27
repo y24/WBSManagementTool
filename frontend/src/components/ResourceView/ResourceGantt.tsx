@@ -358,7 +358,7 @@ export default function ResourceGantt({
                                     getAssigneeColor={getAssigneeColor}
                                     colorMode="status"
                                     handleMouseDown={handleMouseDown}
-                                    customLabel={showResourceTaskType ? subtask.subtask_type_name : undefined}
+                                    customLabel={showResourceTaskType ? `${subtask.project_name} ${subtask.subtask_type_name}` : undefined}
                                     isResourceView={true}
                                     compactResourceBar={hasStackedTracks}
                                     barVisibility="actual"
