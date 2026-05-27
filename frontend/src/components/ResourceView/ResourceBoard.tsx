@@ -20,6 +20,7 @@ interface ResourceBoardProps {
   showMarkers: boolean;
   isDarkMode: boolean;
   showResourceTaskType: boolean;
+  showResourceScopeMask: boolean;
   colorByTask: boolean;
   resourceLoadScope: ResourceLoadScope;
   scale: GanttScale;
@@ -40,6 +41,7 @@ export default function ResourceBoard({
   showMarkers,
   isDarkMode,
   showResourceTaskType,
+  showResourceScopeMask,
   colorByTask,
   resourceLoadScope,
   scale,
@@ -105,8 +107,10 @@ export default function ResourceBoard({
               showMarkers={showMarkers}
               isDarkMode={isDarkMode}
               showResourceTaskType={showResourceTaskType}
+              showResourceScopeMask={showResourceScopeMask}
               colorByTask={colorByTask}
               loadScopeEndDate={loadScopeEndDate}
+              actualLoadScopeStartDate={actualLoadScopeStartDate}
               scale={scale}
               onScroll={onGanttScroll}
               ganttRef={ganttRef}

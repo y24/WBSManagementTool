@@ -32,6 +32,7 @@ export interface DisplayOptions {
   highlightDelayedTasks: boolean;
   showInterruptionReason: boolean;
   showResourceTaskType: boolean;
+  showResourceScopeMask: boolean;
   colorByTask: boolean;
   resourceLoadScope: ResourceLoadScope;
   overlapThreshold: number;

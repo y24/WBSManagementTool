@@ -47,6 +47,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   highlightDelayedTasks: true,
   showInterruptionReason: false,
   showResourceTaskType: true,
+  showResourceScopeMask: false,
   colorByTask: false,
   resourceLoadScope: '2w' as const,
   overlapThreshold: 1,

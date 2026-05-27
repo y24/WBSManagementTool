@@ -3,7 +3,7 @@ import { format, differenceInCalendarDays, addDays, parseISO, isValid, getDaysIn
 import { InitialData } from '../../types';
 import { GanttRange, GanttScale } from '../../types/wbs';
 import { ResourceRow, ResourceSubtask } from '../../pages/mainboard/useResourceData';
-import { getScaleCellWidth, getGanttUnits } from '../../utils/ganttUtils';
+import { getScaleCellWidth, getDateX, getGanttUnits } from '../../utils/ganttUtils';
 import { useGanttDrag } from '../../hooks/useGanttDrag';
 import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
@@ -38,8 +38,10 @@ interface ResourceGanttProps {
   showMarkers: boolean;
   isDarkMode: boolean;
   showResourceTaskType: boolean;
+  showResourceScopeMask: boolean;
   colorByTask: boolean;
   loadScopeEndDate?: string;
+  actualLoadScopeStartDate?: string;
   scale: GanttScale;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   ganttRef: React.RefObject<HTMLDivElement | null>;
@@ -54,8 +56,10 @@ export default function ResourceGantt({
   showMarkers,
   isDarkMode,
   showResourceTaskType,
+  showResourceScopeMask,
   colorByTask,
   loadScopeEndDate,
+  actualLoadScopeStartDate,
   scale,
   onScroll,
   ganttRef,
@@ -85,6 +89,23 @@ export default function ResourceGantt({
   const cellWidth = getScaleCellWidth(scale);
   const baseDate = useMemo(() => range.start_date ? parseISO(range.start_date) : new Date(), [range.start_date]);
   const totalWidth = useMemo(() => days.length * cellWidth, [days, cellWidth]);
+
+  const scopeMask = useMemo(() => {
+    if (!actualLoadScopeStartDate || !loadScopeEndDate || !range.start_date) return null;
+
+    const scopeStart = parseISO(actualLoadScopeStartDate);
+    const scopeEndExclusive = addDays(parseISO(loadScopeEndDate), 1);
+    if (!isValid(scopeStart) || !isValid(scopeEndExclusive)) return null;
+
+    const startX = Math.max(0, Math.min(totalWidth, getDateX(scopeStart, baseDate, scale)));
+    const endX = Math.max(startX, Math.min(totalWidth, getDateX(scopeEndExclusive, baseDate, scale)));
+
+    return {
+      leftWidth: startX,
+      rightLeft: endX,
+      rightWidth: Math.max(0, totalWidth - endX),
+    };
+  }, [actualLoadScopeStartDate, baseDate, loadScopeEndDate, range.start_date, scale, totalWidth]);
 
   const removedStatusId = useMemo(
     () => initialData?.statuses.find(s => s.status_name === 'Removed')?.id,
@@ -387,6 +408,31 @@ export default function ResourceGantt({
                 </React.Fragment>
               );
             })}
+
+            {showResourceScopeMask && scopeMask && (
+              <div className="pointer-events-none absolute inset-0 z-40">
+                {scopeMask.leftWidth > 0 && (
+                  <div
+                    className="absolute top-0 bottom-0 bg-black/15 dark:bg-black/30"
+                    style={{ left: 0, width: `${scopeMask.leftWidth}px` }}
+                  />
+                )}
+                {scopeMask.rightWidth > 0 && (
+                  <div
+                    className="absolute top-0 bottom-0 bg-black/15 dark:bg-black/30"
+                    style={{ left: `${scopeMask.rightLeft}px`, width: `${scopeMask.rightWidth}px` }}
+                  />
+                )}
+                <div
+                  className="absolute top-0 bottom-0 border-l border-slate-500/25 dark:border-slate-300/20"
+                  style={{ left: `${scopeMask.leftWidth}px` }}
+                />
+                <div
+                  className="absolute top-0 bottom-0 border-l border-slate-500/25 dark:border-slate-300/20"
+                  style={{ left: `${scopeMask.rightLeft}px` }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
