@@ -48,7 +48,6 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showInterruptionReason: false,
   showResourceTaskType: true,
   showResourceScopeMask: false,
-  colorByTask: false,
   resourceLoadScope: '2w' as const,
   overlapThreshold: 1,
 };
@@ -79,7 +78,22 @@ export function getInitialFilters(): FilterState {
 }
 
 export function getInitialDisplayOptions(): DisplayOptions {
-  return readJson(STORAGE_KEYS.displayOptions, DEFAULT_DISPLAY_OPTIONS);
+  const saved = localStorage.getItem(STORAGE_KEYS.displayOptions);
+  if (!saved) return DEFAULT_DISPLAY_OPTIONS;
+
+  try {
+    const parsed = JSON.parse(saved);
+    return (Object.keys(DEFAULT_DISPLAY_OPTIONS) as Array<keyof DisplayOptions>).reduce(
+      (options, key) => ({
+        ...options,
+        [key]: parsed[key] ?? DEFAULT_DISPLAY_OPTIONS[key],
+      }),
+      {} as DisplayOptions,
+    );
+  } catch (error) {
+    console.error(`Failed to parse localStorage key: ${STORAGE_KEYS.displayOptions}`, error);
+    return DEFAULT_DISPLAY_OPTIONS;
+  }
 }
 
 export function getInitialExpandedProjects(): Record<number, boolean> {

@@ -21,7 +21,6 @@ interface ResourceBoardProps {
   isDarkMode: boolean;
   showResourceTaskType: boolean;
   showResourceScopeMask: boolean;
-  colorByTask: boolean;
   resourceLoadScope: ResourceLoadScope;
   scale: GanttScale;
   onListScroll: (e: UIEvent<HTMLDivElement>) => void;
@@ -42,7 +41,6 @@ export default function ResourceBoard({
   isDarkMode,
   showResourceTaskType,
   showResourceScopeMask,
-  colorByTask,
   resourceLoadScope,
   scale,
   onListScroll,
@@ -108,7 +106,6 @@ export default function ResourceBoard({
               isDarkMode={isDarkMode}
               showResourceTaskType={showResourceTaskType}
               showResourceScopeMask={showResourceScopeMask}
-              colorByTask={colorByTask}
               loadScopeEndDate={loadScopeEndDate}
               actualLoadScopeStartDate={actualLoadScopeStartDate}
               scale={scale}

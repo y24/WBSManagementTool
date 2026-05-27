@@ -33,7 +33,6 @@ export interface DisplayOptions {
   showInterruptionReason: boolean;
   showResourceTaskType: boolean;
   showResourceScopeMask: boolean;
-  colorByTask: boolean;
   resourceLoadScope: ResourceLoadScope;
   overlapThreshold: number;
 }

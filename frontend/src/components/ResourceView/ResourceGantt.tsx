@@ -9,13 +9,6 @@ import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
 import GanttBar from '../GanttBar';
 
-const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
-  const result = /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
-    : null;
-};
-
 const OVERLAID_TRACK_HEIGHT = 36;
 const OVERLAID_STACKED_TRACK_HEIGHT = 26;
 const OVERLAID_LANE_VERTICAL_PADDING = 5;
@@ -39,7 +32,6 @@ interface ResourceGanttProps {
   isDarkMode: boolean;
   showResourceTaskType: boolean;
   showResourceScopeMask: boolean;
-  colorByTask: boolean;
   loadScopeEndDate?: string;
   actualLoadScopeStartDate?: string;
   scale: GanttScale;
@@ -57,7 +49,6 @@ export default function ResourceGantt({
   isDarkMode,
   showResourceTaskType,
   showResourceScopeMask,
-  colorByTask,
   loadScopeEndDate,
   actualLoadScopeStartDate,
   scale,
@@ -150,26 +141,6 @@ export default function ResourceGantt({
     ];
     return palette[assigneeId % palette.length];
   }, [isDarkMode]);
-
-  const taskColorPalette = [
-    '#4e79a7', '#f28e2b', '#59a14f', '#e05759', '#76b7b2',
-    '#c4a030', '#b07aa1', '#d37295', '#6a9cc5', '#d47840',
-    '#4e9050', '#c44e52', '#46a09c', '#8870c0', '#c47030',
-    '#54a07a', '#c46090',
-  ];
-
-  const getSubtaskColor = useCallback((subtaskId: number | null | undefined): string => {
-    if (!subtaskId) return isDarkMode ? '#334155' : '#cbd5e1';
-    return taskColorPalette[subtaskId % taskColorPalette.length];
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDarkMode]);
-
-  const getSubtaskColorLight = useCallback((subtaskId: number | null | undefined): string => {
-    const base = getSubtaskColor(subtaskId);
-    const rgb = hexToRgb(base);
-    if (!rgb) return base;
-    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`;
-  }, [getSubtaskColor]);
 
   const renderUnplannedHighlights = useCallback((row: ResourceRow) => {
     const isWeekendOrHoliday = (date: Date): boolean => {
@@ -335,17 +306,13 @@ export default function ResourceGantt({
 
                             const ghostColor = isStartDelayed
                               ? overdueColor
-                              : colorByTask
-                                ? getSubtaskColorLight(subtask.id)
-                                : isDarkMode
-                                  ? 'rgba(100, 116, 139, 0.28)'
-                                  : 'rgba(180, 175, 165, 0.35)';
+                              : isDarkMode
+                                ? 'rgba(100, 116, 139, 0.28)'
+                                : 'rgba(180, 175, 165, 0.35)';
 
                             const overrideActualBarColor = isEndOverdue
                               ? overdueColor
-                              : colorByTask
-                                ? getSubtaskColor(subtask.id)
-                                : undefined;
+                              : undefined;
 
                             return (
                               <React.Fragment key={`r-overlaid-${subtask.id}`}>
