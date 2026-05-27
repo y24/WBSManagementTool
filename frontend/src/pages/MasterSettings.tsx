@@ -381,28 +381,6 @@ export default function MasterSettings() {
           onDragEnd={(res) => onDragEnd(res, 'member')}
         />
 
-        <HolidaySection
-          holidays={data?.holidays ?? []}
-          showAddHoliday={showAddHoliday}
-          setShowAddHoliday={setShowAddHoliday}
-          newHoliday={newHoliday}
-          setNewHoliday={setNewHoliday}
-          createHoliday={createHoliday}
-          isSyncingHolidays={isSyncingHolidays}
-          syncHolidays={syncHolidays}
-          isHolidayListExpanded={isHolidayListExpanded}
-          setIsHolidayListExpanded={setIsHolidayListExpanded}
-          isEditing={isEditing}
-          editValue={editValue}
-          setEditValue={setEditValue}
-          editColorValue={editColorValue}
-          setEditColorValue={setEditColorValue}
-          saveEdit={saveEdit}
-          cancelEdit={cancelEdit}
-          startEdit={startEdit}
-          deleteItem={deleteItem}
-        />
-
         <StatusSection
           statuses={data?.statuses ?? []}
           showAddStatus={showAddStatus}
@@ -438,6 +416,28 @@ export default function MasterSettings() {
           isSavingSetting={isSavingSetting}
           saveSetting={saveSetting}
           saveLoadRateThresholds={saveLoadRateThresholds}
+        />
+
+        <HolidaySection
+          holidays={data?.holidays ?? []}
+          showAddHoliday={showAddHoliday}
+          setShowAddHoliday={setShowAddHoliday}
+          newHoliday={newHoliday}
+          setNewHoliday={setNewHoliday}
+          createHoliday={createHoliday}
+          isSyncingHolidays={isSyncingHolidays}
+          syncHolidays={syncHolidays}
+          isHolidayListExpanded={isHolidayListExpanded}
+          setIsHolidayListExpanded={setIsHolidayListExpanded}
+          isEditing={isEditing}
+          editValue={editValue}
+          setEditValue={setEditValue}
+          editColorValue={editColorValue}
+          setEditColorValue={setEditColorValue}
+          saveEdit={saveEdit}
+          cancelEdit={cancelEdit}
+          startEdit={startEdit}
+          deleteItem={deleteItem}
         />
       </div>
       <LoadingOverlay isVisible={loading} />
