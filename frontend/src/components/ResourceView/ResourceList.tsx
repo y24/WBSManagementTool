@@ -1,28 +1,28 @@
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
+import { getOverlaidLaneHeight, UNASSIGNED_SEPARATOR_HEIGHT } from './ResourceGantt';
 
-const PLANNED_TRACK_HEIGHT = 32;
-const ACTUAL_TRACK_HEIGHT = 40;
-const STACKED_TRACK_HEIGHT = 24;
-const STACKED_LANE_VERTICAL_PADDING = 5;
-const TYPE_COLUMN_WIDTH = 52;
+const getLoadRateTextColor = (rate: number): string => {
+  if (rate <= 0) return 'text-slate-300 dark:text-slate-600';
+  if (rate <= 30) return 'text-rose-600 dark:text-rose-400';
+  if (rate <= 70) return 'text-amber-500 dark:text-amber-400';
+  if (rate <= 100) return 'text-emerald-600 dark:text-emerald-400';
+  if (rate <= 150) return 'text-amber-500 dark:text-amber-400';
+  return 'text-rose-600 dark:text-rose-400';
+};
 
-const getPlannedTrackHeight = (row: ResourceRow) => row.plannedTracks.length > 1 ? STACKED_TRACK_HEIGHT : PLANNED_TRACK_HEIGHT;
-const getActualTrackHeight = (row: ResourceRow) => row.actualTracks.length > 1 ? STACKED_TRACK_HEIGHT : ACTUAL_TRACK_HEIGHT;
-const getLanePadding = (trackCount: number) => trackCount > 1 ? STACKED_LANE_VERTICAL_PADDING * 2 : 0;
-const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * getPlannedTrackHeight(row) + getLanePadding(row.plannedTracks.length);
-const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * getActualTrackHeight(row) + getLanePadding(row.actualTracks.length);
-const getResourceRowHeight = (row: ResourceRow) => getPlannedLaneHeight(row) + getActualLaneHeight(row);
+const getLoadRateBarColor = (rate: number): string => {
+  if (rate <= 30) return '#e11d48';
+  if (rate <= 70) return '#f59e0b';
+  if (rate <= 100) return '#059669';
+  if (rate <= 150) return '#f59e0b';
+  return '#e11d48';
+};
 
-/**
- * 進行中、遅延、今週終了、レビューの各列のハイライトスタイルを取得する
- */
-const getStatusClasses = (count: number, type: 'inProgress' | 'delayed' | 'ending' | 'review') => {
-  if (count <= 0) return "w-12 text-center text-slate-400 dark:text-slate-500 text-sm";
+const getStatusClasses = (count: number, type: 'inProgress' | 'delayed' | 'completed') => {
+  if (count <= 0) return 'w-10 text-center text-slate-400 dark:text-slate-500 text-sm';
 
-  // 背景色の強さを定義 (Tailwindの任意値/不透明度を使用)
-  // 文字色に合わせて、背景色も同じ系統の色を使用する
   const styleMap = {
     inProgress: [
       'text-blue-600 dark:text-blue-400 bg-blue-600/10 dark:bg-blue-400/20 font-medium',
@@ -36,22 +36,16 @@ const getStatusClasses = (count: number, type: 'inProgress' | 'delayed' | 'endin
       'text-rose-600 dark:text-rose-400 bg-rose-600/35 dark:bg-rose-400/40 font-bold',
       'text-rose-600 dark:text-rose-400 bg-rose-600/50 dark:bg-rose-400/50 font-bold',
     ],
-    ending: [
-      'text-amber-600 dark:text-amber-400 bg-amber-600/10 dark:bg-amber-400/20 font-medium',
-      'text-amber-600 dark:text-amber-400 bg-amber-600/20 dark:bg-amber-400/30 font-semibold',
-      'text-amber-600 dark:text-amber-400 bg-amber-600/35 dark:bg-amber-400/40 font-bold',
-      'text-amber-600 dark:text-amber-400 bg-amber-600/50 dark:bg-amber-400/50 font-bold',
+    completed: [
+      'text-slate-500 dark:text-slate-400 bg-slate-500/10 dark:bg-slate-400/15 font-medium',
+      'text-slate-500 dark:text-slate-400 bg-slate-500/15 dark:bg-slate-400/20 font-medium',
+      'text-slate-500 dark:text-slate-400 bg-slate-500/20 dark:bg-slate-400/25 font-medium',
+      'text-slate-500 dark:text-slate-400 bg-slate-500/25 dark:bg-slate-400/30 font-medium',
     ],
-    review: [
-      'text-indigo-600 dark:text-indigo-400 bg-indigo-600/10 dark:bg-indigo-400/20 font-medium',
-      'text-indigo-600 dark:text-indigo-400 bg-indigo-600/20 dark:bg-indigo-400/30 font-semibold',
-      'text-indigo-600 dark:text-indigo-400 bg-indigo-600/35 dark:bg-indigo-400/40 font-bold',
-      'text-indigo-600 dark:text-indigo-400 bg-indigo-600/50 dark:bg-indigo-400/50 font-bold',
-    ]
   };
 
   const idx = Math.min(count - 1, 3);
-  return `w-12 text-center rounded-md h-6 flex items-center justify-center transition-all duration-200 ${styleMap[type][idx]}`;
+  return `w-10 text-center rounded-md h-6 flex items-center justify-center transition-all duration-200 ${styleMap[type][idx]}`;
 };
 
 interface ResourceListProps {
@@ -63,99 +57,114 @@ interface ResourceListProps {
 
 export default function ResourceList({ data, width, onScroll, listRef }: ResourceListProps) {
   return (
-    <div 
+    <div
       className="flex flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 h-full overflow-y-auto overflow-x-scroll"
       style={{ width: `${width}px`, scrollbarGutter: 'stable' }}
       onScroll={onScroll}
       ref={listRef as unknown as React.RefObject<HTMLDivElement>}
     >
+      {/* Header */}
       <div className="sticky top-0 z-50 flex shrink-0 bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 shadow-sm h-[38px] min-h-[38px] min-w-max">
-        {/* Header Row */}
         <div className="flex w-full items-center h-full">
-          <div className="sticky left-0 z-[60] bg-slate-50 dark:bg-slate-900 min-w-[140px] pl-4 pr-4 h-full flex items-center flex-1 truncate border-r border-slate-200 dark:border-slate-700">担当者名</div>
-          <div className="flex gap-2 shrink-0 px-3">
-            <div className="w-12 text-center" title="進行中件数">進行中</div>
-            <div className="w-12 text-center" title="遅延件数">遅延</div>
-            <div className="w-12 text-center" title="今週終了予定">今週終了</div>
-            <div className="w-12 text-center" title="レビュー待ち">レビュー</div>
+          <div className="sticky left-0 z-[60] bg-slate-50 dark:bg-slate-900 min-w-[160px] pl-4 pr-2 h-full flex items-center flex-1 truncate border-r border-slate-200 dark:border-slate-700">
+            担当者名
           </div>
-          <div
-            className="sticky right-0 z-[70] flex h-full shrink-0 items-center justify-center border-l border-slate-300 bg-slate-50 text-xs font-semibold text-slate-500 shadow-[-2px_0_4px_rgba(15,23,42,0.08)] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:shadow-[-2px_0_4px_rgba(0,0,0,0.25)]"
-            style={{ width: `${TYPE_COLUMN_WIDTH}px` }}
-            title="種別"
-          >
-            種別
+          <div className="flex items-center shrink-0 gap-1 px-2">
+            <div className="w-[76px] text-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1" title="表示期間内の負荷率">負荷</div>
+            <div className="w-10 text-center" title="進行中件数">進行</div>
+            <div className="w-10 text-center" title="遅延件数">遅延</div>
+            <div className="w-10 text-center" title="完了件数">完了</div>
           </div>
         </div>
       </div>
 
       <div className="flex-1 pb-[100px] bg-slate-50 dark:bg-slate-950">
         {data.map((row, rowIndex) => {
-          const rowHeight = getResourceRowHeight(row);
+          const rowHeight = getOverlaidLaneHeight(row);
+          const isDelayed = row.delayedCount > 0;
+          const isFirstUnassigned =
+            row.assignee === null &&
+            (rowIndex === 0 || data[rowIndex - 1].assignee !== null);
+
           return (
-          <div 
-            key={row.assignee?.id ?? 'unassigned'} 
-            className="relative flex items-center bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group/row min-w-max"
-            style={{ height: `${rowHeight}px` }}
-          >
-            <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
-            {rowIndex === data.length - 1 && (
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
-            )}
-            <div className="flex w-full items-center h-full">
-              <div className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[140px] pl-4 pr-4 font-medium text-[15px] text-slate-800 dark:text-slate-200 h-full flex items-center gap-1.5 flex-1 border-r border-slate-200 dark:border-slate-700">
-                <span className="truncate">{row.assignee?.member_name || '未アサイン'}</span>
-                {!row.assignee && (
-                  <AlertTriangle
-                    size={14}
-                    className="shrink-0 text-amber-500"
-                    aria-label="未アサイン"
-                  />
-                )}
-              </div>
-              <div className="flex shrink-0 text-sm items-stretch h-full">
-                <div className="flex gap-2 shrink-0 px-3 items-center">
-                  <div className={getStatusClasses(row.inProgressCount, 'inProgress')}>
-                    {row.inProgressCount}
-                  </div>
-                  <div className={getStatusClasses(row.delayedCount, 'delayed')}>
-                    {row.delayedCount}
-                  </div>
-                  <div className={getStatusClasses(row.endingThisWeekCount, 'ending')}>
-                    {row.endingThisWeekCount}
-                  </div>
-                  <div className={getStatusClasses(row.reviewWaitingCount, 'review')}>
-                    {row.reviewWaitingCount}
-                  </div>
+            <React.Fragment key={row.assignee?.id ?? 'unassigned'}>
+              {isFirstUnassigned && (
+                <div
+                  className="flex items-center gap-2 px-4 border-t border-b border-slate-300 dark:border-slate-600 bg-slate-100/80 dark:bg-slate-800/50 min-w-max"
+                  style={{ height: `${UNASSIGNED_SEPARATOR_HEIGHT}px` }}
+                >
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    未アサイン
+                  </span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                    （{data.filter(r => r.assignee === null).reduce((s, r) => s + r.subtasks.length, 0)}件）
+                  </span>
                 </div>
-              </div>
+              )}
               <div
-                className="sticky right-0 z-30 shrink-0 border-l border-slate-300/80 text-[11px] font-medium text-slate-500 shadow-[-2px_0_4px_rgba(15,23,42,0.08)] dark:border-slate-700/80 dark:text-slate-400 dark:shadow-[-2px_0_4px_rgba(0,0,0,0.25)]"
-                style={{ width: `${TYPE_COLUMN_WIDTH}px` }}
+                className={`relative flex items-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group/row min-w-max ${
+                  isDelayed ? 'bg-rose-50/40 dark:bg-rose-950/15' : 'bg-white dark:bg-slate-900'
+                }`}
+                style={{ height: `${rowHeight}px` }}
               >
-                <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-px bg-slate-400 dark:bg-slate-600" />
+                <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
                 {rowIndex === data.length - 1 && (
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-px bg-slate-400 dark:bg-slate-600" />
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
                 )}
-                <div
-                  className="flex items-center justify-center border-b border-slate-300/70 bg-slate-100 dark:border-slate-700/70 dark:bg-slate-900/95"
-                  style={{ height: `${getPlannedLaneHeight(row)}px` }}
-                >
-                  計画
-                </div>
-                <div
-                  className="flex items-center justify-center bg-white dark:bg-slate-950 group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50"
-                  style={{ height: `${getActualLaneHeight(row)}px` }}
-                >
-                  実績
+                <div className="flex w-full items-center h-full">
+                  {/* Assignee name */}
+                  <div className="sticky left-0 z-10 bg-inherit group-hover/row:bg-slate-50 dark:group-hover/row:bg-slate-800/50 min-w-[160px] pl-4 pr-2 h-full flex items-center gap-1.5 flex-1 border-r border-slate-200 dark:border-slate-700">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate font-medium text-[14px] text-slate-800 dark:text-slate-200">
+                          {row.assignee?.member_name || '未アサイン'}
+                        </span>
+                        {isDelayed && (
+                          <AlertCircle size={13} className="shrink-0 text-rose-500" aria-label="遅延あり" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Load rate + status badges */}
+                  <div className="flex items-center shrink-0 gap-1 px-2 h-full">
+                    {/* Load rate column */}
+                    <div className="w-[76px] flex flex-col items-center justify-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1 gap-0.5">
+                      <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.loadRate)}`}>
+                        {row.loadRate > 0 ? `${row.loadRate}%` : '—'}
+                      </span>
+                      {row.loadRate > 0 && (
+                        <div className="w-12 h-[3px] rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 mt-0.5">
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${Math.min(row.loadRate, 100)}%`,
+                              backgroundColor: getLoadRateBarColor(row.loadRate),
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Status badges */}
+                    <div className="flex items-center gap-1">
+                      <div className={getStatusClasses(row.inProgressCount, 'inProgress')}>
+                        {row.inProgressCount}
+                      </div>
+                      <div className={getStatusClasses(row.delayedCount, 'delayed')}>
+                        {row.delayedCount}
+                      </div>
+                      <div className={getStatusClasses(row.completedCount, 'completed')}>
+                        {row.completedCount}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        );
+            </React.Fragment>
+          );
         })}
       </div>
-
     </div>
   );
 }

@@ -41,16 +41,14 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showMarkers: true,
   isDarkMode: false,
   viewMode: 'wbs',
-  overlapThreshold: 1,
   ganttScale: 'day',
   colorMode: 'status',
   highlightSameAssignee: false,
   highlightDelayedTasks: true,
   showInterruptionReason: false,
   showResourceTaskType: true,
-  showResourceOverlapHighlight: true,
-  highlightResourceUnplanned: false,
   colorByTask: false,
+  resourceLoadScope: '2w' as const,
 };
 
 function readJson<T extends object>(key: string, fallback: T): T {

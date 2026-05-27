@@ -1,11 +1,10 @@
 import React, { useMemo, useCallback } from 'react';
-import { format, differenceInCalendarDays, addDays, parseISO, subDays, isValid, getDaysInMonth, startOfDay } from 'date-fns';
+import { format, differenceInCalendarDays, addDays, parseISO, isValid, getDaysInMonth, startOfDay } from 'date-fns';
 import { InitialData } from '../../types';
 import { GanttRange, GanttScale } from '../../types/wbs';
 import { ResourceRow, ResourceSubtask } from '../../pages/mainboard/useResourceData';
 import { getScaleCellWidth, getGanttUnits } from '../../utils/ganttUtils';
 import { useGanttDrag } from '../../hooks/useGanttDrag';
-import { calculateReviewCalendarDays } from '../WBSTree/utils';
 import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
 import GanttBar from '../GanttBar';
@@ -17,16 +16,19 @@ const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
     : null;
 };
 
-const PLANNED_TRACK_HEIGHT = 32;
-const ACTUAL_TRACK_HEIGHT = 40;
-const STACKED_TRACK_HEIGHT = 24;
-const STACKED_LANE_VERTICAL_PADDING = 5;
+const OVERLAID_TRACK_HEIGHT = 36;
+const OVERLAID_STACKED_TRACK_HEIGHT = 26;
+const OVERLAID_LANE_VERTICAL_PADDING = 5;
+export const UNASSIGNED_SEPARATOR_HEIGHT = 36;
 
-const getPlannedTrackHeight = (row: ResourceRow) => row.plannedTracks.length > 1 ? STACKED_TRACK_HEIGHT : PLANNED_TRACK_HEIGHT;
-const getActualTrackHeight = (row: ResourceRow) => row.actualTracks.length > 1 ? STACKED_TRACK_HEIGHT : ACTUAL_TRACK_HEIGHT;
-const getLanePadding = (trackCount: number) => trackCount > 1 ? STACKED_LANE_VERTICAL_PADDING * 2 : 0;
-const getPlannedLaneHeight = (row: ResourceRow) => Math.max(1, row.plannedTracks.length) * getPlannedTrackHeight(row) + getLanePadding(row.plannedTracks.length);
-const getActualLaneHeight = (row: ResourceRow) => Math.max(1, row.actualTracks.length) * getActualTrackHeight(row) + getLanePadding(row.actualTracks.length);
+const getOverlaidTrackHeight = (row: ResourceRow) =>
+  row.overlaidTracks.length > 1 ? OVERLAID_STACKED_TRACK_HEIGHT : OVERLAID_TRACK_HEIGHT;
+
+export const getOverlaidLaneHeight = (row: ResourceRow) => {
+  const trackCount = Math.max(1, row.overlaidTracks.length);
+  const padding = row.overlaidTracks.length > 1 ? OVERLAID_LANE_VERTICAL_PADDING * 2 : 0;
+  return trackCount * getOverlaidTrackHeight(row) + padding;
+};
 
 interface ResourceGanttProps {
   data: ResourceRow[];
@@ -35,11 +37,9 @@ interface ResourceGanttProps {
   showTodayHighlight: boolean;
   showMarkers: boolean;
   isDarkMode: boolean;
-  overlapThreshold: number;
   showResourceTaskType: boolean;
-  showResourceOverlapHighlight: boolean;
-  highlightResourceUnplanned: boolean;
   colorByTask: boolean;
+  loadScopeEndDate?: string;
   scale: GanttScale;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   ganttRef: React.RefObject<HTMLDivElement | null>;
@@ -53,11 +53,9 @@ export default function ResourceGantt({
   showTodayHighlight,
   showMarkers,
   isDarkMode,
-  overlapThreshold,
   showResourceTaskType,
-  showResourceOverlapHighlight,
-  highlightResourceUnplanned,
   colorByTask,
+  loadScopeEndDate,
   scale,
   onScroll,
   ganttRef,
@@ -66,21 +64,28 @@ export default function ResourceGantt({
   const { dragState, tempDates, handleMouseDown } = useGanttDrag(initialData, scale, onRefresh);
   const [hoveredDate, setHoveredDate] = React.useState<string | null>(null);
 
+  const todayStr = useMemo(() => range.today || new Date().toISOString().split('T')[0], [range.today]);
+
+  const doneStatusId = useMemo(
+    () => initialData?.status_mapping_done ? parseInt(initialData.status_mapping_done, 10) : null,
+    [initialData]
+  );
+
   const days = useMemo(() => {
     if (!range.start_date || !range.end_date) return [];
     return getGanttUnits(range.start_date, range.end_date, scale);
   }, [range, scale]);
 
   const cellWidth = getScaleCellWidth(scale);
-
   const baseDate = useMemo(() => range.start_date ? parseISO(range.start_date) : new Date(), [range.start_date]);
   const totalWidth = useMemo(() => days.length * cellWidth, [days, cellWidth]);
+
   const removedStatusId = useMemo(
-    () => initialData?.statuses.find(status => status.status_name === 'Removed')?.id,
+    () => initialData?.statuses.find(s => s.status_name === 'Removed')?.id,
     [initialData],
   );
   const holidaySet = useMemo(
-    () => new Set(initialData?.holidays.map(holiday => holiday.holiday_date) ?? []),
+    () => new Set(initialData?.holidays.map(h => h.holiday_date) ?? []),
     [initialData],
   );
   const unitDateKeys = useMemo(() => {
@@ -110,49 +115,20 @@ export default function ResourceGantt({
 
   const getAssigneeColor = useCallback((assigneeId: number | null | undefined): string => {
     if (!assigneeId) return isDarkMode ? '#334155' : '#cbd5e1';
-    
     const palette = [
-      '#6366f1', // Indigo 500
-      '#8b5cf6', // Violet 500
-      '#ec4899', // Pink 500
-      '#f43f5e', // Rose 500
-      '#ef4444', // Red 500
-      '#f97316', // Orange 500
-      '#f59e0b', // Amber 500
-      '#eab308', // Yellow 500
-      '#84cc16', // Lime 500
-      '#22c55e', // Green 500
-      '#10b981', // Emerald 500
-      '#14b8a6', // Teal 500
-      '#06b6d4', // Cyan 500
-      '#0ea5e9', // Sky 500
-      '#3b82f6', // Blue 500
-      '#a855f7', // Purple 500
-      '#d946ef', // Fuchsia 500
+      '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#ef4444',
+      '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e',
+      '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6',
+      '#a855f7', '#d946ef',
     ];
-
     return palette[assigneeId % palette.length];
   }, [isDarkMode]);
 
   const taskColorPalette = [
-    // 隣接する色相が大きく異なるよう配置。落ち着いたトーン（Tableau 10 準拠）
-    '#4e79a7', // blue
-    '#f28e2b', // orange
-    '#59a14f', // green
-    '#e05759', // red
-    '#76b7b2', // teal
-    '#c4a030', // gold
-    '#b07aa1', // purple
-    '#d37295', // pink
-    '#6a9cc5', // sky blue
-    '#d47840', // warm orange
-    '#4e9050', // mid green
-    '#c44e52', // deep red
-    '#46a09c', // deep teal
-    '#8870c0', // indigo
-    '#c47030', // amber
-    '#54a07a', // emerald
-    '#c46090', // deep pink
+    '#4e79a7', '#f28e2b', '#59a14f', '#e05759', '#76b7b2',
+    '#c4a030', '#b07aa1', '#d37295', '#6a9cc5', '#d47840',
+    '#4e9050', '#c44e52', '#46a09c', '#8870c0', '#c47030',
+    '#54a07a', '#c46090',
   ];
 
   const getSubtaskColor = useCallback((subtaskId: number | null | undefined): string => {
@@ -165,181 +141,10 @@ export default function ResourceGantt({
     const base = getSubtaskColor(subtaskId);
     const rgb = hexToRgb(base);
     if (!rgb) return base;
-    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`;
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`;
   }, [getSubtaskColor]);
 
-  // Heatmap rendering function
-  const renderHeatmap = useCallback((row: ResourceRow, lane: 'planned' | 'actual') => {
-    if (!showResourceOverlapHighlight) return null;
-
-    const overlapsByDay = new Map<string, number>();
-
-    const addDateRangeToHeatmap = (startDate: Date, endDate: Date) => {
-      if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return;
-      if (differenceInCalendarDays(endDate, startDate) < 0) return;
-
-      let current = startDate;
-      while (differenceInCalendarDays(endDate, current) >= 0) {
-        const dStr = format(current, 'yyyy-MM-dd');
-        overlapsByDay.set(dStr, (overlapsByDay.get(dStr) || 0) + 1);
-        current = addDays(current, 1);
-      }
-    };
-
-    const addActualWorkSegmentsToHeatmap = (task: ResourceSubtask, endDate: Date) => {
-      if (!task.actual_start_date) return;
-
-      const startDate = parseISO(task.actual_start_date);
-      if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return;
-
-      if (differenceInCalendarDays(endDate, startDate) < 0) return;
-
-      const interruptions = [...(task.interruptions || [])]
-        .filter(interruption => interruption.interruption_date)
-        .sort((a, b) => a.interruption_date.localeCompare(b.interruption_date));
-
-      if (interruptions.length === 0) {
-        addDateRangeToHeatmap(startDate, endDate);
-        return;
-      }
-
-      let currentStart = startDate;
-      let isClosed = false;
-
-      for (const interruption of interruptions) {
-        const interruptionDate = parseISO(interruption.interruption_date);
-        if (!isValid(interruptionDate)) continue;
-
-        if (differenceInCalendarDays(interruptionDate, currentStart) >= 0) {
-          const segmentEnd = differenceInCalendarDays(endDate, interruptionDate) >= 0 ? interruptionDate : endDate;
-          addDateRangeToHeatmap(currentStart, segmentEnd);
-          if (segmentEnd.getTime() === endDate.getTime()) {
-            isClosed = true;
-            break;
-          }
-        }
-
-        if (!interruption.resumption_date) {
-          isClosed = true;
-          break;
-        }
-
-        const resumptionDate = parseISO(interruption.resumption_date);
-        if (!isValid(resumptionDate)) {
-          isClosed = true;
-          break;
-        }
-
-        if (differenceInCalendarDays(resumptionDate, currentStart) > 0) {
-          currentStart = resumptionDate;
-        }
-
-        if (differenceInCalendarDays(currentStart, endDate) >= 0) break;
-      }
-
-      if (!isClosed && differenceInCalendarDays(endDate, currentStart) > 0) {
-        addDateRangeToHeatmap(currentStart, endDate);
-      }
-    };
-
-    // Count active subtasks per day by lane.
-    // Planned and actual lanes are evaluated independently so actual-only overlap does not tint planned, and vice versa.
-    row.subtasks.forEach(task => {
-      // Skip removed items from heatmap overlap calculation
-      if (removedStatusId !== undefined && task.status_id === removedStatusId) return;
-
-      const startStr = lane === 'actual' ? task.actual_start_date : task.planned_start_date;
-      const endStr = lane === 'actual'
-        ? (task.actual_end_date || task.actual_start_date)
-        : (task.planned_end_date || task.planned_start_date);
-
-      if (startStr && endStr) {
-        const startDate = parseISO(startStr);
-        let endDate = parseISO(endStr);
-        
-        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return;
-
-        // レビュー期間を除外
-        if (lane === 'actual') {
-          if (task.review_start_date) {
-            const rsDate = parseISO(task.review_start_date);
-            if (isValid(rsDate)) {
-              // レビュー開始日の前日までを「作業期間」とする
-              endDate = subDays(rsDate, 1);
-            }
-          }
-          addActualWorkSegmentsToHeatmap(task, endDate);
-          return;
-        } else {
-          if (task.review_days && task.review_days > 0) {
-            const holidays = initialData?.holidays.map(h => h.holiday_date) || [];
-            const r_days_cal = calculateReviewCalendarDays(endDate, task.review_days, holidays);
-            // 終了予定日からレビュー（カレンダー日）分を差し引いた日までを「作業期間」とする
-            endDate = subDays(endDate, r_days_cal);
-          }
-        }
-
-        if (differenceInCalendarDays(endDate, startDate) < 0) return;
-
-        addDateRangeToHeatmap(startDate, endDate);
-      } else if (startStr) { // 開始日のみ
-        // レビュー期間の考慮は不要（1日のみなので）
-        const startDate = parseISO(startStr);
-        if (!Number.isNaN(startDate.getTime())) {
-          const dateStr = format(startDate, 'yyyy-MM-dd');
-          overlapsByDay.set(dateStr, (overlapsByDay.get(dateStr) || 0) + 1);
-        }
-      } else if (endStr) {
-        const endDate = parseISO(endStr);
-        if (!Number.isNaN(endDate.getTime())) {
-          const dateStr = format(endDate, 'yyyy-MM-dd');
-          overlapsByDay.set(dateStr, (overlapsByDay.get(dateStr) || 0) + 1);
-        }
-      }
-    });
-
-    const cells = [];
-    const maxOverlap = Math.max(...Array.from(overlapsByDay.values()), 0);
-
-    for (let i = 0; i < unitDateKeys.length; i++) {
-        const unit = unitDateKeys[i];
-
-        // 当該セルの期間（日単位）をスキャンして最大重複を出す
-        let maxInUnit = 0;
-        for (const dateStr of unit.dates) {
-          maxInUnit = Math.max(maxInUnit, overlapsByDay.get(dateStr) || 0);
-        }
-
-        if (maxInUnit > overlapThreshold) {
-            const normalized =
-              maxOverlap > overlapThreshold ? (maxInUnit - overlapThreshold) / (maxOverlap - overlapThreshold) : 0;
-            const lightAlpha = 0.04 + (0.16 * normalized);
-            const darkAlpha = 0.06 + (0.19 * normalized);
-            const backgroundColor = isDarkMode
-              ? `rgba(251, 191, 36, ${darkAlpha})`
-              : `rgba(245, 158, 11, ${lightAlpha})`;
-            const borderAlpha = isDarkMode ? darkAlpha * 0.35 : lightAlpha * 0.3;
-
-            cells.push(
-                <div 
-                    key={`heatmap-${unit.key}`}
-                    className="absolute top-0 bottom-0 pointer-events-none"
-                    style={{
-                      left: `${i * cellWidth}px`,
-                      width: `${cellWidth}px`,
-                      backgroundColor,
-                      boxShadow: `inset 0 0 0 1px rgba(245, 158, 11, ${borderAlpha})`,
-                    }}
-                />
-            );
-        }
-    }
-    return cells;
-  }, [cellWidth, initialData, isDarkMode, overlapThreshold, removedStatusId, showResourceOverlapHighlight, unitDateKeys]);
-
   const renderUnplannedHighlights = useCallback((row: ResourceRow) => {
-    if (!highlightResourceUnplanned) return null;
-
     const isWeekendOrHoliday = (date: Date): boolean => {
       const day = date.getDay();
       return day === 0 || day === 6 || holidaySet.has(format(date, 'yyyy-MM-dd'));
@@ -373,10 +178,8 @@ export default function ResourceGantt({
 
     for (let i = 0; i < unitDateKeys.length; i++) {
       const unit = unitDateKeys[i];
-      // 今日より前のセルはハイライト対象外
-      if (differenceInCalendarDays(unit.end, today) < 0) {
-        continue;
-      }
+      if (differenceInCalendarDays(unit.end, today) < 0) continue;
+      if (loadScopeEndDate && unit.dates[0] > loadScopeEndDate) continue;
 
       let hasPlanInUnit = false;
       let hasWorkingDayInUnit = false;
@@ -401,8 +204,8 @@ export default function ResourceGantt({
               left: `${i * cellWidth}px`,
               width: `${cellWidth}px`,
               background: isDarkMode
-                ? 'repeating-linear-gradient(45deg, rgba(234, 179, 8, 0.18) 0px, rgba(234, 179, 8, 0.18) 2px, transparent 2px, transparent 8px)'
-                : 'repeating-linear-gradient(45deg, rgba(250, 204, 21, 0.35) 0px, rgba(250, 204, 21, 0.35) 2px, transparent 2px, transparent 8px)',
+                ? 'repeating-linear-gradient(45deg, rgba(234, 179, 8, 0.14) 0px, rgba(234, 179, 8, 0.14) 2px, transparent 2px, transparent 8px)'
+                : 'repeating-linear-gradient(45deg, rgba(250, 204, 21, 0.28) 0px, rgba(250, 204, 21, 0.28) 2px, transparent 2px, transparent 8px)',
             }}
           />
         );
@@ -410,7 +213,7 @@ export default function ResourceGantt({
     }
 
     return cells;
-  }, [cellWidth, days, highlightResourceUnplanned, holidaySet, isDarkMode, removedStatusId, unitDateKeys]);
+  }, [cellWidth, days, holidaySet, isDarkMode, loadScopeEndDate, removedStatusId, unitDateKeys]);
 
   return (
     <div className="h-full min-h-0 w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
@@ -449,114 +252,124 @@ export default function ResourceGantt({
 
           <div className="relative pb-[100px]">
             {data.map((row, rowIndex) => {
-              const plannedTrackHeight = getPlannedTrackHeight(row);
-              const actualTrackHeight = getActualTrackHeight(row);
-              const hasStackedPlannedTracks = row.plannedTracks.length > 1;
-              const hasStackedActualTracks = row.actualTracks.length > 1;
+              const overlaidTrackHeight = getOverlaidTrackHeight(row);
+              const overlaidLaneHeight = getOverlaidLaneHeight(row);
+              const hasStackedTracks = row.overlaidTracks.length > 1;
+              const isFirstUnassigned =
+                row.assignee === null &&
+                (rowIndex === 0 || data[rowIndex - 1].assignee !== null);
+
               return (
-              <div
-                key={row.assignee?.id ?? 'unassigned'}
-                className="relative group/ganttrow"
-              >
-                <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
-                {rowIndex === data.length - 1 && (
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
-                )}
-                <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-slate-300/45 via-slate-200/20 to-slate-300/45 dark:from-slate-600/45 dark:via-slate-700/15 dark:to-slate-600/45" />
-                <div
-                  className="resource-lane-planned relative border-b border-slate-300/70 dark:border-slate-700/70 bg-slate-100 dark:bg-slate-900/80 w-full pointer-events-auto"
-                  style={{
-                    height: `${getPlannedLaneHeight(row)}px`,
-                    paddingTop: hasStackedPlannedTracks ? `${STACKED_LANE_VERTICAL_PADDING}px` : undefined,
-                    paddingBottom: hasStackedPlannedTracks ? `${STACKED_LANE_VERTICAL_PADDING}px` : undefined,
-                  }}
-                >
-                  <div className="pointer-events-none absolute inset-0">
-                    {renderUnplannedHighlights(row)}
-                    {renderHeatmap(row, 'planned')}
-                  </div>
-                  {(row.plannedTracks.length > 0 ? row.plannedTracks : [[]]).map((track, trackIndex) => (
+                <React.Fragment key={row.assignee?.id ?? 'unassigned'}>
+                  {isFirstUnassigned && (
                     <div
-                      key={`planned-track-${trackIndex}`}
-                      className="relative w-full border-b border-slate-200/20 last:border-b-0 dark:border-slate-800/30"
-                      style={{ height: `${plannedTrackHeight}px` }}
+                      className="relative flex items-center border-t border-b border-slate-300 dark:border-slate-600 bg-slate-100/80 dark:bg-slate-800/50"
+                      style={{ height: `${UNASSIGNED_SEPARATOR_HEIGHT}px` }}
+                    />
+                  )}
+                  <div className="relative group/ganttrow">
+                    <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
+                    {rowIndex === data.length - 1 && (
+                      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
+                    )}
+                    <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-slate-300/45 via-slate-200/20 to-slate-300/45 dark:from-slate-600/45 dark:via-slate-700/15 dark:to-slate-600/45" />
+
+                    <div
+                      className="resource-lane-overlaid relative bg-white dark:bg-slate-950 w-full pointer-events-auto"
+                      style={{
+                        height: `${overlaidLaneHeight}px`,
+                        paddingTop: hasStackedTracks ? `${OVERLAID_LANE_VERTICAL_PADDING}px` : undefined,
+                        paddingBottom: hasStackedTracks ? `${OVERLAID_LANE_VERTICAL_PADDING}px` : undefined,
+                      }}
                     >
-                      {track.map((subtask) => (
-                          <div key={`r-planned-${subtask.id}`} className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                            <GanttBar
-                              item={subtask}
-                              itemType="subtask"
-                              baseDate={baseDate}
-                              cellWidth={cellWidth}
-                              scale={scale}
-                              initialData={initialData}
-                              tempDates={tempDates}
-                              dragState={dragState}
-                              isDarkMode={isDarkMode}
-                              showProgressRate={false}
-                              showAssigneeName={false}
-                              getStatusColor={getStatusColor}
-                              getAssigneeColor={getAssigneeColor}
-                              colorMode="status"
-                              handleMouseDown={handleMouseDown}
-                              customLabel={showResourceTaskType ? subtask.subtask_type_name : undefined}
-                              isResourceView={true}
-                              compactResourceBar={hasStackedPlannedTracks}
-                              barVisibility="planned"
-                              overridePlannedBarColor={colorByTask ? getSubtaskColorLight(subtask.id) : undefined}
-                            />
-                          </div>
+                      <div className="pointer-events-none absolute inset-0">
+                        {renderUnplannedHighlights(row)}
+                      </div>
+
+                      {(row.overlaidTracks.length > 0 ? row.overlaidTracks : [[]]).map((track, trackIndex) => (
+                        <div
+                          key={`overlaid-track-${trackIndex}`}
+                          className="relative w-full border-b border-slate-200/20 last:border-b-0 dark:border-slate-800/30"
+                          style={{ height: `${overlaidTrackHeight}px` }}
+                        >
+                          {track.map((subtask: ResourceSubtask) => {
+                            const isOverdue =
+                              doneStatusId !== null &&
+                              subtask.status_id !== doneStatusId &&
+                              !!subtask.planned_end_date &&
+                              subtask.planned_end_date < todayStr;
+
+                            const ghostColor = colorByTask
+                              ? getSubtaskColorLight(subtask.id)
+                              : isDarkMode
+                                ? 'rgba(100, 116, 139, 0.28)'
+                                : 'rgba(180, 175, 165, 0.35)';
+
+                            const overrideActualBarColor = isOverdue
+                              ? (isDarkMode ? '#f87171' : '#e24b4a')
+                              : colorByTask
+                                ? getSubtaskColor(subtask.id)
+                                : undefined;
+
+                            return (
+                              <React.Fragment key={`r-overlaid-${subtask.id}`}>
+                                {/* Ghost planned bar */}
+                                <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                                  <GanttBar
+                                    item={subtask}
+                                    itemType="subtask"
+                                    baseDate={baseDate}
+                                    cellWidth={cellWidth}
+                                    scale={scale}
+                                    initialData={initialData}
+                                    tempDates={tempDates}
+                                    dragState={dragState}
+                                    isDarkMode={isDarkMode}
+                                    showProgressRate={false}
+                                    showAssigneeName={false}
+                                    getStatusColor={getStatusColor}
+                                    getAssigneeColor={getAssigneeColor}
+                                    colorMode="status"
+                                    handleMouseDown={handleMouseDown}
+                                    isResourceView={true}
+                                    compactResourceBar={hasStackedTracks}
+                                    barVisibility="planned"
+                                    overridePlannedBarColor={ghostColor}
+                                  />
+                                </div>
+                                {/* Actual status bar */}
+                                <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                                  <GanttBar
+                                    item={subtask}
+                                    itemType="subtask"
+                                    baseDate={baseDate}
+                                    cellWidth={cellWidth}
+                                    scale={scale}
+                                    initialData={initialData}
+                                    tempDates={tempDates}
+                                    dragState={dragState}
+                                    isDarkMode={isDarkMode}
+                                    showProgressRate={false}
+                                    showAssigneeName={false}
+                                    getStatusColor={getStatusColor}
+                                    getAssigneeColor={getAssigneeColor}
+                                    colorMode="status"
+                                    handleMouseDown={handleMouseDown}
+                                    customLabel={showResourceTaskType ? subtask.subtask_type_name : undefined}
+                                    isResourceView={true}
+                                    compactResourceBar={hasStackedTracks}
+                                    barVisibility="actual"
+                                    overrideActualBarColor={overrideActualBarColor}
+                                  />
+                                </div>
+                              </React.Fragment>
+                            );
+                          })}
+                        </div>
                       ))}
                     </div>
-                  ))}
-                </div>
-                <div
-                  className="resource-lane-actual relative bg-white dark:bg-slate-950 w-full pointer-events-auto"
-                  style={{
-                    height: `${getActualLaneHeight(row)}px`,
-                    paddingTop: hasStackedActualTracks ? `${STACKED_LANE_VERTICAL_PADDING}px` : undefined,
-                    paddingBottom: hasStackedActualTracks ? `${STACKED_LANE_VERTICAL_PADDING}px` : undefined,
-                  }}
-                >
-                  <div className="pointer-events-none absolute inset-0">
-                    {renderHeatmap(row, 'actual')}
                   </div>
-                  {(row.actualTracks.length > 0 ? row.actualTracks : [[]]).map((track, trackIndex) => (
-                    <div
-                      key={`actual-track-${trackIndex}`}
-                      className="relative w-full border-b border-slate-200/20 last:border-b-0 dark:border-slate-800/30"
-                      style={{ height: `${actualTrackHeight}px` }}
-                    >
-                      {track.map((subtask) => (
-                          <div key={`r-actual-${subtask.id}`} className="absolute top-0 left-0 w-full h-full pointer-events-none">
-                            <GanttBar
-                              item={subtask}
-                              itemType="subtask"
-                              baseDate={baseDate}
-                              cellWidth={cellWidth}
-                              scale={scale}
-                              initialData={initialData}
-                              tempDates={tempDates}
-                              dragState={dragState}
-                              isDarkMode={isDarkMode}
-                              showProgressRate={false}
-                              showAssigneeName={false}
-                              getStatusColor={getStatusColor}
-                              getAssigneeColor={getAssigneeColor}
-                              colorMode="status"
-                              handleMouseDown={handleMouseDown}
-                              customLabel={showResourceTaskType ? subtask.subtask_type_name : undefined}
-                              isResourceView={true}
-                              compactResourceBar={hasStackedActualTracks}
-                              barVisibility="actual"
-                              overrideActualBarColor={colorByTask ? getSubtaskColor(subtask.id) : undefined}
-                            />
-                          </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
+                </React.Fragment>
               );
             })}
           </div>

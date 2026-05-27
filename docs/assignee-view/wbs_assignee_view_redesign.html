@@ -1,0 +1,196 @@
+<div style="padding: 1rem 0; font-family: var(--font-sans);">
+
+<h2 class="sr-only">WBSトラッカー 担当者ビューの改善案モックアップ</h2>
+
+<!-- ===== 改善案: 統合ビュー ===== -->
+<div style="margin-bottom: 2rem;">
+  <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 8px; letter-spacing: 0.02em;">改善案</div>
+  <div style="font-size: 18px; font-weight: 500; margin-bottom: 4px;">担当者ビュー（再設計）</div>
+  <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 16px;">計画と実績を1本のバーに重ねて表示。空き・遅延・負荷を独立した指標として分離。</div>
+
+  <div style="background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden;">
+
+    <!-- ヘッダー: 日付軸 -->
+    <div style="display: grid; grid-template-columns: 200px 80px 1fr; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary);">
+      <div style="padding: 10px 12px; font-size: 12px; color: var(--color-text-secondary); border-right: 0.5px solid var(--color-border-tertiary);">担当者</div>
+      <div style="padding: 10px 8px; font-size: 12px; color: var(--color-text-secondary); text-align: center; border-right: 0.5px solid var(--color-border-tertiary);">負荷</div>
+      <div style="padding: 10px 12px; font-size: 11px; color: var(--color-text-secondary); display: flex; justify-content: space-between;">
+        <span>5/18</span><span>5/22</span><span>5/26</span><span>5/30</span><span style="color: var(--color-text-info); font-weight: 500;">今日</span><span>6/5</span><span>6/9</span>
+      </div>
+    </div>
+
+    <!-- 行: 鈴木 一郎 (オンスケ) -->
+    <div style="display: grid; grid-template-columns: 200px 80px 1fr; border-bottom: 0.5px solid var(--color-border-tertiary); align-items: center; min-height: 64px;">
+      <div style="padding: 12px; border-right: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; gap: 10px;">
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-background-info); color: var(--color-text-info); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500;">鈴</div>
+        <div>
+          <div style="font-size: 14px; font-weight: 500;">鈴木 一郎</div>
+          <div style="font-size: 11px; color: var(--color-text-secondary); display: flex; gap: 6px; margin-top: 2px;">
+            <span>進行 2</span><span style="color: #A32D2D;">遅延 0</span><span>完了 2</span>
+          </div>
+        </div>
+      </div>
+      <!-- 負荷インジケータ -->
+      <div style="padding: 8px; border-right: 0.5px solid var(--color-border-tertiary); text-align: center;">
+        <div style="font-size: 18px; font-weight: 500; color: #3B6D11;">82%</div>
+        <div style="height: 4px; background: #EAF3DE; border-radius: 2px; margin-top: 4px; overflow: hidden;">
+          <div style="height: 100%; width: 82%; background: #639922;"></div>
+        </div>
+      </div>
+      <!-- ガントエリア -->
+      <div style="padding: 8px 12px; position: relative; height: 64px;">
+        <!-- 今日ライン -->
+        <div style="position: absolute; top: 0; bottom: 0; left: 55%; width: 1px; background: var(--color-border-info); opacity: 0.6;"></div>
+        <!-- 計画(背景) + 実績(前景)を重ねる -->
+        <div style="position: absolute; top: 18px; left: 4%; width: 28%; height: 14px;">
+          <div style="position: absolute; inset: 0; background: #D3D1C7; border-radius: 3px; opacity: 0.4;"></div>
+          <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #97C459; border-radius: 3px; display: flex; align-items: center; padding: 0 6px;">
+            <span style="font-size: 10px; color: #173404; font-weight: 500;">テスト終了作業</span>
+          </div>
+        </div>
+        <div style="position: absolute; top: 38px; left: 36%; width: 22%; height: 14px;">
+          <div style="position: absolute; inset: 0; background: #D3D1C7; border-radius: 3px; opacity: 0.4;"></div>
+          <div style="position: absolute; top: 0; left: 0; width: 95%; height: 100%; background: #AFA9EC; border-radius: 3px; display: flex; align-items: center; padding: 0 6px;">
+            <span style="font-size: 10px; color: #26215C; font-weight: 500;">テスト設計</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 行: 山田 太郎 (オンスケだが負荷高) -->
+    <div style="display: grid; grid-template-columns: 200px 80px 1fr; border-bottom: 0.5px solid var(--color-border-tertiary); align-items: center; min-height: 64px;">
+      <div style="padding: 12px; border-right: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; gap: 10px;">
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-background-info); color: var(--color-text-info); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500;">山</div>
+        <div>
+          <div style="font-size: 14px; font-weight: 500;">山田 太郎</div>
+          <div style="font-size: 11px; color: var(--color-text-secondary); display: flex; gap: 6px; margin-top: 2px;">
+            <span>進行 3</span><span style="color: #A32D2D;">遅延 0</span><span>完了 1</span>
+          </div>
+        </div>
+      </div>
+      <div style="padding: 8px; border-right: 0.5px solid var(--color-border-tertiary); text-align: center;">
+        <div style="font-size: 18px; font-weight: 500; color: #BA7517;">118%</div>
+        <div style="height: 4px; background: #FAEEDA; border-radius: 2px; margin-top: 4px; overflow: hidden;">
+          <div style="height: 100%; width: 100%; background: #EF9F27;"></div>
+        </div>
+      </div>
+      <div style="padding: 8px 12px; position: relative; height: 64px;">
+        <div style="position: absolute; top: 0; bottom: 0; left: 55%; width: 1px; background: var(--color-border-info); opacity: 0.6;"></div>
+        <!-- 重なってる感を出すため2本を近接配置 -->
+        <div style="position: absolute; top: 12px; left: 4%; width: 32%; height: 14px;">
+          <div style="position: absolute; inset: 0; background: #D3D1C7; border-radius: 3px; opacity: 0.4;"></div>
+          <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #97C459; border-radius: 3px; display: flex; align-items: center; padding: 0 6px;">
+            <span style="font-size: 10px; color: #173404; font-weight: 500;">テスト設計</span>
+          </div>
+        </div>
+        <div style="position: absolute; top: 30px; left: 38%; width: 24%; height: 14px;">
+          <div style="position: absolute; inset: 0; background: #D3D1C7; border-radius: 3px; opacity: 0.4;"></div>
+          <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #EF9F27; border-radius: 3px; display: flex; align-items: center; padding: 0 6px;">
+            <span style="font-size: 10px; color: #412402; font-weight: 500;">データ投入</span>
+          </div>
+        </div>
+        <div style="position: absolute; top: 48px; left: 55%; width: 30%; height: 10px;">
+          <div style="position: absolute; inset: 0; background: #D3D1C7; border-radius: 3px; opacity: 0.4;"></div>
+          <div style="position: absolute; top: 0; left: 0; width: 60%; height: 100%; background: #5DCAA5; border-radius: 3px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 行: B (遅延あり) -->
+    <div style="display: grid; grid-template-columns: 200px 80px 1fr; border-bottom: 0.5px solid var(--color-border-tertiary); align-items: center; min-height: 64px; background: rgba(231, 76, 60, 0.02);">
+      <div style="padding: 12px; border-right: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; gap: 10px;">
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: #FCEBEB; color: #A32D2D; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500;">B</div>
+        <div>
+          <div style="font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px;">B <i class="ti ti-alert-circle" style="font-size: 14px; color: #A32D2D;" aria-hidden="true"></i></div>
+          <div style="font-size: 11px; color: var(--color-text-secondary); display: flex; gap: 6px; margin-top: 2px;">
+            <span>進行 1</span><span style="color: #A32D2D; font-weight: 500;">遅延 1</span><span>完了 0</span>
+          </div>
+        </div>
+      </div>
+      <div style="padding: 8px; border-right: 0.5px solid var(--color-border-tertiary); text-align: center;">
+        <div style="font-size: 18px; font-weight: 500; color: #3B6D11;">65%</div>
+        <div style="height: 4px; background: #EAF3DE; border-radius: 2px; margin-top: 4px; overflow: hidden;">
+          <div style="height: 100%; width: 65%; background: #639922;"></div>
+        </div>
+      </div>
+      <div style="padding: 8px 12px; position: relative; height: 64px;">
+        <div style="position: absolute; top: 0; bottom: 0; left: 55%; width: 1px; background: var(--color-border-info); opacity: 0.6;"></div>
+        <!-- 計画範囲を超えた実績(遅延) -->
+        <div style="position: absolute; top: 18px; left: 30%; width: 25%; height: 14px;">
+          <div style="position: absolute; inset: 0; background: #D3D1C7; border-radius: 3px; opacity: 0.4;"></div>
+          <div style="position: absolute; top: 0; left: 0; width: 140%; height: 100%; background: #E24B4A; border-radius: 3px; display: flex; align-items: center; padding: 0 6px; border: 1px solid #A32D2D;">
+            <span style="font-size: 10px; color: #fff; font-weight: 500;">テスト計画 (遅延 3日)</span>
+          </div>
+        </div>
+        <div style="position: absolute; top: 40px; left: 65%; width: 22%; height: 14px;">
+          <div style="position: absolute; inset: 0; background: #D3D1C7; border-radius: 3px; opacity: 0.4;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 行: E (空きが多い) -->
+    <div style="display: grid; grid-template-columns: 200px 80px 1fr; border-bottom: 0.5px solid var(--color-border-tertiary); align-items: center; min-height: 64px;">
+      <div style="padding: 12px; border-right: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; gap: 10px;">
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-background-secondary); color: var(--color-text-secondary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500;">E</div>
+        <div>
+          <div style="font-size: 14px; font-weight: 500;">E</div>
+          <div style="font-size: 11px; color: var(--color-text-secondary); display: flex; gap: 6px; margin-top: 2px;">
+            <span>進行 0</span><span>遅延 0</span><span>完了 1</span>
+          </div>
+        </div>
+      </div>
+      <div style="padding: 8px; border-right: 0.5px solid var(--color-border-tertiary); text-align: center;">
+        <div style="font-size: 18px; font-weight: 500; color: var(--color-text-tertiary);">22%</div>
+        <div style="height: 4px; background: var(--color-background-secondary); border-radius: 2px; margin-top: 4px; overflow: hidden;">
+          <div style="height: 100%; width: 22%; background: #B4B2A9;"></div>
+        </div>
+      </div>
+      <div style="padding: 8px 12px; position: relative; height: 64px;">
+        <div style="position: absolute; top: 0; bottom: 0; left: 55%; width: 1px; background: var(--color-border-info); opacity: 0.6;"></div>
+        <!-- 空き帯 -->
+        <div style="position: absolute; top: 8px; bottom: 8px; left: 4%; right: 4%; background: repeating-linear-gradient(45deg, #FAEEDA, #FAEEDA 4px, transparent 4px, transparent 8px); border-radius: 4px; border: 0.5px dashed #EF9F27; opacity: 0.5;"></div>
+        <div style="position: absolute; top: 24px; left: 22%; width: 8%; height: 14px;">
+          <div style="position: absolute; inset: 0; background: #97C459; border-radius: 3px;"></div>
+        </div>
+        <div style="position: absolute; top: 22px; left: 50%; font-size: 10px; color: #854F0B; font-weight: 500; background: var(--color-background-primary); padding: 2px 8px; border-radius: 3px; border: 0.5px solid #EF9F27;">
+          <i class="ti ti-clock-pause" style="font-size: 11px;" aria-hidden="true"></i> 空き 12日
+        </div>
+      </div>
+    </div>
+
+    <!-- 凡例 -->
+    <div style="padding: 10px 12px; background: var(--color-background-secondary); display: flex; gap: 16px; font-size: 11px; color: var(--color-text-secondary); flex-wrap: wrap; align-items: center;">
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 16px; height: 8px; background: #D3D1C7; border-radius: 2px; opacity: 0.5;"></span>計画</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 16px; height: 8px; background: #97C459; border-radius: 2px;"></span>進行中</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 16px; height: 8px; background: #AFA9EC; border-radius: 2px;"></span>レビュー中</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 16px; height: 8px; background: #5DCAA5; border-radius: 2px;"></span>完了</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 16px; height: 8px; background: #E24B4A; border-radius: 2px;"></span>遅延</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 16px; height: 8px; background: repeating-linear-gradient(45deg, #FAEEDA, #FAEEDA 3px, transparent 3px, transparent 6px); border: 0.5px dashed #EF9F27;"></span>空き</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== サマリーセクション ===== -->
+<div style="margin-bottom: 1rem;">
+  <div style="font-size: 14px; font-weight: 500; margin-bottom: 10px;">補助: チーム全体のサマリー（ビュー上部に常設）</div>
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+    <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px;">
+      <div style="font-size: 11px; color: var(--color-text-secondary);">平均負荷率</div>
+      <div style="font-size: 20px; font-weight: 500; margin-top: 2px;">76%</div>
+    </div>
+    <div style="background: #FCEBEB; border-radius: var(--border-radius-md); padding: 12px;">
+      <div style="font-size: 11px; color: #A32D2D;">遅延担当者</div>
+      <div style="font-size: 20px; font-weight: 500; margin-top: 2px; color: #A32D2D;">2人</div>
+    </div>
+    <div style="background: #FAEEDA; border-radius: var(--border-radius-md); padding: 12px;">
+      <div style="font-size: 11px; color: #854F0B;">空き&gt;5日</div>
+      <div style="font-size: 20px; font-weight: 500; margin-top: 2px; color: #854F0B;">3人</div>
+    </div>
+    <div style="background: #FAEEDA; border-radius: var(--border-radius-md); padding: 12px;">
+      <div style="font-size: 11px; color: #854F0B;">過負荷</div>
+      <div style="font-size: 20px; font-weight: 500; margin-top: 2px; color: #854F0B;">1人</div>
+    </div>
+  </div>
+</div>
+
+</div>

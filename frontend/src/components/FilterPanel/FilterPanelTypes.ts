@@ -1,5 +1,7 @@
 import { GanttScale } from '../../types/wbs';
 
+export type ResourceLoadScope = '1w' | '2w' | '1m' | '2m' | '3m';
+
 export interface FilterState {
   projectIds: number[];
   statusIds: number[];
@@ -24,14 +26,12 @@ export interface DisplayOptions {
   showMarkers: boolean;
   isDarkMode: boolean;
   viewMode: 'wbs' | 'resource';
-  overlapThreshold: number;
   ganttScale: GanttScale;
   colorMode: 'status' | 'assignee';
   highlightSameAssignee: boolean;
   highlightDelayedTasks: boolean;
   showInterruptionReason: boolean;
   showResourceTaskType: boolean;
-  showResourceOverlapHighlight: boolean;
-  highlightResourceUnplanned: boolean;
   colorByTask: boolean;
+  resourceLoadScope: ResourceLoadScope;
 }
