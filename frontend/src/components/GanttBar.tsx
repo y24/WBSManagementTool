@@ -34,6 +34,7 @@ interface GanttBarProps {
   colorMode: 'status' | 'assignee';
   isExpanded?: boolean;
   customLabel?: string;
+  showCustomLabelWarning?: boolean;
   projectName?: string;
   taskName?: string;
   isDelayedHighlight?: boolean;
@@ -65,6 +66,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
   colorMode,
   isExpanded = false,
   customLabel,
+  showCustomLabelWarning = false,
   isDelayedHighlight = false,
   isResourceView = false,
   compactResourceBar = false,
@@ -509,18 +511,26 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {customLabel && customLabelRanges.map((range) => (
         <div
           key={range.key}
-          className={`absolute text-[11px] whitespace-nowrap pointer-events-none drop-shadow-sm z-30 ${isResourceView ? 'text-white' : 'text-gray-700 dark:text-gray-300'
+          className={`absolute flex items-center gap-1 text-[11px] whitespace-nowrap pointer-events-none drop-shadow-sm z-30 ${isResourceView ? 'text-white' : 'text-gray-700 dark:text-gray-300'
             }`}
           style={{
             left: `${range.left + 4}px`,
             top: barLabelTopPx,
             maxWidth: `${Math.max(range.width - 8, 0)}px`,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
+            overflow: 'hidden'
           }}
           title={customLabel}
         >
-          {customLabel}
+          {showCustomLabelWarning && (
+            <AlertTriangle
+              size={12}
+              className="shrink-0 fill-amber-400 text-amber-700 drop-shadow-[0_1px_1px_rgba(255,255,255,0.35)]"
+              aria-label="遅延タスク"
+            />
+          )}
+          <span className="min-w-0 overflow-hidden text-ellipsis">
+            {customLabel}
+          </span>
         </div>
       ))}
 
@@ -596,6 +606,7 @@ const areGanttBarPropsEqual = (prev: GanttBarProps, next: GanttBarProps) => {
     prev.colorMode === next.colorMode &&
     prev.isExpanded === next.isExpanded &&
     prev.customLabel === next.customLabel &&
+    prev.showCustomLabelWarning === next.showCustomLabelWarning &&
     prev.projectName === next.projectName &&
     prev.taskName === next.taskName &&
     prev.isDelayedHighlight === next.isDelayedHighlight &&

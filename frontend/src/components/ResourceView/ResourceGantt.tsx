@@ -313,6 +313,7 @@ export default function ResourceGantt({
                             const overrideActualBarColor = isEndOverdue
                               ? overdueColor
                               : undefined;
+                            const isDelayed = isStartDelayed || isEndOverdue;
 
                             return (
                               <React.Fragment key={`r-overlaid-${subtask.id}`}>
@@ -336,6 +337,8 @@ export default function ResourceGantt({
                                     handleMouseDown={handleMouseDown}
                                     isResourceView={true}
                                     compactResourceBar={hasStackedTracks}
+                                    customLabel={isStartDelayed && showResourceTaskType ? `${subtask.project_name} ${subtask.subtask_type_name}` : undefined}
+                                    showCustomLabelWarning={isStartDelayed}
                                     barVisibility="planned"
                                     overridePlannedBarColor={ghostColor}
                                   />
@@ -359,6 +362,7 @@ export default function ResourceGantt({
                                     colorMode="status"
                                     handleMouseDown={handleMouseDown}
                                     customLabel={showResourceTaskType ? `${subtask.project_name} ${subtask.subtask_type_name}` : undefined}
+                                    showCustomLabelWarning={isDelayed}
                                     isResourceView={true}
                                     compactResourceBar={hasStackedTracks}
                                     barVisibility="actual"
