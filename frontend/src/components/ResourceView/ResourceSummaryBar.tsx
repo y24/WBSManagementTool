@@ -28,7 +28,7 @@ export default function ResourceSummaryBar({ data }: ResourceSummaryBarProps) {
             ? 'text-rose-600 dark:text-rose-400'
             : avgLoadRate <= 70
               ? 'text-amber-500 dark:text-amber-400'
-              : avgLoadRate <= 100
+              : avgLoadRate <= 120
                 ? 'text-emerald-600 dark:text-emerald-400'
                 : avgLoadRate <= 150
                   ? 'text-amber-500 dark:text-amber-400'

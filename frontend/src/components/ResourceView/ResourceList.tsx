@@ -7,7 +7,7 @@ const getLoadRateTextColor = (rate: number): string => {
   if (rate <= 0) return 'text-slate-300 dark:text-slate-600';
   if (rate <= 30) return 'text-rose-600 dark:text-rose-400';
   if (rate <= 70) return 'text-amber-500 dark:text-amber-400';
-  if (rate <= 100) return 'text-emerald-600 dark:text-emerald-400';
+  if (rate <= 120) return 'text-emerald-600 dark:text-emerald-400';
   if (rate <= 150) return 'text-amber-500 dark:text-amber-400';
   return 'text-rose-600 dark:text-rose-400';
 };
@@ -15,7 +15,7 @@ const getLoadRateTextColor = (rate: number): string => {
 const getLoadRateBarColor = (rate: number): string => {
   if (rate <= 30) return '#e11d48';
   if (rate <= 70) return '#f59e0b';
-  if (rate <= 100) return '#059669';
+  if (rate <= 120) return '#059669';
   if (rate <= 150) return '#f59e0b';
   return '#e11d48';
 };

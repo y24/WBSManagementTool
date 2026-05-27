@@ -70,6 +70,12 @@ export default function ResourceGantt({
     () => initialData?.status_mapping_done ? parseInt(initialData.status_mapping_done, 10) : null,
     [initialData]
   );
+  const newStatusId = useMemo(() => {
+    if (initialData?.status_mapping_new) {
+      return parseInt(initialData.status_mapping_new, 10);
+    }
+    return initialData?.statuses.find(s => s.status_name === 'New')?.id ?? null;
+  }, [initialData]);
 
   const days = useMemo(() => {
     if (!range.start_date || !range.end_date) return [];
@@ -293,20 +299,29 @@ export default function ResourceGantt({
                           style={{ height: `${overlaidTrackHeight}px` }}
                         >
                           {track.map((subtask: ResourceSubtask) => {
-                            const isOverdue =
+                            const overdueColor = isDarkMode ? '#f87171' : '#e24b4a';
+                            const isStartDelayed =
+                              newStatusId !== null &&
+                              subtask.status_id === newStatusId &&
+                              !subtask.actual_start_date &&
+                              !!subtask.planned_start_date &&
+                              subtask.planned_start_date < todayStr;
+                            const isEndOverdue =
                               doneStatusId !== null &&
                               subtask.status_id !== doneStatusId &&
                               !!subtask.planned_end_date &&
                               subtask.planned_end_date < todayStr;
 
-                            const ghostColor = colorByTask
-                              ? getSubtaskColorLight(subtask.id)
-                              : isDarkMode
-                                ? 'rgba(100, 116, 139, 0.28)'
-                                : 'rgba(180, 175, 165, 0.35)';
+                            const ghostColor = isStartDelayed
+                              ? overdueColor
+                              : colorByTask
+                                ? getSubtaskColorLight(subtask.id)
+                                : isDarkMode
+                                  ? 'rgba(100, 116, 139, 0.28)'
+                                  : 'rgba(180, 175, 165, 0.35)';
 
-                            const overrideActualBarColor = isOverdue
-                              ? (isDarkMode ? '#f87171' : '#e24b4a')
+                            const overrideActualBarColor = isEndOverdue
+                              ? overdueColor
                               : colorByTask
                                 ? getSubtaskColor(subtask.id)
                                 : undefined;
