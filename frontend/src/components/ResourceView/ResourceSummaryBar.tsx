@@ -36,7 +36,7 @@ export default function ResourceSummaryBar({ data }: ResourceSummaryBarProps) {
       labelColor: 'text-slate-500 dark:text-slate-400',
     },
     {
-      label: '遅延担当者',
+      label: '遅延発生',
       value: `${delayedCount}人`,
       bg: delayedCount > 0
         ? 'bg-rose-50 dark:bg-rose-950/30'
