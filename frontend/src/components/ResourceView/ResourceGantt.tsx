@@ -202,8 +202,8 @@ export default function ResourceGantt({
               left: `${i * cellWidth}px`,
               width: `${cellWidth}px`,
               background: isDarkMode
-                ? 'repeating-linear-gradient(45deg, rgba(234, 179, 8, 0.14) 0px, rgba(234, 179, 8, 0.14) 2px, transparent 2px, transparent 8px)'
-                : 'repeating-linear-gradient(45deg, rgba(250, 204, 21, 0.28) 0px, rgba(250, 204, 21, 0.28) 2px, transparent 2px, transparent 8px)',
+                ? 'repeating-linear-gradient(45deg, rgba(234, 179, 8, 0.22) 0px, rgba(234, 179, 8, 0.22) 2px, transparent 2px, transparent 8px)'
+                : 'repeating-linear-gradient(45deg, rgba(234, 179, 8, 0.42) 0px, rgba(234, 179, 8, 0.42) 2px, transparent 2px, transparent 8px)',
             }}
           />
         );

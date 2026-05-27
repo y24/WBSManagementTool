@@ -327,6 +327,14 @@ code {
   background-color: rgba(30, 41, 59, 0.45) !important;
 }
 
+.gantt-body .resource-lane-overlaid {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+:root.dark .gantt-body .resource-lane-overlaid {
+  background-color: rgba(30, 41, 59, 0.45) !important;
+}
+
 .wbs-row-subtask.delayed {
   background-color: rgba(251, 191, 36, 0.15) !important;
 }
