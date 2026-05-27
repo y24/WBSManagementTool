@@ -70,7 +70,7 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
             担当者名
           </div>
           <div className="flex items-center shrink-0 gap-1 px-2">
-            <div className="w-[76px] text-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1" title="表示期間内の負荷率">負荷</div>
+            <div className="w-[76px] text-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1" title="スコープ内の予定稼働率">稼働率</div>
             <div className="w-10 text-center" title="進行中件数">進行</div>
             <div className="w-10 text-center" title="遅延件数">遅延</div>
             <div className="w-10 text-center" title="完了件数">完了</div>

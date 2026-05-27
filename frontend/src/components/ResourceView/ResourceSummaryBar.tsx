@@ -14,21 +14,25 @@ export default function ResourceSummaryBar({ data }: ResourceSummaryBarProps) {
   );
   const delayedCount = assigned.filter(r => r.delayedCount > 0).length;
   const idleCount = assigned.filter(r => r.loadRate > 0 && r.loadRate <= 30).length;
-  const overloadedCount = assigned.filter(r => r.loadRate > 100).length;
+  const overloadedCount = assigned.filter(r => r.loadRate >= 200).length;
 
   const cards = [
     {
-      label: '平均負荷率',
+      label: '平均予定稼働率',
       value: avgLoadRate > 0 ? `${avgLoadRate}%` : '—',
       bg: 'bg-slate-50 dark:bg-slate-800/60',
       textColor:
-        avgLoadRate > 120
-          ? 'text-rose-600 dark:text-rose-400'
-          : avgLoadRate > 100
-            ? 'text-amber-600 dark:text-amber-400'
-            : avgLoadRate <= 30
-              ? 'text-slate-400 dark:text-slate-500'
-              : 'text-slate-700 dark:text-slate-200',
+        avgLoadRate <= 0
+          ? 'text-slate-400 dark:text-slate-500'
+          : avgLoadRate <= 30
+            ? 'text-rose-600 dark:text-rose-400'
+            : avgLoadRate <= 70
+              ? 'text-amber-500 dark:text-amber-400'
+              : avgLoadRate <= 100
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : avgLoadRate <= 150
+                  ? 'text-amber-500 dark:text-amber-400'
+                  : 'text-rose-600 dark:text-rose-400',
       labelColor: 'text-slate-500 dark:text-slate-400',
     },
     {
@@ -58,7 +62,7 @@ export default function ResourceSummaryBar({ data }: ResourceSummaryBarProps) {
         : 'text-slate-500 dark:text-slate-400',
     },
     {
-      label: '過負荷（>100%）',
+      label: '過負荷（≥200%）',
       value: `${overloadedCount}人`,
       bg: overloadedCount > 0
         ? 'bg-amber-50 dark:bg-amber-950/20'
