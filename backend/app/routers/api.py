@@ -164,6 +164,11 @@ def get_initial_data(db: Session = Depends(get_db)):
     mapping_new = crud.get_system_setting(db, crud.SETTING_STATUS_NEW)
     mapping_blocked = crud.get_system_setting(db, crud.SETTING_STATUS_BLOCKED)
     mapping_done = crud.get_system_setting(db, crud.SETTING_STATUS_DONE)
+    load_rate_critical_low = crud.get_system_setting(db, crud.SETTING_LOAD_RATE_CRITICAL_LOW)
+    load_rate_warning_low = crud.get_system_setting(db, crud.SETTING_LOAD_RATE_WARNING_LOW)
+    load_rate_normal_high = crud.get_system_setting(db, crud.SETTING_LOAD_RATE_NORMAL_HIGH)
+    load_rate_warning_high = crud.get_system_setting(db, crud.SETTING_LOAD_RATE_WARNING_HIGH)
+    load_rate_overload = crud.get_system_setting(db, crud.SETTING_LOAD_RATE_OVERLOAD)
     
     return {
         "statuses": crud.get_statuses(db),
@@ -175,6 +180,11 @@ def get_initial_data(db: Session = Depends(get_db)):
         "status_mapping_new": mapping_new.setting_value if mapping_new else None,
         "status_mapping_blocked": mapping_blocked.setting_value if mapping_blocked else None,
         "status_mapping_done": mapping_done.setting_value if mapping_done else None,
+        "load_rate_critical_low": load_rate_critical_low.setting_value if load_rate_critical_low else None,
+        "load_rate_warning_low": load_rate_warning_low.setting_value if load_rate_warning_low else None,
+        "load_rate_normal_high": load_rate_normal_high.setting_value if load_rate_normal_high else None,
+        "load_rate_warning_high": load_rate_warning_high.setting_value if load_rate_warning_high else None,
+        "load_rate_overload": load_rate_overload.setting_value if load_rate_overload else None,
         "enable_websocket": manager.enabled,
     }
 
@@ -194,6 +204,11 @@ def set_system_setting(key: str, req: schemas.SystemSettingUpdate, db: Session =
         crud.SETTING_STATUS_NEW: "ステータス条件: 未着手",
         crud.SETTING_STATUS_BLOCKED: "ステータス条件: ブロック",
         crud.SETTING_STATUS_DONE: "ステータス条件: 完了",
+        crud.SETTING_LOAD_RATE_CRITICAL_LOW: "稼働率しきい値: 低すぎ",
+        crud.SETTING_LOAD_RATE_WARNING_LOW: "稼働率しきい値: 低め",
+        crud.SETTING_LOAD_RATE_NORMAL_HIGH: "稼働率しきい値: 適正上限",
+        crud.SETTING_LOAD_RATE_WARNING_HIGH: "稼働率しきい値: 高め",
+        crud.SETTING_LOAD_RATE_OVERLOAD: "稼働率しきい値: 過負荷",
     }.get(key, "システム設定")
     return crud.set_system_setting(db, key, req.setting_value, description)
 

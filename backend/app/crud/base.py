@@ -7,6 +7,11 @@ SETTING_TICKET_URL = "ticket_url_template"
 SETTING_STATUS_NEW = "status_mapping_new"
 SETTING_STATUS_BLOCKED = "status_mapping_blocked"
 SETTING_STATUS_DONE = "status_mapping_done"
+SETTING_LOAD_RATE_CRITICAL_LOW = "load_rate_critical_low"
+SETTING_LOAD_RATE_WARNING_LOW = "load_rate_warning_low"
+SETTING_LOAD_RATE_NORMAL_HIGH = "load_rate_normal_high"
+SETTING_LOAD_RATE_WARNING_HIGH = "load_rate_warning_high"
+SETTING_LOAD_RATE_OVERLOAD = "load_rate_overload"
 
 def get_system_setting(db: Session, key: str):
     return db.query(models.SystemSetting).filter(models.SystemSetting.setting_key == key).first()

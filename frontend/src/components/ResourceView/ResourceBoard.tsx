@@ -7,6 +7,7 @@ import { useResourceData } from '../../pages/mainboard/useResourceData';
 import { Project, GanttRange, GanttScale } from '../../types/wbs';
 import { InitialData } from '../../types';
 import { ResourceLoadScope } from '../FilterPanel/FilterPanelTypes';
+import { getLoadRateThresholds } from '../../utils/loadRateThresholds';
 
 interface ResourceBoardProps {
   projects: Project[];
@@ -49,6 +50,7 @@ export default function ResourceBoard({
 }: ResourceBoardProps) {
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const effectiveTodayStr = dynamicGanttRange?.today || todayStr;
+  const loadRateThresholds = useMemo(() => getLoadRateThresholds(initialData), [initialData]);
 
   const loadScopeEndDate = useMemo(() => {
     const today = parseISO(effectiveTodayStr);
@@ -72,7 +74,7 @@ export default function ResourceBoard({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-      <ResourceSummaryBar data={resourceData} />
+      <ResourceSummaryBar data={resourceData} loadRateThresholds={loadRateThresholds} />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <div
@@ -82,6 +84,7 @@ export default function ResourceBoard({
           <ResourceList
             data={resourceData}
             width={treeWidth}
+            loadRateThresholds={loadRateThresholds}
             onScroll={onListScroll}
             listRef={listRef}
           />

@@ -42,5 +42,10 @@ export interface InitialData {
   status_mapping_new?: string | null;
   status_mapping_blocked?: string | null;
   status_mapping_done?: string | null;
+  load_rate_critical_low?: string | null;
+  load_rate_warning_low?: string | null;
+  load_rate_normal_high?: string | null;
+  load_rate_warning_high?: string | null;
+  load_rate_overload?: string | null;
   enable_websocket: boolean;
 }

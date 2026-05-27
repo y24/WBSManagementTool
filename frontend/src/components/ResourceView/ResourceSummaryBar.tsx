@@ -1,11 +1,13 @@
 import React from 'react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
+import { getLoadRateTextColor, LoadRateThresholds } from '../../utils/loadRateThresholds';
 
 interface ResourceSummaryBarProps {
   data: ResourceRow[];
+  loadRateThresholds: LoadRateThresholds;
 }
 
-export default function ResourceSummaryBar({ data }: ResourceSummaryBarProps) {
+export default function ResourceSummaryBar({ data, loadRateThresholds }: ResourceSummaryBarProps) {
   const assigned = data.filter(r => r.assignee !== null);
   if (assigned.length === 0) return null;
 
@@ -13,26 +15,15 @@ export default function ResourceSummaryBar({ data }: ResourceSummaryBarProps) {
     assigned.reduce((sum, r) => sum + r.loadRate, 0) / assigned.length
   );
   const delayedCount = assigned.filter(r => r.delayedCount > 0).length;
-  const idleCount = assigned.filter(r => r.loadRate > 0 && r.loadRate <= 30).length;
-  const overloadedCount = assigned.filter(r => r.loadRate >= 200).length;
+  const idleCount = assigned.filter(r => r.loadRate > 0 && r.loadRate <= loadRateThresholds.criticalLow).length;
+  const overloadedCount = assigned.filter(r => r.loadRate >= loadRateThresholds.overload).length;
 
   const cards = [
     {
       label: '平均予定稼働率',
       value: avgLoadRate > 0 ? `${avgLoadRate}%` : '—',
       bg: 'bg-slate-50 dark:bg-slate-800/60',
-      textColor:
-        avgLoadRate <= 0
-          ? 'text-slate-400 dark:text-slate-500'
-          : avgLoadRate <= 30
-            ? 'text-rose-600 dark:text-rose-400'
-            : avgLoadRate <= 70
-              ? 'text-amber-500 dark:text-amber-400'
-              : avgLoadRate <= 120
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : avgLoadRate <= 150
-                  ? 'text-amber-500 dark:text-amber-400'
-                  : 'text-rose-600 dark:text-rose-400',
+      textColor: getLoadRateTextColor(avgLoadRate, loadRateThresholds),
       labelColor: 'text-slate-500 dark:text-slate-400',
     },
     {
@@ -49,7 +40,7 @@ export default function ResourceSummaryBar({ data }: ResourceSummaryBarProps) {
         : 'text-slate-500 dark:text-slate-400',
     },
     {
-      label: '空き多い（≤30%）',
+      label: `空き多い（≤${loadRateThresholds.criticalLow}%）`,
       value: `${idleCount}人`,
       bg: idleCount > 0
         ? 'bg-amber-50 dark:bg-amber-950/20'
@@ -62,7 +53,7 @@ export default function ResourceSummaryBar({ data }: ResourceSummaryBarProps) {
         : 'text-slate-500 dark:text-slate-400',
     },
     {
-      label: '過負荷（≥200%）',
+      label: `過負荷（≥${loadRateThresholds.overload}%）`,
       value: `${overloadedCount}人`,
       bg: overloadedCount > 0
         ? 'bg-amber-50 dark:bg-amber-950/20'

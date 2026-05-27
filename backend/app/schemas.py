@@ -353,6 +353,11 @@ class InitialData(BaseModel):
     status_mapping_new: Optional[str] = None
     status_mapping_blocked: Optional[str] = None
     status_mapping_done: Optional[str] = None
+    load_rate_critical_low: Optional[str] = None
+    load_rate_warning_low: Optional[str] = None
+    load_rate_normal_high: Optional[str] = None
+    load_rate_warning_high: Optional[str] = None
+    load_rate_overload: Optional[str] = None
     enable_websocket: bool = True
 
 # --- Import ---

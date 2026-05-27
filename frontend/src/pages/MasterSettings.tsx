@@ -10,6 +10,14 @@ import { SystemSettingsSection } from '../components/masterSettings/SystemSettin
 import { useWebSocket } from '../api/websocket';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import LoadingOverlay from '../components/LoadingOverlay';
+import {
+  defaultLoadRateThresholds,
+  getLoadRateThresholds,
+  isLoadRateThresholdsValid,
+  LoadRateThresholdInputs,
+  parseLoadRateThresholdInputs,
+  toLoadRateThresholdInputs,
+} from '../utils/loadRateThresholds';
 
 type EditingItem = { id: number; field: string } | null;
 
@@ -55,6 +63,9 @@ export default function MasterSettings() {
   const [showAddHoliday, setShowAddHoliday] = useState(false);
 
   const [ticketUrlTemplate, setTicketUrlTemplate] = useState('');
+  const [loadRateThresholds, setLoadRateThresholds] = useState<LoadRateThresholdInputs>(
+    toLoadRateThresholdInputs(defaultLoadRateThresholds)
+  );
   const [statusMappingNew, setStatusMappingNew] = useState<number[]>([]);
   const [statusMappingBlocked, setStatusMappingBlocked] = useState<number[]>([]);
   const [statusMappingDone, setStatusMappingDone] = useState<number[]>([]);
@@ -76,6 +87,7 @@ export default function MasterSettings() {
       .then(res => {
         setData(res.data);
         setTicketUrlTemplate(res.data.ticket_url_template || '');
+        setLoadRateThresholds(toLoadRateThresholdInputs(getLoadRateThresholds(res.data)));
         setStatusMappingNew(parseMapping(res.data.status_mapping_new));
         setStatusMappingBlocked(parseMapping(res.data.status_mapping_blocked));
         setStatusMappingDone(parseMapping(res.data.status_mapping_done));
@@ -271,6 +283,36 @@ export default function MasterSettings() {
     }
   };
 
+  const saveLoadRateThresholds = async () => {
+    const parsedThresholds = parseLoadRateThresholdInputs(loadRateThresholds);
+    if (!parsedThresholds) {
+      alert('稼働率しきい値は0以上の数値で入力してください。');
+      return;
+    }
+
+    if (!isLoadRateThresholdsValid(parsedThresholds)) {
+      alert('稼働率しきい値は 低すぎ < 低め < 適正上限 < 高め < 過負荷 の順で入力してください。');
+      return;
+    }
+
+    try {
+      setIsSavingSetting(true);
+      await Promise.all([
+        apiClient.put('/settings/load_rate_critical_low', { setting_value: String(parsedThresholds.criticalLow) }),
+        apiClient.put('/settings/load_rate_warning_low', { setting_value: String(parsedThresholds.warningLow) }),
+        apiClient.put('/settings/load_rate_normal_high', { setting_value: String(parsedThresholds.normalHigh) }),
+        apiClient.put('/settings/load_rate_warning_high', { setting_value: String(parsedThresholds.warningHigh) }),
+        apiClient.put('/settings/load_rate_overload', { setting_value: String(parsedThresholds.overload) }),
+      ]);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('稼働率しきい値の保存に失敗しました。');
+    } finally {
+      setIsSavingSetting(false);
+    }
+  };
+
   const toggleMapping = (category: 'new' | 'blocked' | 'done', statusId: number) => {
     let current: number[] = [];
     let key = '';
@@ -391,8 +433,11 @@ export default function MasterSettings() {
         <SystemSettingsSection
           ticketUrlTemplate={ticketUrlTemplate}
           setTicketUrlTemplate={setTicketUrlTemplate}
+          loadRateThresholds={loadRateThresholds}
+          setLoadRateThresholds={setLoadRateThresholds}
           isSavingSetting={isSavingSetting}
           saveSetting={saveSetting}
+          saveLoadRateThresholds={saveLoadRateThresholds}
         />
       </div>
       <LoadingOverlay isVisible={loading} />

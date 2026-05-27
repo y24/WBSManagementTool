@@ -1,6 +1,6 @@
 import psycopg2
 from app.database import SessionLocal
-from app.models import MstStatus, MstSubtaskType
+from app.models import MstStatus, MstSubtaskType, SystemSetting
 
 def seed_data():
     db = SessionLocal()
@@ -41,6 +41,19 @@ def seed_data():
             if not existing:
                 db.add(MstSubtaskType(**ty))
             # 既存のレコードは更新せず、ユーザーの設定（名前、ソート順、有効フラグ）を保持する
+
+        settings = [
+            {"setting_key": "load_rate_critical_low", "setting_value": "30", "description": "稼働率しきい値: 低すぎ"},
+            {"setting_key": "load_rate_warning_low", "setting_value": "70", "description": "稼働率しきい値: 低め"},
+            {"setting_key": "load_rate_normal_high", "setting_value": "120", "description": "稼働率しきい値: 適正上限"},
+            {"setting_key": "load_rate_warning_high", "setting_value": "150", "description": "稼働率しきい値: 高め"},
+            {"setting_key": "load_rate_overload", "setting_value": "200", "description": "稼働率しきい値: 過負荷"},
+        ]
+
+        for setting in settings:
+            existing = db.query(SystemSetting).filter(SystemSetting.setting_key == setting["setting_key"]).first()
+            if not existing:
+                db.add(SystemSetting(**setting))
 
         # シードリストに含まれないレコードを自動的に非アクティブ化する処理を削除
         # (ユーザーが追加したカスタム種別を保持するため)

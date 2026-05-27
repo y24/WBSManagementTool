@@ -2,23 +2,7 @@ import React from 'react';
 import { AlertCircle } from 'lucide-react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
 import { getOverlaidLaneHeight, UNASSIGNED_SEPARATOR_HEIGHT } from './ResourceGantt';
-
-const getLoadRateTextColor = (rate: number): string => {
-  if (rate <= 0) return 'text-slate-300 dark:text-slate-600';
-  if (rate <= 30) return 'text-rose-600 dark:text-rose-400';
-  if (rate <= 70) return 'text-amber-500 dark:text-amber-400';
-  if (rate <= 120) return 'text-emerald-600 dark:text-emerald-400';
-  if (rate <= 150) return 'text-amber-500 dark:text-amber-400';
-  return 'text-rose-600 dark:text-rose-400';
-};
-
-const getLoadRateBarColor = (rate: number): string => {
-  if (rate <= 30) return '#e11d48';
-  if (rate <= 70) return '#f59e0b';
-  if (rate <= 120) return '#059669';
-  if (rate <= 150) return '#f59e0b';
-  return '#e11d48';
-};
+import { getLoadRateBarColor, getLoadRateTextColor, LoadRateThresholds } from '../../utils/loadRateThresholds';
 
 const getStatusClasses = (count: number, type: 'inProgress' | 'delayed' | 'completed') => {
   if (count <= 0) return 'w-10 text-center text-slate-400 dark:text-slate-500 text-sm';
@@ -51,11 +35,12 @@ const getStatusClasses = (count: number, type: 'inProgress' | 'delayed' | 'compl
 interface ResourceListProps {
   data: ResourceRow[];
   width: number;
+  loadRateThresholds: LoadRateThresholds;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   listRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export default function ResourceList({ data, width, onScroll, listRef }: ResourceListProps) {
+export default function ResourceList({ data, width, loadRateThresholds, onScroll, listRef }: ResourceListProps) {
   return (
     <div
       className="flex flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 h-full overflow-y-auto overflow-x-scroll"
@@ -131,7 +116,7 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
                   <div className="flex items-center shrink-0 gap-1 px-2 h-full">
                     {/* Load rate column */}
                     <div className="w-[76px] flex flex-col items-center justify-center gap-0.5">
-                      <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.loadRate)}`}>
+                      <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.loadRate, loadRateThresholds)}`}>
                         {row.loadRate > 0 ? `${row.loadRate}%` : '—'}
                       </span>
                       {row.loadRate > 0 && (
@@ -140,14 +125,14 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
                             className="h-full rounded-full"
                             style={{
                               width: `${Math.min(row.loadRate, 100)}%`,
-                              backgroundColor: getLoadRateBarColor(row.loadRate),
+                              backgroundColor: getLoadRateBarColor(row.loadRate, loadRateThresholds),
                             }}
                           />
                         </div>
                       )}
                     </div>
                     <div className="w-[76px] flex flex-col items-center justify-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1 gap-0.5">
-                      <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.actualLoadRate)}`}>
+                      <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.actualLoadRate, loadRateThresholds)}`}>
                         {row.actualLoadRate > 0 ? `${row.actualLoadRate}%` : '—'}
                       </span>
                       {row.actualLoadRate > 0 && (
@@ -156,7 +141,7 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
                             className="h-full rounded-full"
                             style={{
                               width: `${Math.min(row.actualLoadRate, 100)}%`,
-                              backgroundColor: getLoadRateBarColor(row.actualLoadRate),
+                              backgroundColor: getLoadRateBarColor(row.actualLoadRate, loadRateThresholds),
                             }}
                           />
                         </div>
