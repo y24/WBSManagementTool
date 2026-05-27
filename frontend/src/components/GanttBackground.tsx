@@ -1,5 +1,5 @@
 import React from 'react';
-import { format, getDay, isToday, parseISO, differenceInCalendarDays, isValid } from 'date-fns';
+import { format, getDay, parseISO, isValid } from 'date-fns';
 import { InitialData } from '../types';
 import { Project, GanttScale } from '../types/wbs';
 import { getDateX } from '../utils/ganttUtils';
@@ -41,6 +41,13 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
     if (!isValid(start) || !isValid(end)) return null;
     return { start, end };
   }, [range.start_date, range.end_date]);
+
+  const todayLineX = React.useMemo(() => {
+    if (!showTodayHighlight || !range.start_date || !markerRange) return null;
+    const today = parseISO(format(new Date(), 'yyyy-MM-dd'));
+    if (!isValid(today) || today < markerRange.start || today > markerRange.end) return null;
+    return getDateX(today, parseISO(range.start_date), scale);
+  }, [markerRange, range.start_date, scale, showTodayHighlight]);
 
   return (
     <>
@@ -86,7 +93,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
         return (
           <div
             key={`marker-line-${m.id}`}
-            className={`absolute top-0 bottom-0 z-25 pointer-events-none border-l-2 ${isDragging ? 'opacity-50' : ''}`}
+            className={`absolute top-0 bottom-0 z-25 pointer-events-none border-l-2 border-dashed ${isDragging ? 'opacity-50' : ''}`}
             style={{ left: `${left}px`, borderLeftColor: m.color }}
           />
         );
@@ -100,14 +107,13 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
         />
       )}
 
-      {/* 今日列のハイライト (z-20) */}
-      {showTodayHighlight && days.map((d, i) => isToday(d) && (
+      {/* 今日線 (z-20) */}
+      {todayLineX !== null && (
         <div
-          key={`today-highlight-${d.toISOString()}`}
-          className="absolute top-0 bottom-0 border-x border-amber-400/30 bg-amber-400/10 z-20 pointer-events-none"
-          style={{ left: `${getDateX(d, parseISO(range.start_date), scale)}px`, width: `${scale === 'day' ? cellWidth : (cellWidth / 7)}px` }}
+          className="absolute top-0 bottom-0 border-l-[3px] border-amber-500/65 dark:border-amber-300/65 z-20 pointer-events-none"
+          style={{ left: `${todayLineX}px` }}
         />
-      ))}
+      )}
     </>
   );
 };
