@@ -317,12 +317,15 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const warningTopPx = isSubtask && isResourceView ? resourceBarTop : '10px';
 
   const isHighlighted = highlightSameAssignee && hoveredAssigneeId !== null && item.assignee_id === hoveredAssigneeId;
-  const labelLeft = showActualBar && actualSegments.length > 0
-    ? getDateX(actualSegments[0].start, baseDate, scale)
-    : (pStart || 0);
-  const labelWidth = showActualBar && actualSegments.length > 0
-    ? getDateWidth(actualSegments[0].start, actualSegments[actualSegments.length - 1].end, scale)
-    : (pWidth ?? 0);
+  const customLabelRanges = showActualBar && actualSegments.length > 0
+    ? actualSegments.map((seg, idx) => ({
+        key: `actual-label-${idx}`,
+        left: getDateX(seg.start, baseDate, scale),
+        width: actualSegmentWidths[idx] ?? getDateWidth(seg.start, seg.end, scale),
+      }))
+    : (showPlannedBar && pStart !== undefined && pWidth !== undefined
+      ? [{ key: 'planned-label', left: pStart, width: pWidth }]
+      : []);
 
   return (
     <div
@@ -503,23 +506,23 @@ const GanttBar: React.FC<GanttBarProps> = ({
       )}
 
       {/* カスタムラベル（担当者ビュー用） */}
-      {customLabel && (showActualBar || showPlannedBar) && (
+      {customLabel && customLabelRanges.map((range) => (
         <div
-
+          key={range.key}
           className={`absolute text-[11px] whitespace-nowrap pointer-events-none drop-shadow-sm z-30 ${isResourceView ? 'text-white' : 'text-gray-700 dark:text-gray-300'
             }`}
           style={{
-            left: `${labelLeft + 4}px`,
+            left: `${range.left + 4}px`,
             top: barLabelTopPx,
-            maxWidth: `${Math.max(labelWidth - 8, 0)}px`,
+            maxWidth: `${Math.max(range.width - 8, 0)}px`,
             overflow: 'hidden',
             textOverflow: 'ellipsis'
           }}
-
+          title={customLabel}
         >
           {customLabel}
         </div>
-      )}
+      ))}
 
       {isDelayed && warningText && !customLabel && !isResourceView && (
         <div
