@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiClient, getInitialData } from '../api/client';
 import { InitialData } from '../types';
 import { HolidaySection } from '../components/masterSettings/HolidaySection';
@@ -20,6 +20,13 @@ import {
 } from '../utils/loadRateThresholds';
 
 type EditingItem = { id: number; field: string } | null;
+type MasterSectionId =
+  | 'subtask-types'
+  | 'members'
+  | 'statuses'
+  | 'status-mapping'
+  | 'system-settings'
+  | 'holidays';
 
 interface NewStatus {
   status_name: string;
@@ -45,9 +52,20 @@ const parseMapping = (value?: string | null) =>
     .map(v => parseInt(v.trim(), 10))
     .filter(n => !Number.isNaN(n));
 
+const masterSections: { id: MasterSectionId; label: string; description: string }[] = [
+  { id: 'subtask-types', label: 'サブタスク種別', description: '工程種別の追加・並び順変更' },
+  { id: 'members', label: '担当者', description: '担当者の追加・並び順変更' },
+  { id: 'statuses', label: 'ステータス', description: '名称と表示色の設定' },
+  { id: 'status-mapping', label: '自動更新条件', description: '親タスクのステータス判定設定' },
+  { id: 'system-settings', label: 'システム設定', description: 'チケットURL / 稼働率のしきい値' },
+  { id: 'holidays', label: '祝日', description: '非稼働日の設定' },
+];
+
 export default function MasterSettings() {
+  const pageRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<InitialData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeSectionId, setActiveSectionId] = useState<MasterSectionId>('subtask-types');
   const [editing, setEditing] = useState<EditingItem>(null);
   const [editValue, setEditValue] = useState('');
   const [editColorValue, setEditColorValue] = useState('#000000');
@@ -99,6 +117,39 @@ export default function MasterSettings() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const page = pageRef.current;
+    if (!page) return;
+
+    const updateActiveSection = () => {
+      const pageTop = page.getBoundingClientRect().top;
+      const targetOffset = pageTop + 112;
+      const currentSection = masterSections.reduce<MasterSectionId>((current, section) => {
+        const element = document.getElementById(section.id);
+        if (!element) return current;
+        return element.getBoundingClientRect().top <= targetOffset ? section.id : current;
+      }, masterSections[0].id);
+
+      setActiveSectionId(currentSection);
+    };
+
+    updateActiveSection();
+    page.addEventListener('scroll', updateActiveSection, { passive: true });
+    return () => page.removeEventListener('scroll', updateActiveSection);
+  }, []);
+
+  const scrollToSection = (sectionId: MasterSectionId) => {
+    const page = pageRef.current;
+    const element = document.getElementById(sectionId);
+    if (!page || !element) return;
+
+    page.scrollTo({
+      top: element.offsetTop - 24,
+      behavior: 'smooth',
+    });
+    setActiveSectionId(sectionId);
+  };
 
   const startEdit = (id: number, field: string, currentValue: string, colorValue?: string) => {
     setEditing({ id, field });
@@ -343,102 +394,133 @@ export default function MasterSettings() {
 
 
   return (
-    <div className="master-page">
-      <div className="master-container">
-        <h2 className="master-title">マスタ・設定</h2>
+    <div className="master-page" ref={pageRef}>
+      <div className="master-layout">
+        <aside className="master-nav" aria-label="マスタ・設定メニュー">
+          <div className="master-nav-heading">設定メニュー</div>
+          <nav className="master-nav-list">
+            {masterSections.map(section => (
+              <button
+                key={section.id}
+                type="button"
+                className={`master-nav-item ${activeSectionId === section.id ? 'active' : ''}`}
+                onClick={() => scrollToSection(section.id)}
+              >
+                <span className="master-nav-label">{section.label}</span>
+                <span className="master-nav-description">{section.description}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-        <SubtaskTypeSection
-          subtaskTypes={data?.subtask_types ?? []}
-          showAddSubtaskType={showAddSubtaskType}
-          setShowAddSubtaskType={setShowAddSubtaskType}
-          newSubtaskType={newSubtaskType}
-          setNewSubtaskType={setNewSubtaskType}
-          createSubtaskType={createSubtaskType}
-          isEditing={isEditing}
-          editValue={editValue}
-          setEditValue={setEditValue}
-          saveEdit={saveEdit}
-          cancelEdit={cancelEdit}
-          startEdit={startEdit}
-          deleteItem={deleteItem}
-          onDragEnd={(res) => onDragEnd(res, 'subtask_type')}
-        />
+        <div className="master-container">
+          <h2 className="master-title">マスタ・設定</h2>
 
-        <MemberSection
-          members={data?.members ?? []}
-          showAddMember={showAddMember}
-          setShowAddMember={setShowAddMember}
-          newMember={newMember}
-          setNewMember={setNewMember}
-          createMember={createMember}
-          isEditing={isEditing}
-          editValue={editValue}
-          setEditValue={setEditValue}
-          saveEdit={saveEdit}
-          cancelEdit={cancelEdit}
-          startEdit={startEdit}
-          deleteItem={deleteItem}
-          onDragEnd={(res) => onDragEnd(res, 'member')}
-        />
+          <div id="subtask-types" className="master-scroll-section">
+            <SubtaskTypeSection
+              subtaskTypes={data?.subtask_types ?? []}
+              showAddSubtaskType={showAddSubtaskType}
+              setShowAddSubtaskType={setShowAddSubtaskType}
+              newSubtaskType={newSubtaskType}
+              setNewSubtaskType={setNewSubtaskType}
+              createSubtaskType={createSubtaskType}
+              isEditing={isEditing}
+              editValue={editValue}
+              setEditValue={setEditValue}
+              saveEdit={saveEdit}
+              cancelEdit={cancelEdit}
+              startEdit={startEdit}
+              deleteItem={deleteItem}
+              onDragEnd={(res) => onDragEnd(res, 'subtask_type')}
+            />
+          </div>
 
-        <StatusSection
-          statuses={data?.statuses ?? []}
-          showAddStatus={showAddStatus}
-          setShowAddStatus={setShowAddStatus}
-          newStatus={newStatus}
-          setNewStatus={setNewStatus}
-          createStatus={createStatus}
-          isEditing={isEditing}
-          editValue={editValue}
-          setEditValue={setEditValue}
-          editColorValue={editColorValue}
-          setEditColorValue={setEditColorValue}
-          saveEdit={saveEdit}
-          cancelEdit={cancelEdit}
-          startEdit={startEdit}
-          deleteItem={deleteItem}
-          onDragEnd={(res) => onDragEnd(res, 'status')}
-        />
+          <div id="members" className="master-scroll-section">
+            <MemberSection
+              members={data?.members ?? []}
+              showAddMember={showAddMember}
+              setShowAddMember={setShowAddMember}
+              newMember={newMember}
+              setNewMember={setNewMember}
+              createMember={createMember}
+              isEditing={isEditing}
+              editValue={editValue}
+              setEditValue={setEditValue}
+              saveEdit={saveEdit}
+              cancelEdit={cancelEdit}
+              startEdit={startEdit}
+              deleteItem={deleteItem}
+              onDragEnd={(res) => onDragEnd(res, 'member')}
+            />
+          </div>
 
-        <StatusMappingSection
-          statuses={data?.statuses ?? []}
-          statusMappingNew={statusMappingNew}
-          statusMappingBlocked={statusMappingBlocked}
-          statusMappingDone={statusMappingDone}
-          toggleMapping={toggleMapping}
-        />
+          <div id="statuses" className="master-scroll-section">
+            <StatusSection
+              statuses={data?.statuses ?? []}
+              showAddStatus={showAddStatus}
+              setShowAddStatus={setShowAddStatus}
+              newStatus={newStatus}
+              setNewStatus={setNewStatus}
+              createStatus={createStatus}
+              isEditing={isEditing}
+              editValue={editValue}
+              setEditValue={setEditValue}
+              editColorValue={editColorValue}
+              setEditColorValue={setEditColorValue}
+              saveEdit={saveEdit}
+              cancelEdit={cancelEdit}
+              startEdit={startEdit}
+              deleteItem={deleteItem}
+              onDragEnd={(res) => onDragEnd(res, 'status')}
+            />
+          </div>
 
-        <SystemSettingsSection
-          ticketUrlTemplate={ticketUrlTemplate}
-          setTicketUrlTemplate={setTicketUrlTemplate}
-          loadRateThresholds={loadRateThresholds}
-          setLoadRateThresholds={setLoadRateThresholds}
-          isSavingSetting={isSavingSetting}
-          saveSetting={saveSetting}
-          saveLoadRateThresholds={saveLoadRateThresholds}
-        />
+          <div id="status-mapping" className="master-scroll-section">
+            <StatusMappingSection
+              statuses={data?.statuses ?? []}
+              statusMappingNew={statusMappingNew}
+              statusMappingBlocked={statusMappingBlocked}
+              statusMappingDone={statusMappingDone}
+              toggleMapping={toggleMapping}
+            />
+          </div>
 
-        <HolidaySection
-          holidays={data?.holidays ?? []}
-          showAddHoliday={showAddHoliday}
-          setShowAddHoliday={setShowAddHoliday}
-          newHoliday={newHoliday}
-          setNewHoliday={setNewHoliday}
-          createHoliday={createHoliday}
-          isSyncingHolidays={isSyncingHolidays}
-          syncHolidays={syncHolidays}
-          isHolidayListExpanded={isHolidayListExpanded}
-          setIsHolidayListExpanded={setIsHolidayListExpanded}
-          isEditing={isEditing}
-          editValue={editValue}
-          setEditValue={setEditValue}
-          editColorValue={editColorValue}
-          setEditColorValue={setEditColorValue}
-          saveEdit={saveEdit}
-          cancelEdit={cancelEdit}
-          startEdit={startEdit}
-          deleteItem={deleteItem}
-        />
+          <div id="system-settings" className="master-scroll-section">
+            <SystemSettingsSection
+              ticketUrlTemplate={ticketUrlTemplate}
+              setTicketUrlTemplate={setTicketUrlTemplate}
+              loadRateThresholds={loadRateThresholds}
+              setLoadRateThresholds={setLoadRateThresholds}
+              isSavingSetting={isSavingSetting}
+              saveSetting={saveSetting}
+              saveLoadRateThresholds={saveLoadRateThresholds}
+            />
+          </div>
+
+          <div id="holidays" className="master-scroll-section">
+            <HolidaySection
+              holidays={data?.holidays ?? []}
+              showAddHoliday={showAddHoliday}
+              setShowAddHoliday={setShowAddHoliday}
+              newHoliday={newHoliday}
+              setNewHoliday={setNewHoliday}
+              createHoliday={createHoliday}
+              isSyncingHolidays={isSyncingHolidays}
+              syncHolidays={syncHolidays}
+              isHolidayListExpanded={isHolidayListExpanded}
+              setIsHolidayListExpanded={setIsHolidayListExpanded}
+              isEditing={isEditing}
+              editValue={editValue}
+              setEditValue={setEditValue}
+              editColorValue={editColorValue}
+              setEditColorValue={setEditColorValue}
+              saveEdit={saveEdit}
+              cancelEdit={cancelEdit}
+              startEdit={startEdit}
+              deleteItem={deleteItem}
+            />
+          </div>
+        </div>
       </div>
       <LoadingOverlay isVisible={loading} />
     </div>
