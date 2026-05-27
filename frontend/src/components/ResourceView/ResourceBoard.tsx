@@ -48,18 +48,26 @@ export default function ResourceBoard({
   onRefresh
 }: ResourceBoardProps) {
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const effectiveTodayStr = dynamicGanttRange?.today || todayStr;
 
   const loadScopeEndDate = useMemo(() => {
-    const today = parseISO(todayStr);
+    const today = parseISO(effectiveTodayStr);
     const days = resourceLoadScope === '1w' ? 6 : resourceLoadScope === '2w' ? 13 : resourceLoadScope === '1m' ? 29 : resourceLoadScope === '2m' ? 59 : 89;
     return format(addDays(today, days), 'yyyy-MM-dd');
-  }, [todayStr, resourceLoadScope]);
+  }, [effectiveTodayStr, resourceLoadScope]);
+
+  const actualLoadScopeStartDate = useMemo(() => {
+    const today = parseISO(effectiveTodayStr);
+    const days = resourceLoadScope === '1w' ? 6 : resourceLoadScope === '2w' ? 13 : resourceLoadScope === '1m' ? 29 : resourceLoadScope === '2m' ? 59 : 89;
+    return format(addDays(today, -days), 'yyyy-MM-dd');
+  }, [effectiveTodayStr, resourceLoadScope]);
 
   const resourceData = useResourceData(
     projects,
     initialData,
-    dynamicGanttRange?.today || todayStr,
-    loadScopeEndDate
+    effectiveTodayStr,
+    loadScopeEndDate,
+    actualLoadScopeStartDate
   );
 
   return (

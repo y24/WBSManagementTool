@@ -14,6 +14,7 @@ export interface ResourceRow {
   subtasks: ResourceSubtask[];
   overlaidTracks: ResourceSubtask[][];
   loadRate: number;
+  actualLoadRate: number;
   inProgressCount: number;
   delayedCount: number;
   completedCount: number;
@@ -40,11 +41,23 @@ function countWorkingDaysInRange(
   return count;
 }
 
+function getOverlapRange(
+  startStr: string,
+  endStr: string,
+  scopeStartStr: string,
+  scopeEndStr: string
+): { start: string; end: string } | null {
+  const start = startStr > scopeStartStr ? startStr : scopeStartStr;
+  const end = endStr < scopeEndStr ? endStr : scopeEndStr;
+  return start <= end ? { start, end } : null;
+}
+
 export function useResourceData(
   projects: Project[],
   initialData: InitialData | null,
   todayStr: string,
-  loadScopeEndDate?: string
+  loadScopeEndDate?: string,
+  actualLoadScopeStartDate?: string
 ): ResourceRow[] {
   return useMemo(() => {
     if (!initialData) return [];
@@ -71,6 +84,7 @@ export function useResourceData(
         subtasks: [],
         overlaidTracks: [],
         loadRate: 0,
+        actualLoadRate: 0,
         inProgressCount: 0,
         delayedCount: 0,
         completedCount: 0,
@@ -81,6 +95,7 @@ export function useResourceData(
       subtasks: [],
       overlaidTracks: [],
       loadRate: 0,
+      actualLoadRate: 0,
       inProgressCount: 0,
       delayedCount: 0,
       completedCount: 0,
@@ -226,6 +241,9 @@ export function useResourceData(
     const availableWorkingDays = loadScopeEndDate
       ? countWorkingDaysInRange(todayStr, loadScopeEndDate, holidaySet)
       : 0;
+    const actualAvailableWorkingDays = actualLoadScopeStartDate
+      ? countWorkingDaysInRange(actualLoadScopeStartDate, todayStr, holidaySet)
+      : 0;
 
     assigneeMap.forEach(row => {
       if (row.subtasks.length === 0) return;
@@ -247,6 +265,37 @@ export function useResourceData(
           plannedDays += countWorkingDaysInRange(start, end, holidaySet);
         });
         row.loadRate = Math.round((plannedDays / availableWorkingDays) * 100);
+      }
+
+      if (actualAvailableWorkingDays > 0 && actualLoadScopeStartDate) {
+        let actualEffortDays = 0;
+        row.subtasks.forEach(subtask => {
+          if (subtask.status_id === removedStatusId) return;
+          if (!subtask.actual_start_date || !subtask.actual_effort_days) return;
+
+          const actualStart = subtask.actual_start_date.split('T')[0];
+          const actualEnd = subtask.actual_end_date
+            ? subtask.actual_end_date.split('T')[0]
+            : todayStr;
+          if (actualStart > todayStr || actualEnd < actualStart) return;
+
+          const overlap = getOverlapRange(
+            actualStart,
+            actualEnd,
+            actualLoadScopeStartDate,
+            todayStr
+          );
+          if (!overlap) return;
+
+          const totalActualWorkingDays = countWorkingDaysInRange(actualStart, actualEnd, holidaySet);
+          if (totalActualWorkingDays <= 0) return;
+
+          const overlapWorkingDays = countWorkingDaysInRange(overlap.start, overlap.end, holidaySet);
+          if (overlapWorkingDays <= 0) return;
+
+          actualEffortDays += Number(subtask.actual_effort_days) * (overlapWorkingDays / totalActualWorkingDays);
+        });
+        row.actualLoadRate = Math.round((actualEffortDays / actualAvailableWorkingDays) * 100);
       }
     });
 
@@ -272,5 +321,5 @@ export function useResourceData(
 
         return (a.assignee?.member_name || '').localeCompare(b.assignee?.member_name || '', 'ja');
       });
-  }, [projects, initialData, todayStr, loadScopeEndDate]);
+  }, [projects, initialData, todayStr, loadScopeEndDate, actualLoadScopeStartDate]);
 }

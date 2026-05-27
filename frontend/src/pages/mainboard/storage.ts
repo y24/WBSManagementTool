@@ -49,6 +49,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   showResourceTaskType: true,
   colorByTask: false,
   resourceLoadScope: '2w' as const,
+  overlapThreshold: 1,
 };
 
 function readJson<T extends object>(key: string, fallback: T): T {

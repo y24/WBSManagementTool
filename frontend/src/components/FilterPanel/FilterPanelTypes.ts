@@ -34,4 +34,5 @@ export interface DisplayOptions {
   showResourceTaskType: boolean;
   colorByTask: boolean;
   resourceLoadScope: ResourceLoadScope;
+  overlapThreshold: number;
 }

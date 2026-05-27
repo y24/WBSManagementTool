@@ -70,7 +70,8 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
             担当者名
           </div>
           <div className="flex items-center shrink-0 gap-1 px-2">
-            <div className="w-[76px] text-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1" title="スコープ内の予定稼働率">予定稼働率</div>
+            <div className="w-[76px] text-center" title="今日からスコープ終了日までの予定稼働率">計画</div>
+            <div className="w-[76px] text-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1" title="スコープ開始日から今日までの実績稼働率">実績</div>
             <div className="w-10 text-center" title="進行中件数">進行</div>
             <div className="w-10 text-center" title="遅延件数">遅延</div>
             <div className="w-10 text-center" title="完了件数">完了</div>
@@ -129,7 +130,7 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
                   {/* Load rate + status badges */}
                   <div className="flex items-center shrink-0 gap-1 px-2 h-full">
                     {/* Load rate column */}
-                    <div className="w-[76px] flex flex-col items-center justify-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1 gap-0.5">
+                    <div className="w-[76px] flex flex-col items-center justify-center gap-0.5">
                       <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.loadRate)}`}>
                         {row.loadRate > 0 ? `${row.loadRate}%` : '—'}
                       </span>
@@ -140,6 +141,22 @@ export default function ResourceList({ data, width, onScroll, listRef }: Resourc
                             style={{
                               width: `${Math.min(row.loadRate, 100)}%`,
                               backgroundColor: getLoadRateBarColor(row.loadRate),
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="w-[76px] flex flex-col items-center justify-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1 gap-0.5">
+                      <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.actualLoadRate)}`}>
+                        {row.actualLoadRate > 0 ? `${row.actualLoadRate}%` : '—'}
+                      </span>
+                      {row.actualLoadRate > 0 && (
+                        <div className="w-12 h-[3px] rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 mt-0.5">
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${Math.min(row.actualLoadRate, 100)}%`,
+                              backgroundColor: getLoadRateBarColor(row.actualLoadRate),
                             }}
                           />
                         </div>
