@@ -12,6 +12,9 @@ SETTING_LOAD_RATE_WARNING_LOW = "load_rate_warning_low"
 SETTING_LOAD_RATE_NORMAL_HIGH = "load_rate_normal_high"
 SETTING_LOAD_RATE_WARNING_HIGH = "load_rate_warning_high"
 SETTING_LOAD_RATE_OVERLOAD = "load_rate_overload"
+SETTING_SCHEDULE_VARIANCE_NORMAL = "schedule_variance_normal"
+SETTING_SCHEDULE_VARIANCE_WARNING = "schedule_variance_warning"
+SETTING_SCHEDULE_VARIANCE_CRITICAL = "schedule_variance_critical"
 
 def get_system_setting(db: Session, key: str):
     return db.query(models.SystemSetting).filter(models.SystemSetting.setting_key == key).first()

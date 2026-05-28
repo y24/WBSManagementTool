@@ -2,7 +2,14 @@ import React from 'react';
 import { AlertCircle } from 'lucide-react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
 import { getOverlaidLaneHeight, UNASSIGNED_SEPARATOR_HEIGHT } from './ResourceGantt';
-import { getLoadRateBarColor, getLoadRateTextColor, LoadRateThresholds } from '../../utils/loadRateThresholds';
+import {
+  getLoadRateBarColor,
+  getLoadRateTextColor,
+  getScheduleVarianceBadgeClasses,
+  getScheduleVarianceTextColor,
+  LoadRateThresholds,
+  ScheduleVarianceThresholds,
+} from '../../utils/loadRateThresholds';
 
 const getStatusClasses = (count: number, type: 'inProgress' | 'delayed' | 'completed') => {
   if (count <= 0) return 'w-10 text-center text-slate-400 dark:text-slate-500 text-sm';
@@ -36,11 +43,19 @@ interface ResourceListProps {
   data: ResourceRow[];
   width: number;
   loadRateThresholds: LoadRateThresholds;
+  scheduleVarianceThresholds: ScheduleVarianceThresholds;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   listRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export default function ResourceList({ data, width, loadRateThresholds, onScroll, listRef }: ResourceListProps) {
+export default function ResourceList({
+  data,
+  width,
+  loadRateThresholds,
+  scheduleVarianceThresholds,
+  onScroll,
+  listRef
+}: ResourceListProps) {
   return (
     <div
       className="flex flex-col bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 h-full overflow-y-auto overflow-x-scroll"
@@ -56,7 +71,8 @@ export default function ResourceList({ data, width, loadRateThresholds, onScroll
           </div>
           <div className="flex items-center shrink-0 gap-1 px-2">
             <div className="w-[76px] text-center" title="今日からスコープ終了日までの予定稼働率">計画</div>
-            <div className="w-[76px] text-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1" title="スコープ開始日から今日までの実績稼働率">実績</div>
+            <div className="w-[76px] text-center" title="スコープ開始日から今日までの実績稼働率">実績</div>
+            <div className="w-[76px] text-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1" title="スコープ内サブタスクごとの今日時点の実績進捗 - 計画進捗">予実差</div>
             <div className="w-10 text-center" title="進行中件数">進行</div>
             <div className="w-10 text-center" title="遅延件数">遅延</div>
             <div className="w-10 text-center" title="完了件数">完了</div>
@@ -131,7 +147,7 @@ export default function ResourceList({ data, width, loadRateThresholds, onScroll
                         </div>
                       )}
                     </div>
-                    <div className="w-[76px] flex flex-col items-center justify-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1 gap-0.5">
+                    <div className="w-[76px] flex flex-col items-center justify-center gap-0.5">
                       <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.actualLoadRate, loadRateThresholds)}`}>
                         {row.actualLoadRate > 0 ? `${row.actualLoadRate}%` : '—'}
                       </span>
@@ -146,6 +162,16 @@ export default function ResourceList({ data, width, loadRateThresholds, onScroll
                           />
                         </div>
                       )}
+                    </div>
+                    <div className="w-[76px] flex items-center justify-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1">
+                      <span
+                        className={`min-w-[54px] h-6 px-1.5 rounded-md flex items-center justify-center text-[14px] font-semibold leading-none ${getScheduleVarianceTextColor(row.scheduleVariancePt, scheduleVarianceThresholds)} ${getScheduleVarianceBadgeClasses(row.scheduleVariancePt, scheduleVarianceThresholds)}`}
+                        title="0ptに近いほど計画通りです"
+                      >
+                        {row.scheduleVariancePt === null
+                          ? '—'
+                          : `${row.scheduleVariancePt > 0 ? '+' : ''}${row.scheduleVariancePt}pt`}
+                      </span>
                     </div>
 
                     {/* Status badges */}

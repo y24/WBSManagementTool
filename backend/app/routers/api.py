@@ -10,6 +10,15 @@ from ..utils.websocket_manager import manager
 
 router = APIRouter()
 
+DEFAULT_SCHEDULE_VARIANCE_NORMAL = "10"
+DEFAULT_SCHEDULE_VARIANCE_WARNING = "20"
+DEFAULT_SCHEDULE_VARIANCE_CRITICAL = "40"
+
+def _setting_value_or_default(setting, default_value: str):
+    if not setting or setting.setting_value is None or setting.setting_value == "":
+        return default_value
+    return setting.setting_value
+
 # --- WBS Aggregation ---
 @router.get("/wbs", response_model=schemas.WBSResponse)
 def read_wbs(
@@ -169,6 +178,9 @@ def get_initial_data(db: Session = Depends(get_db)):
     load_rate_normal_high = crud.get_system_setting(db, crud.SETTING_LOAD_RATE_NORMAL_HIGH)
     load_rate_warning_high = crud.get_system_setting(db, crud.SETTING_LOAD_RATE_WARNING_HIGH)
     load_rate_overload = crud.get_system_setting(db, crud.SETTING_LOAD_RATE_OVERLOAD)
+    schedule_variance_normal = crud.get_system_setting(db, crud.SETTING_SCHEDULE_VARIANCE_NORMAL)
+    schedule_variance_warning = crud.get_system_setting(db, crud.SETTING_SCHEDULE_VARIANCE_WARNING)
+    schedule_variance_critical = crud.get_system_setting(db, crud.SETTING_SCHEDULE_VARIANCE_CRITICAL)
     
     return {
         "statuses": crud.get_statuses(db),
@@ -185,6 +197,9 @@ def get_initial_data(db: Session = Depends(get_db)):
         "load_rate_normal_high": load_rate_normal_high.setting_value if load_rate_normal_high else None,
         "load_rate_warning_high": load_rate_warning_high.setting_value if load_rate_warning_high else None,
         "load_rate_overload": load_rate_overload.setting_value if load_rate_overload else None,
+        "schedule_variance_normal": _setting_value_or_default(schedule_variance_normal, DEFAULT_SCHEDULE_VARIANCE_NORMAL),
+        "schedule_variance_warning": _setting_value_or_default(schedule_variance_warning, DEFAULT_SCHEDULE_VARIANCE_WARNING),
+        "schedule_variance_critical": _setting_value_or_default(schedule_variance_critical, DEFAULT_SCHEDULE_VARIANCE_CRITICAL),
         "enable_websocket": manager.enabled,
     }
 
@@ -209,6 +224,9 @@ def set_system_setting(key: str, req: schemas.SystemSettingUpdate, db: Session =
         crud.SETTING_LOAD_RATE_NORMAL_HIGH: "稼働率しきい値: 適正上限",
         crud.SETTING_LOAD_RATE_WARNING_HIGH: "稼働率しきい値: 高め",
         crud.SETTING_LOAD_RATE_OVERLOAD: "稼働率しきい値: 過負荷",
+        crud.SETTING_SCHEDULE_VARIANCE_NORMAL: "予実差しきい値: 正常",
+        crud.SETTING_SCHEDULE_VARIANCE_WARNING: "予実差しきい値: 注意",
+        crud.SETTING_SCHEDULE_VARIANCE_CRITICAL: "予実差しきい値: 重大",
     }.get(key, "システム設定")
     return crud.set_system_setting(db, key, req.setting_value, description)
 

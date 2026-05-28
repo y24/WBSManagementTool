@@ -12,11 +12,17 @@ import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import LoadingOverlay from '../components/LoadingOverlay';
 import {
   defaultLoadRateThresholds,
+  defaultScheduleVarianceThresholds,
   getLoadRateThresholds,
+  getScheduleVarianceThresholds,
   isLoadRateThresholdsValid,
+  isScheduleVarianceThresholdsValid,
   LoadRateThresholdInputs,
   parseLoadRateThresholdInputs,
+  parseScheduleVarianceThresholdInputs,
+  ScheduleVarianceThresholdInputs,
   toLoadRateThresholdInputs,
+  toScheduleVarianceThresholdInputs,
 } from '../utils/loadRateThresholds';
 
 type EditingItem = { id: number; field: string } | null;
@@ -57,7 +63,7 @@ const masterSections: { id: MasterSectionId; label: string; description: string 
   { id: 'members', label: '担当者', description: '担当者の追加・並び順変更' },
   { id: 'statuses', label: 'ステータス', description: '名称と表示色の設定' },
   { id: 'status-mapping', label: '自動更新条件', description: '親タスクのステータス判定設定' },
-  { id: 'system-settings', label: 'システム設定', description: 'チケットURL / 稼働率のしきい値' },
+  { id: 'system-settings', label: 'システム設定', description: 'チケットURL / 稼働率・予実差のしきい値' },
   { id: 'holidays', label: '祝日', description: '非稼働日の設定' },
 ];
 
@@ -84,6 +90,9 @@ export default function MasterSettings() {
   const [loadRateThresholds, setLoadRateThresholds] = useState<LoadRateThresholdInputs>(
     toLoadRateThresholdInputs(defaultLoadRateThresholds)
   );
+  const [scheduleVarianceThresholds, setScheduleVarianceThresholds] = useState<ScheduleVarianceThresholdInputs>(
+    toScheduleVarianceThresholdInputs(defaultScheduleVarianceThresholds)
+  );
   const [statusMappingNew, setStatusMappingNew] = useState<number[]>([]);
   const [statusMappingBlocked, setStatusMappingBlocked] = useState<number[]>([]);
   const [statusMappingDone, setStatusMappingDone] = useState<number[]>([]);
@@ -106,6 +115,7 @@ export default function MasterSettings() {
         setData(res.data);
         setTicketUrlTemplate(res.data.ticket_url_template || '');
         setLoadRateThresholds(toLoadRateThresholdInputs(getLoadRateThresholds(res.data)));
+        setScheduleVarianceThresholds(toScheduleVarianceThresholdInputs(getScheduleVarianceThresholds(res.data)));
         setStatusMappingNew(parseMapping(res.data.status_mapping_new));
         setStatusMappingBlocked(parseMapping(res.data.status_mapping_blocked));
         setStatusMappingDone(parseMapping(res.data.status_mapping_done));
@@ -364,6 +374,34 @@ export default function MasterSettings() {
     }
   };
 
+  const saveScheduleVarianceThresholds = async () => {
+    const parsedThresholds = parseScheduleVarianceThresholdInputs(scheduleVarianceThresholds);
+    if (!parsedThresholds) {
+      alert('予実差しきい値は1以上の数値で入力してください。');
+      return;
+    }
+
+    if (!isScheduleVarianceThresholdsValid(parsedThresholds)) {
+      alert('予実差しきい値は1以上、かつ 正常 < 注意 < 重大 の順で入力してください。');
+      return;
+    }
+
+    try {
+      setIsSavingSetting(true);
+      await Promise.all([
+        apiClient.put('/settings/schedule_variance_normal', { setting_value: String(parsedThresholds.normal) }),
+        apiClient.put('/settings/schedule_variance_warning', { setting_value: String(parsedThresholds.warning) }),
+        apiClient.put('/settings/schedule_variance_critical', { setting_value: String(parsedThresholds.critical) }),
+      ]);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert('予実差しきい値の保存に失敗しました。');
+    } finally {
+      setIsSavingSetting(false);
+    }
+  };
+
   const toggleMapping = (category: 'new' | 'blocked' | 'done', statusId: number) => {
     let current: number[] = [];
     let key = '';
@@ -491,9 +529,12 @@ export default function MasterSettings() {
               setTicketUrlTemplate={setTicketUrlTemplate}
               loadRateThresholds={loadRateThresholds}
               setLoadRateThresholds={setLoadRateThresholds}
+              scheduleVarianceThresholds={scheduleVarianceThresholds}
+              setScheduleVarianceThresholds={setScheduleVarianceThresholds}
               isSavingSetting={isSavingSetting}
               saveSetting={saveSetting}
               saveLoadRateThresholds={saveLoadRateThresholds}
+              saveScheduleVarianceThresholds={saveScheduleVarianceThresholds}
             />
           </div>
 

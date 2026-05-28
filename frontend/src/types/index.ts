@@ -47,5 +47,8 @@ export interface InitialData {
   load_rate_normal_high?: string | null;
   load_rate_warning_high?: string | null;
   load_rate_overload?: string | null;
+  schedule_variance_normal?: string | null;
+  schedule_variance_warning?: string | null;
+  schedule_variance_critical?: string | null;
   enable_websocket: boolean;
 }

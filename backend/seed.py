@@ -48,6 +48,9 @@ def seed_data():
             {"setting_key": "load_rate_normal_high", "setting_value": "120", "description": "稼働率しきい値: 適正上限"},
             {"setting_key": "load_rate_warning_high", "setting_value": "150", "description": "稼働率しきい値: 高め"},
             {"setting_key": "load_rate_overload", "setting_value": "200", "description": "稼働率しきい値: 過負荷"},
+            {"setting_key": "schedule_variance_normal", "setting_value": "10", "description": "予実差しきい値: 正常"},
+            {"setting_key": "schedule_variance_warning", "setting_value": "20", "description": "予実差しきい値: 注意"},
+            {"setting_key": "schedule_variance_critical", "setting_value": "40", "description": "予実差しきい値: 重大"},
         ]
 
         for setting in settings:

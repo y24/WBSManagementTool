@@ -358,6 +358,9 @@ class InitialData(BaseModel):
     load_rate_normal_high: Optional[str] = None
     load_rate_warning_high: Optional[str] = None
     load_rate_overload: Optional[str] = None
+    schedule_variance_normal: Optional[str] = None
+    schedule_variance_warning: Optional[str] = None
+    schedule_variance_critical: Optional[str] = None
     enable_websocket: bool = True
 
 # --- Import ---
