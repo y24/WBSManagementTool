@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, AlertTriangle } from 'lucide-react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
 import { getOverlaidLaneHeight, UNASSIGNED_SEPARATOR_HEIGHT } from './ResourceGantt';
 import {
@@ -7,6 +7,7 @@ import {
   getLoadRateTextColor,
   getScheduleVarianceBadgeClasses,
   getScheduleVarianceTextColor,
+  isLoadRateCritical,
   LoadRateThresholds,
   ScheduleVarianceThresholds,
 } from '../../utils/loadRateThresholds';
@@ -84,6 +85,9 @@ export default function ResourceList({
         {data.map((row, rowIndex) => {
           const rowHeight = getOverlaidLaneHeight(row);
           const isDelayed = row.delayedCount > 0;
+          const hasCriticalLoadRate =
+            isLoadRateCritical(row.loadRate, loadRateThresholds) ||
+            isLoadRateCritical(row.actualLoadRate, loadRateThresholds);
           const isFirstUnassigned =
             row.assignee === null &&
             (rowIndex === 0 || data[rowIndex - 1].assignee !== null);
@@ -104,9 +108,7 @@ export default function ResourceList({
                 </div>
               )}
               <div
-                className={`relative flex items-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group/row min-w-max ${
-                  isDelayed ? 'bg-rose-50/40 dark:bg-rose-950/15' : 'bg-white dark:bg-slate-900'
-                }`}
+                className="relative flex items-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group/row min-w-max bg-white dark:bg-slate-900"
                 style={{ height: `${rowHeight}px` }}
               >
                 <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 h-px bg-slate-400 dark:bg-slate-600" />
@@ -122,7 +124,22 @@ export default function ResourceList({
                           {row.assignee?.member_name || '未アサイン'}
                         </span>
                         {isDelayed && (
-                          <AlertCircle size={13} className="shrink-0 text-rose-500" aria-label="遅延あり" />
+                          <span title="遅延しているサブタスクがあります" className="inline-flex shrink-0">
+                            <AlertTriangle
+                              size={14}
+                              className="text-amber-500"
+                              aria-label="遅延あり"
+                            />
+                          </span>
+                        )}
+                        {hasCriticalLoadRate && (
+                          <span title="計画または実績稼働率が赤しきい値です" className="inline-flex shrink-0">
+                            <AlertCircle
+                              size={13}
+                              className="text-rose-500"
+                              aria-label="計画または実績稼働率が赤しきい値です"
+                            />
+                          </span>
                         )}
                       </div>
                     </div>

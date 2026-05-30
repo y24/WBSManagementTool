@@ -127,6 +127,9 @@ export const getLoadRateTextColor = (rate: number, thresholds: LoadRateThreshold
   return 'text-rose-600 dark:text-rose-400';
 };
 
+export const isLoadRateCritical = (rate: number, thresholds: LoadRateThresholds): boolean =>
+  rate > 0 && (rate <= thresholds.criticalLow || rate > thresholds.warningHigh);
+
 export const getLoadRateBarColor = (rate: number, thresholds: LoadRateThresholds): string => {
   if (rate <= thresholds.criticalLow) return '#e11d48';
   if (rate <= thresholds.warningLow) return '#f59e0b';
