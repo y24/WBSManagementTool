@@ -5,14 +5,13 @@ import { getOverlaidLaneHeight, UNASSIGNED_SEPARATOR_HEIGHT } from './ResourceGa
 import {
   getLoadRateBarColor,
   getLoadRateTextColor,
-  getScheduleVarianceBadgeClasses,
   getScheduleVarianceTextColor,
   isLoadRateCritical,
   LoadRateThresholds,
   ScheduleVarianceThresholds,
 } from '../../utils/loadRateThresholds';
 
-const getStatusClasses = (count: number, type: 'inProgress' | 'delayed' | 'completed') => {
+const getStatusClasses = (count: number, type: 'inProgress' | 'delayed') => {
   if (count <= 0) return 'w-10 text-center text-slate-400 dark:text-slate-500 text-sm';
 
   const styleMap = {
@@ -27,12 +26,6 @@ const getStatusClasses = (count: number, type: 'inProgress' | 'delayed' | 'compl
       'text-rose-600 dark:text-rose-400 bg-rose-600/20 dark:bg-rose-400/30 font-bold',
       'text-rose-600 dark:text-rose-400 bg-rose-600/35 dark:bg-rose-400/40 font-bold',
       'text-rose-600 dark:text-rose-400 bg-rose-600/50 dark:bg-rose-400/50 font-bold',
-    ],
-    completed: [
-      'text-slate-500 dark:text-slate-400 bg-slate-500/10 dark:bg-slate-400/15 font-medium',
-      'text-slate-500 dark:text-slate-400 bg-slate-500/15 dark:bg-slate-400/20 font-medium',
-      'text-slate-500 dark:text-slate-400 bg-slate-500/20 dark:bg-slate-400/25 font-medium',
-      'text-slate-500 dark:text-slate-400 bg-slate-500/25 dark:bg-slate-400/30 font-medium',
     ],
   };
 
@@ -73,10 +66,9 @@ export default function ResourceList({
           <div className="flex items-center shrink-0 gap-1 px-2">
             <div className="w-[76px] text-center" title="今日からスコープ終了日までの予定稼働率">計画</div>
             <div className="w-[76px] text-center" title="スコープ開始日から今日までの実績稼働率">実績</div>
-            <div className="w-[76px] text-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1" title="スコープ内サブタスクごとの今日時点の実績進捗 - 計画進捗">予実差</div>
+            <div className="w-[76px] text-center border-l border-r border-slate-200 dark:border-slate-700 px-2 mr-1" title="スコープ内サブタスクごとの今日時点の実績進捗 - 計画進捗">予実差</div>
             <div className="w-10 text-center" title="進行中件数">進行</div>
             <div className="w-10 text-center" title="遅延件数">遅延</div>
-            <div className="w-10 text-center" title="完了件数">完了</div>
           </div>
         </div>
       </div>
@@ -180,9 +172,9 @@ export default function ResourceList({
                         </div>
                       )}
                     </div>
-                    <div className="w-[76px] flex items-center justify-center border-r border-slate-200 dark:border-slate-700 pr-2 mr-1">
+                    <div className="w-[76px] flex items-center justify-center border-l border-r border-slate-200 dark:border-slate-700 px-2 mr-1">
                       <span
-                        className={`min-w-[54px] h-6 px-1.5 rounded-md flex items-center justify-center text-[14px] font-semibold leading-none ${getScheduleVarianceTextColor(row.scheduleVariancePt, scheduleVarianceThresholds)} ${getScheduleVarianceBadgeClasses(row.scheduleVariancePt, scheduleVarianceThresholds)}`}
+                        className={`min-w-[54px] h-6 px-1.5 flex items-center justify-center text-[13px] font-normal leading-none ${getScheduleVarianceTextColor(row.scheduleVariancePt, scheduleVarianceThresholds)}`}
                         title="0ptに近いほど計画通りです"
                       >
                         {row.scheduleVariancePt === null
@@ -198,9 +190,6 @@ export default function ResourceList({
                       </div>
                       <div className={getStatusClasses(row.delayedCount, 'delayed')}>
                         {row.delayedCount}
-                      </div>
-                      <div className={getStatusClasses(row.completedCount, 'completed')}>
-                        {row.completedCount}
                       </div>
                     </div>
                   </div>

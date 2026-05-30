@@ -77,7 +77,13 @@ export default function ResourceBoard({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-      <ResourceSummaryBar data={resourceData} loadRateThresholds={loadRateThresholds} />
+      <ResourceSummaryBar
+        data={resourceData}
+        loadRateThresholds={loadRateThresholds}
+        initialData={initialData}
+        todayStr={effectiveTodayStr}
+        loadScopeEndDate={loadScopeEndDate}
+      />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         <div
