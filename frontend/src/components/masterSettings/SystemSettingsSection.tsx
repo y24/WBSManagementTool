@@ -1,5 +1,15 @@
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
+import { Plus, X } from 'lucide-react';
 import { LoadRateThresholdInputs, ScheduleVarianceThresholdInputs } from '../../utils/loadRateThresholds';
+import { MstStatus } from '../../types';
+
+type DevOpsSyncField =
+  | 'planned_start_date'
+  | 'planned_end_date'
+  | 'actual_start_date'
+  | 'actual_end_date';
+
+type DevOpsSyncStatusConditions = Record<DevOpsSyncField, number[]>;
 
 interface SystemSettingsSectionProps {
   ticketUrlTemplate: string;
@@ -8,6 +18,9 @@ interface SystemSettingsSectionProps {
   setLoadRateThresholds: Dispatch<SetStateAction<LoadRateThresholdInputs>>;
   scheduleVarianceThresholds: ScheduleVarianceThresholdInputs;
   setScheduleVarianceThresholds: Dispatch<SetStateAction<ScheduleVarianceThresholdInputs>>;
+  statuses: MstStatus[];
+  devOpsSyncStatusConditions: DevOpsSyncStatusConditions;
+  saveDevOpsSyncStatusConditions: (conditions: DevOpsSyncStatusConditions) => void;
   isSavingSetting: boolean;
   saveSetting: (key: string, value: string) => void;
   saveLoadRateThresholds: () => void;
@@ -21,11 +34,18 @@ export function SystemSettingsSection({
   setLoadRateThresholds,
   scheduleVarianceThresholds,
   setScheduleVarianceThresholds,
+  statuses,
+  devOpsSyncStatusConditions,
+  saveDevOpsSyncStatusConditions,
   isSavingSetting,
   saveSetting,
   saveLoadRateThresholds,
   saveScheduleVarianceThresholds,
 }: SystemSettingsSectionProps) {
+  const [isAddingSyncRule, setIsAddingSyncRule] = useState(false);
+  const [selectedSyncField, setSelectedSyncField] = useState<DevOpsSyncField>('actual_end_date');
+  const [selectedSyncStatusId, setSelectedSyncStatusId] = useState('');
+
   const thresholdFields: {
     key: keyof LoadRateThresholdInputs;
     label: string;
@@ -62,6 +82,53 @@ export function SystemSettingsSection({
     }));
   };
 
+  const syncFields: { key: DevOpsSyncField; label: string }[] = [
+    { key: 'planned_start_date', label: '開始日(予定)' },
+    { key: 'planned_end_date', label: '終了日(予定)' },
+    { key: 'actual_start_date', label: '開始日(実績)' },
+    { key: 'actual_end_date', label: '終了日(実績)' },
+  ];
+
+  const activeSyncRules = syncFields
+    .map(field => ({
+      field: field.key,
+      label: field.label,
+      statusIds: devOpsSyncStatusConditions[field.key] ?? [],
+    }))
+    .filter(rule => rule.statusIds.length > 0);
+
+  const selectedStatusIdNumber = Number(selectedSyncStatusId);
+  const canAddSyncRule =
+    selectedSyncField &&
+    selectedSyncStatusId !== '' &&
+    Number.isInteger(selectedStatusIdNumber) &&
+    !devOpsSyncStatusConditions[selectedSyncField]?.includes(selectedStatusIdNumber);
+
+  const addSyncRuleStatus = () => {
+    if (!canAddSyncRule) return;
+    const current = devOpsSyncStatusConditions[selectedSyncField] ?? [];
+    saveDevOpsSyncStatusConditions({
+      ...devOpsSyncStatusConditions,
+      [selectedSyncField]: [...current, selectedStatusIdNumber],
+    });
+  };
+
+  const removeSyncRuleStatus = (field: DevOpsSyncField, statusId: number) => {
+    saveDevOpsSyncStatusConditions({
+      ...devOpsSyncStatusConditions,
+      [field]: (devOpsSyncStatusConditions[field] ?? []).filter(id => id !== statusId),
+    });
+  };
+
+  const clearSyncRule = (field: DevOpsSyncField) => {
+    saveDevOpsSyncStatusConditions({
+      ...devOpsSyncStatusConditions,
+      [field]: [],
+    });
+  };
+
+  const getStatus = (statusId: number) => statuses.find(status => status.id === statusId);
+
   return (
     <section className="master-section">
       <div className="master-section-header">
@@ -96,6 +163,124 @@ export function SystemSettingsSection({
           >
             {isSavingSetting ? '保存中...' : '保存'}
           </button>
+        </div>
+      </div>
+
+      <div className="master-setting-card mt-4">
+        <div className="master-setting-info flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <label className="master-setting-label">Azure DevOps 連携条件</label>
+            <p className="master-setting-desc">
+              特定のステータスのときのみ連携したい項目を設定します。ここで設定していない項目は常に連携されます。
+            </p>
+          </div>
+          <button
+            type="button"
+            className="master-save-btn inline-flex items-center gap-1.5 px-3 py-2"
+            onClick={() => setIsAddingSyncRule(prev => !prev)}
+            disabled={isSavingSetting}
+          >
+            <Plus size={15} />
+            条件
+          </button>
+        </div>
+
+        {isAddingSyncRule && (
+          <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+              <label className="flex flex-col gap-1">
+                <span className="master-setting-desc font-semibold">連携項目</span>
+                <select
+                  className="master-input"
+                  value={selectedSyncField}
+                  onChange={e => setSelectedSyncField(e.target.value as DevOpsSyncField)}
+                >
+                  {syncFields.map(field => (
+                    <option key={field.key} value={field.key}>{field.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="master-setting-desc font-semibold">同期するステータス</span>
+                <select
+                  className="master-input"
+                  value={selectedSyncStatusId}
+                  onChange={e => setSelectedSyncStatusId(e.target.value)}
+                >
+                  <option value="">選択してください</option>
+                  {statuses.map(status => (
+                    <option key={status.id} value={status.id}>
+                      {status.status_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  className={`master-save-btn w-full sm:w-auto ${!canAddSyncRule || isSavingSetting ? 'opacity-50' : ''}`}
+                  onClick={addSyncRuleStatus}
+                  disabled={!canAddSyncRule || isSavingSetting}
+                >
+                  追加
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-col gap-2">
+          {activeSyncRules.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400">
+              条件付き連携はありません。
+            </div>
+          ) : (
+            activeSyncRules.map(rule => (
+              <div
+                key={rule.field}
+                className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center"
+              >
+                <div className="min-w-32 text-sm font-semibold text-slate-700 dark:text-slate-100">
+                  {rule.label}
+                </div>
+                <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+                  {rule.statusIds.map(statusId => {
+                    const status = getStatus(statusId);
+                    return (
+                      <span
+                        key={statusId}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                      >
+                        <span
+                          className="inline-block h-2.5 w-2.5 rounded-full border border-black/10 dark:border-white/10"
+                          style={{ backgroundColor: status?.color_code ?? '#94a3b8' }}
+                          aria-hidden="true"
+                        />
+                        {status?.status_name ?? `ID:${statusId}`}
+                        <button
+                          type="button"
+                          className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                          onClick={() => removeSyncRuleStatus(rule.field, statusId)}
+                          disabled={isSavingSetting}
+                          title={`${status?.status_name ?? statusId} を条件から外す`}
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="self-start text-xs font-semibold text-slate-500 hover:text-slate-800 disabled:opacity-50 dark:text-slate-400 dark:hover:text-slate-100 sm:self-center"
+                  onClick={() => clearSyncRule(rule.field)}
+                  disabled={isSavingSetting}
+                >
+                  常に連携
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

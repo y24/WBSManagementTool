@@ -11,6 +11,7 @@ from .base import (
     SETTING_SCHEDULE_VARIANCE_NORMAL,
     SETTING_SCHEDULE_VARIANCE_WARNING,
     SETTING_SCHEDULE_VARIANCE_CRITICAL,
+    SETTING_AZURE_DEVOPS_SYNC_STATUS_CONDITIONS,
     get_system_setting,
     set_system_setting,
     get_status_ids_by_category,

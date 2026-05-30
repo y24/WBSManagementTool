@@ -30,6 +30,7 @@ class SyncTarget:
     planned_end_date: object
     actual_start_date: object
     actual_end_date: object
+    status_id: Optional[int]
     updated_at: datetime
 
 
@@ -62,6 +63,7 @@ class SyncTargetRepository:
                     planned_end_date=row.planned_end_date,
                     actual_start_date=row.actual_start_date,
                     actual_end_date=row.actual_end_date,
+                    status_id=row.status_id,
                     updated_at=row.updated_at,
                 )
             )
@@ -84,6 +86,7 @@ class SyncTargetRepository:
                     planned_end_date=row.planned_end_date,
                     actual_start_date=row.actual_start_date,
                     actual_end_date=row.actual_end_date,
+                    status_id=row.status_id,
                     updated_at=row.updated_at,
                 )
             )
@@ -106,6 +109,7 @@ class SyncTargetRepository:
                     planned_end_date=row.planned_end_date,
                     actual_start_date=row.actual_start_date,
                     actual_end_date=row.actual_end_date,
+                    status_id=row.status_id,
                     updated_at=row.updated_at,
                 )
             )

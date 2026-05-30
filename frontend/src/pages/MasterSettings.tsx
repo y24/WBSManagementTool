@@ -34,6 +34,14 @@ type MasterSectionId =
   | 'system-settings'
   | 'holidays';
 
+type DevOpsSyncField =
+  | 'planned_start_date'
+  | 'planned_end_date'
+  | 'actual_start_date'
+  | 'actual_end_date';
+
+type DevOpsSyncStatusConditions = Record<DevOpsSyncField, number[]>;
+
 interface NewStatus {
   status_name: string;
   color_code: string;
@@ -57,6 +65,34 @@ const parseMapping = (value?: string | null) =>
     .split(',')
     .map(v => parseInt(v.trim(), 10))
     .filter(n => !Number.isNaN(n));
+
+const emptyDevOpsSyncStatusConditions = (): DevOpsSyncStatusConditions => ({
+  planned_start_date: [],
+  planned_end_date: [],
+  actual_start_date: [],
+  actual_end_date: [],
+});
+
+const parseDevOpsSyncStatusConditions = (value?: string | null): DevOpsSyncStatusConditions => {
+  const conditions = emptyDevOpsSyncStatusConditions();
+  if (!value) return conditions;
+
+  try {
+    const parsed = JSON.parse(value) as Partial<Record<DevOpsSyncField, unknown>>;
+    (Object.keys(conditions) as DevOpsSyncField[]).forEach(field => {
+      const fieldValue = parsed[field];
+      if (Array.isArray(fieldValue)) {
+        conditions[field] = fieldValue
+          .map(statusId => Number(statusId))
+          .filter(statusId => Number.isInteger(statusId));
+      }
+    });
+  } catch {
+    return conditions;
+  }
+
+  return conditions;
+};
 
 const masterSections: { id: MasterSectionId; label: string; description: string }[] = [
   { id: 'subtask-types', label: 'サブタスク種別', description: '工程種別の追加・並び順変更' },
@@ -93,6 +129,9 @@ export default function MasterSettings() {
   const [scheduleVarianceThresholds, setScheduleVarianceThresholds] = useState<ScheduleVarianceThresholdInputs>(
     toScheduleVarianceThresholdInputs(defaultScheduleVarianceThresholds)
   );
+  const [devOpsSyncStatusConditions, setDevOpsSyncStatusConditions] = useState<DevOpsSyncStatusConditions>(
+    emptyDevOpsSyncStatusConditions()
+  );
   const [statusMappingNew, setStatusMappingNew] = useState<number[]>([]);
   const [statusMappingBlocked, setStatusMappingBlocked] = useState<number[]>([]);
   const [statusMappingDone, setStatusMappingDone] = useState<number[]>([]);
@@ -116,6 +155,7 @@ export default function MasterSettings() {
         setTicketUrlTemplate(res.data.ticket_url_template || '');
         setLoadRateThresholds(toLoadRateThresholdInputs(getLoadRateThresholds(res.data)));
         setScheduleVarianceThresholds(toScheduleVarianceThresholdInputs(getScheduleVarianceThresholds(res.data)));
+        setDevOpsSyncStatusConditions(parseDevOpsSyncStatusConditions(res.data.azure_devops_sync_status_conditions));
         setStatusMappingNew(parseMapping(res.data.status_mapping_new));
         setStatusMappingBlocked(parseMapping(res.data.status_mapping_blocked));
         setStatusMappingDone(parseMapping(res.data.status_mapping_done));
@@ -428,6 +468,11 @@ export default function MasterSettings() {
     saveSetting(key, next.join(','));
   };
 
+  const saveDevOpsSyncStatusConditions = (nextConditions: DevOpsSyncStatusConditions) => {
+    setDevOpsSyncStatusConditions(nextConditions);
+    saveSetting('azure_devops_sync_status_conditions', JSON.stringify(nextConditions));
+  };
+
   const isEditing = (id: number, field: string) => editing?.id === id && editing?.field === field;
 
 
@@ -531,6 +576,9 @@ export default function MasterSettings() {
               setLoadRateThresholds={setLoadRateThresholds}
               scheduleVarianceThresholds={scheduleVarianceThresholds}
               setScheduleVarianceThresholds={setScheduleVarianceThresholds}
+              statuses={data?.statuses ?? []}
+              devOpsSyncStatusConditions={devOpsSyncStatusConditions}
+              saveDevOpsSyncStatusConditions={saveDevOpsSyncStatusConditions}
               isSavingSetting={isSavingSetting}
               saveSetting={saveSetting}
               saveLoadRateThresholds={saveLoadRateThresholds}

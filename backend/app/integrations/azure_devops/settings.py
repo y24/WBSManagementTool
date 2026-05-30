@@ -1,7 +1,7 @@
 import os
 import json
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, List
 
 
 @dataclass
@@ -17,6 +17,7 @@ class AzureDevOpsSettings:
     clear_remote_when_local_null: bool = False
     suppress_notifications: bool = False
     use_mock: bool = True
+    sync_status_conditions: Dict[str, List[int]] = field(default_factory=dict)
     field_mapping: Dict[str, str] = field(
         default_factory=lambda: {
             "planned_start_date": "Microsoft.VSTS.Scheduling.StartDate",
@@ -52,6 +53,19 @@ def load_settings() -> AzureDevOpsSettings:
         try:
             s.field_mapping = json.loads(field_mapping_env)
         except json.JSONDecodeError:
+            pass
+
+    status_conditions_env = os.getenv("AZURE_DEVOPS_SYNC_STATUS_CONDITIONS")
+    if status_conditions_env:
+        try:
+            parsed = json.loads(status_conditions_env)
+            if isinstance(parsed, dict):
+                s.sync_status_conditions = {
+                    key: [int(status_id) for status_id in value]
+                    for key, value in parsed.items()
+                    if isinstance(value, list)
+                }
+        except (TypeError, ValueError, json.JSONDecodeError):
             pass
 
     return s

@@ -8,7 +8,7 @@ from datetime import date, datetime, timezone
 from app import models
 from app.integrations.azure_devops import router as devops_router
 from app.integrations.azure_devops.client import AzureDevOpsMockClient
-from app.integrations.azure_devops.hash_service import compute_date_hash
+from app.integrations.azure_devops.hash_service import compute_payload_hash
 from app.integrations.azure_devops.repositories import DevopsSyncStateRepository
 from app.integrations.azure_devops.settings import AzureDevOpsSettings
 from app.integrations.azure_devops.sync_service import SyncResult, SyncSummary, run_sync
@@ -63,6 +63,27 @@ def _make_task(db, project_id, ticket_id=201, sync=True, planned_start=date(2026
     return t
 
 
+def _make_subtask(
+    db,
+    task_id,
+    ticket_id=301,
+    status_id=1,
+    actual_end=date(2026, 5, 8),
+):
+    s = models.Subtask(
+        task_id=task_id,
+        subtask_detail="Test Subtask",
+        ticket_id=ticket_id,
+        sync_to_azure_devops=True,
+        actual_end_date=actual_end,
+        status_id=status_id,
+    )
+    db.add(s)
+    db.commit()
+    db.refresh(s)
+    return s
+
+
 # ---------------------------------------------------------------------------
 # Tests: sync_to_azure_devops flag filtering
 # ---------------------------------------------------------------------------
@@ -111,12 +132,11 @@ class TestHashComparison:
         proj = _make_project(db_session, ticket_id=101)
 
         # Pre-set last_sent_hash to the current hash
-        current_hash = compute_date_hash(
-            proj.planned_start_date,
-            proj.planned_end_date,
-            proj.actual_start_date,
-            proj.actual_end_date,
-        )
+        current_hash = compute_payload_hash({
+            "planned_start_date": proj.planned_start_date,
+            "planned_end_date": proj.planned_end_date,
+            "actual_start_date": proj.actual_start_date,
+        })
         state = models.DevopsSyncState(
             entity_type="project",
             entity_id=proj.id,
@@ -209,9 +229,11 @@ class TestPatchBehavior:
 
         state_repo = DevopsSyncStateRepository(db_session)
         state = state_repo.get_by_entity("project", proj.id)
-        expected_hash = compute_date_hash(
-            proj.planned_start_date, proj.planned_end_date, None, None
-        )
+        expected_hash = compute_payload_hash({
+            "planned_start_date": proj.planned_start_date,
+            "planned_end_date": proj.planned_end_date,
+            "actual_start_date": None,
+        })
         assert state is not None
         assert state.last_sent_hash == expected_hash
         assert state.last_status == "success"
@@ -233,6 +255,33 @@ class TestPatchBehavior:
         # Hash must remain None (not updated)
         assert state.last_sent_hash is None
         assert state.last_status == "failed"
+
+
+class TestStatusConditionBehavior:
+    def test_actual_end_date_is_not_patched_when_status_does_not_match(self, db_session, settings):
+        proj = _make_project(db_session, ticket_id=None)
+        task = _make_task(db_session, proj.id, ticket_id=None)
+        _make_subtask(db_session, task.id, ticket_id=301, status_id=2)
+
+        settings.sync_status_conditions = {"actual_end_date": [4]}
+        client = AzureDevOpsMockClient()
+        result = run_sync(db_session, dry_run=False, settings=settings, client=client)
+
+        assert result.summary.skipped_same_remote_value == 1
+        assert result.summary.updated == 0
+        assert "Custom.ActualEndDate" not in client.get_stored_fields(301)
+
+    def test_actual_end_date_is_patched_when_status_matches(self, db_session, settings):
+        proj = _make_project(db_session, ticket_id=None)
+        task = _make_task(db_session, proj.id, ticket_id=None)
+        _make_subtask(db_session, task.id, ticket_id=301, status_id=4)
+
+        settings.sync_status_conditions = {"actual_end_date": [4]}
+        client = AzureDevOpsMockClient()
+        result = run_sync(db_session, dry_run=False, settings=settings, client=client)
+
+        assert result.summary.updated == 1
+        assert client.get_stored_fields(301).get("Custom.ActualEndDate") == "2026-05-08T00:00:00+09:00"
 
 
 # ---------------------------------------------------------------------------

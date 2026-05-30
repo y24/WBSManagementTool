@@ -32,3 +32,21 @@ def test_schedule_variance_threshold_defaults(db_session):
     assert initial_data["schedule_variance_normal"] == "10"
     assert initial_data["schedule_variance_warning"] == "20"
     assert initial_data["schedule_variance_critical"] == "40"
+
+
+def test_devops_sync_status_conditions_default_actual_end_done(db_session):
+    initial_data = get_initial_data(db_session)
+
+    assert initial_data["azure_devops_sync_status_conditions"] == '{"actual_end_date": [4]}'
+
+
+def test_devops_sync_status_conditions_round_trip(db_session):
+    setting = set_system_setting(
+        "azure_devops_sync_status_conditions",
+        schemas.SystemSettingUpdate(setting_value='{"actual_end_date":[4]}'),
+        db_session,
+    )
+    assert setting.setting_value == '{"actual_end_date":[4]}'
+
+    initial_data = get_initial_data(db_session)
+    assert initial_data["azure_devops_sync_status_conditions"] == '{"actual_end_date":[4]}'

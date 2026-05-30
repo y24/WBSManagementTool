@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
 import httpx
+import json
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -18,6 +19,9 @@ def _setting_value_or_default(setting, default_value: str):
     if not setting or setting.setting_value is None or setting.setting_value == "":
         return default_value
     return setting.setting_value
+
+def _default_devops_sync_status_conditions(_db: Session) -> str:
+    return json.dumps({"actual_end_date": [4]}, ensure_ascii=True)
 
 # --- WBS Aggregation ---
 @router.get("/wbs", response_model=schemas.WBSResponse)
@@ -181,6 +185,7 @@ def get_initial_data(db: Session = Depends(get_db)):
     schedule_variance_normal = crud.get_system_setting(db, crud.SETTING_SCHEDULE_VARIANCE_NORMAL)
     schedule_variance_warning = crud.get_system_setting(db, crud.SETTING_SCHEDULE_VARIANCE_WARNING)
     schedule_variance_critical = crud.get_system_setting(db, crud.SETTING_SCHEDULE_VARIANCE_CRITICAL)
+    devops_sync_status_conditions = crud.get_system_setting(db, crud.SETTING_AZURE_DEVOPS_SYNC_STATUS_CONDITIONS)
     
     return {
         "statuses": crud.get_statuses(db),
@@ -200,6 +205,10 @@ def get_initial_data(db: Session = Depends(get_db)):
         "schedule_variance_normal": _setting_value_or_default(schedule_variance_normal, DEFAULT_SCHEDULE_VARIANCE_NORMAL),
         "schedule_variance_warning": _setting_value_or_default(schedule_variance_warning, DEFAULT_SCHEDULE_VARIANCE_WARNING),
         "schedule_variance_critical": _setting_value_or_default(schedule_variance_critical, DEFAULT_SCHEDULE_VARIANCE_CRITICAL),
+        "azure_devops_sync_status_conditions": _setting_value_or_default(
+            devops_sync_status_conditions,
+            _default_devops_sync_status_conditions(db),
+        ),
         "enable_websocket": manager.enabled,
     }
 
@@ -227,6 +236,7 @@ def set_system_setting(key: str, req: schemas.SystemSettingUpdate, db: Session =
         crud.SETTING_SCHEDULE_VARIANCE_NORMAL: "予実差しきい値: 正常",
         crud.SETTING_SCHEDULE_VARIANCE_WARNING: "予実差しきい値: 注意",
         crud.SETTING_SCHEDULE_VARIANCE_CRITICAL: "予実差しきい値: 重大",
+        crud.SETTING_AZURE_DEVOPS_SYNC_STATUS_CONDITIONS: "Azure DevOps連携: ステータス別同期条件",
     }.get(key, "システム設定")
     return crud.set_system_setting(db, key, req.setting_value, description)
 

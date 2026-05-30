@@ -12,12 +12,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import json
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
+from app import crud
+
 from .client import AzureDevOpsClientBase, create_client
-from .hash_service import compute_date_hash, normalize_date, normalize_devops_date
+from .hash_service import compute_payload_hash, normalize_date, normalize_devops_date
 from .repositories import (
     DevopsSyncStateRepository,
     SyncLockRepository,
@@ -66,15 +69,58 @@ class SyncResult:
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _load_sync_status_conditions(db: Session) -> Dict[str, List[int]]:
+    setting = crud.get_system_setting(db, crud.SETTING_AZURE_DEVOPS_SYNC_STATUS_CONDITIONS)
+    if setting and setting.setting_value:
+        try:
+            parsed = json.loads(setting.setting_value)
+            if isinstance(parsed, dict):
+                return {
+                    key: [int(status_id) for status_id in value]
+                    for key, value in parsed.items()
+                    if isinstance(value, list)
+                }
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return {}
+
+    return {"actual_end_date": [4]}
+
+
+def _is_field_sync_allowed(
+    target: SyncTarget,
+    wbs_attr: str,
+    status_conditions: Dict[str, List[int]],
+) -> bool:
+    allowed_status_ids = status_conditions.get(wbs_attr) or []
+    if not allowed_status_ids:
+        return True
+    return target.status_id in allowed_status_ids
+
+
+def _build_active_payload(
+    target: SyncTarget,
+    field_mapping: Dict[str, str],
+    status_conditions: Dict[str, List[int]],
+) -> Dict[str, Any]:
+    return {
+        wbs_attr: getattr(target, wbs_attr, None)
+        for wbs_attr in field_mapping.keys()
+        if _is_field_sync_allowed(target, wbs_attr, status_conditions)
+    }
+
 def _build_patch_ops(
     target: SyncTarget,
     devops_fields: Dict[str, Any],
     field_mapping: Dict[str, str],
     clear_remote_when_local_null: bool,
+    status_conditions: Dict[str, List[int]],
 ) -> List[Dict[str, Any]]:
     """Return a list of JSON Patch operations for fields that differ."""
     ops = []
     for wbs_attr, devops_field in field_mapping.items():
+        if not _is_field_sync_allowed(target, wbs_attr, status_conditions):
+            continue
+
         wbs_raw = getattr(target, wbs_attr, None)
         wbs_val = normalize_date(wbs_raw)
         devops_val = normalize_devops_date(devops_fields.get(devops_field))
@@ -127,6 +173,7 @@ def run_sync(
         settings = get_settings()
     if client is None:
         client = create_client(settings)
+    sync_status_conditions = settings.sync_status_conditions or _load_sync_status_conditions(db)
 
     started_at = datetime.now(timezone.utc)
     job_id = started_at.strftime("%Y%m%d-%H%M%S")
@@ -158,11 +205,12 @@ def run_sync(
             continue
 
         work_item_id = target.raw_ticket_id
-        current_hash = compute_date_hash(
-            target.planned_start_date,
-            target.planned_end_date,
-            target.actual_start_date,
-            target.actual_end_date,
+        current_hash = compute_payload_hash(
+            _build_active_payload(
+                target,
+                settings.field_mapping,
+                sync_status_conditions,
+            )
         )
 
         state = state_repo.get_by_entity(target.entity_type, target.entity_id)
@@ -252,6 +300,7 @@ def run_sync(
             devops_item.fields,
             settings.field_mapping,
             settings.clear_remote_when_local_null,
+            sync_status_conditions,
         )
 
         if not patch_ops:

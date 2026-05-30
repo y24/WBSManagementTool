@@ -1,7 +1,7 @@
 import hashlib
 import json
 from datetime import date
-from typing import Optional, Union
+from typing import Mapping, Optional, Union
 
 
 def normalize_date(value: Optional[Union[date, str]]) -> Optional[str]:
@@ -35,4 +35,14 @@ def compute_date_hash(
         "planned_start_date": normalize_date(planned_start_date),
     }
     json_str = json.dumps(payload, sort_keys=True, ensure_ascii=True)
+    return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
+
+
+def compute_payload_hash(payload: Mapping[str, Optional[Union[date, str]]]) -> str:
+    """Return SHA-256 hex digest of the active Azure DevOps sync payload."""
+    normalized = {
+        key: normalize_date(value)
+        for key, value in payload.items()
+    }
+    json_str = json.dumps(normalized, sort_keys=True, ensure_ascii=True)
     return hashlib.sha256(json_str.encode("utf-8")).hexdigest()

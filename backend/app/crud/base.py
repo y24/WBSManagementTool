@@ -15,6 +15,7 @@ SETTING_LOAD_RATE_OVERLOAD = "load_rate_overload"
 SETTING_SCHEDULE_VARIANCE_NORMAL = "schedule_variance_normal"
 SETTING_SCHEDULE_VARIANCE_WARNING = "schedule_variance_warning"
 SETTING_SCHEDULE_VARIANCE_CRITICAL = "schedule_variance_critical"
+SETTING_AZURE_DEVOPS_SYNC_STATUS_CONDITIONS = "azure_devops_sync_status_conditions"
 
 def get_system_setting(db: Session, key: str):
     return db.query(models.SystemSetting).filter(models.SystemSetting.setting_key == key).first()

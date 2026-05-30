@@ -51,6 +51,7 @@ def seed_data():
             {"setting_key": "schedule_variance_normal", "setting_value": "10", "description": "予実差しきい値: 正常"},
             {"setting_key": "schedule_variance_warning", "setting_value": "20", "description": "予実差しきい値: 注意"},
             {"setting_key": "schedule_variance_critical", "setting_value": "40", "description": "予実差しきい値: 重大"},
+            {"setting_key": "azure_devops_sync_status_conditions", "setting_value": "{\"actual_end_date\": [4]}", "description": "Azure DevOps連携: ステータス別同期条件"},
         ]
 
         for setting in settings:
