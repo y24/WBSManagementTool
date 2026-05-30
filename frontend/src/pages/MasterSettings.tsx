@@ -425,17 +425,13 @@ export default function MasterSettings() {
     }
 
     if (!isScheduleVarianceThresholdsValid(parsedThresholds)) {
-      alert('予実差しきい値は1以上、かつ 正常 < 注意 < 重大 の順で入力してください。');
+      alert('予実差の重大しきい値は1以上の数値で入力してください。');
       return;
     }
 
     try {
       setIsSavingSetting(true);
-      await Promise.all([
-        apiClient.put('/settings/schedule_variance_normal', { setting_value: String(parsedThresholds.normal) }),
-        apiClient.put('/settings/schedule_variance_warning', { setting_value: String(parsedThresholds.warning) }),
-        apiClient.put('/settings/schedule_variance_critical', { setting_value: String(parsedThresholds.critical) }),
-      ]);
+      await apiClient.put('/settings/schedule_variance_critical', { setting_value: String(parsedThresholds.critical) });
       fetchData();
     } catch (err) {
       console.error(err);

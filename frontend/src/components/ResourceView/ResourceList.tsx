@@ -64,10 +64,10 @@ export default function ResourceList({
             担当者名
           </div>
           <div className="flex items-center shrink-0 gap-1 px-2">
-            <div className="w-[76px] text-center" title="今日からスコープ終了日までの予定稼働率">計画</div>
-            <div className="w-[76px] text-center" title="スコープ開始日から今日までの実績稼働率">実績</div>
+            <div className="w-[76px] text-center" title="今日からスコープ終了日までの予定稼働率">予定稼働率</div>
+            <div className="w-[76px] text-center" title="スコープ開始日から今日までの実績稼働率">実績稼働率</div>
             <div className="w-[76px] text-center border-l border-r border-slate-200 dark:border-slate-700 px-2 mr-1" title="スコープ内サブタスクごとの今日時点の実績進捗 - 計画進捗">予実差</div>
-            <div className="w-10 text-center" title="進行中件数">進行</div>
+            <div className="w-10 text-center" title="進行中件数">進行中</div>
             <div className="w-10 text-center" title="遅延件数">遅延</div>
           </div>
         </div>

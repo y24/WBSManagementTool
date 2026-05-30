@@ -38,8 +38,6 @@ export function AssigneeViewSettingsSection({
     label: string;
     color: string;
   }[] = [
-    { key: 'normal', label: '正常', color: '#059669' },
-    { key: 'warning', label: '注意', color: '#f59e0b' },
     { key: 'critical', label: '重大', color: '#e11d48' },
   ];
 
@@ -111,7 +109,7 @@ export function AssigneeViewSettingsSection({
         <div className="master-setting-info">
           <label className="master-setting-label">予実差しきい値</label>
           <p className="master-setting-desc">
-            担当者ビューの予実差（pt）の色分けに使用します。0ptに近いほど計画通りです。
+            担当者ビューの予実差（pt）が重大しきい値以上になった場合のみ赤色で表示します。
           </p>
         </div>
 
