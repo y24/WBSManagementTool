@@ -37,7 +37,7 @@ export const useDetailModal = ({
     setEditingItem({
       type,
       id: item.id,
-      name: type === 'project' ? item.project_name : type === 'task' ? item.task_name : `S-${item.id}`
+      name: type === 'project' ? item.project_name : type === 'task' ? item.task_name : `ID: ${item.id}`
     });
     setDetailValue(type === 'subtask' ? (item.subtask_detail || '') : (item.detail || ''));
     setTicketIdValue(item.ticket_id != null ? String(item.ticket_id) : '');

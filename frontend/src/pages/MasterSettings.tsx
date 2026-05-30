@@ -6,6 +6,7 @@ import { MemberSection } from '../components/masterSettings/MemberSection';
 import { StatusMappingSection } from '../components/masterSettings/StatusMappingSection';
 import { StatusSection } from '../components/masterSettings/StatusSection';
 import { SubtaskTypeSection } from '../components/masterSettings/SubtaskTypeSection';
+import { AssigneeViewSettingsSection } from '../components/masterSettings/AssigneeViewSettingsSection';
 import { SystemSettingsSection } from '../components/masterSettings/SystemSettingsSection';
 import { useWebSocket } from '../api/websocket';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
@@ -32,6 +33,7 @@ type MasterSectionId =
   | 'statuses'
   | 'status-mapping'
   | 'system-settings'
+  | 'assignee-view'
   | 'holidays';
 
 type DevOpsSyncField =
@@ -99,7 +101,8 @@ const masterSections: { id: MasterSectionId; label: string; description: string 
   { id: 'members', label: '担当者', description: '担当者の追加・並び順変更' },
   { id: 'statuses', label: 'ステータス', description: '名称と表示色の設定' },
   { id: 'status-mapping', label: '自動更新条件', description: '親タスクのステータス判定設定' },
-  { id: 'system-settings', label: 'システム設定', description: 'チケットURL / 稼働率・予実差のしきい値' },
+  { id: 'system-settings', label: 'システム設定', description: 'チケットURL / Azure DevOps連携条件' },
+  { id: 'assignee-view', label: '担当者ビュー', description: '稼働率・予実差のしきい値' },
   { id: 'holidays', label: '祝日', description: '非稼働日の設定' },
 ];
 
@@ -572,15 +575,21 @@ export default function MasterSettings() {
             <SystemSettingsSection
               ticketUrlTemplate={ticketUrlTemplate}
               setTicketUrlTemplate={setTicketUrlTemplate}
-              loadRateThresholds={loadRateThresholds}
-              setLoadRateThresholds={setLoadRateThresholds}
-              scheduleVarianceThresholds={scheduleVarianceThresholds}
-              setScheduleVarianceThresholds={setScheduleVarianceThresholds}
               statuses={data?.statuses ?? []}
               devOpsSyncStatusConditions={devOpsSyncStatusConditions}
               saveDevOpsSyncStatusConditions={saveDevOpsSyncStatusConditions}
               isSavingSetting={isSavingSetting}
               saveSetting={saveSetting}
+            />
+          </div>
+
+          <div id="assignee-view" className="master-scroll-section">
+            <AssigneeViewSettingsSection
+              loadRateThresholds={loadRateThresholds}
+              setLoadRateThresholds={setLoadRateThresholds}
+              scheduleVarianceThresholds={scheduleVarianceThresholds}
+              setScheduleVarianceThresholds={setScheduleVarianceThresholds}
+              isSavingSetting={isSavingSetting}
               saveLoadRateThresholds={saveLoadRateThresholds}
               saveScheduleVarianceThresholds={saveScheduleVarianceThresholds}
             />
