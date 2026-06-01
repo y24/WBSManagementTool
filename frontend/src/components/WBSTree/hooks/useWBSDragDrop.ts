@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { DropResult } from '@hello-pangea/dnd';
 import { wbsOps } from '../../../api/wbsOperations';
 import { Project, Task } from '../../../types/wbs';
+import { showErrorToastUnlessNetworkError } from '../../../utils/toast';
 
 export const useWBSDragDrop = (
   projects: Project[],
@@ -138,7 +139,7 @@ export const useWBSDragDrop = (
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('並び替えの保存に失敗しました');
+      showErrorToastUnlessNetworkError(err, '並び替えの保存に失敗しました。');
       // Revert by fetching data
       onUpdate();
     } finally {

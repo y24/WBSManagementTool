@@ -25,6 +25,7 @@ import {
   toLoadRateThresholdInputs,
   toScheduleVarianceThresholdInputs,
 } from '../utils/loadRateThresholds';
+import { showErrorToast, showErrorToastUnlessNetworkError, showInfoToast } from '../utils/toast';
 
 type EditingItem = { id: number; field: string } | null;
 type MasterSectionId =
@@ -366,11 +367,11 @@ export default function MasterSettings() {
     try {
       setIsSyncingHolidays(true);
       const res = await apiClient.post<{ message: string }>('/masters/holidays/sync');
-      alert(res.data.message);
+      showInfoToast('祝日の同期が完了しました。', res.data.message);
       fetchData();
     } catch (err) {
       console.error(err);
-      alert('祝日の同期に失敗しました。');
+      showErrorToastUnlessNetworkError(err, '祝日の同期に失敗しました。');
     } finally {
       setIsSyncingHolidays(false);
     }
@@ -383,7 +384,7 @@ export default function MasterSettings() {
       fetchData();
     } catch (err) {
       console.error(err);
-      alert('設定の保存に失敗しました。');
+      showErrorToastUnlessNetworkError(err, '設定の保存に失敗しました。');
     } finally {
       setIsSavingSetting(false);
     }
@@ -392,12 +393,12 @@ export default function MasterSettings() {
   const saveLoadRateThresholds = async () => {
     const parsedThresholds = parseLoadRateThresholdInputs(loadRateThresholds);
     if (!parsedThresholds) {
-      alert('稼働率しきい値は0以上の数値で入力してください。');
+      showErrorToast('稼働率しきい値は0以上の数値で入力してください。');
       return;
     }
 
     if (!isLoadRateThresholdsValid(parsedThresholds)) {
-      alert('稼働率しきい値は 低すぎ < 低め < 適正上限 < 高め < 過負荷 の順で入力してください。');
+      showErrorToast('稼働率しきい値は 低すぎ < 低め < 適正上限 < 高め < 過負荷 の順で入力してください。');
       return;
     }
 
@@ -413,7 +414,7 @@ export default function MasterSettings() {
       fetchData();
     } catch (err) {
       console.error(err);
-      alert('稼働率しきい値の保存に失敗しました。');
+      showErrorToastUnlessNetworkError(err, '稼働率しきい値の保存に失敗しました。');
     } finally {
       setIsSavingSetting(false);
     }
@@ -422,12 +423,12 @@ export default function MasterSettings() {
   const saveScheduleVarianceThresholds = async () => {
     const parsedThresholds = parseScheduleVarianceThresholdInputs(scheduleVarianceThresholds);
     if (!parsedThresholds) {
-      alert('予実差しきい値は1以上の数値で入力してください。');
+      showErrorToast('予実差しきい値は1以上の数値で入力してください。');
       return;
     }
 
     if (!isScheduleVarianceThresholdsValid(parsedThresholds)) {
-      alert('予実差の重大しきい値は1以上の数値で入力してください。');
+      showErrorToast('予実差の重大しきい値は1以上の数値で入力してください。');
       return;
     }
 
@@ -437,7 +438,7 @@ export default function MasterSettings() {
       fetchData();
     } catch (err) {
       console.error(err);
-      alert('予実差しきい値の保存に失敗しました。');
+      showErrorToastUnlessNetworkError(err, '予実差しきい値の保存に失敗しました。');
     } finally {
       setIsSavingSetting(false);
     }

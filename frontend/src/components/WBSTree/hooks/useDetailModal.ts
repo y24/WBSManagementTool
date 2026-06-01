@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Project, Task, Subtask } from '../../../types/wbs';
 import { wbsOps } from '../../../api/wbsOperations';
 import { EditingType } from '../DetailModal';
+import { showErrorToastUnlessNetworkError } from '../../../utils/toast';
 
 interface UseDetailModalProps {
   onUpdate: () => void;
@@ -114,7 +115,7 @@ export const useDetailModal = ({
         onUpdate();
       } catch (err) {
         console.error(err);
-        alert('保存に失敗しました');
+        showErrorToastUnlessNetworkError(err, '保存に失敗しました。');
         onUpdate(); // エラー時はサーバーから最新状態を取得してUIを戻す
       } finally {
         setSaving(false);

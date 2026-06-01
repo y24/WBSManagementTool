@@ -2,6 +2,7 @@ import React from 'react';
 import { ChartNoAxesGantt, Check, Link2, Download } from 'lucide-react';
 import { FilterState, DisplayOptions } from './FilterPanelTypes';
 import { apiClient } from '../../api/client';
+import { showErrorToastUnlessNetworkError } from '../../utils/toast';
 
 interface ActionButtonsProps {
   filters: FilterState;
@@ -43,7 +44,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
             setTimeout(() => setIsCopied(false), 2000);
           } catch (error) {
             console.error('Failed to share filters:', error);
-            alert('URLの発行に失敗しました。');
+            showErrorToastUnlessNetworkError(error, 'URLの発行に失敗しました。');
           }
         }}
         className={`relative p-2 rounded-lg border transition-all shadow-sm ${isCopied

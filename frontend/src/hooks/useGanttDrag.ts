@@ -5,6 +5,7 @@ import { InitialData } from '../types';
 import { addBusinessDays, getBusinessDaysCount, calculateReviewCalendarDays } from '../components/WBSTree/utils';
 import { GanttScale } from '../types/wbs';
 import { getScaleCellWidth } from '../utils/ganttUtils';
+import { showErrorToastUnlessNetworkError } from '../utils/toast';
 
 export type DragMode = 'move' | 'resize-left' | 'resize-right' | 'resize-review' | 'resize-planned-review' | 'marker-move';
 export type ItemType = 'project' | 'task' | 'subtask' | 'marker';
@@ -303,7 +304,7 @@ export const useGanttDrag = (
       onRefresh?.();
     } catch (err) {
       console.error('Failed to update period:', err);
-      alert('期間の更新に失敗しました。');
+      showErrorToastUnlessNetworkError(err, '期間の更新に失敗しました。');
     }
   }, [onRefresh, updateDragPosition]);
 

@@ -12,6 +12,7 @@ import { addBusinessDays } from './WBSTree/utils';
 import GanttDateTooltip from './GanttDateTooltip';
 import { GanttScale } from '../types/wbs';
 import { getScaleCellWidth, getDateX, getDateWidth, getGanttUnits } from '../utils/ganttUtils';
+import { showErrorToastUnlessNetworkError } from '../utils/toast';
 
 interface GanttChartProps {
   projects: Project[];
@@ -83,7 +84,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       onRefresh?.();
     } catch (err) {
       console.error('Failed to save marker:', err);
-      alert('マーカーの保存に失敗しました。');
+      showErrorToastUnlessNetworkError(err, 'マーカーの保存に失敗しました。');
     }
   };
 
@@ -94,7 +95,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
       onRefresh?.();
     } catch (err) {
       console.error('Failed to delete marker:', err);
-      alert('マーカーの削除に失敗しました。');
+      showErrorToastUnlessNetworkError(err, 'マーカーの削除に失敗しました。');
     }
   };
 

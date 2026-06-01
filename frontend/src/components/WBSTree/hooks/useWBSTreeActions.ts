@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Project } from '../../../types/wbs';
 import { wbsOps } from '../../../api/wbsOperations';
+import { showErrorToast, showErrorToastUnlessNetworkError } from '../../../utils/toast';
 
 interface UseWBSTreeActionsProps {
   projects: Project[];
@@ -72,7 +73,7 @@ export const useWBSTreeActions = ({
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('削除中にエラーが発生しました。');
+      showErrorToastUnlessNetworkError(err, '削除中にエラーが発生しました。');
     } finally {
       setSaving(false);
     }
@@ -104,7 +105,7 @@ export const useWBSTreeActions = ({
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('クリア中にエラーが発生しました。');
+      showErrorToastUnlessNetworkError(err, 'クリア中にエラーが発生しました。');
     } finally {
       setSaving(false);
     }
@@ -136,7 +137,7 @@ export const useWBSTreeActions = ({
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('クリア中にエラーが発生しました。');
+      showErrorToastUnlessNetworkError(err, 'クリア中にエラーが発生しました。');
     } finally {
       setSaving(false);
     }
@@ -151,7 +152,7 @@ export const useWBSTreeActions = ({
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('複製中にエラーが発生しました。');
+      showErrorToastUnlessNetworkError(err, '複製中にエラーが発生しました。');
     } finally {
       setSaving(false);
     }
@@ -202,7 +203,7 @@ export const useWBSTreeActions = ({
     });
 
     if (!minDate) {
-      alert('日付が設定されている項目がありません。');
+      showErrorToast('日付が設定されている項目がありません。');
       return;
     }
 
@@ -219,7 +220,7 @@ export const useWBSTreeActions = ({
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('日付の移動中にエラーが発生しました。');
+      showErrorToastUnlessNetworkError(err, '日付の移動中にエラーが発生しました。');
     } finally {
       setSaving(false);
     }

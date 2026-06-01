@@ -4,6 +4,7 @@ import { X, Plus, Edit2, Trash2, Calendar, MessageSquare, Check, AlertTriangle, 
 import { Subtask, SubtaskInterruption } from '../../types/wbs';
 import { apiClient } from '../../api/client';
 import { format } from 'date-fns';
+import { showErrorToast, showErrorToastUnlessNetworkError } from '../../utils/toast';
 
 interface InterruptionListModalProps {
   isOpen: boolean;
@@ -128,7 +129,7 @@ const InterruptionListModal: React.FC<InterruptionListModalProps> = ({
   const handleSave = async () => {
     if (!editForm.interruption_date) return;
     if (editForm.resumption_date && editForm.resumption_date < editForm.interruption_date) {
-      alert('再開日は中断日以降である必要があります。');
+      showErrorToast('再開日は中断日以降である必要があります。');
       return;
     }
 
@@ -153,7 +154,7 @@ const InterruptionListModal: React.FC<InterruptionListModalProps> = ({
       if (onRefresh) onRefresh();
     } catch (err) {
       console.error('Failed to save interruption:', err);
-      alert('保存に失敗しました。');
+      showErrorToastUnlessNetworkError(err, '保存に失敗しました。');
     }
   };
 
@@ -168,7 +169,7 @@ const InterruptionListModal: React.FC<InterruptionListModalProps> = ({
       if (onRefresh) onRefresh();
     } catch (err) {
       console.error('Failed to delete interruption:', err);
-      alert('削除に失敗しました。');
+      showErrorToastUnlessNetworkError(err, '削除に失敗しました。');
     }
   };
 

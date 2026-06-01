@@ -1,4 +1,6 @@
-import axios from 'axios';
+import axios, { type AxiosResponse } from 'axios';
+import type { InitialData } from '../types';
+import { markNetworkErrorToastShown, showToast } from '../utils/toast';
 
 // APIクライアントのベース設定
 export const apiClient = axios.create({
@@ -13,11 +15,22 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error('API Error:', error.response || error.message);
+    if (axios.isAxiosError(error) && !error.response) {
+      markNetworkErrorToastShown(error);
+      showToast(
+        {
+          type: 'error',
+          title: 'ネットワークエラー',
+          message: 'サーバーに接続できません。通信状態またはAPIサーバーの起動状態を確認してください。',
+        },
+        { dedupeKey: 'api-network-error' },
+      );
+    }
     return Promise.reject(error);
   }
 );
 // 初期データの取得リクエストを重複させないためのプロミス保存用
-let initialDataPromise: Promise<any> | null = null;
+let initialDataPromise: Promise<AxiosResponse<InitialData>> | null = null;
 
 export const getInitialData = () => {
   if (initialDataPromise) return initialDataPromise;

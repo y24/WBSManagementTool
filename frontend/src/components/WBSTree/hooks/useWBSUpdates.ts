@@ -5,6 +5,7 @@ import { InitialData } from '../../../types';
 import { DisplayOptions } from '../../FilterPanel/FilterPanelTypes';
 import { wbsOps } from '../../../api/wbsOperations';
 import { addBusinessDays, getBusinessDaysCount } from '../utils';
+import { showErrorToast, showErrorToastUnlessNetworkError } from '../../../utils/toast';
 
 const parseStatusMapping = (value: string | null | undefined, fallback: number[]): number[] => {
   const parsed = value
@@ -62,7 +63,7 @@ export const useWBSUpdates = ({
   const handleUpdate = useCallback(async (type: 'project' | 'task' | 'subtask', id: number, field: string, value: any, options?: { forceConfirm?: boolean }) => {
     // Name validation
     if ((field === 'project_name' || field === 'task_name') && (!value || value.trim() === '')) {
-      alert('名称を入力してください。');
+      showErrorToast('名称を入力してください。');
       onUpdate();
       return;
     }
@@ -81,7 +82,7 @@ export const useWBSUpdates = ({
         const endVal = isStart ? (item as any)[otherField] : value;
 
         if (startVal && endVal && startVal > endVal) {
-          alert('開始日より後の日付を終了日に設定してください。');
+          showErrorToast('開始日より後の日付を終了日に設定してください。');
           onUpdate();
           return;
         }
@@ -248,7 +249,7 @@ export const useWBSUpdates = ({
         onUpdate({ skipStatusAutoRefresh: !applyStatusAutoUpdates });
       } catch (err) {
         console.error(err);
-        alert('保存に失敗しました。');
+        showErrorToastUnlessNetworkError(err, '保存に失敗しました。');
         onUpdate(); // エラー時はサーバーから最新状態を取得してUIを戻す
       } finally {
         setSaving(false);

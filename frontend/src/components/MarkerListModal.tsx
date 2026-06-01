@@ -4,6 +4,7 @@ import { X, Tag, Plus, Edit2, Trash2, Calendar, MessageSquare, Palette, Check, A
 import { Marker, InitialData } from '../types';
 import { apiClient } from '../api/client';
 import { format, parseISO } from 'date-fns';
+import { showErrorToastUnlessNetworkError } from '../utils/toast';
 
 interface MarkerListModalProps {
   isOpen: boolean;
@@ -156,7 +157,7 @@ const MarkerListModal: React.FC<MarkerListModalProps> = ({
       if (onRefresh) onRefresh();
     } catch (err) {
       console.error('Failed to save marker:', err);
-      alert('保存に失敗しました。');
+      showErrorToastUnlessNetworkError(err, '保存に失敗しました。');
     }
   };
 
@@ -169,7 +170,7 @@ const MarkerListModal: React.FC<MarkerListModalProps> = ({
       if (onRefresh) onRefresh();
     } catch (err) {
       console.error('Failed to delete marker:', err);
-      alert('削除に失敗しました。');
+      showErrorToastUnlessNetworkError(err, '削除に失敗しました。');
     }
   };
 

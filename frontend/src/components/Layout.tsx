@@ -1,5 +1,6 @@
 import { ReactNode, useEffect } from 'react';
 import Header from './Header';
+import ToastContainer from './ToastContainer';
 
 interface LayoutProps {
   children: ReactNode;
@@ -30,6 +31,7 @@ export default function Layout({ children }: LayoutProps) {
       <main className="flex-1 flex flex-col relative w-full h-full min-h-0 bg-slate-50 dark:bg-slate-900 overflow-hidden">
         {children}
       </main>
+      <ToastContainer />
     </div>
   );
 }

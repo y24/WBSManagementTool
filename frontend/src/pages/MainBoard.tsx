@@ -28,6 +28,7 @@ import { Download } from 'lucide-react';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { parseISO } from 'date-fns';
 import { getDateX } from '../utils/ganttUtils';
+import { showErrorToastUnlessNetworkError } from '../utils/toast';
 
 type WBSRefreshOptions = boolean | {
   showLoading?: boolean;
@@ -54,6 +55,7 @@ export default function MainBoard() {
   const ganttRef = useRef<HTMLDivElement>(null);
   const syncLockRef = useRef<'tree' | 'gantt' | null>(null);
   const viewSwitchFrameRefs = useRef<number[]>([]);
+  const todayScrollAnimationRef = useRef<number | null>(null);
 
   // Real-time synchronization
   useWebSocket((msg) => {
@@ -187,6 +189,52 @@ export default function MainBoard() {
   const filteredProjects = useFilteredProjects({ data, filters, initialData, displayOptions });
   const dynamicGanttRange = useDynamicGanttRange({ data, filteredProjects });
 
+  const scrollGanttHorizontally = useCallback((targetScrollLeft: number) => {
+    const gantt = ganttRef.current;
+    if (!gantt) return;
+
+    if (todayScrollAnimationRef.current !== null) {
+      cancelAnimationFrame(todayScrollAnimationRef.current);
+      todayScrollAnimationRef.current = null;
+    }
+
+    const maxScrollLeft = Math.max(0, gantt.scrollWidth - gantt.clientWidth);
+    const boundedTarget = Math.min(maxScrollLeft, Math.max(0, targetScrollLeft));
+    const startScrollLeft = gantt.scrollLeft;
+    const distance = boundedTarget - startScrollLeft;
+
+    if (Math.abs(distance) < 1) {
+      gantt.scrollLeft = boundedTarget;
+      return;
+    }
+
+    const duration = Math.min(720, Math.max(320, Math.abs(distance) * 0.35));
+    const startTime = performance.now();
+    const easeOutCubic = (progress: number) => 1 - Math.pow(1 - progress, 3);
+
+    const tick = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      gantt.scrollLeft = startScrollLeft + distance * easeOutCubic(progress);
+
+      if (progress < 1) {
+        todayScrollAnimationRef.current = requestAnimationFrame(tick);
+      } else {
+        todayScrollAnimationRef.current = null;
+      }
+    };
+
+    todayScrollAnimationRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (todayScrollAnimationRef.current !== null) {
+        cancelAnimationFrame(todayScrollAnimationRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const handleScrollToToday = () => {
       if (ganttRef.current && dynamicGanttRange?.start_date) {
@@ -197,17 +245,14 @@ export default function MainBoard() {
         // Center the today date in the visible area
         const containerWidth = ganttRef.current.clientWidth;
         const targetScroll = Math.max(0, scrollX - containerWidth / 2);
-        
-        ganttRef.current.scrollTo({
-          left: targetScroll,
-          behavior: 'smooth'
-        });
+
+        scrollGanttHorizontally(targetScroll);
       }
     };
     
     window.addEventListener('gantt-scroll-to-today', handleScrollToToday);
     return () => window.removeEventListener('gantt-scroll-to-today', handleScrollToToday);
-  }, [dynamicGanttRange, displayOptions.ganttScale]);
+  }, [dynamicGanttRange, displayOptions.ganttScale, scrollGanttHorizontally]);
 
   useEffect(() => {
     if (!loading && data && ganttRef.current) {
@@ -373,7 +418,7 @@ export default function MainBoard() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Export failed:', error);
-      alert('Excelの出力に失敗しました。');
+      showErrorToastUnlessNetworkError(error, 'Excelの出力に失敗しました。');
     }
   };
 

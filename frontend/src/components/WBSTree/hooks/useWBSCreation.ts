@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { wbsOps } from '../../../api/wbsOperations';
 import { InitialData } from '../../../types';
+import { showErrorToastUnlessNetworkError } from '../../../utils/toast';
 
 export const useWBSCreation = (
   onUpdate: () => void,
@@ -37,7 +38,7 @@ export const useWBSCreation = (
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('プロジェクトの追加に失敗しました。');
+      showErrorToastUnlessNetworkError(err, 'プロジェクトの追加に失敗しました。');
     } finally {
       setSaving(false);
     }
@@ -77,7 +78,7 @@ export const useWBSCreation = (
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('タスクの追加に失敗しました。');
+      showErrorToastUnlessNetworkError(err, 'タスクの追加に失敗しました。');
     } finally {
       setSaving(false);
     }
@@ -105,7 +106,7 @@ export const useWBSCreation = (
       onUpdate();
     } catch (err) {
       console.error(err);
-      alert('サブタスクの追加に失敗しました。');
+      showErrorToastUnlessNetworkError(err, 'サブタスクの追加に失敗しました。');
     } finally {
       setSaving(false);
     }
