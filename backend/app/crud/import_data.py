@@ -386,13 +386,20 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.B
         df.to_excel(writer, index=False, sheet_name='WBS')
         
         # Optional: Auto-adjust column width (requires openpyxl)
+        from openpyxl.utils import get_column_letter
+
+        def get_display_length(value) -> int:
+            if value is None or pd.isna(value):
+                return 0
+            return len(str(value))
+
         worksheet = writer.sheets['WBS']
         for idx, col in enumerate(df.columns):
             max_len = max(
-                df[col].astype(str).map(len).max(),
+                max((get_display_length(value) for value in df[col]), default=0),
                 len(col)
             ) + 4
-            worksheet.column_dimensions[chr(65 + idx)].width = min(max_len, 52)
+            worksheet.column_dimensions[get_column_letter(idx + 1)].width = min(max_len, 52)
 
     output.seek(0)
     return output
