@@ -253,6 +253,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const typeColor = colorMode === 'assignee' && item.assignee_id 
     ? getAssigneeColor(item.assignee_id) 
     : getStatusColor(item.status_id);
+  const plannedBarColor = overridePlannedBarColor
+    ?? (colorMode === 'assignee' && item.assignee_id ? getAssigneeColor(item.assignee_id) : undefined);
 
   let rStart: number | undefined, rWidth: number | undefined;
   if (isSubtask && plannedStart && plannedEnd && reviewDays && reviewDays > 0) {
@@ -339,8 +341,8 @@ const GanttBar: React.FC<GanttBarProps> = ({
       {showPlannedBar && (
         <>
           <div
-            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} ${overridePlannedBarColor ? '' : 'bg-gray-400 dark:bg-slate-500'} ${overridePlannedBarColor ? '' : (isSubtask ? 'opacity-80 dark:opacity-70' : 'opacity-40 dark:opacity-30')} ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? delayedHighlightClasses : ''} ${!hasActual && isHighlighted ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-indigo-400 dark:ring-offset-slate-900 z-30' : ''} pointer-events-auto transition-shadow duration-200`}
-            style={{ left: `${pStart}px`, width: `${pWidth}px`, ...(overridePlannedBarColor ? { backgroundColor: overridePlannedBarColor } : {}) }}
+            className={`absolute ${hasActual ? 'top-[6px]' : subtaskBarTopClass} ${hasActual ? 'rounded-t-sm' : 'rounded-sm'} ${hasActual ? (isSubtask ? 'h-1.5' : 'h-1') : subtaskBarHeightClass} ${plannedBarColor ? '' : 'bg-gray-400 dark:bg-slate-500'} ${overridePlannedBarColor ? '' : (isSubtask ? 'opacity-80 dark:opacity-70' : 'opacity-40 dark:opacity-30')} ${!allowBarEdit || isAutoPlanned ? '' : 'gantt-bar-draggable'} ${isDragging && dragState?.barType === 'planned' ? 'gantt-bar-dragging' : ''} ${!hasActual && isDelayedHighlight ? delayedHighlightClasses : ''} ${!hasActual && isHighlighted ? 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-indigo-400 dark:ring-offset-slate-900 z-30' : ''} pointer-events-auto transition-shadow duration-200`}
+            style={{ left: `${pStart}px`, width: `${pWidth}px`, ...(plannedBarColor ? { backgroundColor: plannedBarColor } : {}) }}
             onMouseEnter={handleMouseEnter}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
