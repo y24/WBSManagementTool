@@ -6,6 +6,7 @@ import { InitialData } from '../types';
 import { ItemType, BarType, DragMode, DragState } from '../hooks/useGanttDrag';
 import { GanttScale } from '../types/wbs';
 import { getDateX, getDateWidth } from '../utils/ganttUtils';
+import { getDisplayActualEndDate } from '../utils/ganttDateRange';
 import { getWarning, calculateReviewCalendarDays } from './WBSTree/utils';
 import GanttTooltip from './GanttTooltip';
 
@@ -140,6 +141,11 @@ const GanttBar: React.FC<GanttBarProps> = ({
   const actualEnd = temp?.actual_end_date || item.actual_end_date;
   const reviewStart = temp?.review_start_date || item.review_start_date;
   const reviewDays = temp?.review_days !== undefined ? temp.review_days : item.review_days;
+  const displayActualEnd = getDisplayActualEndDate({
+    actual_start_date: actualStart,
+    actual_end_date: actualEnd,
+    review_start_date: reviewStart,
+  });
 
   // 計画バーの計算
   let pStart: number | undefined, pWidth: number | undefined;
@@ -216,9 +222,9 @@ const GanttBar: React.FC<GanttBarProps> = ({
   };
 
   // 実績セグメントの計算
-  const actualSegments = (actualStart && actualEnd) 
-    ? calculateSegments(actualStart, actualEnd, item.interruptions || [])
-    : (actualStart ? [{ start: parseISO(actualStart), end: parseISO(actualStart) }] : []);
+  const actualSegments = (actualStart && displayActualEnd)
+    ? calculateSegments(actualStart, displayActualEnd, item.interruptions || [])
+    : [];
 
   // レビューセグメントの計算
   const reviewSegments = (isSubtask && actualStart && actualEnd && reviewStart)

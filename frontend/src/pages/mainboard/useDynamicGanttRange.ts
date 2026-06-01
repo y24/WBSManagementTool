@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { addDays, endOfMonth, format, subDays } from 'date-fns';
 import { GanttRange, Project, WBSResponse } from '../../types/wbs';
+import { getDisplayActualEndDate } from '../../utils/ganttDateRange';
 
 interface UseDynamicGanttRangeParams {
   data: WBSResponse | null;
@@ -12,13 +13,15 @@ interface Schedulable {
   planned_end_date?: string | null;
   actual_start_date?: string | null;
   actual_end_date?: string | null;
+  review_start_date?: string | null;
 }
 
 function collectDates(target: Date[], item: Schedulable): void {
   if (item.planned_start_date) target.push(new Date(item.planned_start_date));
   if (item.planned_end_date) target.push(new Date(item.planned_end_date));
   if (item.actual_start_date) target.push(new Date(item.actual_start_date));
-  if (item.actual_end_date) target.push(new Date(item.actual_end_date));
+  const displayActualEnd = getDisplayActualEndDate(item);
+  if (displayActualEnd) target.push(new Date(displayActualEnd));
 }
 
 export function useDynamicGanttRange({ data, filteredProjects }: UseDynamicGanttRangeParams): GanttRange | undefined {

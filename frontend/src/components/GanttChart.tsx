@@ -12,6 +12,7 @@ import { addBusinessDays } from './WBSTree/utils';
 import GanttDateTooltip from './GanttDateTooltip';
 import { GanttScale } from '../types/wbs';
 import { getScaleCellWidth, getDateX, getDateWidth, getGanttUnits } from '../utils/ganttUtils';
+import { getDisplayActualEndDate } from '../utils/ganttDateRange';
 import { showErrorToastUnlessNetworkError } from '../utils/toast';
 
 interface GanttChartProps {
@@ -274,9 +275,15 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
           const pe = temp?.planned_end_date || subtask.planned_end_date;
           const as = temp?.actual_start_date || subtask.actual_start_date;
           const ae = temp?.actual_end_date || subtask.actual_end_date;
+          const rs = temp?.review_start_date || subtask.review_start_date;
+          const displayActualEnd = getDisplayActualEndDate({
+            actual_start_date: as,
+            actual_end_date: ae,
+            review_start_date: rs,
+          });
 
           const matchPlanned = ps && pe && hDate >= ps && hDate <= pe;
-          const matchActual = as && hDate >= as && (!ae || hDate <= ae);
+          const matchActual = as && displayActualEnd && hDate >= as && hDate <= displayActualEnd;
 
           if (matchPlanned || matchActual) {
             results.push({

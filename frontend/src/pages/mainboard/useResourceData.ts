@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { parseISO, format, addDays } from 'date-fns';
 import { Project, Subtask } from '../../types/wbs';
 import { InitialData, MstMember } from '../../types';
+import { getDisplayActualEndDate } from '../../utils/ganttDateRange';
 
 export interface ResourceSubtask extends Subtask {
   project_name: string;
@@ -158,7 +159,8 @@ export function useResourceData(
     const getActualBounds = (t: ResourceSubtask): DateBounds[] => {
       if (!t.actual_start_date) return [];
       const start = parseISO(t.actual_start_date);
-      const end = t.actual_end_date ? parseISO(t.actual_end_date) : start;
+      const displayActualEnd = getDisplayActualEndDate(t);
+      const end = displayActualEnd ? parseISO(displayActualEnd) : start;
       if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
       if (end < start) {
         const timestamp = parseDateTime(t.actual_start_date);
@@ -353,7 +355,12 @@ export function useResourceData(
         if (subtask.status_id === removedStatusId) return;
         const inScope =
           hasDateOverlap(subtask.planned_start_date, subtask.planned_end_date, combinedScopeStartDate, combinedScopeEndDate) ||
-          hasDateOverlap(subtask.actual_start_date, subtask.actual_end_date, combinedScopeStartDate, combinedScopeEndDate);
+          hasDateOverlap(
+            subtask.actual_start_date,
+            getDisplayActualEndDate(subtask),
+            combinedScopeStartDate,
+            combinedScopeEndDate
+          );
         if (!inScope) return;
 
         const expectedProgress = getExpectedProgressPercent(subtask);
