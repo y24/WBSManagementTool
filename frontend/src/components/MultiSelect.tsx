@@ -4,7 +4,14 @@ import { ChevronDown, Check, X, Search } from 'lucide-react';
 
 interface MultiSelectProps {
   values: any[];
-  options: { id: any; name: string; color?: string; disabled?: boolean }[];
+  options: {
+    id: any;
+    name: string;
+    color?: string;
+    disabled?: boolean;
+    badge?: string;
+    hiddenUntilSearch?: boolean;
+  }[];
   onChange: (values: any[]) => void;
   className?: string;
   placeholder?: string;
@@ -28,9 +35,12 @@ const MultiSelect = memo(({
 
   const selectedOptions = options.filter(o => values.includes(o.id));
 
-  const filteredOptions = options.filter(opt =>
-    opt.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const filteredOptions = options.filter((opt) => {
+    if (opt.hiddenUntilSearch && !normalizedSearchTerm && !values.includes(opt.id)) return false;
+    return opt.name.toLowerCase().includes(normalizedSearchTerm);
+  });
+  const selectableFilteredOptions = filteredOptions.filter((opt) => !opt.disabled);
 
   const toggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -151,9 +161,12 @@ const MultiSelect = memo(({
                   クリア
                 </button>
               )}
-              {values.length < options.length && (
+              {selectableFilteredOptions.some((opt) => !values.includes(opt.id)) && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); onChange(options.map(o => o.id)); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(Array.from(new Set([...values, ...selectableFilteredOptions.map((o) => o.id)])));
+                  }}
                   className="text-[10px] text-blue-600 hover:text-blue-800 font-bold uppercase tracking-tight"
                 >
                   全て選択
@@ -213,6 +226,11 @@ const MultiSelect = memo(({
                     />
                   )}
                   <span className={`text-xs flex-1 transition-colors ${isDisabled ? 'text-gray-400 dark:text-slate-500 font-medium italic' : isSelected ? 'text-blue-700 dark:text-blue-400 font-bold' : 'text-gray-700 dark:text-slate-300 font-medium'}`}>{opt.name}</span>
+                  {opt.badge && (
+                    <span className="shrink-0 rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                      {opt.badge}
+                    </span>
+                  )}
                 </div>
               );
             })}

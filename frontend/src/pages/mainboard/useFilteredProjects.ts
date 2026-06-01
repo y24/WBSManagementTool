@@ -37,12 +37,26 @@ export function useFilteredProjects({
       filters.onlyDelayed ||
       filters.onlyUnplanned ||
       filters.searchTerm !== '';
+    const hasChildSpecificConditions =
+      filters.statusIds.length > 0 ||
+      filters.assigneeIds.length > 0 ||
+      filters.subtaskTypeIds.length > 0 ||
+      filters.onlyDelayed ||
+      filters.onlyUnplanned;
 
     return data.projects
       .filter((project) => {
+        const isSelectedProject = filters.projectIds.includes(project.id);
         if (filters.projectIds.length > 0 && !filters.projectIds.includes(project.id)) return false;
         if (!displayOptions.showRemoved && project.status_id === removedStatusId) return false;
-        if (!displayOptions.showDoneProjects && doneStatusId !== null && project.status_id === doneStatusId) return false;
+        if (
+          !isSelectedProject &&
+          !displayOptions.showDoneProjects &&
+          doneStatusId !== null &&
+          project.status_id === doneStatusId
+        ) {
+          return false;
+        }
         return true;
       })
       .map((project) => {
@@ -159,7 +173,11 @@ export function useFilteredProjects({
           : false;
 
         if (hasConditions) {
-          if (projectMatches || filteredTasks.length > 0) {
+          if (projectMatches && !hasChildSpecificConditions) {
+            return { ...project };
+          }
+
+          if (filteredTasks.length > 0) {
             return { ...project, tasks: filteredTasks };
           }
           return null;

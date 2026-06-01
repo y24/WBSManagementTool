@@ -81,8 +81,8 @@ export default function MainBoard() {
 
         const wbsRes = await wbsOps.getWBS(
           undefined, // projectIds
-          displayOptions.showDoneProjects,
-          displayOptions.showRemoved,
+          true,
+          true,
           8,
           !skipStatusAutoRefresh
         );
@@ -98,7 +98,7 @@ export default function MainBoard() {
         setLoading(false);
       }
     },
-    [displayOptions.showDoneProjects, displayOptions.showRemoved],
+    [],
   );
 
   useEffect(() => {

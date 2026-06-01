@@ -21,6 +21,8 @@ const FilterControls: React.FC<FilterControlsProps> = ({
 }) => {
   const statuses = initialData?.statuses || [];
   const members = initialData?.members || [];
+  const doneStatusId = initialData?.status_mapping_done ? parseInt(initialData.status_mapping_done, 10) : null;
+  const removedStatusId = statuses.find(s => s.status_name === 'Removed')?.id || 7;
 
   return (
     <>
@@ -29,18 +31,22 @@ const FilterControls: React.FC<FilterControlsProps> = ({
         values={filters.projectIds}
         options={projects
           .filter(p => {
-            const doneStatusId = initialData?.status_mapping_done ? parseInt(initialData.status_mapping_done) : null;
-            const removedStatusId = statuses.find(s => s.status_name === 'Removed')?.id || 7;
-
             // 選択中のプロジェクトは常に表示
             if (filters.projectIds.includes(p.id)) return true;
 
             if (!displayOptions.showRemoved && p.status_id === removedStatusId) return false;
-            if (!displayOptions.showDoneProjects && doneStatusId !== null && p.status_id === doneStatusId) return false;
 
             return true;
           })
-          .map(p => ({ id: p.id, name: p.project_name }))}
+          .map(p => {
+            const isDoneProject = doneStatusId !== null && p.status_id === doneStatusId;
+            return {
+              id: p.id,
+              name: p.project_name,
+              badge: isDoneProject ? '完了済' : undefined,
+              hiddenUntilSearch: isDoneProject && !displayOptions.showDoneProjects,
+            };
+          })}
         onChange={(ids) => setFilters((prev: FilterState) => ({ ...prev, projectIds: ids as number[] }))}
         placeholder="プロジェクトを選択"
         dropdownTitle="プロジェクト"
