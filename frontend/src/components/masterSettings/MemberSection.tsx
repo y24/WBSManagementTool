@@ -1,5 +1,5 @@
 import type { MstMember } from '../../types';
-import { CheckIcon, PencilIcon, PlusIcon, TrashIcon, XIcon, sectionIconStyle, GpIcon } from './icons';
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon, PlusIcon, TrashIcon, XIcon, sectionIconStyle, GpIcon } from './icons';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface NewMember {
@@ -21,6 +21,8 @@ interface MemberSectionProps {
   startEdit: (id: number, field: string, currentValue: string, colorValue?: string) => void;
   deleteItem: (endpoint: string, id: number, name: string) => void;
   onDragEnd: (result: DropResult) => void;
+  isMemberListExpanded: boolean;
+  setIsMemberListExpanded: (value: boolean) => void;
 }
 
 export function MemberSection({
@@ -38,7 +40,11 @@ export function MemberSection({
   startEdit,
   deleteItem,
   onDragEnd,
+  isMemberListExpanded,
+  setIsMemberListExpanded,
 }: MemberSectionProps) {
+  const displayedMembers = isMemberListExpanded ? members : members.slice(0, 8);
+
   return (
     <section className="master-section">
       <div className="master-section-header">
@@ -70,52 +76,53 @@ export function MemberSection({
       )}
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="members-list" direction="horizontal">
+        <Droppable droppableId="members-list">
           {(provided) => (
             <div 
               {...provided.droppableProps} 
               ref={provided.innerRef} 
-              className="master-list master-list-chips"
+              className="master-list"
             >
-              {members.map((m, index) => (
+              {displayedMembers.map((m, index) => (
                 <Draggable key={m.id} draggableId={m.id.toString()} index={index}>
                   {(provided, snapshot) => (
                     <div 
                       ref={provided.innerRef}
                       {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className={`master-chip master-chip-green ${snapshot.isDragging ? 'dragging' : ''}`}
+                      className={`master-list-item master-sortable-chip-row ${snapshot.isDragging ? 'dragging' : ''}`}
                     >
-                      {isEditing(m.id, 'member') ? (
-                        <div className="master-edit-inline" {...(snapshot.isDragging ? { onClick: (e) => e.stopPropagation() } : {})}>
-                          <input
-                            className="master-input master-input-sm"
-                            value={editValue}
-                            onChange={e => setEditValue(e.target.value)}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') saveEdit('/masters/members', m.id, { member_name: editValue });
-                              if (e.key === 'Escape') cancelEdit();
-                            }}
-                            autoFocus
-                          />
-                          <button className="master-confirm-btn" onClick={() => saveEdit('/masters/members', m.id, { member_name: editValue })}>
-                            <CheckIcon />
-                          </button>
-                          <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
+                      <div className="master-list-item-content master-sortable-chip-content">
+                        <div {...provided.dragHandleProps} className="master-drag-handle mr-2 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                          <GpIcon />
                         </div>
-                      ) : (
-                        <>
-                          <div className="master-drag-handle opacity-40">
-                            <GpIcon />
+                        {isEditing(m.id, 'member') ? (
+                          <div className="master-edit-inline">
+                            <input
+                              className="master-input master-input-sm"
+                              value={editValue}
+                              onChange={e => setEditValue(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') saveEdit('/masters/members', m.id, { member_name: editValue });
+                                if (e.key === 'Escape') cancelEdit();
+                              }}
+                              autoFocus
+                            />
+                            <button className="master-confirm-btn" onClick={() => saveEdit('/masters/members', m.id, { member_name: editValue })}>
+                              <CheckIcon />
+                            </button>
+                            <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
                           </div>
-                          <div className="master-chip-main">
+                        ) : (
+                          <span className="master-chip master-chip-green master-chip-static">
                             <span className="master-chip-text">{m.member_name}</span>
-                            <div className="master-chip-actions">
-                              <button className="master-chip-btn" onClick={() => startEdit(m.id, 'member', m.member_name)} title="編集"><PencilIcon /></button>
-                              <button className="master-chip-btn master-chip-btn-del" onClick={() => deleteItem('/masters/members', m.id, m.member_name)} title="削除"><TrashIcon /></button>
-                            </div>
-                          </div>
-                        </>
+                          </span>
+                        )}
+                      </div>
+                      {!isEditing(m.id, 'member') && (
+                        <div className="master-actions">
+                          <button className="master-action-btn master-edit" onClick={() => startEdit(m.id, 'member', m.member_name)} title="編集"><PencilIcon /></button>
+                          <button className="master-action-btn master-delete" onClick={() => deleteItem('/masters/members', m.id, m.member_name)} title="削除"><TrashIcon /></button>
+                        </div>
                       )}
                     </div>
                   )}
@@ -126,6 +133,25 @@ export function MemberSection({
           )}
         </Droppable>
       </DragDropContext>
+
+      {members.length > 8 && (
+        <button
+          className="master-list-expand-btn"
+          onClick={() => setIsMemberListExpanded(!isMemberListExpanded)}
+        >
+          {isMemberListExpanded ? (
+            <>
+              <ChevronUpIcon />
+              閉じる
+            </>
+          ) : (
+            <>
+              <ChevronDownIcon />
+              すべての担当者を表示 ({members.length}件)
+            </>
+          )}
+        </button>
+      )}
     </section>
   );
 }

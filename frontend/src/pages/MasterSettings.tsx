@@ -9,7 +9,7 @@ import { SubtaskTypeSection } from '../components/masterSettings/SubtaskTypeSect
 import { AssigneeViewSettingsSection } from '../components/masterSettings/AssigneeViewSettingsSection';
 import { SystemSettingsSection } from '../components/masterSettings/SystemSettingsSection';
 import { useWebSocket } from '../api/websocket';
-import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { DropResult } from '@hello-pangea/dnd';
 import LoadingOverlay from '../components/LoadingOverlay';
 import {
   defaultLoadRateThresholds,
@@ -140,6 +140,8 @@ export default function MasterSettings() {
   const [statusMappingDone, setStatusMappingDone] = useState<number[]>([]);
   const [isSavingSetting, setIsSavingSetting] = useState(false);
   const [isSyncingHolidays, setIsSyncingHolidays] = useState(false);
+  const [isSubtaskTypeListExpanded, setIsSubtaskTypeListExpanded] = useState(false);
+  const [isMemberListExpanded, setIsMemberListExpanded] = useState(false);
   const [isHolidayListExpanded, setIsHolidayListExpanded] = useState(false);
 
   // Real-time synchronization
@@ -514,6 +516,8 @@ export default function MasterSettings() {
               startEdit={startEdit}
               deleteItem={deleteItem}
               onDragEnd={(res) => onDragEnd(res, 'subtask_type')}
+              isSubtaskTypeListExpanded={isSubtaskTypeListExpanded}
+              setIsSubtaskTypeListExpanded={setIsSubtaskTypeListExpanded}
             />
           </div>
 
@@ -533,6 +537,8 @@ export default function MasterSettings() {
               startEdit={startEdit}
               deleteItem={deleteItem}
               onDragEnd={(res) => onDragEnd(res, 'member')}
+              isMemberListExpanded={isMemberListExpanded}
+              setIsMemberListExpanded={setIsMemberListExpanded}
             />
           </div>
 

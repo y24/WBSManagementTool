@@ -989,9 +989,30 @@ code {
   flex-shrink: 0;
 }
 
+.master-sortable-chip-row {
+  justify-content: space-between;
+  padding: 0.35rem 0.5rem;
+}
+
+.master-sortable-chip-content {
+  gap: 0.35rem;
+}
+
+.master-chip-static {
+  min-width: 6.5rem;
+  justify-content: center;
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+}
+
 .master-chip:hover .master-chip-text {
   opacity: 0;
   visibility: hidden;
+}
+
+.master-chip-static:hover .master-chip-text {
+  opacity: 1;
+  visibility: visible;
 }
 
 .master-chip:hover .master-chip-actions {
