@@ -120,6 +120,29 @@ def test_get_wbs_data_with_calculations(db_session):
     assert p_wbs.tasks[0].planned_effort_total == 8
     assert p_wbs.tasks[0].is_overlapping == True
 
+def test_get_wbs_data_keeps_zero_planned_effort_totals(db_session):
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))
+
+    crud.create_subtask(db_session, schemas.SubtaskCreate(
+        task_id=task.id,
+        status_id=1,
+        planned_effort_days=0,
+        subtask_detail="S1",
+    ))
+    crud.create_subtask(db_session, schemas.SubtaskCreate(
+        task_id=task.id,
+        status_id=1,
+        planned_effort_days=0,
+        subtask_detail="S2",
+    ))
+
+    wbs_data = crud.get_wbs_data(db_session, project_ids=[project.id])
+    p_wbs = wbs_data[0]
+
+    assert p_wbs.planned_effort_total == 0
+    assert p_wbs.tasks[0].planned_effort_total == 0
+
 def test_in_review_without_review_days_preserves_actual_end_date(db_session):
     project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
     task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))

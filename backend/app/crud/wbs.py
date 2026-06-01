@@ -69,22 +69,21 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
             t_wbs = schemas.TaskWBS.from_orm(t)
             valid_subtasks = [s for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed")]
             
-            # Helper to get weight (fallback to 1 if not entered or 0)
-            def get_subtask_weight(s):
+            # Displayed effort totals must be the actual sum. Progress weighting uses
+            # a separate fallback so zero-effort subtasks can still contribute to progress.
+            def get_progress_weight(s):
                 return s.planned_effort_days if (s.planned_effort_days and s.planned_effort_days > 0) else Decimal('1')
 
-            t_wbs.planned_effort_total = sum(get_subtask_weight(s) for s in valid_subtasks)
-            # If no subtasks, treat task itself as having 1 day of effort for progress calculation consistency
-            if not valid_subtasks:
-                t_wbs.planned_effort_total = Decimal('1')
+            t_wbs.planned_effort_total = sum((s.planned_effort_days or Decimal('0')) for s in valid_subtasks)
             t_wbs.actual_effort_total = sum((s.actual_effort_days or Decimal('0')) for s in valid_subtasks)
             t_wbs.work_days_total = sum((s.work_days or Decimal('0')) for s in valid_subtasks)
             
             # Weighted progress for Task
             if valid_subtasks:
-                # We use planned_effort_days (with fallback 1) as weight. 
-                weighted_sum = sum((Decimal(str(s.progress_percent or 0)) * get_subtask_weight(s)) for s in valid_subtasks)
-                t_wbs.progress_percent = int(round(float(weighted_sum) / float(t_wbs.planned_effort_total)))
+                # We use planned_effort_days with fallback 1 only for progress weighting.
+                progress_weight_total = sum(get_progress_weight(s) for s in valid_subtasks)
+                weighted_sum = sum((Decimal(str(s.progress_percent or 0)) * get_progress_weight(s)) for s in valid_subtasks)
+                t_wbs.progress_percent = int(round(float(weighted_sum) / float(progress_weight_total)))
             else:
                 t_wbs.progress_percent = 0
 
