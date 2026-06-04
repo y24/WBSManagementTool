@@ -104,13 +104,13 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
             <>
               <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`}>工数比率</div>
               <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`} title="実作業に割り当てる営業日数。レビュー期間は除きます。">作業日数</div>
-              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`} title="レビューに割り当てる営業日数。この期間の工数は一律50%で計算されます。">レビュー日数</div>
+              <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`} title="レビューに割り当てる営業日数。この期間にも工数比率を適用します。">レビュー日数</div>
               <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`} title="実作業を開始する予定日。">開始(計画)</div>
               <div className={`w-20 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`} title="実作業とレビューの全工程を完了する予定日。">終了(計画)</div>
               {showManHours && (
                 <div
                   className={`w-16 flex-shrink-0 flex items-center ${commonHeaderClasses} ${planningCellClasses} !py-0`}
-                  title="予定工数 = (作業日数 × 工数比率) + (レビュー日数 × 50%)&#10;※作業日数とレビュー日数が同日の場合は、両方の工数を合算して算出します。"
+                  title="予定工数 = (作業日数 + レビュー日数) × 工数比率&#10;※作業日数とレビュー日数が同日の場合は、両方の工数を合算して算出します。"
                 >
                   予定工数
                 </div>
@@ -125,7 +125,7 @@ const WBSHeader: React.FC<WBSHeaderProps> = ({
               {showManHours && (
                 <div
                   className={`w-16 flex-shrink-0 flex items-center ${commonHeaderClasses} !py-0`}
-                  title="実績工数 = (作業期間 × 工数比率) + (レビュー期間 × 50%)&#10;※作業期間とレビュー期間が同日の場合は、両方の工数を合算して算出します。"
+                  title="実績工数 = (作業期間 + レビュー期間) × 工数比率&#10;※作業期間とレビュー期間が同日の場合は、両方の工数を合算して算出します。"
                 >
                   実績工数
                 </div>

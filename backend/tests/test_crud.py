@@ -1,5 +1,6 @@
 import pytest
 from datetime import date
+from decimal import Decimal
 from app import crud, schemas, models
 
 def test_create_project(db_session):
@@ -142,6 +143,41 @@ def test_get_wbs_data_keeps_zero_planned_effort_totals(db_session):
 
     assert p_wbs.planned_effort_total == 0
     assert p_wbs.tasks[0].planned_effort_total == 0
+
+def test_auto_planned_effort_applies_workload_to_review_days(db_session):
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))
+
+    subtask = crud.create_subtask(db_session, schemas.SubtaskCreate(
+        task_id=task.id,
+        status_id=1,
+        subtask_detail="S1",
+        planned_start_date=date(2023, 1, 2),
+        planned_end_date=date(2023, 1, 6),
+        work_days=3,
+        review_days=2,
+        workload_percent=50,
+        is_auto_effort=True,
+    ))
+
+    assert subtask.planned_effort_days == Decimal("2.5")
+
+def test_auto_actual_effort_applies_workload_to_review_period(db_session):
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))
+
+    subtask = crud.create_subtask(db_session, schemas.SubtaskCreate(
+        task_id=task.id,
+        status_id=1,
+        subtask_detail="S1",
+        actual_start_date=date(2023, 1, 2),
+        review_start_date=date(2023, 1, 5),
+        actual_end_date=date(2023, 1, 6),
+        workload_percent=50,
+        is_auto_effort=True,
+    ))
+
+    assert subtask.actual_effort_days == Decimal("2.5")
 
 def test_in_review_without_review_days_preserves_actual_end_date(db_session):
     project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
