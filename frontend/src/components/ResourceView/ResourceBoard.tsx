@@ -17,6 +17,7 @@ interface ResourceBoardProps {
   listRef: React.RefObject<HTMLDivElement | null>;
   ganttRef: React.RefObject<HTMLDivElement | null>;
   dynamicGanttRange?: GanttRange;
+  currentTodayStr: string;
   showTodayHighlight: boolean;
   showMarkers: boolean;
   isDarkMode: boolean;
@@ -39,6 +40,7 @@ export default function ResourceBoard({
   listRef,
   ganttRef,
   dynamicGanttRange,
+  currentTodayStr,
   showTodayHighlight,
   showMarkers,
   isDarkMode,
@@ -52,8 +54,7 @@ export default function ResourceBoard({
   onRefresh,
   onLocalUpdate
 }: ResourceBoardProps) {
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
-  const effectiveTodayStr = dynamicGanttRange?.today || todayStr;
+  const effectiveTodayStr = dynamicGanttRange?.today || currentTodayStr;
   const loadRateThresholds = useMemo(() => getLoadRateThresholds(initialData), [initialData]);
   const scheduleVarianceThresholds = useMemo(() => getScheduleVarianceThresholds(initialData), [initialData]);
 
@@ -124,6 +125,7 @@ export default function ResourceBoard({
               highlightResourceDelayedTasks={highlightResourceDelayedTasks}
               loadScopeEndDate={loadScopeEndDate}
               actualLoadScopeStartDate={actualLoadScopeStartDate}
+              todayStr={effectiveTodayStr}
               scale={scale}
               onScroll={onGanttScroll}
               ganttRef={ganttRef}

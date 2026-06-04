@@ -36,6 +36,7 @@ interface ResourceGanttProps {
   highlightResourceDelayedTasks: boolean;
   loadScopeEndDate?: string;
   actualLoadScopeStartDate?: string;
+  todayStr: string;
   scale: GanttScale;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   ganttRef: React.RefObject<HTMLDivElement | null>;
@@ -55,6 +56,7 @@ export default function ResourceGantt({
   highlightResourceDelayedTasks,
   loadScopeEndDate,
   actualLoadScopeStartDate,
+  todayStr,
   scale,
   onScroll,
   ganttRef,
@@ -68,8 +70,6 @@ export default function ResourceGantt({
     x: number;
     y: number;
   } | null>(null);
-
-  const todayStr = useMemo(() => range.today || new Date().toISOString().split('T')[0], [range.today]);
 
   const doneStatusId = useMemo(
     () => initialData?.status_mapping_done ? parseInt(initialData.status_mapping_done, 10) : null,
@@ -196,7 +196,7 @@ export default function ResourceGantt({
     });
 
     const cells = [];
-    const today = startOfDay(new Date());
+    const today = startOfDay(parseISO(todayStr));
 
     for (let i = 0; i < unitDateKeys.length; i++) {
       const unit = unitDateKeys[i];
@@ -235,7 +235,7 @@ export default function ResourceGantt({
     }
 
     return cells;
-  }, [cellWidth, days, holidaySet, isDarkMode, loadScopeEndDate, removedStatusId, unitDateKeys]);
+  }, [cellWidth, days, holidaySet, isDarkMode, loadScopeEndDate, removedStatusId, todayStr, unitDateKeys]);
 
   return (
     <div className="h-full min-h-0 w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
@@ -257,6 +257,7 @@ export default function ResourceGantt({
             onDateClick={() => {}}
             setHoveredDate={setHoveredDate}
             handleMouseDown={handleMouseDown}
+            todayStr={todayStr}
           />
 
           <GanttBackground
@@ -270,6 +271,7 @@ export default function ResourceGantt({
             showMarkers={showMarkers}
             dragState={dragState}
             tempDates={tempDates}
+            todayStr={todayStr}
           />
 
           <div className="relative pb-[100px]">

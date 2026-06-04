@@ -39,6 +39,7 @@ interface WBSTreeProps {
   hidePlanningColumns?: boolean;
   isPlanningMode?: boolean;
   displayOptions: DisplayOptions;
+  currentTodayStr: string;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
@@ -55,6 +56,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   hidePlanningColumns = false,
   isPlanningMode = false,
   displayOptions,
+  currentTodayStr,
   onScroll
 }, ref) => {
   const [saving, setSaving] = useState(false);
@@ -243,6 +245,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
             isEditing={isEditing}
             onTabNavigation={moveFocusAndEdit}
             displayOptions={displayOptions}
+            currentTodayStr={currentTodayStr}
           />
         </DragDropContext>
 

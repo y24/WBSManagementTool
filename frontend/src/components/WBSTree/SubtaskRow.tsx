@@ -29,6 +29,7 @@ interface SubtaskRowProps {
   projectName?: string;
   taskName?: string;
   highlightDelayedTasks?: boolean;
+  todayStr: string;
   showManHours?: boolean;
   hasDuplicateTicketId?: boolean;
 }
@@ -53,6 +54,7 @@ const SubtaskRow = memo(({
   projectName,
   taskName,
   highlightDelayedTasks = true,
+  todayStr,
   showManHours = true,
   hasDuplicateTicketId = false
 }: SubtaskRowProps) => {
@@ -73,7 +75,6 @@ const SubtaskRow = memo(({
     setLocalProgress(subtask.progress_percent ?? null);
   }, [subtask.progress_percent]);
 
-  const todayStr = React.useMemo(() => new Date().toISOString().split('T')[0], []);
   const doneStatusId = React.useMemo(() => initialData?.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null, [initialData]);
   const newStatusId = React.useMemo(() => initialData?.status_mapping_new ? Number.parseInt(initialData.status_mapping_new, 10) : undefined, [initialData]);
 

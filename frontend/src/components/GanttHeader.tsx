@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { format, getDay, isToday, parseISO, differenceInCalendarDays, isValid, startOfWeek, endOfWeek, startOfYear } from 'date-fns';
+import { format, getDay, isSameDay, parseISO, isValid, endOfWeek } from 'date-fns';
 import { GanttScale } from '../types/wbs';
 import { getDateX } from '../utils/ganttUtils';
 import { InitialData } from '../types';
@@ -24,6 +24,7 @@ interface GanttHeaderProps {
   ) => void;
   dragState: any;
   tempDates: Record<number, any>;
+  todayStr: string;
 }
 
 const GanttHeader: React.FC<GanttHeaderProps> = ({
@@ -37,6 +38,7 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
   handleMouseDown,
   dragState,
   tempDates,
+  todayStr,
 }) => {
   const isHoliday = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -127,11 +129,12 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
           }
 
           const dateStr = format(d, 'yyyy-MM-dd');
+          const isCurrentDate = scale === 'day' && isSameDay(d, parseISO(todayStr));
 
           return (
             <div
               key={d.toISOString()}
-              className={`absolute top-0 bottom-0 border-r border-gray-200 dark:border-slate-800 flex items-center justify-center text-[10px] cursor-pointer transition-colors group/header-cell ${dayClasses} ${(scale === 'day' && isToday(d)) ? 'font-bold' : ''}`}
+              className={`absolute top-0 bottom-0 border-r border-gray-200 dark:border-slate-800 flex items-center justify-center text-[10px] cursor-pointer transition-colors group/header-cell ${dayClasses} ${isCurrentDate ? 'font-bold' : ''}`}
               style={{ left: `${i * cellWidth}px`, width: `${cellWidth}px` }}
               title={tooltip}
               onMouseEnter={(e) => setHoveredDate(dateStr, e.clientX, e.clientY)}
@@ -218,6 +221,7 @@ const areGanttHeaderPropsEqual = (prev: GanttHeaderProps, next: GanttHeaderProps
     prev.scale === next.scale &&
     prev.initialData === next.initialData &&
     prev.showMarkers === next.showMarkers &&
+    prev.todayStr === next.todayStr &&
     prevMarkerDragId === nextMarkerDragId &&
     getActiveMarkerTemp(prev) === getActiveMarkerTemp(next)
   );

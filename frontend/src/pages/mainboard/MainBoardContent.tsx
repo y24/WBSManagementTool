@@ -27,6 +27,7 @@ interface MainBoardContentProps {
   expandedTasks: Record<number, boolean>;
   setExpandedTasks: Dispatch<SetStateAction<Record<number, boolean>>>;
   dynamicGanttRange?: GanttRange;
+  currentTodayStr: string;
   onTreeScroll: (e: UIEvent<HTMLDivElement>) => void;
   onGanttScroll: (e: UIEvent<HTMLDivElement>) => void;
 }
@@ -47,6 +48,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
   expandedTasks,
   setExpandedTasks,
   dynamicGanttRange,
+  currentTodayStr,
   onTreeScroll,
   onGanttScroll,
 }) => {
@@ -73,6 +75,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
           listRef={isResourceView ? treeRef : inactiveTreeRef}
           ganttRef={isResourceView ? ganttRef : inactiveGanttRef}
           dynamicGanttRange={dynamicGanttRange}
+          currentTodayStr={currentTodayStr}
           showTodayHighlight={displayOptions.showTodayHighlight}
           showMarkers={displayOptions.showMarkers}
           isDarkMode={displayOptions.isDarkMode}
@@ -109,6 +112,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
           hidePlanningColumns={displayOptions.hidePlanningColumns}
           isPlanningMode={displayOptions.isPlanningMode}
           displayOptions={displayOptions}
+          currentTodayStr={currentTodayStr}
           onScroll={onTreeScroll}
         />
       </div>
@@ -130,6 +134,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
                 projects={filteredProjects}
                 initialData={initialData}
                 range={dynamicGanttRange}
+                currentTodayStr={currentTodayStr}
                 expandedProjects={expandedProjects}
                 expandedTasks={expandedTasks}
                 showProjectRange={displayOptions.showProjectRange}

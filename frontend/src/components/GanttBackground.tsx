@@ -15,6 +15,7 @@ interface GanttBackgroundProps {
   showMarkers: boolean;
   dragState: any;
   tempDates: Record<number, any>;
+  todayStr: string;
 }
 
 const GanttBackground: React.FC<GanttBackgroundProps> = ({
@@ -28,6 +29,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
   showMarkers,
   dragState,
   tempDates,
+  todayStr,
 }) => {
   const isHoliday = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -44,10 +46,10 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
 
   const todayLineX = React.useMemo(() => {
     if (!showTodayHighlight || !range.start_date || !markerRange) return null;
-    const today = parseISO(format(new Date(), 'yyyy-MM-dd'));
+    const today = parseISO(todayStr);
     if (!isValid(today) || today < markerRange.start || today > markerRange.end) return null;
     return getDateX(today, parseISO(range.start_date), scale);
-  }, [markerRange, range.start_date, scale, showTodayHighlight]);
+  }, [markerRange, range.start_date, scale, showTodayHighlight, todayStr]);
 
   return (
     <>
@@ -137,6 +139,7 @@ const areGanttBackgroundPropsEqual = (prev: GanttBackgroundProps, next: GanttBac
     prev.hoveredDate === next.hoveredDate &&
     prev.showTodayHighlight === next.showTodayHighlight &&
     prev.showMarkers === next.showMarkers &&
+    prev.todayStr === next.todayStr &&
     prevMarkerDragId === nextMarkerDragId &&
     getActiveMarkerTemp(prev) === getActiveMarkerTemp(next)
   );

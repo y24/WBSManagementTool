@@ -20,6 +20,7 @@ interface GanttChartProps {
   projects: Project[];
   initialData: InitialData | null;
   range: GanttRange;
+  currentTodayStr: string;
   expandedProjects: Record<number, boolean>;
   expandedTasks: Record<number, boolean>;
   showProjectRange: boolean;
@@ -42,6 +43,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   projects,
   initialData,
   range,
+  currentTodayStr,
   expandedProjects,
   expandedTasks,
   showProjectRange,
@@ -161,7 +163,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
            !item.actual_start_date && !item.actual_end_date;
   }, []);
 
-  const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const todayStr = currentTodayStr;
   const doneStatusId = useMemo(() => initialData?.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null, [initialData]);
   const newStatusId = useMemo(() => initialData?.status_mapping_new ? Number.parseInt(initialData.status_mapping_new, 10) : undefined, [initialData]);
 
@@ -399,6 +401,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
             handleMouseDown={handleMouseDown}
             dragState={dragState}
             tempDates={tempDates}
+            todayStr={todayStr}
           />
 
           <GanttBackground
@@ -412,6 +415,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
             showMarkers={showMarkers}
             dragState={dragState}
             tempDates={tempDates}
+            todayStr={todayStr}
           />
 
           {/* 要素行の描画 (z-10) */}

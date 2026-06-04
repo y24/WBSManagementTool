@@ -29,6 +29,7 @@ import LoadingOverlay from '../components/LoadingOverlay';
 import { parseISO } from 'date-fns';
 import { getDateX } from '../utils/ganttUtils';
 import { showErrorToastUnlessNetworkError } from '../utils/toast';
+import { useCurrentDateString } from '../hooks/useCurrentDateString';
 
 type WBSRefreshOptions = boolean | {
   showLoading?: boolean;
@@ -56,6 +57,7 @@ export default function MainBoard() {
   const syncLockRef = useRef<'tree' | 'gantt' | null>(null);
   const viewSwitchFrameRefs = useRef<number[]>([]);
   const todayScrollAnimationRef = useRef<number | null>(null);
+  const currentTodayStr = useCurrentDateString();
 
   // Real-time synchronization
   useWebSocket((msg) => {
@@ -186,8 +188,8 @@ export default function MainBoard() {
     return () => window.removeEventListener('refresh-wbs', handleRefresh);
   }, [fetchData]);
 
-  const filteredProjects = useFilteredProjects({ data, filters, initialData, displayOptions });
-  const dynamicGanttRange = useDynamicGanttRange({ data, filteredProjects });
+  const filteredProjects = useFilteredProjects({ data, filters, initialData, displayOptions, currentTodayStr });
+  const dynamicGanttRange = useDynamicGanttRange({ data, filteredProjects, currentTodayStr });
 
   const scrollGanttHorizontally = useCallback((targetScrollLeft: number) => {
     const gantt = ganttRef.current;
@@ -409,7 +411,7 @@ export default function MainBoard() {
       const link = document.createElement('a');
       link.href = url;
       
-      const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      const today = currentTodayStr.replace(/-/g, '');
       link.setAttribute('download', `wbs_export_${today}.xlsx`);
       
       document.body.appendChild(link);
@@ -459,6 +461,7 @@ export default function MainBoard() {
         expandedTasks={expandedTasks}
         setExpandedTasks={setExpandedTasks}
         dynamicGanttRange={dynamicGanttRange}
+        currentTodayStr={currentTodayStr}
         onTreeScroll={handleTreeScroll}
         onGanttScroll={handleGanttScroll}
       />

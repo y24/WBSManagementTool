@@ -8,6 +8,7 @@ interface UseFilteredProjectsParams {
   filters: FilterState;
   initialData: InitialData | null;
   displayOptions: DisplayOptions;
+  currentTodayStr: string;
 }
 
 function containsSearchTerm(text: string | null | undefined, term: string): boolean {
@@ -25,11 +26,12 @@ export function useFilteredProjects({
   filters,
   initialData,
   displayOptions,
+  currentTodayStr,
 }: UseFilteredProjectsParams): Project[] {
   return useMemo(() => {
     if (!data?.projects) return [];
 
-    const todayStr = data.gantt_range?.today || new Date().toISOString().split('T')[0];
+    const todayStr = currentTodayStr;
     const doneStatusId = initialData?.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null;
     const removedStatusId = initialData?.statuses.find((status) => status.status_name === 'Removed')?.id ?? 7;
     const newStatusId = initialData?.statuses.find((status) => status.status_name === 'New')?.id;
@@ -185,5 +187,5 @@ export function useFilteredProjects({
         return { ...project, tasks: filteredTasks };
       })
       .filter(Boolean) as Project[];
-  }, [data, filters, initialData, displayOptions]);
+  }, [data, filters, initialData, displayOptions, currentTodayStr]);
 }

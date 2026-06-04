@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
-import { addDays, endOfMonth, format, subDays } from 'date-fns';
+import { addDays, endOfMonth, format, parseISO, subDays } from 'date-fns';
 import { GanttRange, Project, WBSResponse } from '../../types/wbs';
 import { getDisplayActualEndDate } from '../../utils/ganttDateRange';
 
 interface UseDynamicGanttRangeParams {
   data: WBSResponse | null;
   filteredProjects: Project[];
+  currentTodayStr: string;
 }
 
 interface Schedulable {
@@ -24,12 +25,15 @@ function collectDates(target: Date[], item: Schedulable): void {
   if (displayActualEnd) target.push(new Date(displayActualEnd));
 }
 
-export function useDynamicGanttRange({ data, filteredProjects }: UseDynamicGanttRangeParams): GanttRange | undefined {
+export function useDynamicGanttRange({ data, filteredProjects, currentTodayStr }: UseDynamicGanttRangeParams): GanttRange | undefined {
   return useMemo(() => {
-    if (!data?.gantt_range || filteredProjects.length === 0) return data?.gantt_range;
+    if (!data?.gantt_range) return undefined;
 
-    const todayStr = data.gantt_range.today;
-    const today = new Date(todayStr);
+    const todayStr = currentTodayStr;
+    const today = parseISO(todayStr);
+    if (filteredProjects.length === 0) {
+      return { ...data.gantt_range, today: todayStr };
+    }
     const allDates: Date[] = [];
 
     filteredProjects.forEach((project) => {
@@ -42,7 +46,9 @@ export function useDynamicGanttRange({ data, filteredProjects }: UseDynamicGantt
       });
     });
 
-    if (allDates.length === 0) return data.gantt_range;
+    if (allDates.length === 0) {
+      return { ...data.gantt_range, today: todayStr };
+    }
 
     const minDate = new Date(Math.min(...allDates.map((date) => date.getTime())));
     const maxDate = new Date(Math.max(...allDates.map((date) => date.getTime())));
@@ -60,5 +66,5 @@ export function useDynamicGanttRange({ data, filteredProjects }: UseDynamicGantt
       end_date: format(targetEndDate, 'yyyy-MM-dd'),
       today: todayStr,
     };
-  }, [data, filteredProjects]);
+  }, [data, filteredProjects, currentTodayStr]);
 }

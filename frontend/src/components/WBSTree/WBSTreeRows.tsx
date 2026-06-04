@@ -32,6 +32,7 @@ interface WBSTreeRowsProps {
   isEditing: boolean;
   onTabNavigation?: (direction: 'next' | 'prev', autoEdit: boolean) => void;
   displayOptions: DisplayOptions;
+  currentTodayStr: string;
 }
 
 const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
@@ -58,7 +59,8 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
   onEditingChange,
   isEditing,
   onTabNavigation,
-  displayOptions
+  displayOptions,
+  currentTodayStr
 }) => {
   const duplicateTicketIds = useMemo(() => {
     const counts = new Map<number, number>();
@@ -204,6 +206,7 @@ const WBSTreeRows: React.FC<WBSTreeRowsProps> = ({
                                                     projectName={project.project_name}
                                                     taskName={task.task_name}
                                                     highlightDelayedTasks={displayOptions.highlightDelayedTasks}
+                                                    todayStr={currentTodayStr}
                                                     showManHours={displayOptions.showManHours}
                                                     hasDuplicateTicketId={subtask.sync_to_azure_devops !== false && subtask.ticket_id != null && duplicateTicketIds.has(subtask.ticket_id)}
                                                   />
