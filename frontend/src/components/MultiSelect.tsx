@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Check, X, Search } from 'lucide-react';
 
@@ -40,6 +40,25 @@ const MultiSelect = memo(({
     if (opt.hiddenUntilSearch && !normalizedSearchTerm && !values.includes(opt.id)) return false;
     return opt.name.toLowerCase().includes(normalizedSearchTerm);
   });
+  const sortedFilteredOptions = useMemo(() => {
+    if (values.length === 0) return filteredOptions;
+
+    const selectedOrder = new Map(values.map((value, index) => [value, index]));
+    return filteredOptions
+      .map((opt, index) => ({ opt, index }))
+      .sort((a, b) => {
+        const aSelectedOrder = selectedOrder.get(a.opt.id);
+        const bSelectedOrder = selectedOrder.get(b.opt.id);
+        const aIsSelected = aSelectedOrder !== undefined;
+        const bIsSelected = bSelectedOrder !== undefined;
+
+        if (aIsSelected && bIsSelected) return aSelectedOrder - bSelectedOrder;
+        if (aIsSelected) return -1;
+        if (bIsSelected) return 1;
+        return a.index - b.index;
+      })
+      .map(({ opt }) => opt);
+  }, [filteredOptions, values]);
   const selectableFilteredOptions = filteredOptions.filter((opt) => !opt.disabled);
 
   const toggleDropdown = (e: React.MouseEvent) => {
@@ -203,7 +222,7 @@ const MultiSelect = memo(({
               <div className="px-3 py-6 text-center">
                 <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">一致する項目がありません</p>
               </div>
-            ) : filteredOptions.map((opt) => {
+            ) : sortedFilteredOptions.map((opt) => {
               const isSelected = values.includes(opt.id);
               const isDisabled = opt.disabled;
               return (
