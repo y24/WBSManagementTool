@@ -3,6 +3,13 @@ import { Settings, ListTree, Plus, FileInput, LayoutDashboard, RefreshCw, Calend
 import { useState, useEffect } from 'react';
 import { getInitialData } from '../api/client';
 
+const navItems = [
+  { to: '/', label: 'メインボード', icon: ListTree },
+  { to: '/import', label: 'データインポート', icon: FileInput },
+  { to: '/dashboard', label: 'ダッシュボード', icon: LayoutDashboard },
+  { to: '/masters', label: 'マスタ・設定', icon: Settings },
+] as const;
+
 export default function Header() {
   const location = useLocation();
   const isMainBoard = location.pathname === '/';
@@ -23,35 +30,27 @@ export default function Header() {
           WBS Tracker
         </h1>
         <nav className="flex gap-4">
-          <Link
-            to="/"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-medium"
-          >
-            <ListTree size={18} />
-            <span className="text-sm">メインボード</span>
-          </Link>
-          <Link
-            to="/import"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-medium"
-          >
-            <FileInput size={18} />
-            <span className="text-sm">データインポート</span>
-          </Link>
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-medium"
-          >
-            <LayoutDashboard size={18} />
-            <span className="text-sm">ダッシュボード</span>
-          </Link>
+          {navItems.map(({ to, label, icon: Icon }) => {
+            const isActive = location.pathname === to;
+            const navClassName = [
+              'flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all font-medium',
+              isActive
+                ? 'bg-sky-50 border-sky-200 text-sky-700 shadow-sm dark:bg-sky-950/40 dark:border-sky-800/70 dark:text-sky-200'
+                : 'border-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white',
+            ].join(' ');
 
-          <Link
-            to="/masters"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-medium"
-          >
-            <Settings size={18} />
-            <span className="text-sm">マスタ・設定</span>
-          </Link>
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={navClassName}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <Icon size={18} />
+                <span className="text-sm">{label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
       </div>
