@@ -14,6 +14,7 @@ import { GanttScale } from '../types/wbs';
 import { getScaleCellWidth, getDateX, getDateWidth, getGanttUnits } from '../utils/ganttUtils';
 import { getDisplayActualEndDate } from '../utils/ganttDateRange';
 import { showErrorToastUnlessNetworkError } from '../utils/toast';
+import ResourceTaskContextMenu, { ContextMenuSubtask } from './ResourceView/ResourceTaskContextMenu';
 
 interface GanttChartProps {
   projects: Project[];
@@ -34,6 +35,7 @@ interface GanttChartProps {
   isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
   onRefresh?: () => void;
+  onLocalUpdate?: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, unknown>) => void;
 }
 
 const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
@@ -54,13 +56,19 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   showInterruptionReason = false,
   isDarkMode = false,
   onScroll,
-  onRefresh
+  onRefresh,
+  onLocalUpdate
 }, ref) => {
   const [hoveredDateInfo, setHoveredDateInfo] = useState<{ date: string; x: number; y: number } | null>(null);
   const hoveredDate = hoveredDateInfo?.date ?? null;
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isMarkerModalOpen, setIsMarkerModalOpen] = useState(false);
   const [hoveredAssigneeId, setHoveredAssigneeId] = useState<number | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    subtask: ContextMenuSubtask;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Drag logic
   const { dragState, tempDates, handleMouseDown } = useGanttDrag(initialData, scale, onRefresh);
@@ -124,6 +132,27 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     const memberColor = initialData?.members.find(m => m.id === assigneeId)?.color_code;
     return normalizeColor(memberColor, '#9ca3af');
   }, [initialData, isDarkMode, normalizeColor]);
+
+  const handleSubtaskContextMenu = useCallback((
+    event: React.MouseEvent,
+    subtask: Subtask,
+    project: Project,
+    task: Task,
+    subtaskTypeName?: string,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu({
+      subtask: {
+        ...subtask,
+        project_name: project.project_name,
+        task_name: task.task_name,
+        subtask_type_name: subtaskTypeName,
+      },
+      x: event.clientX,
+      y: event.clientY,
+    });
+  }, []);
 
   const baseDate = useMemo(() => range.start_date ? parseISO(range.start_date) : new Date(), [range.start_date]);
 
@@ -505,6 +534,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
                     highlightSameAssignee={highlightSameAssignee}
                     hoveredAssigneeId={hoveredAssigneeId}
                     setHoveredAssigneeId={setHoveredAssigneeId}
+                    onBarContextMenu={(e) => handleSubtaskContextMenu(e, subtask, row.project, row.task, typeName)}
                   />
                   {showInterruptionReason && subtask.interruptions?.map(inter => {
                     const interDate = parseISO(inter.interruption_date);
@@ -552,6 +582,18 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
           mouseY={hoveredDateInfo.y}
           initialData={initialData}
           isVisible={true}
+        />
+      )}
+
+      {contextMenu && (
+        <ResourceTaskContextMenu
+          subtask={contextMenu.subtask}
+          initialData={initialData}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onRefresh={onRefresh ?? (() => {})}
+          onLocalUpdate={onLocalUpdate}
         />
       )}
     </div>

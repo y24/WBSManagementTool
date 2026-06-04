@@ -84,6 +84,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
           onListScroll={onTreeScroll}
           onGanttScroll={onGanttScroll}
           onRefresh={() => onUpdate(false)}
+          onLocalUpdate={onLocalUpdate}
         />
         </div>
       )}
@@ -144,6 +145,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
                 isDarkMode={displayOptions.isDarkMode}
                 onScroll={onGanttScroll}
                 onRefresh={() => onUpdate(false)}
+                onLocalUpdate={onLocalUpdate}
               />
             )}
           </div>

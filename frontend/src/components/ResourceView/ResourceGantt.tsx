@@ -8,6 +8,7 @@ import { useGanttDrag } from '../../hooks/useGanttDrag';
 import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
 import GanttBar from '../GanttBar';
+import ResourceTaskContextMenu from './ResourceTaskContextMenu';
 
 const OVERLAID_TRACK_HEIGHT = 36;
 const OVERLAID_STACKED_TRACK_HEIGHT = 26;
@@ -39,6 +40,7 @@ interface ResourceGanttProps {
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   ganttRef: React.RefObject<HTMLDivElement | null>;
   onRefresh: () => void;
+  onLocalUpdate?: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, unknown>) => void;
 }
 
 export default function ResourceGantt({
@@ -56,10 +58,16 @@ export default function ResourceGantt({
   scale,
   onScroll,
   ganttRef,
-  onRefresh
+  onRefresh,
+  onLocalUpdate
 }: ResourceGanttProps) {
   const { dragState, tempDates, handleMouseDown } = useGanttDrag(initialData, scale, onRefresh);
   const [hoveredDate, setHoveredDate] = React.useState<string | null>(null);
+  const [contextMenu, setContextMenu] = React.useState<{
+    subtask: ResourceSubtask;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const todayStr = useMemo(() => range.today || new Date().toISOString().split('T')[0], [range.today]);
 
@@ -147,6 +155,16 @@ export default function ResourceGantt({
     const memberColor = initialData?.members.find(m => m.id === assigneeId)?.color_code;
     return normalizeColor(memberColor, '#9ca3af');
   }, [initialData, isDarkMode, normalizeColor]);
+
+  const handleBarContextMenu = useCallback((event: React.MouseEvent, item: ResourceSubtask) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenu({
+      subtask: item,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  }, []);
 
   const renderUnplannedHighlights = useCallback((row: ResourceRow) => {
     const isWeekendOrHoliday = (date: Date): boolean => {
@@ -341,6 +359,7 @@ export default function ResourceGantt({
                                     isDelayedHighlight={highlightResourceDelayedTasks && isStartDelayed}
                                     barVisibility="planned"
                                     overridePlannedBarColor={ghostColor}
+                                    onBarContextMenu={handleBarContextMenu}
                                   />
                                 </div>
                                 {/* Actual status bar */}
@@ -367,6 +386,7 @@ export default function ResourceGantt({
                                     isResourceView={true}
                                     compactResourceBar={hasStackedTracks}
                                     barVisibility="actual"
+                                    onBarContextMenu={handleBarContextMenu}
                                   />
                                 </div>
                               </React.Fragment>
@@ -407,6 +427,17 @@ export default function ResourceGantt({
           </div>
         </div>
       </div>
+      {contextMenu && (
+        <ResourceTaskContextMenu
+          subtask={contextMenu.subtask}
+          initialData={initialData}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onRefresh={onRefresh}
+          onLocalUpdate={onLocalUpdate}
+        />
+      )}
     </div>
   );
 }

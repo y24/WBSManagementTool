@@ -47,6 +47,7 @@ interface GanttBarProps {
   barVisibility?: 'both' | 'planned' | 'actual';
   overridePlannedBarColor?: string;
   overrideActualBarColor?: string;
+  onBarContextMenu?: (e: React.MouseEvent, item: any) => void;
 }
 
 const GanttBar: React.FC<GanttBarProps> = ({
@@ -79,6 +80,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
   barVisibility = 'both',
   overridePlannedBarColor,
   overrideActualBarColor,
+  onBarContextMenu,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -356,6 +358,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
               if (!allowBarEdit || isAutoPlanned) return;
               handleMouseDown(e, item.id, itemType, 'planned', 'move', { start: plannedStart, end: plannedEnd, reviewDays, name: itemName ?? undefined });
             }}
+            onContextMenu={(e) => onBarContextMenu?.(e, item)}
           >
             {/* リサイズハンドル */}
             {allowBarEdit && !isAutoPlanned && (
@@ -408,6 +411,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
                   if (!allowBarEdit || isFixedEnd || isAutoActual) return;
                   handleMouseDown(e, item.id, itemType, 'actual', 'move', { start: actualStart, end: actualEnd, reviewStart: reviewStart, name: itemName ?? undefined });
                 }}
+                onContextMenu={(e) => onBarContextMenu?.(e, item)}
               >
                 {/* リサイズハンドル (最初と最後のセグメントのみ) */}
                 {allowBarEdit && (!isAutoActual) && idx === 0 && (
@@ -628,7 +632,8 @@ const areGanttBarPropsEqual = (prev: GanttBarProps, next: GanttBarProps) => {
     prev.setHoveredAssigneeId === next.setHoveredAssigneeId &&
     prev.barVisibility === next.barVisibility &&
     prev.overridePlannedBarColor === next.overridePlannedBarColor &&
-    prev.overrideActualBarColor === next.overrideActualBarColor
+    prev.overrideActualBarColor === next.overrideActualBarColor &&
+    prev.onBarContextMenu === next.onBarContextMenu
   );
 };
 

@@ -28,6 +28,7 @@ interface ResourceBoardProps {
   onListScroll: (e: UIEvent<HTMLDivElement>) => void;
   onGanttScroll: (e: UIEvent<HTMLDivElement>) => void;
   onRefresh: () => void;
+  onLocalUpdate?: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, unknown>) => void;
 }
 
 export default function ResourceBoard({
@@ -48,7 +49,8 @@ export default function ResourceBoard({
   scale,
   onListScroll,
   onGanttScroll,
-  onRefresh
+  onRefresh,
+  onLocalUpdate
 }: ResourceBoardProps) {
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const effectiveTodayStr = dynamicGanttRange?.today || todayStr;
@@ -126,6 +128,7 @@ export default function ResourceBoard({
               onScroll={onGanttScroll}
               ganttRef={ganttRef}
               onRefresh={onRefresh}
+              onLocalUpdate={onLocalUpdate}
             />
           )}
         </div>
