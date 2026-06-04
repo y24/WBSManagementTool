@@ -133,16 +133,20 @@ export default function ResourceGantt({
     return color;
   }, [initialData, isDarkMode]);
 
+  const normalizeColor = useCallback((color: string | null | undefined, fallback: string): string => {
+    let normalized = color || fallback;
+    if (!normalized.startsWith('#')) normalized = '#' + normalized;
+    if (normalized.length === 4) {
+      normalized = '#' + normalized[1] + normalized[1] + normalized[2] + normalized[2] + normalized[3] + normalized[3];
+    }
+    return normalized;
+  }, []);
+
   const getAssigneeColor = useCallback((assigneeId: number | null | undefined): string => {
     if (!assigneeId) return isDarkMode ? '#334155' : '#cbd5e1';
-    const palette = [
-      '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#ef4444',
-      '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e',
-      '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6',
-      '#a855f7', '#d946ef',
-    ];
-    return palette[assigneeId % palette.length];
-  }, [isDarkMode]);
+    const memberColor = initialData?.members.find(m => m.id === assigneeId)?.color_code;
+    return normalizeColor(memberColor, '#9ca3af');
+  }, [initialData, isDarkMode, normalizeColor]);
 
   const renderUnplannedHighlights = useCallback((row: ResourceRow) => {
     const isWeekendOrHoliday = (date: Date): boolean => {

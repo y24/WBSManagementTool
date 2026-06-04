@@ -44,6 +44,7 @@ class MstMember(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     member_name = Column(String(100), nullable=False)
+    color_code = Column(String(20), nullable=False, default="#9ca3af")
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

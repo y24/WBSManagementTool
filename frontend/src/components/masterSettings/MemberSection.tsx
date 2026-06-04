@@ -4,6 +4,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 
 interface NewMember {
   member_name: string;
+  color_code: string;
 }
 
 interface MemberSectionProps {
@@ -16,6 +17,8 @@ interface MemberSectionProps {
   isEditing: (id: number, field: string) => boolean;
   editValue: string;
   setEditValue: (value: string) => void;
+  editColorValue: string;
+  setEditColorValue: (value: string) => void;
   saveEdit: (endpoint: string, id: number, payload: Record<string, unknown>) => void;
   cancelEdit: () => void;
   startEdit: (id: number, field: string, currentValue: string, colorValue?: string) => void;
@@ -35,6 +38,8 @@ export function MemberSection({
   isEditing,
   editValue,
   setEditValue,
+  editColorValue,
+  setEditColorValue,
   saveEdit,
   cancelEdit,
   startEdit,
@@ -65,9 +70,16 @@ export function MemberSection({
               className="master-input"
               placeholder="担当者名"
               value={newMember.member_name}
-              onChange={e => setNewMember({ member_name: e.target.value })}
+              onChange={e => setNewMember({ ...newMember, member_name: e.target.value })}
               onKeyDown={e => e.key === 'Enter' && createMember()}
               autoFocus
+            />
+            <input
+              type="color"
+              className="master-color-input"
+              value={newMember.color_code}
+              onChange={e => setNewMember({ ...newMember, color_code: e.target.value })}
+              title="担当者色"
             />
             <button className="master-confirm-btn" onClick={createMember}><CheckIcon /></button>
             <button className="master-cancel-btn" onClick={() => setShowAddMember(false)}><XIcon /></button>
@@ -95,6 +107,7 @@ export function MemberSection({
                         <div {...provided.dragHandleProps} className="master-drag-handle mr-2 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
                           <GpIcon />
                         </div>
+                        <span className="master-color-dot" style={{ backgroundColor: m.color_code }}></span>
                         {isEditing(m.id, 'member') ? (
                           <div className="master-edit-inline">
                             <input
@@ -102,25 +115,30 @@ export function MemberSection({
                               value={editValue}
                               onChange={e => setEditValue(e.target.value)}
                               onKeyDown={e => {
-                                if (e.key === 'Enter') saveEdit('/masters/members', m.id, { member_name: editValue });
+                                if (e.key === 'Enter') saveEdit('/masters/members', m.id, { member_name: editValue, color_code: editColorValue });
                                 if (e.key === 'Escape') cancelEdit();
                               }}
                               autoFocus
                             />
-                            <button className="master-confirm-btn" onClick={() => saveEdit('/masters/members', m.id, { member_name: editValue })}>
+                            <input
+                              type="color"
+                              className="master-color-input"
+                              value={editColorValue}
+                              onChange={e => setEditColorValue(e.target.value)}
+                              title="担当者色"
+                            />
+                            <button className="master-confirm-btn" onClick={() => saveEdit('/masters/members', m.id, { member_name: editValue, color_code: editColorValue })}>
                               <CheckIcon />
                             </button>
                             <button className="master-cancel-btn" onClick={cancelEdit}><XIcon /></button>
                           </div>
                         ) : (
-                          <span className="master-chip master-chip-green master-chip-static">
-                            <span className="master-chip-text">{m.member_name}</span>
-                          </span>
+                          <span className="master-item-name">{m.member_name}</span>
                         )}
                       </div>
                       {!isEditing(m.id, 'member') && (
                         <div className="master-actions">
-                          <button className="master-action-btn master-edit" onClick={() => startEdit(m.id, 'member', m.member_name)} title="編集"><PencilIcon /></button>
+                          <button className="master-action-btn master-edit" onClick={() => startEdit(m.id, 'member', m.member_name, m.color_code)} title="編集"><PencilIcon /></button>
                           <button className="master-action-btn master-delete" onClick={() => deleteItem('/masters/members', m.id, m.member_name)} title="削除"><TrashIcon /></button>
                         </div>
                       )}

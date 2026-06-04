@@ -18,6 +18,7 @@ export interface MstSubtaskType extends MasterBase {
 
 export interface MstMember extends MasterBase {
   member_name: string;
+  color_code: string;
 }
 
 export interface MstHoliday extends MasterBase {

@@ -110,33 +110,20 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     return color;
   }, [initialData, isDarkMode]);
 
+  const normalizeColor = useCallback((color: string | null | undefined, fallback: string): string => {
+    let normalized = color || fallback;
+    if (!normalized.startsWith('#')) normalized = '#' + normalized;
+    if (normalized.length === 4) {
+      normalized = '#' + normalized[1] + normalized[1] + normalized[2] + normalized[2] + normalized[3] + normalized[3];
+    }
+    return normalized;
+  }, []);
+
   const getAssigneeColor = useCallback((assigneeId: number | null | undefined): string => {
     if (!assigneeId) return isDarkMode ? '#334155' : '#cbd5e1';
-    
-    // Muted color palette (Tailwind 500 levels, semi-harmonious)
-    const palette = [
-      '#6366f1', // Indigo 500
-      '#8b5cf6', // Violet 500
-      '#ec4899', // Pink 500
-      '#f43f5e', // Rose 500
-      '#ef4444', // Red 500
-      '#f97316', // Orange 500
-      '#f59e0b', // Amber 500
-      '#eab308', // Yellow 500
-      '#84cc16', // Lime 500
-      '#22c55e', // Green 500
-      '#10b981', // Emerald 500
-      '#14b8a6', // Teal 500
-      '#06b6d4', // Cyan 500
-      '#0ea5e9', // Sky 500
-      '#3b82f6', // Blue 500
-      '#a855f7', // Purple 500
-      '#d946ef', // Fuchsia 500
-    ];
-
-    // Simple deterministic selection
-    return palette[assigneeId % palette.length];
-  }, [isDarkMode]);
+    const memberColor = initialData?.members.find(m => m.id === assigneeId)?.color_code;
+    return normalizeColor(memberColor, '#9ca3af');
+  }, [initialData, isDarkMode, normalizeColor]);
 
   const baseDate = useMemo(() => range.start_date ? parseISO(range.start_date) : new Date(), [range.start_date]);
 

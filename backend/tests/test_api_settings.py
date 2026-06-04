@@ -1,5 +1,5 @@
 from app import schemas
-from app.routers.api import get_initial_data, set_system_setting
+from app.routers.api import get_initial_data, set_system_setting, update_member
 
 
 def test_load_rate_threshold_settings_round_trip(db_session):
@@ -50,3 +50,15 @@ def test_devops_sync_status_conditions_round_trip(db_session):
 
     initial_data = get_initial_data(db_session)
     assert initial_data["azure_devops_sync_status_conditions"] == '{"actual_end_date":[4]}'
+
+
+def test_member_color_round_trip_in_initial_data(db_session):
+    member = update_member(
+        1,
+        schemas.MemberUpdate(color_code="#64748b"),
+        db_session,
+    )
+    assert member.color_code == "#64748b"
+
+    initial_data = get_initial_data(db_session)
+    assert initial_data["members"][0].color_code == "#64748b"

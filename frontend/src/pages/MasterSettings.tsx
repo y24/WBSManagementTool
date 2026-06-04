@@ -56,6 +56,7 @@ interface NewSubtaskType {
 
 interface NewMember {
   member_name: string;
+  color_code: string;
 }
 
 interface NewHoliday {
@@ -118,7 +119,7 @@ export default function MasterSettings() {
 
   const [newStatus, setNewStatus] = useState<NewStatus>({ status_name: '', color_code: '#3b82f6' });
   const [newSubtaskType, setNewSubtaskType] = useState<NewSubtaskType>({ type_name: '' });
-  const [newMember, setNewMember] = useState<NewMember>({ member_name: '' });
+  const [newMember, setNewMember] = useState<NewMember>({ member_name: '', color_code: '#9ca3af' });
   const [newHoliday, setNewHoliday] = useState<NewHoliday>({ holiday_date: '', holiday_name: '' });
 
   const [showAddStatus, setShowAddStatus] = useState(false);
@@ -331,9 +332,10 @@ export default function MasterSettings() {
     try {
       await apiClient.post('/masters/members', {
         member_name: newMember.member_name.trim(),
+        color_code: newMember.color_code,
         sort_order: data?.members.length ?? 0,
       });
-      setNewMember({ member_name: '' });
+      setNewMember({ member_name: '', color_code: '#9ca3af' });
       setShowAddMember(false);
       fetchData();
     } catch (err) {
@@ -533,6 +535,8 @@ export default function MasterSettings() {
               isEditing={isEditing}
               editValue={editValue}
               setEditValue={setEditValue}
+              editColorValue={editColorValue}
+              setEditColorValue={setEditColorValue}
               saveEdit={saveEdit}
               cancelEdit={cancelEdit}
               startEdit={startEdit}

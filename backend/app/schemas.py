@@ -48,6 +48,7 @@ class Status(StatusBase):
 
 class MemberBase(BaseModel):
     member_name: str
+    color_code: str = "#9ca3af"
     sort_order: int = 0
     is_active: bool = True
 
@@ -56,6 +57,7 @@ class MemberCreate(MemberBase):
 
 class MemberUpdate(BaseModel):
     member_name: Optional[str] = None
+    color_code: Optional[str] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
 

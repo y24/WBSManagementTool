@@ -101,6 +101,7 @@ erDiagram
     mst_members {
         int id PK
         string member_name
+        string color_code
         int sort_order
         boolean is_active
     }
@@ -237,6 +238,7 @@ PJ/タスク/サブタスクの進捗ステータス。
 | :--- | :--- | :---: | :---: | :--- |
 | id | Integer | PK | No | メンバーID |
 | member_name | String(100) | - | No | 名前 |
+| color_code | String(20) | - | No | 担当者別表示色 (HEX)。初期値は `#9ca3af` |
 | sort_order | Integer | - | No | 表示順 |
 | is_active | Boolean | - | No | 有効フラグ |
 
