@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { FilterState, DisplayOptions } from '../../components/FilterPanel';
+import { FilterState, DisplayOptions, UNASSIGNED_ASSIGNEE_ID } from '../../components/FilterPanel';
 import { InitialData } from '../../types';
 import { Project, Task, WBSResponse } from '../../types/wbs';
 
@@ -12,6 +12,12 @@ interface UseFilteredProjectsParams {
 
 function containsSearchTerm(text: string | null | undefined, term: string): boolean {
   return (text ?? '').toLowerCase().includes(term);
+}
+
+function matchesAssigneeFilter(assigneeId: number | null | undefined, assigneeIds: number[]): boolean {
+  if (assigneeIds.length === 0) return true;
+  if (assigneeId == null) return assigneeIds.includes(UNASSIGNED_ASSIGNEE_ID);
+  return assigneeIds.includes(assigneeId);
 }
 
 export function useFilteredProjects({
@@ -77,10 +83,7 @@ export function useFilteredProjects({
 
               if (filters.statusIds.length > 0 && !filters.statusIds.includes(subtask.status_id)) return false;
 
-              if (
-                filters.assigneeIds.length > 0 &&
-                (!subtask.assignee_id || !filters.assigneeIds.includes(subtask.assignee_id))
-              ) {
+              if (!matchesAssigneeFilter(subtask.assignee_id, filters.assigneeIds)) {
                 return false;
               }
 
@@ -125,11 +128,7 @@ export function useFilteredProjects({
                 return false;
               }
 
-              if (
-                filters.assigneeIds.length > 0 &&
-                task.assignee_id &&
-                !filters.assigneeIds.includes(task.assignee_id)
-              ) {
+              if (!matchesAssigneeFilter(task.assignee_id, filters.assigneeIds)) {
                 return false;
               }
 

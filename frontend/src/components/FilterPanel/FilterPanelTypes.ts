@@ -2,6 +2,8 @@ import { GanttScale } from '../../types/wbs';
 
 export type ResourceLoadScope = '1w' | '2w' | '1m' | '2m' | '3m';
 
+export const UNASSIGNED_ASSIGNEE_ID = -1;
+
 export interface FilterState {
   projectIds: number[];
   statusIds: number[];

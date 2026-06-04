@@ -1,6 +1,6 @@
 import React from 'react';
 import MultiSelect from '../MultiSelect';
-import { FilterState, DisplayOptions } from './FilterPanelTypes';
+import { FilterState, DisplayOptions, UNASSIGNED_ASSIGNEE_ID } from './FilterPanelTypes';
 import { Project } from '../../types/wbs';
 import { InitialData } from '../../types';
 
@@ -71,7 +71,10 @@ const FilterControls: React.FC<FilterControlsProps> = ({
       {/* Assignee Filter */}
       <MultiSelect
         values={filters.assigneeIds}
-        options={members.map(m => ({ id: m.id, name: m.member_name }))}
+        options={[
+          { id: UNASSIGNED_ASSIGNEE_ID, name: '未アサイン' },
+          ...members.map(m => ({ id: m.id, name: m.member_name })),
+        ]}
         onChange={(ids) => setFilters((prev: FilterState) => ({ ...prev, assigneeIds: ids as number[] }))}
         placeholder="担当者を選択"
         dropdownTitle="担当者"
