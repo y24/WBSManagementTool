@@ -12,6 +12,7 @@ import BulkCreateModal from './WBSTree/BulkCreateModal';
 import WBSHeader from './WBSTree/WBSHeader';
 import WBSTreeRows from './WBSTree/WBSTreeRows';
 import InterruptionListModal from './WBSTree/InterruptionListModal';
+import SelectionSummaryBar from './WBSTree/SelectionSummaryBar';
 import { DisplayOptions } from './FilterPanel/FilterPanelTypes';
 
 // Hooks
@@ -65,7 +66,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
 
   // Selection Hook
   const selection = useWBSSelection(projects);
-  const { checkedIds, setCheckedIds, toggleCheckProject, toggleCheckTask, toggleCheckSubtask, totalSelectedCount, selectedIds, selectedCounts, minimalIds, clearSelection } = selection;
+  const { checkedIds, setCheckedIds, toggleCheckProject, toggleCheckTask, toggleCheckSubtask, totalSelectedCount, selectedIds, selectedCounts, minimalIds, selectedSubtaskSummary, clearSelection } = selection;
+  const showSelectionSummary = selectedSubtaskSummary.count >= 2;
 
   // Tree State Hook
   const { nameWidth, assigneeWidth, startResizing } = useWBSTreeState();
@@ -301,6 +303,12 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
         onClear={() => setCheckedIds({})}
         menuRendered={menuRendered}
         loading={saving}
+        hasSummaryBar={showSelectionSummary}
+      />
+
+      <SelectionSummaryBar
+        summary={selectedSubtaskSummary}
+        visible={showSelectionSummary}
       />
 
       <ShiftDatesModal

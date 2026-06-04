@@ -1,5 +1,15 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Project, Task } from '../../../types/wbs';
+import { Project, Subtask, Task } from '../../../types/wbs';
+
+export interface SelectedSubtaskSummary {
+  count: number;
+  plannedEffortDays: number;
+  actualEffortDays: number;
+  plannedEffortInputCount: number;
+  actualEffortInputCount: number;
+}
+
+const roundEffort = (value: number) => Math.round(value * 10) / 10;
 
 export const useWBSSelection = (projects: Project[]) => {
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
@@ -121,16 +131,35 @@ export const useWBSSelection = (projects: Project[]) => {
     setLastCheckedId(id);
   }, [handleShiftSelect]);
 
-  const { selectedCounts, totalSelectedCount, selectedIds, minimalIds } = useMemo(() => {
+  const { selectedCounts, totalSelectedCount, selectedIds, minimalIds, selectedSubtaskSummary } = useMemo(() => {
     let pCount = 0;
     let tCount = 0;
     let sCount = 0;
+    let plannedEffortDays = 0;
+    let actualEffortDays = 0;
+    let plannedEffortInputCount = 0;
+    let actualEffortInputCount = 0;
     const pIds: number[] = [];
     const tIds: number[] = [];
     const sIds: number[] = [];
     const minPIds: number[] = [];
     const minTIds: number[] = [];
     const minSIds: number[] = [];
+
+    const addSelectedSubtask = (subtask: Subtask) => {
+      sCount++;
+      sIds.push(subtask.id);
+
+      if (subtask.planned_effort_days != null) {
+        plannedEffortInputCount++;
+        plannedEffortDays += Number(subtask.planned_effort_days) || 0;
+      }
+
+      if (subtask.actual_effort_days != null) {
+        actualEffortInputCount++;
+        actualEffortDays += Number(subtask.actual_effort_days) || 0;
+      }
+    };
 
     projects.forEach(p => {
       const pChecked = !!checkedIds[`p-${p.id}`];
@@ -149,8 +178,7 @@ export const useWBSSelection = (projects: Project[]) => {
         t.subtasks.forEach(s => {
           const sChecked = !!checkedIds[`s-${s.id}`];
           if (sChecked) {
-            sCount++;
-            sIds.push(s.id);
+            addSelectedSubtask(s);
             if (!pChecked && !tChecked) minSIds.push(s.id);
           }
         });
@@ -161,7 +189,14 @@ export const useWBSSelection = (projects: Project[]) => {
       selectedCounts: { pCount, tCount, sCount },
       totalSelectedCount: pCount + tCount + sCount,
       selectedIds: { pIds, tIds, sIds },
-      minimalIds: { pIds: minPIds, tIds: minTIds, sIds: minSIds }
+      minimalIds: { pIds: minPIds, tIds: minTIds, sIds: minSIds },
+      selectedSubtaskSummary: {
+        count: sCount,
+        plannedEffortDays: roundEffort(plannedEffortDays),
+        actualEffortDays: roundEffort(actualEffortDays),
+        plannedEffortInputCount,
+        actualEffortInputCount
+      }
     };
   }, [projects, checkedIds]);
 
@@ -180,6 +215,7 @@ export const useWBSSelection = (projects: Project[]) => {
     totalSelectedCount,
     selectedIds,
     minimalIds,
+    selectedSubtaskSummary,
     clearSelection
   };
 };

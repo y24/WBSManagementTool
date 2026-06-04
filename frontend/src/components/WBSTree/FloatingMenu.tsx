@@ -12,6 +12,7 @@ interface FloatingMenuProps {
   onClear: () => void;
   menuRendered: boolean;
   loading?: boolean;
+  hasSummaryBar?: boolean;
 }
 
 const FloatingMenu = ({
@@ -23,12 +24,13 @@ const FloatingMenu = ({
   onShiftDates,
   onClear,
   menuRendered,
-  loading
+  loading,
+  hasSummaryBar = false
 }: FloatingMenuProps) => {
   if (!menuRendered) return null;
 
   return createPortal(
-    <div className={`fixed bottom-8 left-1/2 z-[10005] floating-menu-container ${totalSelectedCount === 0 ? 'floating-menu-hide' : ''}`}>
+    <div className={`fixed ${hasSummaryBar ? 'bottom-16' : 'bottom-8'} left-1/2 z-[10005] floating-menu-container ${totalSelectedCount === 0 ? 'floating-menu-hide' : ''}`}>
       <div className="bg-white/90 backdrop-blur-md border border-gray-200 rounded-full shadow-2xl px-6 py-3 flex items-center gap-6 ring-1 ring-black/5">
         <div className="flex items-center gap-2">
           <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
