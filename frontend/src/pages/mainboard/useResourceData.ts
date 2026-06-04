@@ -54,6 +54,12 @@ function getOverlapRange(
   return start <= end ? { start, end } : null;
 }
 
+function getWorkloadFactor(subtask: Pick<Subtask, 'workload_percent'>): number {
+  const percent = subtask.workload_percent ?? 100;
+  if (!Number.isFinite(percent)) return 1;
+  return Math.max(0, percent) / 100;
+}
+
 export function useResourceData(
   projects: Project[],
   initialData: InitialData | null,
@@ -302,27 +308,29 @@ export function useResourceData(
       row.overlaidTracks = packTracks(row.subtasks, getMergedBounds);
 
       if (availableWorkingDays > 0 && loadScopeEndDate) {
-        let plannedDays = 0;
+        let plannedEffortDays = 0;
         row.subtasks.forEach(subtask => {
           if (subtask.status_id === removedStatusId) return;
           if (!subtask.planned_start_date || !subtask.planned_end_date) return;
-          const start = subtask.planned_start_date > todayStr
-            ? subtask.planned_start_date
+          const plannedStart = subtask.planned_start_date.split('T')[0];
+          const plannedEnd = subtask.planned_end_date.split('T')[0];
+          const start = plannedStart > todayStr
+            ? plannedStart
             : todayStr;
-          const end = subtask.planned_end_date < loadScopeEndDate
-            ? subtask.planned_end_date
+          const end = plannedEnd < loadScopeEndDate
+            ? plannedEnd
             : loadScopeEndDate;
           if (start > end) return;
-          plannedDays += countWorkingDaysInRange(start, end, holidaySet);
+          plannedEffortDays += countWorkingDaysInRange(start, end, holidaySet) * getWorkloadFactor(subtask);
         });
-        row.loadRate = Math.round((plannedDays / availableWorkingDays) * 100);
+        row.loadRate = Math.round((plannedEffortDays / availableWorkingDays) * 100);
       }
 
       if (actualAvailableWorkingDays > 0 && actualLoadScopeStartDate) {
         let actualEffortDays = 0;
         row.subtasks.forEach(subtask => {
           if (subtask.status_id === removedStatusId) return;
-          if (!subtask.actual_start_date || !subtask.actual_effort_days) return;
+          if (!subtask.actual_start_date) return;
 
           const actualStart = subtask.actual_start_date.split('T')[0];
           const actualEnd = subtask.actual_end_date
@@ -344,7 +352,12 @@ export function useResourceData(
           const overlapWorkingDays = countWorkingDaysInRange(overlap.start, overlap.end, holidaySet);
           if (overlapWorkingDays <= 0) return;
 
-          actualEffortDays += Number(subtask.actual_effort_days) * (overlapWorkingDays / totalActualWorkingDays);
+          const explicitActualEffort = Number(subtask.actual_effort_days);
+          if (subtask.actual_effort_days !== null && subtask.actual_effort_days !== undefined && Number.isFinite(explicitActualEffort)) {
+            actualEffortDays += explicitActualEffort * (overlapWorkingDays / totalActualWorkingDays);
+          } else {
+            actualEffortDays += overlapWorkingDays * getWorkloadFactor(subtask);
+          }
         });
         row.actualLoadRate = Math.round((actualEffortDays / actualAvailableWorkingDays) * 100);
       }
