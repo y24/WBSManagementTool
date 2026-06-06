@@ -229,8 +229,10 @@ const GanttBar: React.FC<GanttBarProps> = ({
     : [];
 
   // レビューセグメントの計算
-  const reviewSegments = (isSubtask && actualStart && actualEnd && reviewStart)
-    ? calculateSegments(reviewStart, actualEnd, item.interruptions || [])
+  // actualEnd がない(In Reviewステータス)場合は plannedEnd をレビュー期間の終端として使用する
+  const reviewEndForDisplay = actualEnd || (reviewStart ? plannedEnd : null);
+  const reviewSegments = (isSubtask && actualStart && reviewEndForDisplay && reviewStart)
+    ? calculateSegments(reviewStart, reviewEndForDisplay, item.interruptions || [])
     : [];
 
   const canShowPlannedBar = barVisibility === 'both' || barVisibility === 'planned';
