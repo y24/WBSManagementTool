@@ -62,3 +62,15 @@ def test_member_color_round_trip_in_initial_data(db_session):
 
     initial_data = get_initial_data(db_session)
     assert initial_data["members"][0].color_code == "#64748b"
+
+
+def test_member_resource_view_exclusion_round_trip_in_initial_data(db_session):
+    member = update_member(
+        1,
+        schemas.MemberUpdate(exclude_from_resource_view=True),
+        db_session,
+    )
+    assert member.exclude_from_resource_view is True
+
+    initial_data = get_initial_data(db_session)
+    assert initial_data["members"][0].exclude_from_resource_view is True

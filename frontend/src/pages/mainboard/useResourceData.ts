@@ -86,19 +86,21 @@ export function useResourceData(
 
     const assigneeMap = new Map<number | 'unassigned', ResourceRow>();
 
-    initialData.members.forEach(member => {
-      assigneeMap.set(member.id, {
-        assignee: member,
-        subtasks: [],
-        overlaidTracks: [],
-        loadRate: 0,
-        actualLoadRate: 0,
-        scheduleVariancePt: null,
-        inProgressCount: 0,
-        delayedCount: 0,
-        completedCount: 0,
+    initialData.members
+      .filter(member => !member.exclude_from_resource_view)
+      .forEach(member => {
+        assigneeMap.set(member.id, {
+          assignee: member,
+          subtasks: [],
+          overlaidTracks: [],
+          loadRate: 0,
+          actualLoadRate: 0,
+          scheduleVariancePt: null,
+          inProgressCount: 0,
+          delayedCount: 0,
+          completedCount: 0,
+        });
       });
-    });
     assigneeMap.set('unassigned', {
       assignee: null,
       subtasks: [],

@@ -87,6 +87,11 @@ export function MemberSection({
         </div>
       )}
 
+      <div className="master-member-list-header" aria-hidden="true">
+        <span>担当者</span>
+        <span>担当者ビュー除外</span>
+      </div>
+
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="members-list">
           {(provided) => (
@@ -136,6 +141,20 @@ export function MemberSection({
                           <span className="master-item-name">{m.member_name}</span>
                         )}
                       </div>
+                      {!isEditing(m.id, 'member') && (
+                        <label
+                          className="master-resource-exclude-toggle"
+                          title="担当者ビューの表示対象から除外"
+                          onMouseDown={e => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={m.exclude_from_resource_view}
+                            onChange={e => saveEdit('/masters/members', m.id, { exclude_from_resource_view: e.target.checked })}
+                            aria-label={`${m.member_name}を担当者ビューから除外`}
+                          />
+                        </label>
+                      )}
                       {!isEditing(m.id, 'member') && (
                         <div className="master-actions">
                           <button className="master-action-btn master-edit" onClick={() => startEdit(m.id, 'member', m.member_name, m.color_code)} title="編集"><PencilIcon /></button>

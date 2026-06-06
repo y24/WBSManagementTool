@@ -820,6 +820,25 @@ code {
   gap: 0.25rem;
 }
 
+.master-member-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.25rem 0 0.15rem;
+  padding: 0.35rem 4.7rem 0.35rem 3.75rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+:root.dark .master-member-list-header {
+  color: #94a3b8;
+  border-bottom-color: #334155;
+}
+
 .master-list-item {
   display: flex;
   align-items: center;
@@ -862,10 +881,37 @@ code {
   font-size: 0.95rem;
   font-weight: 500;
   color: #334155;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 :root.dark .master-item-name {
   color: #f1f5f9;
+}
+
+.master-resource-exclude-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 7.5rem;
+  flex-shrink: 0;
+  margin-left: 0.75rem;
+  color: #64748b;
+  cursor: pointer;
+  user-select: none;
+}
+
+.master-resource-exclude-toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: #64748b;
+  cursor: pointer;
+}
+
+:root.dark .master-resource-exclude-toggle {
+  color: #94a3b8;
 }
 
 .master-holiday-date {

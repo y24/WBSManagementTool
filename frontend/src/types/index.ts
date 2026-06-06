@@ -19,6 +19,7 @@ export interface MstSubtaskType extends MasterBase {
 export interface MstMember extends MasterBase {
   member_name: string;
   color_code: string;
+  exclude_from_resource_view: boolean;
 }
 
 export interface MstHoliday extends MasterBase {
