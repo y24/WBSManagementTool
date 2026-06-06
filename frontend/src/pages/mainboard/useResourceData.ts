@@ -60,6 +60,14 @@ function getWorkloadFactor(subtask: Pick<Subtask, 'workload_percent'>): number {
   return Math.max(0, percent) / 100;
 }
 
+function isPlanOnlyPendingSubtask(subtask: Subtask, pendingStatusId: number | undefined): boolean {
+  if (pendingStatusId === undefined || subtask.status_id !== pendingStatusId) return false;
+
+  const hasPlannedDate = !!subtask.planned_start_date || !!subtask.planned_end_date;
+  const hasActualDate = !!subtask.actual_start_date || !!subtask.actual_end_date;
+  return hasPlannedDate && !hasActualDate;
+}
+
 export function useResourceData(
   projects: Project[],
   initialData: InitialData | null,
@@ -76,6 +84,7 @@ export function useResourceData(
     const statusIdByName = new Map(initialData.statuses.map(s => [s.status_name, s.id]));
     const subtaskTypeNameById = new Map(initialData.subtask_types.map(t => [t.id, t.type_name]));
     const newStatusId = statusIdByName.get('New');
+    const pendingStatusId = statusIdByName.get('Pending');
     const inProgressStatusSet = new Set(
       initialData.statuses
         .filter(s => ['In Progress', 'In Review'].includes(s.status_name))
@@ -119,6 +128,7 @@ export function useResourceData(
           const assigneeKey = subtask.assignee_id ?? 'unassigned';
           const row = assigneeMap.get(assigneeKey);
           if (!row) return;
+          if (isPlanOnlyPendingSubtask(subtask, pendingStatusId)) return;
 
           const typeName = subtaskTypeNameById.get(subtask.subtask_type_id) ?? '';
           const isRemoved = subtask.status_id === removedStatusId;
