@@ -23,6 +23,7 @@ export interface ResourceRow {
 }
 
 type DateBounds = { start: number; end: number };
+type WorkSegmentMode = 'planned' | 'actual';
 
 function countWorkingDaysInRange(
   startStr: string,
@@ -60,12 +61,26 @@ function getWorkloadFactor(subtask: Pick<Subtask, 'workload_percent'>): number {
   return Math.max(0, percent) / 100;
 }
 
-function isPlanOnlySuspendedSubtask(subtask: Subtask, suspendedStatusIds: Set<number>): boolean {
-  if (!suspendedStatusIds.has(subtask.status_id)) return false;
+function isPlanOnlyPendingSubtask(subtask: Subtask, pendingStatusId: number | undefined): boolean {
+  if (pendingStatusId === undefined || subtask.status_id !== pendingStatusId) return false;
 
   const hasPlannedDate = !!subtask.planned_start_date || !!subtask.planned_end_date;
   const hasActualDate = !!subtask.actual_start_date || !!subtask.actual_end_date;
   return hasPlannedDate && !hasActualDate;
+}
+
+function getFiniteEffort(value: number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const effort = Number(value);
+  return Number.isFinite(effort) ? Math.max(0, effort) : null;
+}
+
+function getPreviousDateTimestamp(timestamp: number): number {
+  return addDays(new Date(timestamp), -1).getTime();
+}
+
+function getNextDateTimestamp(timestamp: number): number {
+  return addDays(new Date(timestamp), 1).getTime();
 }
 
 export function useResourceData(
@@ -86,7 +101,7 @@ export function useResourceData(
     const newStatusId = statusIdByName.get('New');
     const pendingStatusId = statusIdByName.get('Pending');
     const blockedStatusId = statusIdByName.get('Blocked');
-    const suspendedStatusIds = new Set(
+    const actualStopStatusIds = new Set(
       [pendingStatusId, blockedStatusId].filter((id): id is number => id !== undefined)
     );
     const inProgressStatusSet = new Set(
@@ -132,7 +147,7 @@ export function useResourceData(
           const assigneeKey = subtask.assignee_id ?? 'unassigned';
           const row = assigneeMap.get(assigneeKey);
           if (!row) return;
-          if (isPlanOnlySuspendedSubtask(subtask, suspendedStatusIds)) return;
+          if (isPlanOnlyPendingSubtask(subtask, pendingStatusId)) return;
 
           const typeName = subtaskTypeNameById.get(subtask.subtask_type_id) ?? '';
           const isRemoved = subtask.status_id === removedStatusId;
@@ -178,6 +193,63 @@ export function useResourceData(
       return start !== null && end !== null ? [{ start, end }] : [];
     };
 
+    const subtractBounds = (segments: DateBounds[], excludedBounds: DateBounds[]): DateBounds[] => {
+      return excludedBounds.reduce((currentSegments, excluded) => {
+        const nextSegments: DateBounds[] = [];
+
+        currentSegments.forEach(segment => {
+          if (excluded.end < segment.start || excluded.start > segment.end) {
+            nextSegments.push(segment);
+            return;
+          }
+
+          if (excluded.start > segment.start) {
+            const beforeEnd = getPreviousDateTimestamp(excluded.start);
+            if (segment.start <= beforeEnd) {
+              nextSegments.push({ start: segment.start, end: beforeEnd });
+            }
+          }
+
+          if (excluded.end < segment.end) {
+            const afterStart = getNextDateTimestamp(excluded.end);
+            if (afterStart <= segment.end) {
+              nextSegments.push({ start: afterStart, end: segment.end });
+            }
+          }
+        });
+
+        return nextSegments;
+      }, segments);
+    };
+
+    const getPlannedReviewBounds = (t: ResourceSubtask): DateBounds[] => {
+      const plannedEnd = t.planned_end_date ? parseISO(t.planned_end_date) : null;
+      const reviewDays = getFiniteEffort(t.review_days);
+      if (!plannedEnd || Number.isNaN(plannedEnd.getTime()) || reviewDays === null || reviewDays <= 0) {
+        return [];
+      }
+
+      let remainingWorkingDays = Math.ceil(reviewDays);
+      let current = plannedEnd;
+
+      while (remainingWorkingDays > 0) {
+        const currentStr = format(current, 'yyyy-MM-dd');
+        const day = current.getDay();
+        if (day !== 0 && day !== 6 && !holidaySet.has(currentStr)) {
+          remainingWorkingDays--;
+        }
+        if (remainingWorkingDays > 0) {
+          current = addDays(current, -1);
+        }
+      }
+
+      return [{ start: current.getTime(), end: plannedEnd.getTime() }];
+    };
+
+    const getPlannedWorkSegments = (t: ResourceSubtask): DateBounds[] => {
+      return subtractBounds(getPlannedBounds(t), getPlannedReviewBounds(t));
+    };
+
     const getActualBounds = (t: ResourceSubtask): DateBounds[] => {
       if (!t.actual_start_date) return [];
       const start = parseISO(t.actual_start_date);
@@ -215,6 +287,133 @@ export function useResourceData(
         segments.push({ start: start.getTime(), end: end.getTime() });
       }
       return segments;
+    };
+
+    const getActualWorkSegments = (t: ResourceSubtask): DateBounds[] => {
+      if (!t.actual_start_date) return [];
+
+      const start = parseISO(t.actual_start_date);
+      if (Number.isNaN(start.getTime())) return [];
+
+      let endDateStr = t.actual_end_date?.split('T')[0] ?? null;
+      if (!endDateStr) {
+        const isStoppedWithoutActualEnd = actualStopStatusIds.has(t.status_id);
+        if (isStoppedWithoutActualEnd) {
+          const lastInterruptionDate = [...(t.interruptions || [])]
+            .map(i => i.interruption_date)
+            .filter((date): date is string => !!date)
+            .sort()
+            .at(-1);
+          endDateStr = lastInterruptionDate ?? t.actual_start_date.split('T')[0];
+        } else {
+          endDateStr = todayStr;
+        }
+      }
+
+      const end = parseISO(endDateStr);
+      if (Number.isNaN(end.getTime())) return [];
+      if (end < start) {
+        return [{ start: start.getTime(), end: start.getTime() }];
+      }
+
+      const interruptions = [...(t.interruptions || [])]
+        .filter(i => i.interruption_date)
+        .sort((a, b) => a.interruption_date.localeCompare(b.interruption_date));
+
+      const segments: DateBounds[] = [];
+      let currentStart = start;
+
+      for (const interruption of interruptions) {
+        const interruptionDate = parseISO(interruption.interruption_date);
+        if (Number.isNaN(interruptionDate.getTime())) continue;
+
+        if (interruptionDate >= currentStart) {
+          const segmentEnd = interruptionDate < end ? interruptionDate : end;
+          segments.push({ start: currentStart.getTime(), end: segmentEnd.getTime() });
+          if (segmentEnd.getTime() === end.getTime()) {
+            currentStart = end;
+            break;
+          }
+        }
+
+        if (!interruption.resumption_date) {
+          currentStart = end;
+          break;
+        }
+
+        const resumptionDate = parseISO(interruption.resumption_date);
+        if (Number.isNaN(resumptionDate.getTime())) {
+          currentStart = end;
+          break;
+        }
+        if (resumptionDate > currentStart) currentStart = resumptionDate;
+        if (currentStart >= end) break;
+      }
+
+      if (currentStart < end) segments.push({ start: currentStart.getTime(), end: end.getTime() });
+      if (segments.length === 0 && start.getTime() === end.getTime()) {
+        segments.push({ start: start.getTime(), end: end.getTime() });
+      }
+
+      const reviewStart = t.review_start_date ? parseISO(t.review_start_date) : null;
+      const reviewBounds = reviewStart && !Number.isNaN(reviewStart.getTime()) && reviewStart <= end
+        ? [{ start: reviewStart.getTime(), end: end.getTime() }]
+        : [];
+
+      return subtractBounds(segments, reviewBounds);
+    };
+
+    const getWorkSegments = (subtask: ResourceSubtask, mode: WorkSegmentMode): DateBounds[] => {
+      return mode === 'planned' ? getPlannedWorkSegments(subtask) : getActualWorkSegments(subtask);
+    };
+
+    const formatBoundsDate = (timestamp: number): string => format(new Date(timestamp), 'yyyy-MM-dd');
+
+    const countWorkingDaysInBounds = (bounds: DateBounds): number => {
+      return countWorkingDaysInRange(formatBoundsDate(bounds.start), formatBoundsDate(bounds.end), holidaySet);
+    };
+
+    const availableCapacity = (windowStart: string, windowEnd: string): number => {
+      return countWorkingDaysInRange(windowStart, windowEnd, holidaySet);
+    };
+
+    const effortInWindow = (
+      subtask: ResourceSubtask,
+      windowStart: string,
+      windowEnd: string,
+      mode: WorkSegmentMode
+    ): number => {
+      const segments = getWorkSegments(subtask, mode);
+      if (segments.length === 0) return 0;
+
+      const totalWorkingDays = segments.reduce((sum, segment) => sum + countWorkingDaysInBounds(segment), 0);
+      if (totalWorkingDays <= 0) return 0;
+
+      const overlapWorkingDays = segments.reduce((sum, segment) => {
+        const overlap = getOverlapRange(
+          formatBoundsDate(segment.start),
+          formatBoundsDate(segment.end),
+          windowStart,
+          windowEnd
+        );
+        return overlap
+          ? sum + countWorkingDaysInRange(overlap.start, overlap.end, holidaySet)
+          : sum;
+      }, 0);
+      if (overlapWorkingDays <= 0) return 0;
+
+      const workloadEffort = overlapWorkingDays * getWorkloadFactor(subtask);
+      const explicitEffort = mode === 'planned'
+        ? getFiniteEffort(subtask.planned_effort_days)
+        : getFiniteEffort(subtask.actual_effort_days);
+
+      if (explicitEffort === null) return workloadEffort;
+      if (mode === 'planned' && subtask.is_auto_effort) return workloadEffort;
+
+      const proportionalEffort = explicitEffort * (overlapWorkingDays / totalWorkingDays);
+      return mode === 'planned'
+        ? Math.max(proportionalEffort, workloadEffort)
+        : Math.min(proportionalEffort, workloadEffort);
     };
 
     // Outer envelope of planned + actual bounds used for track packing
@@ -266,10 +465,10 @@ export function useResourceData(
     };
 
     const availableWorkingDays = loadScopeEndDate
-      ? countWorkingDaysInRange(todayStr, loadScopeEndDate, holidaySet)
+      ? availableCapacity(todayStr, loadScopeEndDate)
       : 0;
     const actualAvailableWorkingDays = actualLoadScopeStartDate
-      ? countWorkingDaysInRange(actualLoadScopeStartDate, todayStr, holidaySet)
+      ? availableCapacity(actualLoadScopeStartDate, todayStr)
       : 0;
     const combinedScopeStartDate = actualLoadScopeStartDate ?? todayStr;
     const combinedScopeEndDate = loadScopeEndDate ?? todayStr;
@@ -327,17 +526,8 @@ export function useResourceData(
         let plannedEffortDays = 0;
         row.subtasks.forEach(subtask => {
           if (subtask.status_id === removedStatusId) return;
-          if (!subtask.planned_start_date || !subtask.planned_end_date) return;
-          const plannedStart = subtask.planned_start_date.split('T')[0];
-          const plannedEnd = subtask.planned_end_date.split('T')[0];
-          const start = plannedStart > todayStr
-            ? plannedStart
-            : todayStr;
-          const end = plannedEnd < loadScopeEndDate
-            ? plannedEnd
-            : loadScopeEndDate;
-          if (start > end) return;
-          plannedEffortDays += countWorkingDaysInRange(start, end, holidaySet) * getWorkloadFactor(subtask);
+          if (doneStatusId !== null && subtask.status_id === doneStatusId) return;
+          plannedEffortDays += effortInWindow(subtask, todayStr, loadScopeEndDate, 'planned');
         });
         row.loadRate = Math.round((plannedEffortDays / availableWorkingDays) * 100);
       }
@@ -346,34 +536,7 @@ export function useResourceData(
         let actualEffortDays = 0;
         row.subtasks.forEach(subtask => {
           if (subtask.status_id === removedStatusId) return;
-          if (!subtask.actual_start_date) return;
-
-          const actualStart = subtask.actual_start_date.split('T')[0];
-          const actualEnd = subtask.actual_end_date
-            ? subtask.actual_end_date.split('T')[0]
-            : todayStr;
-          if (actualStart > todayStr || actualEnd < actualStart) return;
-
-          const overlap = getOverlapRange(
-            actualStart,
-            actualEnd,
-            actualLoadScopeStartDate,
-            todayStr
-          );
-          if (!overlap) return;
-
-          const totalActualWorkingDays = countWorkingDaysInRange(actualStart, actualEnd, holidaySet);
-          if (totalActualWorkingDays <= 0) return;
-
-          const overlapWorkingDays = countWorkingDaysInRange(overlap.start, overlap.end, holidaySet);
-          if (overlapWorkingDays <= 0) return;
-
-          const explicitActualEffort = Number(subtask.actual_effort_days);
-          if (subtask.actual_effort_days !== null && subtask.actual_effort_days !== undefined && Number.isFinite(explicitActualEffort)) {
-            actualEffortDays += explicitActualEffort * (overlapWorkingDays / totalActualWorkingDays);
-          } else {
-            actualEffortDays += overlapWorkingDays * getWorkloadFactor(subtask);
-          }
+          actualEffortDays += effortInWindow(subtask, actualLoadScopeStartDate, todayStr, 'actual');
         });
         row.actualLoadRate = Math.round((actualEffortDays / actualAvailableWorkingDays) * 100);
       }
