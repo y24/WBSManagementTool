@@ -63,7 +63,7 @@ const SortHeaderButton: React.FC<{
     <button
       type="button"
       className={`group inline-flex h-full min-w-0 items-center justify-center gap-1 rounded px-1 text-center transition-colors hover:bg-slate-200/70 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:hover:bg-slate-800 dark:hover:text-slate-200 ${className}`}
-      title={`${title}（クリックでソート、現在: ${directionLabel}）`}
+      title={`${title}`}
       aria-label={`${label}でソート（現在: ${directionLabel}）`}
       aria-sort={isActive ? (sortState.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
       onClick={() => onSortChange(sortKey)}
@@ -101,7 +101,7 @@ export default function ResourceList({
           <div className="sticky left-0 z-[60] bg-slate-50 dark:bg-slate-900 min-w-[160px] pl-4 pr-2 h-full flex items-center flex-1 truncate border-r border-slate-200 dark:border-slate-700">
             <SortHeaderButton
               label="担当者名"
-              title="担当者マスタの表示順"
+              title="担当者名"
               sortKey="assignee"
               sortState={sortState}
               onSortChange={onSortChange}

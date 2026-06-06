@@ -24,6 +24,7 @@ interface ResourceTaskContextMenuProps {
 }
 
 const quickProgressValues = [0, 25, 50, 75, 100];
+const quickWorkloadValues = [25, 50, 75, 100];
 
 const normalizeColor = (color: string | null | undefined, fallback: string) => {
   let normalized = color || fallback;
@@ -56,11 +57,13 @@ export default function ResourceTaskContextMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const [draftTask, setDraftTask] = useState(subtask);
   const [progressInput, setProgressInput] = useState(String(subtask.progress_percent ?? 0));
+  const [workloadInput, setWorkloadInput] = useState(String(subtask.workload_percent ?? 100));
   const [savingField, setSavingField] = useState<string | null>(null);
 
   useEffect(() => {
     setDraftTask(subtask);
     setProgressInput(String(subtask.progress_percent ?? 0));
+    setWorkloadInput(String(subtask.workload_percent ?? 100));
   }, [subtask]);
 
   useEffect(() => {
@@ -151,6 +154,18 @@ export default function ResourceTaskContextMenu({
     saveUpdates('progress', { progress_percent: clampedValue });
   };
 
+  const commitWorkload = (rawValue = workloadInput) => {
+    const value = Number.parseInt(rawValue, 10);
+    if (Number.isNaN(value)) {
+      setWorkloadInput(String(draftTask.workload_percent ?? 100));
+      return;
+    }
+    const clampedValue = Math.min(100, Math.max(1, value));
+    setWorkloadInput(String(clampedValue));
+    if (clampedValue === (draftTask.workload_percent ?? 100) || isSaving) return;
+    saveUpdates('workload', { workload_percent: clampedValue });
+  };
+
   return createPortal(
     <div
       ref={menuRef}
@@ -213,10 +228,6 @@ export default function ResourceTaskContextMenu({
               );
             })}
           </div>
-          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: normalizeColor(currentStatus?.color_code, '#94a3b8') }} />
-            現在: {currentStatus?.status_name || '-'}
-          </div>
         </section>
 
         <section className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
@@ -277,6 +288,61 @@ export default function ResourceTaskContextMenu({
         <section className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <Percent size={13} />
+              工数比率
+            </div>
+            {savingField === 'workload' && <Loader2 size={14} className="animate-spin text-slate-400" />}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={workloadInput}
+              disabled={isSaving}
+              onChange={(event) => setWorkloadInput(event.target.value)}
+              onBlur={() => commitWorkload()}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  commitWorkload();
+                }
+              }}
+              className="h-8 w-20 rounded-md border border-slate-200 bg-white px-2 text-right text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-500"
+            />
+            <span className="text-sm text-slate-500 dark:text-slate-400">%</span>
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div
+                className="h-full rounded-full bg-blue-400 transition-all dark:bg-blue-500"
+                style={{ width: `${Math.min(100, Math.max(0, Number(draftTask.workload_percent ?? 100)))}%` }}
+              />
+            </div>
+          </div>
+          <div className="mt-2 grid grid-cols-4 gap-1">
+            {quickWorkloadValues.map(value => (
+              <button
+                key={value}
+                type="button"
+                disabled={isSaving}
+                onClick={() => {
+                  setWorkloadInput(String(value));
+                  commitWorkload(String(value));
+                }}
+                className={`rounded border px-1.5 py-1 text-[11px] transition-colors disabled:cursor-wait disabled:opacity-70 ${
+                  value === (draftTask.workload_percent ?? 100)
+                    ? 'border-slate-300 bg-slate-100 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
+                }`}
+              >
+                {value}%
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               <UserRound size={13} />
               担当者
             </div>
@@ -304,10 +370,6 @@ export default function ResourceTaskContextMenu({
                 </button>
               );
             })}
-          </div>
-          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: normalizeColor(currentMember?.color_code, '#94a3b8') }} />
-            現在: {currentMember?.member_name || '未設定'}
           </div>
         </section>
       </div>
