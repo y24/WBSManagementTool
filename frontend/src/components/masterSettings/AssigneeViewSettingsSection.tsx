@@ -109,7 +109,7 @@ export function AssigneeViewSettingsSection({
         <div className="master-setting-info">
           <label className="master-setting-label">予実差しきい値</label>
           <p className="master-setting-desc">
-            担当者ビューの予実差（pt）が重大しきい値以上になった場合のみ赤色で表示します。
+            担当者ビューの予実差（人日）が各しきい値以上になった場合に色分けして表示します。
           </p>
         </div>
 
@@ -132,7 +132,7 @@ export function AssigneeViewSettingsSection({
                   value={scheduleVarianceThresholds[field.key]}
                   onChange={e => updateVarianceThreshold(field.key, e.target.value)}
                 />
-                <span className="text-xs text-slate-500 dark:text-slate-400">pt</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">人日</span>
               </div>
             </label>
           ))}

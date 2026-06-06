@@ -470,52 +470,7 @@ export function useResourceData(
     const actualAvailableWorkingDays = actualLoadScopeStartDate
       ? availableCapacity(actualLoadScopeStartDate, todayStr)
       : 0;
-    const combinedScopeStartDate = actualLoadScopeStartDate ?? todayStr;
-    const combinedScopeEndDate = loadScopeEndDate ?? todayStr;
-
-    const hasDateOverlap = (
-      startStr: string | null | undefined,
-      endStr: string | null | undefined,
-      scopeStartStr: string,
-      scopeEndStr: string
-    ): boolean => {
-      if (!startStr) return false;
-      const start = startStr.split('T')[0];
-      const end = (endStr ?? startStr).split('T')[0];
-      if (end < start) return false;
-      return getOverlapRange(start, end, scopeStartStr, scopeEndStr) !== null;
-    };
-
-    const getExpectedProgressPercent = (subtask: ResourceSubtask): number | null => {
-      if (!subtask.planned_start_date || !subtask.planned_end_date) return null;
-
-      const plannedStart = subtask.planned_start_date.split('T')[0];
-      const plannedEnd = subtask.planned_end_date.split('T')[0];
-      if (plannedEnd < plannedStart) return null;
-      if (todayStr < plannedStart) return 0;
-      if (todayStr >= plannedEnd) return 100;
-
-      const totalWorkingDays = countWorkingDaysInRange(plannedStart, plannedEnd, holidaySet);
-      if (totalWorkingDays <= 0) return null;
-
-      const elapsedWorkingDays = countWorkingDaysInRange(plannedStart, todayStr, holidaySet);
-      return Math.min(100, Math.max(0, (elapsedWorkingDays / totalWorkingDays) * 100));
-    };
-
-    const getVarianceWeight = (subtask: ResourceSubtask): number => {
-      const explicitEffort = Number(subtask.planned_effort_days ?? subtask.work_days ?? 0);
-      if (Number.isFinite(explicitEffort) && explicitEffort > 0) return explicitEffort;
-      if (subtask.planned_start_date && subtask.planned_end_date) {
-        const plannedDays = countWorkingDaysInRange(
-          subtask.planned_start_date.split('T')[0],
-          subtask.planned_end_date.split('T')[0],
-          holidaySet
-        );
-        if (plannedDays > 0) return plannedDays;
-      }
-      const actualEffort = Number(subtask.actual_effort_days ?? 0);
-      return Number.isFinite(actualEffort) && actualEffort > 0 ? actualEffort : 1;
-    };
+    const varianceScopeStart = actualLoadScopeStartDate ?? todayStr;
 
     assigneeMap.forEach(row => {
       if (row.subtasks.length === 0) return;
@@ -541,30 +496,15 @@ export function useResourceData(
         row.actualLoadRate = Math.round((actualEffortDays / actualAvailableWorkingDays) * 100);
       }
 
-      let weightedVariance = 0;
-      let totalVarianceWeight = 0;
+      let plannedDueEffort = 0;
+      let actualDoneEffort = 0;
       row.subtasks.forEach(subtask => {
         if (subtask.status_id === removedStatusId) return;
-        const inScope =
-          hasDateOverlap(subtask.planned_start_date, subtask.planned_end_date, combinedScopeStartDate, combinedScopeEndDate) ||
-          hasDateOverlap(
-            subtask.actual_start_date,
-            getDisplayActualEndDate(subtask),
-            combinedScopeStartDate,
-            combinedScopeEndDate
-          );
-        if (!inScope) return;
-
-        const expectedProgress = getExpectedProgressPercent(subtask);
-        if (expectedProgress === null) return;
-
-        const actualProgress = Number(subtask.progress_percent ?? 0);
-        const weight = getVarianceWeight(subtask);
-        weightedVariance += (actualProgress - expectedProgress) * weight;
-        totalVarianceWeight += weight;
+        plannedDueEffort += effortInWindow(subtask, varianceScopeStart, todayStr, 'planned');
+        actualDoneEffort += effortInWindow(subtask, varianceScopeStart, todayStr, 'actual');
       });
-      row.scheduleVariancePt = totalVarianceWeight > 0
-        ? Math.round(weightedVariance / totalVarianceWeight)
+      row.scheduleVariancePt = plannedDueEffort > 0
+        ? Math.round((actualDoneEffort - plannedDueEffort) * 10) / 10
         : null;
     });
 

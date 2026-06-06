@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, AlertTriangle, ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
 import type { ResourceSortKey, ResourceSortState } from './ResourceBoard';
 import { getOverlaidLaneHeight, UNASSIGNED_SEPARATOR_HEIGHT } from './ResourceGantt';
@@ -7,7 +7,6 @@ import {
   getLoadRateBarColor,
   getLoadRateTextColor,
   getScheduleVarianceTextColor,
-  isLoadRateCritical,
   LoadRateThresholds,
   ScheduleVarianceThresholds,
 } from '../../utils/loadRateThresholds';
@@ -23,10 +22,10 @@ const getStatusClasses = (count: number, type: 'inProgress' | 'delayed') => {
       'text-blue-600 dark:text-blue-400 bg-blue-600/50 dark:bg-blue-400/50 font-bold',
     ],
     delayed: [
-      'text-rose-600 dark:text-rose-400 bg-rose-600/10 dark:bg-rose-400/20 font-bold',
-      'text-rose-600 dark:text-rose-400 bg-rose-600/20 dark:bg-rose-400/30 font-bold',
-      'text-rose-600 dark:text-rose-400 bg-rose-600/35 dark:bg-rose-400/40 font-bold',
-      'text-rose-600 dark:text-rose-400 bg-rose-600/50 dark:bg-rose-400/50 font-bold',
+      'text-amber-600 dark:text-amber-400 bg-amber-600/10 dark:bg-amber-400/20 font-bold',
+      'text-amber-600 dark:text-amber-400 bg-amber-600/20 dark:bg-amber-400/30 font-bold',
+      'text-amber-600 dark:text-amber-400 bg-amber-600/35 dark:bg-amber-400/40 font-bold',
+      'text-amber-600 dark:text-amber-400 bg-amber-600/50 dark:bg-amber-400/50 font-bold',
     ],
   };
 
@@ -125,24 +124,16 @@ export default function ResourceList({
               onSortChange={onSortChange}
               className="w-[76px]"
             />
-            <div className="w-[76px] h-full border-l border-r border-slate-200 dark:border-slate-700 px-1 mr-1">
+            <div className="h-full border-l border-slate-200 dark:border-slate-700 pl-1">
               <SortHeaderButton
-                label="予実差"
-                title="スコープ内サブタスクごとの今日時点の実績進捗 - 計画進捗"
-                sortKey="scheduleVariancePt"
+                label="進行中"
+                title="進行中件数"
+                sortKey="inProgressCount"
                 sortState={sortState}
                 onSortChange={onSortChange}
-                className="w-full"
+                className="w-[72px]"
               />
             </div>
-            <SortHeaderButton
-              label="進行中"
-              title="進行中件数"
-              sortKey="inProgressCount"
-              sortState={sortState}
-              onSortChange={onSortChange}
-              className="w-[72px]"
-            />
             <SortHeaderButton
               label="遅延"
               title="遅延件数"
@@ -151,6 +142,16 @@ export default function ResourceList({
               onSortChange={onSortChange}
               className="w-[72px]"
             />
+            <div className="w-[76px] h-full border-l border-slate-200 dark:border-slate-700 px-1 ml-1">
+              <SortHeaderButton
+                label="予実差"
+                title="今日までの実績工数 − 計画消化予定工数（人日）。負 = 遅れ、正 = 前倒し"
+                sortKey="scheduleVariancePt"
+                sortState={sortState}
+                onSortChange={onSortChange}
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -159,9 +160,6 @@ export default function ResourceList({
         {data.map((row, rowIndex) => {
           const rowHeight = getOverlaidLaneHeight(row);
           const isDelayed = row.delayedCount > 0;
-          const hasCriticalLoadRate =
-            isLoadRateCritical(row.loadRate, loadRateThresholds) ||
-            isLoadRateCritical(row.actualLoadRate, loadRateThresholds);
           const isFirstUnassigned =
             row.assignee === null &&
             (rowIndex === 0 || data[rowIndex - 1].assignee !== null);
@@ -206,15 +204,6 @@ export default function ResourceList({
                             />
                           </span>
                         )}
-                        {row.assignee !== null && hasCriticalLoadRate && (
-                          <span title="計画または実績稼働率が赤しきい値です" className="inline-flex shrink-0">
-                            <AlertCircle
-                              size={13}
-                              className="text-rose-500"
-                              aria-label="計画または実績稼働率が赤しきい値です"
-                            />
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -229,12 +218,12 @@ export default function ResourceList({
                         <div className="w-[76px] flex items-center justify-center">
                           <span className="text-[15px] font-semibold leading-none text-slate-300 dark:text-slate-600">—</span>
                         </div>
-                        <div className="w-[76px] flex items-center justify-center border-l border-r border-slate-200 dark:border-slate-700 px-2 mr-1">
-                          <span className="min-w-[54px] h-6 px-1.5 flex items-center justify-center text-[13px] font-normal leading-none text-slate-300 dark:text-slate-600">—</span>
+                        <div className="flex items-center">
+                          <div className="w-[72px] flex items-center justify-center text-[13px] font-medium text-slate-300 dark:text-slate-600 border-l border-slate-200 dark:border-slate-700 ml-1 pl-1">—</div>
+                          <div className="w-[72px] flex items-center justify-center text-[13px] font-medium text-slate-300 dark:text-slate-600">—</div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <div className="w-[72px] flex items-center justify-center text-[13px] font-medium text-slate-300 dark:text-slate-600">—</div>
-                          <div className="w-[72px] flex items-center justify-center text-[13px] font-medium text-slate-300 dark:text-slate-600">—</div>
+                        <div className="w-[76px] flex items-center justify-center border-l border-slate-200 dark:border-slate-700 px-2 ml-1">
+                          <span className="min-w-[54px] h-6 px-1.5 flex items-center justify-center text-[13px] font-normal leading-none text-slate-300 dark:text-slate-600">—</span>
                         </div>
                       </>
                     ) : (
@@ -268,25 +257,27 @@ export default function ResourceList({
                             />
                           </div>
                         </div>
-                        <div className="w-[76px] flex items-center justify-center border-l border-r border-slate-200 dark:border-slate-700 px-2 mr-1">
-                          <span
-                            className={`min-w-[54px] h-6 px-1.5 flex items-center justify-center text-[13px] font-normal leading-none ${getScheduleVarianceTextColor(row.scheduleVariancePt, scheduleVarianceThresholds)}`}
-                            title="0ptに近いほど計画通りです"
-                          >
-                            {row.scheduleVariancePt === null
-                              ? '—'
-                              : `${row.scheduleVariancePt > 0 ? '+' : ''}${row.scheduleVariancePt}pt`}
-                          </span>
-                        </div>
-
                         {/* Status badges */}
                         <div className="flex items-center gap-1">
-                          <div className={getStatusClasses(row.inProgressCount, 'inProgress')}>
-                            {row.inProgressCount}
+                          <div className="border-l border-slate-200 dark:border-slate-700 ml-1 pl-1">
+                            <div className={getStatusClasses(row.inProgressCount, 'inProgress')}>
+                              {row.inProgressCount}
+                            </div>
                           </div>
                           <div className={getStatusClasses(row.delayedCount, 'delayed')}>
                             {row.delayedCount}
                           </div>
+                        </div>
+
+                        <div className="w-[76px] flex items-center justify-center border-l border-slate-200 dark:border-slate-700 px-2 ml-1">
+                          <span
+                            className={`min-w-[54px] h-6 px-1.5 flex items-center justify-center text-[13px] font-normal leading-none ${getScheduleVarianceTextColor(row.scheduleVariancePt, scheduleVarianceThresholds)}`}
+                            title="今日までの実績工数 − 計画消化予定工数（人日）。負値が大きいほど遅れ、正値は前倒し"
+                          >
+                            {row.scheduleVariancePt === null
+                              ? '—'
+                              : `${row.scheduleVariancePt > 0 ? '+' : ''}${row.scheduleVariancePt}日`}
+                          </span>
                         </div>
                       </>
                     )}

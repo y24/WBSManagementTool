@@ -27,9 +27,9 @@ export const defaultLoadRateThresholds: LoadRateThresholds = {
 };
 
 export const defaultScheduleVarianceThresholds: ScheduleVarianceThresholds = {
-  normal: 10,
-  warning: 20,
-  critical: 40,
+  normal: 1,
+  warning: 3,
+  critical: 5,
 };
 
 const parseThreshold = (value: string | null | undefined, fallback: number): number => {
@@ -142,9 +142,9 @@ export const getScheduleVarianceTextColor = (
 ): string => {
   if (variancePt === null) return 'text-slate-300 dark:text-slate-600';
   const abs = Math.abs(variancePt);
-  return abs >= thresholds.critical
-    ? 'text-rose-600 dark:text-rose-400'
-    : 'text-slate-400 dark:text-slate-500';
+  if (abs >= thresholds.critical) return 'text-rose-600 dark:text-rose-400';
+  if (abs >= thresholds.warning) return 'text-amber-500 dark:text-amber-400';
+  return 'text-slate-400 dark:text-slate-500';
 };
 
 export const getScheduleVarianceBadgeClasses = (

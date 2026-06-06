@@ -275,14 +275,14 @@ export default function ResourceSummaryBar({
     assigned.reduce((sum, r) => sum + r.loadRate, 0) / assigned.length
   );
   const delayedCount = assigned.filter(r => r.delayedCount > 0).length;
-  const idleCount = assigned.filter(r => r.loadRate > 0 && r.loadRate <= loadRateThresholds.criticalLow).length;
+  const idleCount = assigned.filter(r => r.loadRate <= loadRateThresholds.criticalLow).length;
   const overloadedCount = assigned.filter(r => r.loadRate >= loadRateThresholds.overload).length;
 
   const delayedRows = assigned
     .map(row => ({ row, delayed: getDelayedSubtasks(row, todayStr, doneStatusId, newStatusId) }))
     .filter(item => item.delayed.length > 0);
   const idleRows = assigned
-    .filter(row => row.loadRate > 0 && row.loadRate <= loadRateThresholds.criticalLow)
+    .filter(row => row.loadRate <= loadRateThresholds.criticalLow)
     .map(row => ({ row, idleRanges: getIdleRanges(row, todayStr, loadScopeEndDate, holidaySet) }));
   const overloadedRows = assigned
     .filter(row => row.loadRate >= loadRateThresholds.overload)
