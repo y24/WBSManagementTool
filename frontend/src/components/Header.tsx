@@ -1,7 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Settings, ListTree, Plus, FileInput, LayoutDashboard, RefreshCw, CalendarDays } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { getInitialData } from '../api/client';
 
 const navItems = [
   { to: '/', label: 'メインボード', icon: ListTree },
@@ -13,15 +11,6 @@ const navItems = [
 export default function Header() {
   const location = useLocation();
   const isMainBoard = location.pathname === '/';
-  const [enableWebsocket, setEnableWebsocket] = useState(true);
-
-  useEffect(() => {
-    getInitialData().then(res => {
-      if (res && res.data) {
-        setEnableWebsocket(res.data.enable_websocket);
-      }
-    });
-  }, []);
 
   return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 h-14 flex items-center px-6 justify-between shrink-0 shadow-md z-50 transition-colors">
@@ -64,15 +53,13 @@ export default function Header() {
             >
               <CalendarDays size={16} />
             </button>
-            {!enableWebsocket && (
-              <button
-                onClick={() => window.dispatchEvent(new CustomEvent('refresh-wbs'))}
-                className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md text-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-all font-medium active:scale-95 shadow-sm"
-                title="データを再読込"
-              >
-                <RefreshCw size={16} />
-              </button>
-            )}
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('refresh-wbs'))}
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md text-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-all font-medium active:scale-95 shadow-sm"
+              title="データを再読込"
+            >
+              <RefreshCw size={16} />
+            </button>
             <button
               onClick={(e) => window.dispatchEvent(new CustomEvent('add-project', { detail: { isShift: e.shiftKey } }))}
               className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 rounded-md text-sm border border-indigo-200/60 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 hover:text-indigo-700 dark:hover:text-indigo-200 transition-all font-medium group active:scale-95 shadow-sm"

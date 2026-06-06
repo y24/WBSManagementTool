@@ -372,7 +372,6 @@ class InitialData(BaseModel):
     schedule_variance_warning: Optional[str] = None
     schedule_variance_critical: Optional[str] = None
     azure_devops_sync_status_conditions: Optional[str] = None
-    enable_websocket: bool = True
 
 # --- Import ---
 class ImportPreviewRow(BaseModel):

@@ -53,5 +53,4 @@ export interface InitialData {
   schedule_variance_warning?: string | null;
   schedule_variance_critical?: string | null;
   azure_devops_sync_status_conditions?: string | null;
-  enable_websocket: boolean;
 }

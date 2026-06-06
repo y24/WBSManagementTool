@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiClient, getInitialData } from '../api/client';
+import { wbsOps } from '../api/wbsOperations';
 import { InitialData } from '../types';
 import { HolidaySection } from '../components/masterSettings/HolidaySection';
 import { MemberSection } from '../components/masterSettings/MemberSection';
@@ -8,7 +9,6 @@ import { StatusSection } from '../components/masterSettings/StatusSection';
 import { SubtaskTypeSection } from '../components/masterSettings/SubtaskTypeSection';
 import { AssigneeViewSettingsSection } from '../components/masterSettings/AssigneeViewSettingsSection';
 import { SystemSettingsSection } from '../components/masterSettings/SystemSettingsSection';
-import { useWebSocket } from '../api/websocket';
 import { DropResult } from '@hello-pangea/dnd';
 import LoadingOverlay from '../components/LoadingOverlay';
 import {
@@ -110,6 +110,7 @@ const masterSections: { id: MasterSectionId; label: string; description: string 
 
 export default function MasterSettings() {
   const pageRef = useRef<HTMLDivElement | null>(null);
+  const initialDataVersionRef = useRef<string | null>(null);
   const [data, setData] = useState<InitialData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeSectionId, setActiveSectionId] = useState<MasterSectionId>('subtask-types');
@@ -146,18 +147,10 @@ export default function MasterSettings() {
   const [isMemberListExpanded, setIsMemberListExpanded] = useState(false);
   const [isHolidayListExpanded, setIsHolidayListExpanded] = useState(false);
 
-  // Real-time synchronization
-  useWebSocket((msg) => {
-    if (msg.type === 'update') {
-      console.log(`MasterSettings received ${msg.type} signal, refreshing...`);
-      fetchData();
-    }
-  });
-
   const fetchData = useCallback(() => {
     setLoading(true);
     getInitialData({ forceRefresh: true })
-      .then(res => {
+      .then(async res => {
         setData(res.data);
         setTicketUrlTemplate(res.data.ticket_url_template || '');
         setLoadRateThresholds(toLoadRateThresholdInputs(getLoadRateThresholds(res.data)));
@@ -166,14 +159,47 @@ export default function MasterSettings() {
         setStatusMappingNew(parseMapping(res.data.status_mapping_new));
         setStatusMappingBlocked(parseMapping(res.data.status_mapping_blocked));
         setStatusMappingDone(parseMapping(res.data.status_mapping_done));
+
+        const versionRes = await wbsOps.getWBSVersion();
+        initialDataVersionRef.current = versionRes.data.initial_data_version;
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 
+  const checkForMasterUpdates = useCallback(async () => {
+    if (document.visibilityState !== 'visible') return;
+
+    try {
+      const versionRes = await wbsOps.getWBSVersion();
+      if (!initialDataVersionRef.current) {
+        initialDataVersionRef.current = versionRes.data.initial_data_version;
+        return;
+      }
+
+      if (versionRes.data.initial_data_version !== initialDataVersionRef.current) {
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Failed to check master settings version', err);
+    }
+  }, [fetchData]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(checkForMasterUpdates, 30000);
+    window.addEventListener('focus', checkForMasterUpdates);
+    document.addEventListener('visibilitychange', checkForMasterUpdates);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', checkForMasterUpdates);
+      document.removeEventListener('visibilitychange', checkForMasterUpdates);
+    };
+  }, [checkForMasterUpdates]);
 
   useEffect(() => {
     const page = pageRef.current;

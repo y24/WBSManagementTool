@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { wbsOps } from '../api/wbsOperations';
 import { DashboardData } from '../types/dashboard';
 import { DashboardAnalyticsChartsSection, DashboardChartsSection } from '../components/dashboard/DashboardChartsSection';
@@ -9,7 +9,6 @@ import {
   DashboardListsSection,
 } from '../components/dashboard/DashboardListsSection';
 import { DashboardChartTheme } from '../components/dashboard/constants';
-import { useWebSocket } from '../api/websocket';
 import LoadingOverlay from '../components/LoadingOverlay';
 
 export default function Dashboard() {
@@ -23,14 +22,7 @@ export default function Dashboard() {
   const scrollAnimationRef = useRef<number | null>(null);
   const assigneeHeightBeforeToggleRef = useRef<number | null>(null);
   const isAssigneeTogglingRef = useRef(false);
-
-  // Real-time synchronization
-  useWebSocket((msg) => {
-    if (msg.type === 'update' || msg.type === 'connected') {
-      console.log(`Dashboard received ${msg.type} signal, refreshing...`);
-      fetchData();
-    }
-  });
+  const wbsTreeVersionRef = useRef<string | null>(null);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -40,10 +32,6 @@ export default function Dashboard() {
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
     return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    fetchData();
   }, []);
 
   useEffect(() => {
@@ -99,17 +87,55 @@ export default function Dashboard() {
     };
   }, [showAllAssignees]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await wbsOps.getDashboard();
+      const [res, versionRes] = await Promise.all([
+        wbsOps.getDashboard(),
+        wbsOps.getWBSVersion(),
+      ]);
       setData(res.data);
+      wbsTreeVersionRef.current = versionRes.data.tree_version;
     } catch (err) {
       console.error('Failed to fetch dashboard data', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const checkForDashboardUpdates = useCallback(async () => {
+    if (document.visibilityState !== 'visible') return;
+
+    try {
+      const versionRes = await wbsOps.getWBSVersion();
+      if (!wbsTreeVersionRef.current) {
+        wbsTreeVersionRef.current = versionRes.data.tree_version;
+        return;
+      }
+
+      if (versionRes.data.tree_version !== wbsTreeVersionRef.current) {
+        await fetchData();
+      }
+    } catch (err) {
+      console.error('Failed to check dashboard version', err);
+    }
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(checkForDashboardUpdates, 30000);
+    window.addEventListener('focus', checkForDashboardUpdates);
+    document.addEventListener('visibilitychange', checkForDashboardUpdates);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', checkForDashboardUpdates);
+      document.removeEventListener('visibilitychange', checkForDashboardUpdates);
+    };
+  }, [checkForDashboardUpdates]);
 
   const handleToggleAssignees = () => {
     const section = assigneeSectionRef.current;

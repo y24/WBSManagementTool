@@ -22,7 +22,6 @@ import {
   persistGanttScrollLeft,
   persistTreeWidth,
 } from './mainboard/storage';
-import { useWebSocket } from '../api/websocket';
 import ConfirmModal from '../components/WBSTree/ConfirmModal';
 import { Download } from 'lucide-react';
 import LoadingOverlay from '../components/LoadingOverlay';
@@ -70,35 +69,6 @@ export default function MainBoard() {
     initialDataRef.current = initRes.data;
     setInitialData(initRes.data);
   }, []);
-
-  const loadInitialDataWithLatestVersion = useCallback(async () => {
-    await loadInitialData(true);
-    const versionRes = await wbsOps.getWBSVersion();
-    initialDataVersionRef.current = versionRes.data.initial_data_version;
-  }, [loadInitialData]);
-
-  // Real-time synchronization
-  useWebSocket((msg) => {
-    if (msg.type === 'connected') {
-      if (msg.is_reconnect) {
-        console.log('MainBoard received reconnect signal, checking WBS version...');
-        fetchData({ checkTreeVersion: true, skipStatusAutoRefresh: true });
-      }
-      return;
-    }
-
-    if (msg.type === 'update') {
-      const initialDataEntities = new Set(['status', 'subtask_type', 'member', 'marker']);
-      if (msg.entity && initialDataEntities.has(msg.entity)) {
-        console.log(`MainBoard received ${msg.entity} update signal, refreshing initial data...`);
-        loadInitialDataWithLatestVersion();
-        return;
-      }
-
-      console.log(`MainBoard received ${msg.type} signal, refreshing WBS...`);
-      fetchData({ skipStatusAutoRefresh: !!msg.skip_status_auto_refresh });
-    }
-  });
 
   const isFetchingRef = useRef(false);
 
@@ -189,6 +159,16 @@ export default function MainBoard() {
       document.removeEventListener('visibilitychange', checkTreeOnResume);
       document.removeEventListener('pointerdown', checkTreeOnResume, true);
     };
+  }, [fetchData]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchData({ checkTreeVersion: true, skipStatusAutoRefresh: true });
+      }
+    }, 30000);
+
+    return () => window.clearInterval(intervalId);
   }, [fetchData]);
 
   useEffect(() => {
