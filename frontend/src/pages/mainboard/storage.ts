@@ -28,7 +28,7 @@ export const createDefaultFilters = (): FilterState => ({
 });
 
 const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
-  showProjectRange: true,
+  showProjectRange: false,
   showTodayHighlight: true,
   showRemoved: false,
   showDoneProjects: false,
@@ -44,7 +44,7 @@ const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
   ganttScale: 'day',
   colorMode: 'status',
   highlightSameAssignee: false,
-  highlightDelayedTasks: true,
+  highlightDelayedTasks: false,
   showInterruptionReason: false,
   showResourceTaskType: true,
   showResourceScopeMask: false,
