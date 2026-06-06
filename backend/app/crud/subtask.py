@@ -234,7 +234,7 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
         return None
     
     old_task_id = db_subtask.task_id
-    update_dict = subtask.dict(exclude_unset=True)
+    update_dict = subtask.model_dump(exclude_unset=True)
     skip_status_auto_update = update_dict.pop("skip_status_auto_update", False)
     
     # Auto-set dates if status is being changed
@@ -280,7 +280,7 @@ def update_subtask(db: Session, subtask_id: int, subtask: schemas.SubtaskUpdate)
         removed_status = db.query(models.MstStatus).filter(models.MstStatus.id == new_status_id).first()
         if removed_status and removed_status.status_name == "Removed":
             # ユーザーが明示的に指定した項目以外は自動更新による変更を削除する
-            requested_keys = subtask.dict(exclude_unset=True).keys()
+            requested_keys = subtask.model_dump(exclude_unset=True).keys()
             for k in ["progress_percent", "actual_start_date", "actual_end_date", "review_start_date"]:
                 if k in update_dict and k not in requested_keys:
                     del update_dict[k]

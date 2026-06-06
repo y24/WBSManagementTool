@@ -53,7 +53,7 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
     # Map to schema with calculated fields
     result = []
     for p in projects:
-        p_wbs = schemas.ProjectWBS.from_orm(p)
+        p_wbs = schemas.ProjectWBS.model_validate(p)
         
         tasks_wbs = []
         p_planned_effort = Decimal('0')
@@ -66,7 +66,7 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
             
             is_task_removed = t.status and t.status.status_name == "Removed"
             
-            t_wbs = schemas.TaskWBS.from_orm(t)
+            t_wbs = schemas.TaskWBS.model_validate(t)
             valid_subtasks = [s for s in t.subtasks if not s.is_deleted and (s.status and s.status.status_name != "Removed")]
             
             # Displayed effort totals must be the actual sum. Progress weighting uses

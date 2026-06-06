@@ -1,13 +1,16 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from sqlalchemy.orm import Session
 from .. import models, schemas
 
 def create_shared_filter(db: Session, filter_in: schemas.SharedFilterCreate) -> models.SharedFilter:
     # 1. Cleanup old records (90 days)
-    # Using datetime.utcnow() for consistency if the DB uses UTC
-    threshold = datetime.utcnow() - timedelta(days=90)
-    db.query(models.SharedFilter).filter(models.SharedFilter.created_at < threshold).delete()
+    threshold = datetime.now(UTC) - timedelta(days=90)
+    old_filters = db.query(models.SharedFilter).filter(models.SharedFilter.created_at < threshold).all()
+    for old_filter in old_filters:
+        db.delete(old_filter)
+    if old_filters:
+        db.flush()
     
     # 2. Generate token
     token = str(uuid.uuid4())

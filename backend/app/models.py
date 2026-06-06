@@ -214,6 +214,7 @@ class Subtask(Base):
 
 class SharedFilter(Base):
     __tablename__ = "shared_filters"
+    __table_args__ = {"sqlite_autoincrement": True}
 
     id = Column(Integer, primary_key=True, index=True)
     token = Column(String(100), unique=True, index=True, nullable=False)

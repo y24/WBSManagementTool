@@ -42,7 +42,7 @@ def update_task(db: Session, task_id: int, task: schemas.TaskUpdate):
         return None
     
     old_project_id = db_task.project_id
-    update_dict = task.dict(exclude_unset=True)
+    update_dict = task.model_dump(exclude_unset=True)
     skip_status_auto_update = update_dict.pop("skip_status_auto_update", False)
     
     # Auto-set dates if status is being changed

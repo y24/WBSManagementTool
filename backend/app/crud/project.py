@@ -34,7 +34,7 @@ def update_project(db: Session, project_id: int, project: schemas.ProjectUpdate)
     if not db_project:
         return None
     
-    update_dict = project.dict(exclude_unset=True)
+    update_dict = project.model_dump(exclude_unset=True)
     skip_status_auto_update = update_dict.pop("skip_status_auto_update", False)
     
     # Auto-set dates if status is being changed
