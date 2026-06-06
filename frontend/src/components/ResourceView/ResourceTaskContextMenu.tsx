@@ -35,9 +35,9 @@ const normalizeColor = (color: string | null | undefined, fallback: string) => {
   return normalized;
 };
 
-const clampPosition = (x: number, y: number) => {
+const clampPosition = (x: number, y: number, actualHeight?: number) => {
   const width = 320;
-  const height = 540;
+  const height = actualHeight ?? 540;
   const margin = 12;
   return {
     left: Math.min(Math.max(margin, x), Math.max(margin, window.innerWidth - width - margin)),
@@ -59,6 +59,7 @@ export default function ResourceTaskContextMenu({
   const [progressInput, setProgressInput] = useState(String(subtask.progress_percent ?? 0));
   const [workloadInput, setWorkloadInput] = useState(String(subtask.workload_percent ?? 100));
   const [savingField, setSavingField] = useState<string | null>(null);
+  const [adjustedPosition, setAdjustedPosition] = useState<{ left: number; top: number } | null>(null);
 
   useEffect(() => {
     setDraftTask(subtask);
@@ -96,6 +97,14 @@ export default function ResourceTaskContextMenu({
   }, [onClose]);
 
   const position = useMemo(() => clampPosition(x, y), [x, y]);
+
+  React.useLayoutEffect(() => {
+    if (!menuRef.current) return;
+    const actualHeight = menuRef.current.offsetHeight;
+    if (actualHeight > 0) {
+      setAdjustedPosition(clampPosition(x, y, actualHeight));
+    }
+  }, [x, y]);
 
   const statusById = useMemo(
     () => new Map(initialData?.statuses.map(status => [status.id, status]) ?? []),
@@ -170,7 +179,7 @@ export default function ResourceTaskContextMenu({
     <div
       ref={menuRef}
       className="fixed z-[11000] w-[320px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl ring-1 ring-black/5 dark:border-slate-700 dark:bg-slate-900 dark:ring-white/10"
-      style={{ left: position.left, top: position.top }}
+      style={{ left: (adjustedPosition ?? position).left, top: (adjustedPosition ?? position).top }}
       onContextMenu={(event) => {
         event.preventDefault();
         event.stopPropagation();
