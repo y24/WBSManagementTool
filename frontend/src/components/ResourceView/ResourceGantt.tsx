@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { format, differenceInCalendarDays, addDays, parseISO, isValid, getDaysInMonth, startOfDay } from 'date-fns';
-import { InitialData } from '../../types';
+import { InitialData, Marker } from '../../types';
 import { GanttRange, GanttScale } from '../../types/wbs';
 import { ResourceRow, ResourceSubtask } from '../../pages/mainboard/useResourceData';
 import { getScaleCellWidth, getDateX, getGanttUnits } from '../../utils/ganttUtils';
@@ -28,6 +28,7 @@ interface ResourceGanttProps {
   data: ResourceRow[];
   range: GanttRange;
   initialData: InitialData | null;
+  markers: Marker[];
   showTodayHighlight: boolean;
   showMarkers: boolean;
   isDarkMode: boolean;
@@ -48,6 +49,7 @@ export default function ResourceGantt({
   data,
   range,
   initialData,
+  markers,
   showTodayHighlight,
   showMarkers,
   isDarkMode,
@@ -251,6 +253,7 @@ export default function ResourceGantt({
             cellWidth={cellWidth}
             scale={scale}
             initialData={initialData}
+            markers={markers}
             showMarkers={showMarkers}
             dragState={dragState}
             tempDates={tempDates}
@@ -265,6 +268,7 @@ export default function ResourceGantt({
             cellWidth={cellWidth}
             scale={scale}
             initialData={initialData}
+            markers={markers}
             range={range}
             hoveredDate={hoveredDate}
             showTodayHighlight={showTodayHighlight}

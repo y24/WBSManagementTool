@@ -5,7 +5,7 @@ import ResourceGantt from './ResourceGantt';
 import ResourceSummaryBar from './ResourceSummaryBar';
 import { ResourceRow, useResourceData } from '../../pages/mainboard/useResourceData';
 import { Project, GanttRange, GanttScale } from '../../types/wbs';
-import { InitialData } from '../../types';
+import { InitialData, Marker } from '../../types';
 import { ResourceLoadScope } from '../FilterPanel/FilterPanelTypes';
 import { getLoadRateThresholds, getScheduleVarianceThresholds } from '../../utils/loadRateThresholds';
 
@@ -104,6 +104,7 @@ const compareRowsBySort = (
 interface ResourceBoardProps {
   projects: Project[];
   initialData: InitialData | null;
+  markers: Marker[];
   treeWidth: number;
   setIsResizing: React.Dispatch<React.SetStateAction<boolean>>;
   listRef: React.RefObject<HTMLDivElement | null>;
@@ -127,6 +128,7 @@ interface ResourceBoardProps {
 export default function ResourceBoard({
   projects,
   initialData,
+  markers,
   treeWidth,
   setIsResizing,
   listRef,
@@ -233,6 +235,7 @@ export default function ResourceBoard({
               data={sortedResourceData}
               range={dynamicGanttRange}
               initialData={initialData}
+              markers={markers}
               showTodayHighlight={showTodayHighlight}
               showMarkers={showMarkers}
               isDarkMode={isDarkMode}

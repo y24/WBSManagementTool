@@ -74,6 +74,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
         <ResourceBoard
           projects={filteredProjects}
           initialData={initialData}
+          markers={markers}
           treeWidth={treeWidth}
           setIsResizing={setIsResizing}
           listRef={isResourceView ? treeRef : inactiveTreeRef}
