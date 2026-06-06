@@ -142,7 +142,6 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
                 currentTodayStr={currentTodayStr}
                 expandedProjects={expandedProjects}
                 expandedTasks={expandedTasks}
-                showProjectRange={displayOptions.showProjectRange}
                 showTodayHighlight={displayOptions.showTodayHighlight}
                 showAssigneeName={displayOptions.showAssigneeName}
                 showProgressRate={displayOptions.showProgressRate}

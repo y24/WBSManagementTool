@@ -24,7 +24,6 @@ interface GanttChartProps {
   currentTodayStr: string;
   expandedProjects: Record<number, boolean>;
   expandedTasks: Record<number, boolean>;
-  showProjectRange: boolean;
   showTodayHighlight: boolean;
   showAssigneeName?: boolean;
   showProgressRate?: boolean;
@@ -49,7 +48,6 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   currentTodayStr,
   expandedProjects,
   expandedTasks,
-  showProjectRange,
   showTodayHighlight,
   showAssigneeName = false,
   showProgressRate = false,
@@ -242,45 +240,6 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     }
   }, [baseDate, isRowEmpty, onRefresh]);
 
-  const projectDisplayRanges = useMemo(() => {
-    if (!range.start_date || !projects.length) return {};
-    const baseDate = parseISO(range.start_date);
-
-    return projects.reduce((acc, project) => {
-      const allDates: number[] = [];
-      const collect = (item: any) => {
-        const dates = {
-          pS: item.planned_start_date,
-          pE: item.planned_end_date,
-          aS: item.actual_start_date,
-          aE: item.actual_end_date,
-          rS: item.review_start_date,
-        };
-        Object.values(dates).forEach(v => {
-          if (v) {
-            const d = parseISO(v as string);
-            if (!isNaN(d.getTime())) allDates.push(d.getTime());
-          }
-        });
-      };
-
-      collect(project);
-      (project.tasks || []).forEach(t => {
-        collect(t);
-        (t.subtasks || []).forEach(s => collect(s));
-      });
-
-      if (allDates.length > 0) {
-        const min = Math.min(...allDates);
-        const max = Math.max(...allDates);
-        const left = getDateX(new Date(min), baseDate, scale);
-        const width = getDateWidth(new Date(min), new Date(max), scale);
-        acc[project.id] = { left, width, status_id: project.status_id };
-      }
-      return acc;
-    }, {} as Record<number, { left: number; width: number; status_id?: number | null }>);
-  }, [projects, range.start_date, scale]);
-
   // ホバーされた日のサブタスクを抽出
   const subtasksOnHoveredDate = useMemo(() => {
     if (!hoveredDate || !projects.length) return [];
@@ -347,32 +306,6 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     return rows;
   }, [projects, expandedProjects, expandedTasks]);
 
-  const projectRowSpans = useMemo(() => {
-    const spans: Record<number, { top: number; height: number }> = {};
-    let rowIndex = 0;
-
-    projects.forEach(project => {
-      const start = rowIndex;
-      rowIndex += 1;
-
-      if (expandedProjects[project.id] !== false) {
-        project.tasks.forEach(task => {
-          rowIndex += 1;
-          if (expandedTasks[task.id] !== false) {
-            rowIndex += task.subtasks.length;
-          }
-        });
-      }
-
-      spans[project.id] = {
-        top: start * 37,
-        height: Math.max(1, rowIndex - start) * 37,
-      };
-    });
-
-    return spans;
-  }, [projects, expandedProjects, expandedTasks]);
-
   const totalWidth = useMemo(() => {
     if (scale === 'day') return days.length * cellWidth;
     // For week/month, the last unit might end after the range.end_date
@@ -426,28 +359,6 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
 
           {/* 要素行の描画 (z-10) */}
           <div className="relative z-10">
-            {showProjectRange && projects.map(project => {
-              const pRange = projectDisplayRanges[project.id];
-              const span = projectRowSpans[project.id];
-              if (!pRange || !span) return null;
-
-              return (
-                <div 
-                  key={`p-range-${project.id}`}
-                  className="wbs-project-range-highlight"
-                  style={{
-                    left: `${pRange.left}px`,
-                    width: `${pRange.width}px`,
-                    top: `${span.top}px`,
-                    height: `${span.height}px`,
-                    zIndex: 0,
-                    '--highlight-bg': `${getStatusColor(pRange.status_id)}26`,
-                    '--highlight-border': `${getStatusColor(pRange.status_id)}73`
-                  } as React.CSSProperties}
-                />
-              );
-            })}
-
             {visibleRows.map(row => {
               if (row.itemType === 'project') {
                 const project = row.project;

@@ -28,7 +28,6 @@ export const createDefaultFilters = (): FilterState => ({
 });
 
 const DEFAULT_DISPLAY_OPTIONS: DisplayOptions = {
-  showProjectRange: false,
   showTodayHighlight: true,
   showRemoved: false,
   showDoneProjects: false,

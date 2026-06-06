@@ -15,7 +15,6 @@ export interface FilterState {
 }
 
 export interface DisplayOptions {
-  showProjectRange: boolean;
   showTodayHighlight: boolean;
   showRemoved: boolean;
   showDoneProjects: boolean;

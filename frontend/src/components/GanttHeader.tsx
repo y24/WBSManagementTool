@@ -11,7 +11,7 @@ interface GanttHeaderProps {
   cellWidth: number;
   scale: GanttScale;
   initialData: InitialData | null;
-  markers: Marker[];
+  markers?: Marker[];
   showMarkers: boolean;
   onDateClick: (date: Date) => void;
   setHoveredDate: (date: string | null, mouseX?: number, mouseY?: number) => void;
@@ -33,7 +33,7 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
   cellWidth,
   scale,
   initialData,
-  markers,
+  markers = [],
   showMarkers,
   onDateClick,
   setHoveredDate,
