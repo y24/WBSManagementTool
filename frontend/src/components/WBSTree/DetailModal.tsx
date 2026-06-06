@@ -12,6 +12,8 @@ interface DetailModalProps {
   setDetailValue: (v: string) => void;
   ticketIdValue: string;
   setTicketIdValue: (v: string) => void;
+  testingIdValue: string;
+  setTestingIdValue: (v: string) => void;
   linkUrlValue: string;
   setLinkUrlValue: (v: string) => void;
   memoValue: string;
@@ -46,6 +48,8 @@ const DetailModal = ({
   setDetailValue,
   ticketIdValue,
   setTicketIdValue,
+  testingIdValue,
+  setTestingIdValue,
   linkUrlValue,
   setLinkUrlValue,
   memoValue,
@@ -69,6 +73,7 @@ const DetailModal = ({
   const initialValues = useRef({
     detailValue,
     ticketIdValue,
+    testingIdValue,
     linkUrlValue,
     memoValue,
     syncToAzureDevops,
@@ -78,6 +83,7 @@ const DetailModal = ({
     return (
       detailValue !== initialValues.current.detailValue ||
       ticketIdValue !== initialValues.current.ticketIdValue ||
+      testingIdValue !== initialValues.current.testingIdValue ||
       linkUrlValue !== initialValues.current.linkUrlValue ||
       memoValue !== initialValues.current.memoValue ||
       syncToAzureDevops !== initialValues.current.syncToAzureDevops
@@ -119,10 +125,13 @@ const DetailModal = ({
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [detailValue, ticketIdValue, linkUrlValue, memoValue, syncToAzureDevops, showConfirm, onSave, disableHotkeys]);
+  }, [detailValue, ticketIdValue, testingIdValue, linkUrlValue, memoValue, syncToAzureDevops, showConfirm, onSave, disableHotkeys]);
 
   const ticketUrl = ticketUrlTemplate && ticketIdValue
     ? ticketUrlTemplate.replace('{TICKET_ID}', ticketIdValue)
+    : null;
+  const testingUrl = ticketUrlTemplate && testingIdValue
+    ? ticketUrlTemplate.replace('{TICKET_ID}', testingIdValue)
     : null;
 
   const canLoadChildCandidates = editingType !== 'project' && !!parentTicketId;
@@ -234,7 +243,46 @@ const DetailModal = ({
                     🔗 {ticketUrl}
                   </p>
                 )}
-                {ticketIdValue && (
+                {editingType === 'project' && (
+                  <div className="mt-3">
+                    <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <Hash size={12} className="text-slate-500" />
+                      Testing ID
+                      {testingUrl && (
+                        <a
+                          href={testingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-auto flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 normal-case tracking-normal transition-colors"
+                        >
+                          <Link size={11} />
+                          チケットを開く
+                        </a>
+                      )}
+                    </label>
+                    <input
+                      id="modal-testing-id-input"
+                      name="testing-id"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
+                      value={testingIdValue}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/[^0-9]/g, '');
+                        setTestingIdValue(v);
+                      }}
+                      placeholder="Testing IDを入力..."
+                    />
+                    {testingUrl && (
+                      <p className="mt-1 text-xs text-gray-400 dark:text-slate-500 truncate px-1" title={testingUrl}>
+                        🔗 {testingUrl}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {(ticketIdValue || testingIdValue) && (
                   <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none w-fit">
                     <input
                       type="checkbox"

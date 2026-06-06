@@ -242,6 +242,7 @@ class ProjectBase(BaseModel):
     project_name: str
     detail: Optional[str] = None
     ticket_id: Optional[int] = None
+    testing_id: Optional[int] = None
     link_url: Optional[str] = None
     memo: Optional[str] = None
     sync_to_azure_devops: bool = True
@@ -263,6 +264,7 @@ class ProjectUpdate(BaseModel):
     project_name: Optional[str] = None
     detail: Optional[str] = None
     ticket_id: Optional[int] = None
+    testing_id: Optional[int] = None
     link_url: Optional[str] = None
     memo: Optional[str] = None
     sync_to_azure_devops: Optional[bool] = None
@@ -382,6 +384,7 @@ class ImportPreviewRow(BaseModel):
     assignee: Optional[str] = None
     type: Optional[str] = None
     ticket_id: Optional[str] = None
+    testing_id: Optional[str] = None
     link_url: Optional[str] = None
     planned_start: Optional[date] = None
     planned_end: Optional[date] = None

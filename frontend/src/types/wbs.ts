@@ -76,6 +76,7 @@ export interface Project {
   project_name: string;
   detail?: string | null;
   ticket_id?: number | null;
+  testing_id?: number | null;
   link_url?: string | null;
   memo?: string | null;
   sync_to_azure_devops?: boolean;

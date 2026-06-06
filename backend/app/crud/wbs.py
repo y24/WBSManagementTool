@@ -160,6 +160,7 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
             project_name=orig_p.project_name,
             detail=orig_p.detail,
             ticket_id=orig_p.ticket_id,
+            testing_id=orig_p.testing_id,
             memo=orig_p.memo,
             planned_start_date=orig_p.planned_start_date,
             planned_end_date=orig_p.planned_end_date,

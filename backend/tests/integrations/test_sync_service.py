@@ -32,10 +32,11 @@ def settings():
     )
 
 
-def _make_project(db, ticket_id=101, sync=True, planned_start=date(2026, 5, 1), planned_end=date(2026, 5, 10)):
+def _make_project(db, ticket_id=101, testing_id=None, sync=True, planned_start=date(2026, 5, 1), planned_end=date(2026, 5, 10)):
     p = models.Project(
         project_name="Test Project",
         ticket_id=ticket_id,
+        testing_id=testing_id,
         sync_to_azure_devops=sync,
         planned_start_date=planned_start,
         planned_end_date=planned_end,
@@ -355,6 +356,26 @@ class TestDryRun:
 # ---------------------------------------------------------------------------
 
 class TestMultiEntitySync:
+    def test_project_testing_id_is_synced_as_additional_work_item(self, db_session, settings):
+        proj = _make_project(db_session, ticket_id=10, testing_id=11)
+
+        client = AzureDevOpsMockClient()
+        result = run_sync(db_session, dry_run=False, settings=settings, client=client)
+
+        assert result.summary.candidates == 2
+        assert result.summary.updated == 2
+        assert result.summary.failed == 0
+        assert client.get_stored_fields(10).get("Microsoft.VSTS.Scheduling.StartDate") == "2026-05-01T00:00:00+09:00"
+        assert client.get_stored_fields(11).get("Microsoft.VSTS.Scheduling.StartDate") == "2026-05-01T00:00:00+09:00"
+
+        state_repo = DevopsSyncStateRepository(db_session)
+        assert state_repo.get_by_entity("project", proj.id) is not None
+        assert state_repo.get_by_entity("project_testing", proj.id) is not None
+
+        result2 = run_sync(db_session, dry_run=False, settings=settings, client=client)
+        assert result2.summary.skipped_no_local_change == 2
+        assert result2.summary.fetch_targets == 0
+
     def test_project_task_subtask_all_synced(self, db_session, settings):
         proj = _make_project(db_session, ticket_id=10)
         task = _make_task(db_session, proj.id, ticket_id=20)

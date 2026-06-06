@@ -16,6 +16,7 @@ COLUMN_MAPPING = {
     "サブタスク種別": "type",
     "サブタスク詳細": "subtask_detail",
     "チケットID": "ticket_id",
+    "Testing ID": "testing_id",
     "ステータス": "status",
     "担当者": "assignee",
     "レビュー日数": "review_days",
@@ -34,12 +35,12 @@ COLUMN_MAPPING = {
 def generate_template() -> io.BytesIO:
     columns = list(COLUMN_MAPPING.keys())
     sample_data = [
-        [0, "新規プロジェクトA", "", "", "123456", "New", "山田 太郎", "", "2026-04-01", "2026-04-17", "", "2026-04-01", "", "", 10, "", "https://example.com/p1", "プロジェクトのメモ"],
-        [1, "シナリオテスト", "", "", "234567", "New", "山田 太郎", "", "2026-04-01", "2026-04-10", "", "2026-04-01", "", "", 20, "", "https://example.com/t1", "タスクのメモ"],
-        [2, "", "テスト設計", "データ作成含む", "345678", "New", "佐藤 次郎", 1, "2026-04-01", "2026-04-03", 2, "2026-04-01", "2026-04-03", 2, 100, 80, "https://example.com/s1", "サブタスクのメモ"],
-        [2, "", "テスト実施", "", "", "New", "佐藤 次郎", 0.5, "2026-04-04", "2026-04-05", 1, "", "", "", 0, 100, "", ""],
-        [1, "性能テスト", "", "", "", "New", "鈴木 一郎", "", "", "", "", "", "", "", 0, "", "", "階層1,2の日付未入力は自動計算されます"],
-        [2, "", "テスト設計", "", "", "New", "鈴木 一郎", 0.5, "2026-04-06", "2026-04-07", "", "", "", "", 0, 100, "", ""],
+        [0, "新規プロジェクトA", "", "", "123456", "456789", "New", "山田 太郎", "", "2026-04-01", "2026-04-17", "", "2026-04-01", "", "", 10, "", "https://example.com/p1", "プロジェクトのメモ"],
+        [1, "シナリオテスト", "", "", "234567", "", "New", "山田 太郎", "", "2026-04-01", "2026-04-10", "", "2026-04-01", "", "", 20, "", "https://example.com/t1", "タスクのメモ"],
+        [2, "", "テスト設計", "データ作成含む", "345678", "", "New", "佐藤 次郎", 1, "2026-04-01", "2026-04-03", 2, "2026-04-01", "2026-04-03", 2, 100, 80, "https://example.com/s1", "サブタスクのメモ"],
+        [2, "", "テスト実施", "", "", "", "New", "佐藤 次郎", 0.5, "2026-04-04", "2026-04-05", 1, "", "", "", 0, 100, "", ""],
+        [1, "性能テスト", "", "", "", "", "New", "鈴木 一郎", "", "", "", "", "", "", "", 0, "", "", "階層1,2の日付未入力は自動計算されます"],
+        [2, "", "テスト設計", "", "", "", "New", "鈴木 一郎", 0.5, "2026-04-06", "2026-04-07", "", "", "", "", 0, 100, "", ""],
     ]
     df = pd.DataFrame(sample_data, columns=columns)
     output = io.BytesIO()
@@ -188,6 +189,14 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
         else:
             ticket_id = None
 
+        testing_id = row.get("testing_id")
+        if level == 0 and not pd.isna(testing_id):
+            try: testing_id = int(testing_id)
+            except:
+                errors.append("Testing IDは数値(ID)で入力してください")
+        else:
+            testing_id = None
+
         review_days_val = row.get("review_days")
         review_days = None
         if not pd.isna(review_days_val):
@@ -205,6 +214,7 @@ def validate_and_preview(db: Session, file_content: bytes) -> schemas.ImportPrev
             assignee=assignee_name if assignee_name != "nan" else None,
             type=type_name if type_name != "nan" else None,
             ticket_id=str(ticket_id) if ticket_id is not None else None,
+            testing_id=str(testing_id) if testing_id is not None else None,
             planned_start=d_start,
             planned_end=d_end,
             planned_effort=effort,
@@ -260,6 +270,7 @@ def execute_import(db: Session, rows: List[schemas.ImportPreviewRow]):
                 is_auto_planned_date=is_auto_planned,
                 is_auto_actual_date=is_auto_actual,
                 ticket_id=int(r.ticket_id) if r.ticket_id else None,
+                testing_id=int(r.testing_id) if r.testing_id else None,
                 sort_order=next_proj_sort
             )
             db_project = create_project(db, p_data)
@@ -334,7 +345,7 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.B
     # 階層、名称、サブタスク種別、サブタスク詳細、チケットID、ステータス、担当者、レビュー日数、
     # 開始(計画)、終了(計画)、予定工数、開始(実績)、終了(実績)、実績工数、進捗、工数比率、メモ
     headers = [
-        "階層", "名称", "サブタスク種別", "サブタスク詳細", "チケットID", "ステータス", "担当者", "レビュー日数",
+        "階層", "名称", "サブタスク種別", "サブタスク詳細", "チケットID", "Testing ID", "ステータス", "担当者", "レビュー日数",
         "開始(計画)", "終了(計画)", "予定工数", "開始(実績)", "終了(実績)", "実績工数", "進捗", "工数比率", "リンクURL", "メモ"
     ]
 
@@ -346,7 +357,7 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.B
     for p in projects:
         # Level 0: Project
         rows.append([
-            0, p.project_name, "", "", p.ticket_id, 
+            0, p.project_name, "", "", p.ticket_id, getattr(p, "testing_id", None),
             status_map.get(p.status_id, ""), 
             member_map.get(p.assignee_id, ""), "",
             p.planned_start_date, p.planned_end_date, p.planned_effort_total,
@@ -357,7 +368,7 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.B
         for t in p.tasks:
             # Level 1: Task
             rows.append([
-                1, t.task_name, "", "", t.ticket_id,
+                1, t.task_name, "", "", t.ticket_id, "",
                 status_map.get(t.status_id, ""), 
                 member_map.get(t.assignee_id, ""), "",
                 t.planned_start_date, t.planned_end_date, t.planned_effort_total,
@@ -370,7 +381,7 @@ def export_wbs_to_excel(projects: List[schemas.ProjectWBS], db: Session) -> io.B
                 rows.append([
                     2, "", 
                     type_map.get(s.subtask_type_id, ""), 
-                    s.subtask_detail, s.ticket_id,
+                    s.subtask_detail, s.ticket_id, "",
                     status_map.get(s.status_id, ""), 
                     member_map.get(s.assignee_id, ""), s.review_days,
                     s.planned_start_date, s.planned_end_date, s.planned_effort_days,

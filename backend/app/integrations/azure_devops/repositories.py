@@ -23,7 +23,7 @@ from app.models import Project, Task, Subtask, DevopsSyncState, SyncLock
 
 @dataclass
 class SyncTarget:
-    entity_type: str          # 'project' | 'task' | 'subtask'
+    entity_type: str          # 'project' | 'project_testing' | 'task' | 'subtask'
     entity_id: int
     raw_ticket_id: Optional[int]
     planned_start_date: object  # date | None
@@ -49,24 +49,30 @@ class SyncTargetRepository:
             self._db.query(Project)
             .filter(
                 Project.sync_to_azure_devops.is_(True),
-                Project.ticket_id.isnot(None),
+                (Project.ticket_id.isnot(None)) | (Project.testing_id.isnot(None)),
                 Project.is_deleted.is_(False),
             )
             .all()
         ):
-            targets.append(
-                SyncTarget(
-                    entity_type="project",
-                    entity_id=row.id,
-                    raw_ticket_id=row.ticket_id,
-                    planned_start_date=row.planned_start_date,
-                    planned_end_date=row.planned_end_date,
-                    actual_start_date=row.actual_start_date,
-                    actual_end_date=row.actual_end_date,
-                    status_id=row.status_id,
-                    updated_at=row.updated_at,
+            for entity_type, raw_ticket_id in (
+                ("project", row.ticket_id),
+                ("project_testing", row.testing_id),
+            ):
+                if raw_ticket_id is None:
+                    continue
+                targets.append(
+                    SyncTarget(
+                        entity_type=entity_type,
+                        entity_id=row.id,
+                        raw_ticket_id=raw_ticket_id,
+                        planned_start_date=row.planned_start_date,
+                        planned_end_date=row.planned_end_date,
+                        actual_start_date=row.actual_start_date,
+                        actual_end_date=row.actual_end_date,
+                        status_id=row.status_id,
+                        updated_at=row.updated_at,
+                    )
                 )
-            )
 
         for row in (
             self._db.query(Task)

@@ -88,6 +88,7 @@ class Project(Base):
     project_name = Column(String(200), nullable=False)
     detail = Column(String(300), nullable=True)
     ticket_id = Column(Integer, nullable=True)
+    testing_id = Column(Integer, nullable=True)
     memo = Column(Text, nullable=True)
     planned_start_date = Column(Date, nullable=True)
     planned_end_date = Column(Date, nullable=True)
@@ -111,6 +112,7 @@ class Project(Base):
 
     __table_args__ = (
         CheckConstraint("project_name <> ''", name="check_project_name_empty"),
+        CheckConstraint("testing_id IS NULL OR testing_id >= 0", name="check_project_testing_id"),
         CheckConstraint("sort_order >= 0", name="check_project_sort"),
         CheckConstraint("work_days IS NULL OR work_days >= 0", name="check_project_work_days"),
         CheckConstraint("planned_start_date IS NULL OR planned_end_date IS NULL OR planned_end_date >= planned_start_date", name="check_project_planned_dates"),
@@ -271,7 +273,7 @@ class DevopsSyncState(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     __table_args__ = (
-        CheckConstraint("entity_type IN ('project', 'task', 'subtask')", name="check_devops_sync_entity_type"),
+        CheckConstraint("entity_type IN ('project', 'project_testing', 'task', 'subtask')", name="check_devops_sync_entity_type"),
     )
 
 

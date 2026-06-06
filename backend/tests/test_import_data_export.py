@@ -73,5 +73,6 @@ def test_export_wbs_to_excel_handles_numeric_and_empty_values():
     worksheet = workbook["WBS"]
     assert worksheet.max_row == 4
     assert worksheet["A1"].value == "階層"
+    assert worksheet["F1"].value == "Testing ID"
     assert worksheet["A4"].value == 2
-    assert worksheet["K4"].value == 1.25
+    assert worksheet["L4"].value == 1.25

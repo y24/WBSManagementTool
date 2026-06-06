@@ -30,6 +30,7 @@ export const useDetailModal = ({
   } | null>(null);
   const [detailValue, setDetailValue] = useState('');
   const [ticketIdValue, setTicketIdValue] = useState('');
+  const [testingIdValue, setTestingIdValue] = useState('');
   const [linkUrlValue, setLinkUrlValue] = useState('');
   const [memoValue, setMemoValue] = useState('');
   const [syncToAzureDevops, setSyncToAzureDevops] = useState(true);
@@ -52,6 +53,7 @@ export const useDetailModal = ({
     });
     setDetailValue(type === 'subtask' ? (item.subtask_detail || '') : (item.detail || ''));
     setTicketIdValue(item.ticket_id != null ? String(item.ticket_id) : '');
+    setTestingIdValue(type === 'project' && item.testing_id != null ? String(item.testing_id) : '');
     setLinkUrlValue(item.link_url || '');
     setMemoValue(item.memo || '');
     setSyncToAzureDevops(item.sync_to_azure_devops !== false);
@@ -69,6 +71,9 @@ export const useDetailModal = ({
       memo: memoValue || null,
       sync_to_azure_devops: syncToAzureDevops,
     };
+    if (editingItem.type === 'project') {
+      updates.testing_id = testingIdValue !== '' ? parseInt(testingIdValue, 10) : null;
+    }
     if (editingItem.type === 'subtask') {
       updates.subtask_detail = detailValue || null;
     } else {
@@ -111,6 +116,9 @@ export const useDetailModal = ({
             }
             delete (itemUpdates as any).workload_percent;
           }
+          if (item.type !== 'project') {
+            delete (itemUpdates as any).testing_id;
+          }
 
           // 楽観的更新
           if (onLocalUpdate) {
@@ -141,6 +149,7 @@ export const useDetailModal = ({
 
         const fieldsToCheck = [
           { f: 'ticket_id', v: updates.ticket_id },
+          { f: 'testing_id', v: item.type === 'project' ? updates.testing_id : null },
           { f: 'memo', v: updates.memo },
           { f: item.type === 'subtask' ? 'subtask_detail' : 'detail', v: editingItem.type === 'subtask' ? updates.subtask_detail : updates.detail },
         ];
@@ -177,6 +186,8 @@ export const useDetailModal = ({
     setDetailValue,
     ticketIdValue,
     setTicketIdValue,
+    testingIdValue,
+    setTestingIdValue,
     linkUrlValue,
     setLinkUrlValue,
     memoValue,
