@@ -320,3 +320,34 @@ def reorder_subtasks(db: Session, ordered_ids: list[int]):
             subtask.sort_order = i
     db.commit()
     return True
+
+def recalculate_all_effort(db: Session, project_ids: Optional[List[int]] = None) -> dict:
+    """
+    Bulk recalculate effort for all subtasks with is_auto_effort=True.
+    """
+    query = db.query(models.Subtask).join(models.Task).filter(
+        models.Subtask.is_auto_effort == True,
+        models.Subtask.is_deleted == False,
+        models.Task.is_deleted == False,
+    )
+    if project_ids:
+        query = query.filter(models.Task.project_id.in_(project_ids))
+
+    subtasks = query.all()
+    affected_task_ids = set()
+    updated_count = 0
+
+    for s in subtasks:
+        old_planned = s.planned_effort_days
+        old_actual = s.actual_effort_days
+        _calculate_subtask_effort(db, s)
+        if s.planned_effort_days != old_planned or s.actual_effort_days != old_actual:
+            affected_task_ids.add(s.task_id)
+            updated_count += 1
+
+    if updated_count > 0:
+        db.commit()
+        for tid in affected_task_ids:
+            recalculate_task_dates(db, tid)
+
+    return {"updated": updated_count, "total": len(subtasks)}

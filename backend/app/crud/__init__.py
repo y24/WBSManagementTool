@@ -58,6 +58,7 @@ from .task import (
 from .subtask import (
     create_subtask,
     refresh_subtasks_actual_end_date,
+    recalculate_all_effort,
     update_subtask,
     delete_subtask,
     reorder_subtasks

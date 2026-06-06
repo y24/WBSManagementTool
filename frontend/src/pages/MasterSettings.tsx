@@ -9,6 +9,7 @@ import { StatusSection } from '../components/masterSettings/StatusSection';
 import { SubtaskTypeSection } from '../components/masterSettings/SubtaskTypeSection';
 import { AssigneeViewSettingsSection } from '../components/masterSettings/AssigneeViewSettingsSection';
 import { SystemSettingsSection } from '../components/masterSettings/SystemSettingsSection';
+import { MaintenanceSection } from '../components/masterSettings/MaintenanceSection';
 import { DropResult } from '@hello-pangea/dnd';
 import LoadingOverlay from '../components/LoadingOverlay';
 import {
@@ -35,7 +36,8 @@ type MasterSectionId =
   | 'status-mapping'
   | 'system-settings'
   | 'assignee-view'
-  | 'holidays';
+  | 'holidays'
+  | 'maintenance';
 
 type DevOpsSyncField =
   | 'planned_start_date'
@@ -106,6 +108,7 @@ const masterSections: { id: MasterSectionId; label: string; description: string 
   { id: 'system-settings', label: 'システム設定', description: 'チケットURL / Azure DevOps連携条件' },
   { id: 'assignee-view', label: '担当者ビュー', description: '稼働率・予実差のしきい値' },
   { id: 'holidays', label: '祝日', description: '非稼働日の設定' },
+  { id: 'maintenance', label: 'メンテナンス', description: '一括再計算など管理用操作' },
 ];
 
 export default function MasterSettings() {
@@ -650,6 +653,10 @@ export default function MasterSettings() {
               startEdit={startEdit}
               deleteItem={deleteItem}
             />
+          </div>
+
+          <div id="maintenance" className="master-scroll-section">
+            <MaintenanceSection />
           </div>
         </div>
       </div>

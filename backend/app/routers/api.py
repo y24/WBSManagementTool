@@ -404,6 +404,14 @@ def execute_import(req: schemas.ImportExecuteRequest, db: Session = Depends(get_
     if not success:
         raise HTTPException(status_code=400, detail="Import failed")
     return {"status": "ok"}
+@router.post("/admin/recalc-effort")
+def recalc_all_effort(
+    project_ids: List[int] = Query(default=None),
+    db: Session = Depends(get_db)
+):
+    result = crud.recalculate_all_effort(db, project_ids or None)
+    return result
+
 @router.post("/items/duplicate")
 def duplicate_items(req: schemas.DuplicateRequest, db: Session = Depends(get_db)):
     success = crud.duplicate_items(db, req)
