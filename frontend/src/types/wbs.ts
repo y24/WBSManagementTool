@@ -107,5 +107,7 @@ export interface GanttRange {
 export interface WBSResponse {
   filters: any;
   gantt_range: GanttRange;
+  tree_version: string;
+  initial_data_version: string;
   projects: Project[];
 }

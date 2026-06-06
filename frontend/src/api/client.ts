@@ -31,14 +31,20 @@ apiClient.interceptors.response.use(
 );
 // 初期データの取得リクエストを重複させないためのプロミス保存用
 let initialDataPromise: Promise<AxiosResponse<InitialData>> | null = null;
+let initialDataCache: AxiosResponse<InitialData> | null = null;
 
-export const getInitialData = () => {
-  if (initialDataPromise) return initialDataPromise;
+export const getInitialData = (options: { forceRefresh?: boolean } = {}) => {
+  if (!options.forceRefresh && initialDataCache) return Promise.resolve(initialDataCache);
+  if (!options.forceRefresh && initialDataPromise) return initialDataPromise;
   
   initialDataPromise = apiClient.get('/initial-data')
+    .then((response) => {
+      initialDataCache = response;
+      return response;
+    })
     .finally(() => {
       // リクエストが完了（成功 or 失敗）したらプロミスをクリア
-      // これにより、起動時の同時呼び出しは重複排除され、その後の明示的な更新では最新が取得可能になる
+      // 成功レスポンスは initialDataCache に残し、明示的な forceRefresh のみ再取得する
       initialDataPromise = null;
     });
     

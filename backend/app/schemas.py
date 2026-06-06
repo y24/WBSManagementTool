@@ -313,7 +313,13 @@ class GanttRange(BaseModel):
 class WBSResponse(BaseModel):
     filters: dict
     gantt_range: GanttRange
+    tree_version: str
+    initial_data_version: str
     projects: List[ProjectWBS]
+
+class WBSVersionResponse(BaseModel):
+    tree_version: str
+    initial_data_version: str
 
 # --- System Settings ---
 class SystemSettingUpdate(BaseModel):

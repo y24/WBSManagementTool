@@ -120,6 +120,9 @@ export const wbsOps = {
     return apiClient.get(`/wbs?${params.toString()}`);
   },
 
+  getWBSVersion: () =>
+    apiClient.get('/wbs/version'),
+
   getDashboard: () => 
     apiClient.get('/dashboard'),
 

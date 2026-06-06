@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
 import httpx
 import json
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from typing import List
 
-from .. import crud, schemas
+from .. import crud, models, schemas
 from ..database import get_db
 from ..utils.websocket_manager import manager
 
@@ -23,7 +24,46 @@ def _setting_value_or_default(setting, default_value: str):
 def _default_devops_sync_status_conditions(_db: Session) -> str:
     return json.dumps({"actual_end_date": [4]}, ensure_ascii=True)
 
+def _wbs_tree_version(db: Session) -> str:
+    version_parts = []
+    for model in (models.Project, models.Task, models.Subtask, models.SubtaskInterruption):
+        count, max_id, max_updated_at = db.query(
+            func.count(model.id),
+            func.coalesce(func.max(model.id), 0),
+            func.max(model.updated_at),
+        ).one()
+        updated = max_updated_at.isoformat() if max_updated_at else ""
+        version_parts.append(f"{model.__tablename__}:{count}:{max_id}:{updated}")
+    return "|".join(version_parts)
+
+def _initial_data_version(db: Session) -> str:
+    version_parts = []
+    for model in (models.MstStatus, models.MstSubtaskType, models.MstMember, models.MstHoliday, models.Marker):
+        count, max_id, max_updated_at = db.query(
+            func.count(model.id),
+            func.coalesce(func.max(model.id), 0),
+            func.max(model.updated_at),
+        ).one()
+        updated = max_updated_at.isoformat() if max_updated_at else ""
+        version_parts.append(f"{model.__tablename__}:{count}:{max_id}:{updated}")
+
+    settings_count, max_setting_key, max_setting_updated_at = db.query(
+        func.count(models.SystemSetting.setting_key),
+        func.max(models.SystemSetting.setting_key),
+        func.max(models.SystemSetting.updated_at),
+    ).one()
+    settings_updated = max_setting_updated_at.isoformat() if max_setting_updated_at else ""
+    version_parts.append(f"{models.SystemSetting.__tablename__}:{settings_count}:{max_setting_key or ''}:{settings_updated}")
+    return "|".join(version_parts)
+
 # --- WBS Aggregation ---
+@router.get("/wbs/version", response_model=schemas.WBSVersionResponse)
+def read_wbs_version(db: Session = Depends(get_db)):
+    return {
+        "tree_version": _wbs_tree_version(db),
+        "initial_data_version": _initial_data_version(db),
+    }
+
 @router.get("/wbs", response_model=schemas.WBSResponse)
 def read_wbs(
     project_ids: List[int] = Query(default=None),
@@ -68,6 +108,8 @@ def read_wbs(
             "weeks": weeks
         },
         "gantt_range": gantt_range,
+        "tree_version": _wbs_tree_version(db),
+        "initial_data_version": _initial_data_version(db),
         "projects": projects
     }
 

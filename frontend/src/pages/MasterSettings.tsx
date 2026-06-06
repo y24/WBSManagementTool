@@ -148,7 +148,7 @@ export default function MasterSettings() {
 
   // Real-time synchronization
   useWebSocket((msg) => {
-    if (msg.type === 'update' || msg.type === 'connected') {
+    if (msg.type === 'update') {
       console.log(`MasterSettings received ${msg.type} signal, refreshing...`);
       fetchData();
     }
@@ -156,7 +156,7 @@ export default function MasterSettings() {
 
   const fetchData = useCallback(() => {
     setLoading(true);
-    getInitialData()
+    getInitialData({ forceRefresh: true })
       .then(res => {
         setData(res.data);
         setTicketUrlTemplate(res.data.ticket_url_template || '');

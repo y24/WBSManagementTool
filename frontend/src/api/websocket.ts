@@ -22,6 +22,7 @@ export const useWebSocket = (onMessage: (msg: WSMessage) => void) => {
   const onMessageRef = useRef(onMessage);
   const isMountedRef = useRef(true);
   const lastActiveTimestampRef = useRef(Date.now());
+  const hasOpenedRef = useRef(false);
 
   // Keep callback ref updated
   useEffect(() => {
@@ -60,7 +61,8 @@ export const useWebSocket = (onMessage: (msg: WSMessage) => void) => {
       
       // Notify the component that the connection is (re)opened
       // This allows the component to refresh data to ensure consistency.
-      onMessageRef.current({ type: 'connected' });
+      onMessageRef.current({ type: 'connected', is_reconnect: hasOpenedRef.current });
+      hasOpenedRef.current = true;
     };
 
     socket.onmessage = (event) => {

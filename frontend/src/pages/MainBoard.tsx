@@ -34,6 +34,8 @@ import { useCurrentDateString } from '../hooks/useCurrentDateString';
 type WBSRefreshOptions = boolean | {
   showLoading?: boolean;
   skipStatusAutoRefresh?: boolean;
+  refreshInitialData?: boolean;
+  checkTreeVersion?: boolean;
 };
 
 export default function MainBoard() {
@@ -57,12 +59,43 @@ export default function MainBoard() {
   const syncLockRef = useRef<'tree' | 'gantt' | null>(null);
   const viewSwitchFrameRefs = useRef<number[]>([]);
   const todayScrollAnimationRef = useRef<number | null>(null);
+  const initialDataRef = useRef<InitialData | null>(null);
+  const wbsTreeVersionRef = useRef<string | null>(null);
+  const initialDataVersionRef = useRef<string | null>(null);
+  const isAppFocusedRef = useRef(document.hasFocus() && document.visibilityState === 'visible');
   const currentTodayStr = useCurrentDateString();
+
+  const loadInitialData = useCallback(async (forceRefresh = false) => {
+    const initRes = await getInitialData({ forceRefresh });
+    initialDataRef.current = initRes.data;
+    setInitialData(initRes.data);
+  }, []);
+
+  const loadInitialDataWithLatestVersion = useCallback(async () => {
+    await loadInitialData(true);
+    const versionRes = await wbsOps.getWBSVersion();
+    initialDataVersionRef.current = versionRes.data.initial_data_version;
+  }, [loadInitialData]);
 
   // Real-time synchronization
   useWebSocket((msg) => {
-    if (msg.type === 'update' || msg.type === 'connected') {
-      console.log(`MainBoard received ${msg.type} signal, refreshing...`);
+    if (msg.type === 'connected') {
+      if (msg.is_reconnect) {
+        console.log('MainBoard received reconnect signal, checking WBS version...');
+        fetchData({ checkTreeVersion: true, skipStatusAutoRefresh: true });
+      }
+      return;
+    }
+
+    if (msg.type === 'update') {
+      const initialDataEntities = new Set(['status', 'subtask_type', 'member', 'marker']);
+      if (msg.entity && initialDataEntities.has(msg.entity)) {
+        console.log(`MainBoard received ${msg.entity} update signal, refreshing initial data...`);
+        loadInitialDataWithLatestVersion();
+        return;
+      }
+
+      console.log(`MainBoard received ${msg.type} signal, refreshing WBS...`);
       fetchData({ skipStatusAutoRefresh: !!msg.skip_status_auto_refresh });
     }
   });
@@ -73,6 +106,10 @@ export default function MainBoard() {
     async (options: WBSRefreshOptions = false) => {
       const showLoading = typeof options === 'boolean' ? options : !!options.showLoading;
       const skipStatusAutoRefresh = typeof options === 'object' && !!options.skipStatusAutoRefresh;
+      const refreshInitialData = typeof options === 'object' && !!options.refreshInitialData;
+      const checkTreeVersion = typeof options === 'object' && !!options.checkTreeVersion;
+      let shouldRefreshInitialData = refreshInitialData;
+      let forceInitialDataRefresh = refreshInitialData;
 
       // Prevent concurrent WBS fetches
       if (isFetchingRef.current) return;
@@ -80,6 +117,25 @@ export default function MainBoard() {
 
       try {
         if (showLoading) setLoading(true);
+
+        if (checkTreeVersion && wbsTreeVersionRef.current) {
+          const versionRes = await wbsOps.getWBSVersion();
+          if (
+            initialDataVersionRef.current &&
+            versionRes.data.initial_data_version !== initialDataVersionRef.current
+          ) {
+            shouldRefreshInitialData = true;
+            forceInitialDataRefresh = true;
+          }
+
+          if (versionRes.data.tree_version === wbsTreeVersionRef.current) {
+            if (shouldRefreshInitialData || !initialDataRef.current) {
+              await loadInitialData(forceInitialDataRefresh);
+              initialDataVersionRef.current = versionRes.data.initial_data_version;
+            }
+            return;
+          }
+        }
 
         const wbsRes = await wbsOps.getWBS(
           undefined, // projectIds
@@ -89,10 +145,12 @@ export default function MainBoard() {
           !skipStatusAutoRefresh
         );
         setData(wbsRes.data);
+        wbsTreeVersionRef.current = wbsRes.data.tree_version;
+        initialDataVersionRef.current = wbsRes.data.initial_data_version;
 
-        // Fetch initial-data using the shared/cached getter
-        const initRes = await getInitialData();
-        setInitialData(initRes.data);
+        if (shouldRefreshInitialData || !initialDataRef.current) {
+          await loadInitialData(forceInitialDataRefresh);
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -100,8 +158,38 @@ export default function MainBoard() {
         setLoading(false);
       }
     },
-    [],
+    [loadInitialData],
   );
+
+  useEffect(() => {
+    const checkTreeOnResume = () => {
+      if (document.visibilityState !== 'visible') return;
+
+      const isFocused = document.hasFocus();
+      if (isFocused && !isAppFocusedRef.current) {
+        isAppFocusedRef.current = true;
+        fetchData({ checkTreeVersion: true, skipStatusAutoRefresh: true });
+      } else if (!isFocused) {
+        isAppFocusedRef.current = false;
+      }
+    };
+
+    const markBlurred = () => {
+      isAppFocusedRef.current = false;
+    };
+
+    window.addEventListener('focus', checkTreeOnResume);
+    window.addEventListener('blur', markBlurred);
+    document.addEventListener('visibilitychange', checkTreeOnResume);
+    document.addEventListener('pointerdown', checkTreeOnResume, true);
+
+    return () => {
+      window.removeEventListener('focus', checkTreeOnResume);
+      window.removeEventListener('blur', markBlurred);
+      document.removeEventListener('visibilitychange', checkTreeOnResume);
+      document.removeEventListener('pointerdown', checkTreeOnResume, true);
+    };
+  }, [fetchData]);
 
   useEffect(() => {
     persistFilters(filters);
