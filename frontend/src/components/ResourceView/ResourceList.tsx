@@ -1,6 +1,7 @@
 import React from 'react';
-import { AlertCircle, AlertTriangle } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
 import { ResourceRow } from '../../pages/mainboard/useResourceData';
+import type { ResourceSortKey, ResourceSortState } from './ResourceBoard';
 import { getOverlaidLaneHeight, UNASSIGNED_SEPARATOR_HEIGHT } from './ResourceGantt';
 import {
   getLoadRateBarColor,
@@ -12,7 +13,7 @@ import {
 } from '../../utils/loadRateThresholds';
 
 const getStatusClasses = (count: number, type: 'inProgress' | 'delayed') => {
-  if (count <= 0) return 'w-10 text-center text-slate-400 dark:text-slate-500 text-sm';
+  if (count <= 0) return 'w-[72px] text-center text-slate-400 dark:text-slate-500 text-sm';
 
   const styleMap = {
     inProgress: [
@@ -30,7 +31,7 @@ const getStatusClasses = (count: number, type: 'inProgress' | 'delayed') => {
   };
 
   const idx = Math.min(count - 1, 3);
-  return `w-10 text-center rounded-md h-6 flex items-center justify-center transition-all duration-200 ${styleMap[type][idx]}`;
+  return `w-[72px] text-center rounded-md h-6 flex items-center justify-center transition-all duration-200 ${styleMap[type][idx]}`;
 };
 
 interface ResourceListProps {
@@ -38,15 +39,52 @@ interface ResourceListProps {
   width: number;
   loadRateThresholds: LoadRateThresholds;
   scheduleVarianceThresholds: ScheduleVarianceThresholds;
+  sortState: ResourceSortState | null;
+  onSortChange: (key: ResourceSortKey) => void;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   listRef: React.RefObject<HTMLDivElement | null>;
 }
+
+const SortHeaderButton: React.FC<{
+  label: string;
+  title: string;
+  sortKey: ResourceSortKey;
+  sortState: ResourceSortState | null;
+  onSortChange: (key: ResourceSortKey) => void;
+  className?: string;
+}> = ({ label, title, sortKey, sortState, onSortChange, className = '' }) => {
+  const isActive = sortState?.key === sortKey;
+  const Icon = isActive
+    ? sortState.direction === 'asc' ? ArrowUp : ArrowDown
+    : ChevronsUpDown;
+  const directionLabel = isActive ? (sortState.direction === 'asc' ? '昇順' : '降順') : '未設定';
+
+  return (
+    <button
+      type="button"
+      className={`group inline-flex h-full min-w-0 items-center justify-center gap-1 rounded px-1 text-center transition-colors hover:bg-slate-200/70 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:hover:bg-slate-800 dark:hover:text-slate-200 ${className}`}
+      title={`${title}（クリックでソート、現在: ${directionLabel}）`}
+      aria-label={`${label}でソート（現在: ${directionLabel}）`}
+      aria-sort={isActive ? (sortState.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
+      onClick={() => onSortChange(sortKey)}
+    >
+      <span className="truncate">{label}</span>
+      <Icon
+        size={13}
+        className={isActive ? 'shrink-0 text-slate-700 dark:text-slate-200' : 'shrink-0 text-slate-400 opacity-70 group-hover:opacity-100 dark:text-slate-500'}
+        aria-hidden="true"
+      />
+    </button>
+  );
+};
 
 export default function ResourceList({
   data,
   width,
   loadRateThresholds,
   scheduleVarianceThresholds,
+  sortState,
+  onSortChange,
   onScroll,
   listRef
 }: ResourceListProps) {
@@ -61,14 +99,58 @@ export default function ResourceList({
       <div className="sticky top-0 z-50 flex shrink-0 bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 shadow-sm h-[38px] min-h-[38px] min-w-max">
         <div className="flex w-full items-center h-full">
           <div className="sticky left-0 z-[60] bg-slate-50 dark:bg-slate-900 min-w-[160px] pl-4 pr-2 h-full flex items-center flex-1 truncate border-r border-slate-200 dark:border-slate-700">
-            担当者名
+            <SortHeaderButton
+              label="担当者名"
+              title="担当者マスタの表示順"
+              sortKey="assignee"
+              sortState={sortState}
+              onSortChange={onSortChange}
+              className="justify-start"
+            />
           </div>
           <div className="flex items-center shrink-0 gap-1 px-2">
-            <div className="w-[76px] text-center" title="今日からスコープ終了日までの予定稼働率">予定稼働率</div>
-            <div className="w-[76px] text-center" title="スコープ開始日から今日までの実績稼働率">実績稼働率</div>
-            <div className="w-[76px] text-center border-l border-r border-slate-200 dark:border-slate-700 px-2 mr-1" title="スコープ内サブタスクごとの今日時点の実績進捗 - 計画進捗">予実差</div>
-            <div className="w-10 text-center" title="進行中件数">進行中</div>
-            <div className="w-10 text-center" title="遅延件数">遅延</div>
+            <SortHeaderButton
+              label="予定稼働"
+              title="今日からスコープ終了日までの予定稼働率"
+              sortKey="loadRate"
+              sortState={sortState}
+              onSortChange={onSortChange}
+              className="w-[76px]"
+            />
+            <SortHeaderButton
+              label="実績稼働"
+              title="スコープ開始日から今日までの実績稼働率"
+              sortKey="actualLoadRate"
+              sortState={sortState}
+              onSortChange={onSortChange}
+              className="w-[76px]"
+            />
+            <div className="w-[76px] h-full border-l border-r border-slate-200 dark:border-slate-700 px-1 mr-1">
+              <SortHeaderButton
+                label="予実差"
+                title="スコープ内サブタスクごとの今日時点の実績進捗 - 計画進捗"
+                sortKey="scheduleVariancePt"
+                sortState={sortState}
+                onSortChange={onSortChange}
+                className="w-full"
+              />
+            </div>
+            <SortHeaderButton
+              label="進行中"
+              title="進行中件数"
+              sortKey="inProgressCount"
+              sortState={sortState}
+              onSortChange={onSortChange}
+              className="w-[72px]"
+            />
+            <SortHeaderButton
+              label="遅延"
+              title="遅延件数"
+              sortKey="delayedCount"
+              sortState={sortState}
+              onSortChange={onSortChange}
+              className="w-[72px]"
+            />
           </div>
         </div>
       </div>
