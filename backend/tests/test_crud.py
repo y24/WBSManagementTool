@@ -144,7 +144,7 @@ def test_get_wbs_data_keeps_zero_planned_effort_totals(db_session):
     assert p_wbs.planned_effort_total == 0
     assert p_wbs.tasks[0].planned_effort_total == 0
 
-def test_auto_planned_effort_applies_workload_to_review_days(db_session):
+def test_auto_planned_effort_excludes_review_days(db_session):
     project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
     task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))
 
@@ -160,9 +160,10 @@ def test_auto_planned_effort_applies_workload_to_review_days(db_session):
         is_auto_effort=True,
     ))
 
-    assert subtask.planned_effort_days == Decimal("2.5")
+    # 作業日数(5営業日 - レビュー2日 = 3) * 工数比率0.5 = 1.5
+    assert subtask.planned_effort_days == Decimal("1.5")
 
-def test_auto_actual_effort_applies_workload_to_review_period(db_session):
+def test_auto_actual_effort_excludes_review_period(db_session):
     project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
     task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))
 
@@ -177,7 +178,26 @@ def test_auto_actual_effort_applies_workload_to_review_period(db_session):
         is_auto_effort=True,
     ))
 
-    assert subtask.actual_effort_days == Decimal("2.5")
+    # 作業日数(5営業日 - レビュー2営業日 = 3) * 工数比率0.5 = 1.5
+    assert subtask.actual_effort_days == Decimal("1.5")
+
+def test_auto_actual_effort_same_day_start_review_end(db_session):
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))
+
+    subtask = crud.create_subtask(db_session, schemas.SubtaskCreate(
+        task_id=task.id,
+        status_id=1,
+        subtask_detail="S1",
+        actual_start_date=date(2023, 1, 2),
+        review_start_date=date(2023, 1, 2),
+        actual_end_date=date(2023, 1, 2),
+        workload_percent=100,
+        is_auto_effort=True,
+    ))
+
+    # 開始・レビュー開始・終了が同日: 作業とレビューが重複 → 作業日数1日 * 1.0 = 1
+    assert subtask.actual_effort_days == Decimal("1")
 
 def test_in_review_without_review_days_preserves_actual_end_date(db_session):
     project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))

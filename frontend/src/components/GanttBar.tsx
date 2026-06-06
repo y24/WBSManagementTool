@@ -551,7 +551,7 @@ const GanttBar: React.FC<GanttBarProps> = ({
         </div>
       ))}
 
-      {isDelayed && warningText && !customLabel && !isResourceView && (
+      {isDelayed && warningText && !customLabel && !isResourceView && (showPlannedBar || showActualBar) && (
         <div
           className="absolute flex items-center z-20 pointer-events-auto cursor-help"
           style={{ top: warningTopPx, left: `${rightEdge + 4}px` }}

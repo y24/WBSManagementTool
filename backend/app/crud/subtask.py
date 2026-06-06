@@ -58,18 +58,18 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
         if not update_data or any(k in (update_data or {}) for k in ["planned_start_date", "planned_end_date", "workload_percent", "is_auto_effort", "review_days"]):
             if p_end:
                 raw_days = date_utils.get_business_days_count(p_start, p_end, holidays)
-                # 予定工数 = (作業日数 + レビュー日数) * 工数比率
+                # 予定工数 = 作業日数 * 工数比率
                 # 作業日数 = 計画期間の営業日数 - レビュー日数
                 biz_days = float(raw_days)
                 review_days_val = float(p_review or 0)
-                
-                # 作業日数の計算: 期間全体がレビュー期間以下の場合は、重複（オーバーラップ）しているとみなして
-                # 作業日数に全期間を割り当てる。これにより同日の作業・レビュー時に工数が 1.5 (1.0 + 0.5) となる。
+
+                # 作業日数の計算: 期間全体がレビュー期間以下の場合は、作業とレビューが
+                # 重複（オーバーラップ）しているとみなし、作業日数に全期間を割り当てる。
                 work_days_val = biz_days - review_days_val
                 if biz_days > 0 and biz_days <= review_days_val:
                     work_days_val = biz_days
 
-                effort = max(0.0, (work_days_val + review_days_val) * workload_factor)
+                effort = max(0.0, work_days_val * workload_factor)
                 # 四捨五入して1桁
                 db_subtask.planned_effort_days = Decimal(str(int(effort * 10 + 0.5) / 10.0))
             elif is_turning_on and p_effort is not None:
@@ -96,17 +96,17 @@ def _calculate_subtask_effort(db: Session, db_subtask: models.Subtask, update_da
                 review_start_for_calc = max(a_start, r_start)
                 review_biz_days = date_utils.get_business_days_count(review_start_for_calc, a_end, holidays)
             
-            # 実績工数 = (作業日数 + レビュー日数) * 工数比率
+            # 実績工数 = 作業日数 * 工数比率
             # 作業日数 = 全体の営業日数 - レビュー営業日数
             biz_days = float(raw_days)
             review_biz_days_val = float(review_biz_days)
 
-            # 同様に関係性をチェック
+            # 期間全体がレビュー期間以下の場合は、作業とレビューが重複しているとみなす
             work_days_val = biz_days - review_biz_days_val
             if biz_days > 0 and biz_days <= review_biz_days_val:
                 work_days_val = biz_days
 
-            effort = max(0.0, (work_days_val + review_biz_days_val) * workload_factor)
+            effort = max(0.0, work_days_val * workload_factor)
             # 四捨五入して1桁
             db_subtask.actual_effort_days = Decimal(str(int(effort * 10 + 0.5) / 10.0))
 
