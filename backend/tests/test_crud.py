@@ -160,8 +160,27 @@ def test_auto_planned_effort_excludes_review_days(db_session):
         is_auto_effort=True,
     ))
 
-    # 作業日数(5営業日 - レビュー2日 = 3) * 工数比率0.5 = 1.5
+    # work_days(3) を直接使用: 3 * 工数比率0.5 = 1.5
     assert subtask.planned_effort_days == Decimal("1.5")
+
+def test_auto_planned_effort_fractional_review_days(db_session):
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))
+
+    subtask = crud.create_subtask(db_session, schemas.SubtaskCreate(
+        task_id=task.id,
+        status_id=1,
+        subtask_detail="S1",
+        planned_start_date=date(2023, 1, 2),
+        planned_end_date=date(2023, 1, 4),  # addBusinessDays(1/2, 2+0.5) -> 1/4
+        work_days=2,
+        review_days=Decimal("0.5"),
+        workload_percent=100,
+        is_auto_effort=True,
+    ))
+
+    # work_days(2) を直接使用: 2 * 工数比率1.0 = 2.0 (端数レビュー日数が混入しない)
+    assert subtask.planned_effort_days == Decimal("2.0")
 
 def test_auto_actual_effort_excludes_review_period(db_session):
     project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
@@ -298,3 +317,81 @@ def test_shift_dates_moves_subtask_interruptions(db_session):
     db_session.refresh(interruption)
     assert interruption.interruption_date == date(2023, 1, 9)
     assert interruption.resumption_date == date(2023, 1, 12)
+
+
+def test_actual_effort_excludes_interruption_days(db_session):
+    """中断期間は実績工数から除外されること"""
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(
+        db_session,
+        schemas.TaskCreate(
+            project_id=project.id,
+            task_name="T1",
+            is_auto_planned_date=False,
+        ),
+    )
+    # 2023-01-02(月) 〜 2023-01-13(金): 10営業日
+    # 中断: 2023-01-05(木) 〜 2023-01-09(月)復帰 → 除外は01/05〜01/06の2営業日
+    # 期待実績工数 = (10 - 2) * 1.0 = 8日
+    subtask = crud.create_subtask(
+        db_session,
+        schemas.SubtaskCreate(
+            task_id=task.id,
+            subtask_detail="S1",
+            actual_start_date=date(2023, 1, 2),
+            actual_end_date=date(2023, 1, 13),
+            is_auto_effort=True,
+            workload_percent=100,
+        ),
+    )
+
+    crud.create_subtask_interruption(
+        db_session,
+        schemas.SubtaskInterruptionCreate(
+            subtask_id=subtask.id,
+            interruption_date=date(2023, 1, 5),
+            resumption_date=date(2023, 1, 9),
+        ),
+    )
+
+    db_session.refresh(subtask)
+    assert subtask.actual_effort_days == Decimal("8.0")
+
+
+def test_actual_effort_excludes_open_ended_interruption(db_session):
+    """resumption_date が未設定の中断は実績終了日まで除外されること"""
+    project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
+    task = crud.create_task(
+        db_session,
+        schemas.TaskCreate(
+            project_id=project.id,
+            task_name="T1",
+            is_auto_planned_date=False,
+        ),
+    )
+    # 2023-01-02(月) 〜 2023-01-06(金): 5営業日
+    # 中断: 2023-01-04(水) 〜 未設定 → 01/04〜01/06 の3営業日を除外
+    # 期待実績工数 = (5 - 3) * 1.0 = 2日
+    subtask = crud.create_subtask(
+        db_session,
+        schemas.SubtaskCreate(
+            task_id=task.id,
+            subtask_detail="S1",
+            actual_start_date=date(2023, 1, 2),
+            actual_end_date=date(2023, 1, 6),
+            is_auto_effort=True,
+            workload_percent=100,
+        ),
+    )
+
+    crud.create_subtask_interruption(
+        db_session,
+        schemas.SubtaskInterruptionCreate(
+            subtask_id=subtask.id,
+            interruption_date=date(2023, 1, 4),
+            resumption_date=None,
+        ),
+    )
+
+    db_session.refresh(subtask)
+    assert subtask.actual_effort_days == Decimal("2.0")
