@@ -1,4 +1,43 @@
+import type { AxiosResponse } from 'axios';
 import { apiClient } from './client';
+
+interface AzureDevopsChildWorkItem {
+  id: number;
+  title?: string | null;
+  work_item_type?: string | null;
+  state?: string | null;
+}
+
+const azureDevopsChildWorkItemsCache = new Map<number, AxiosResponse<AzureDevopsChildWorkItem[]>>();
+const azureDevopsChildWorkItemsRequests = new Map<number, Promise<AxiosResponse<AzureDevopsChildWorkItem[]>>>();
+
+const getAzureDevopsChildWorkItems = (
+  parentWorkItemId: number,
+  options: { forceRefresh?: boolean } = {}
+) => {
+  if (!options.forceRefresh) {
+    const cached = azureDevopsChildWorkItemsCache.get(parentWorkItemId);
+    if (cached) return Promise.resolve(cached);
+
+    const pending = azureDevopsChildWorkItemsRequests.get(parentWorkItemId);
+    if (pending) return pending;
+  }
+
+  const request = apiClient
+    .get<AzureDevopsChildWorkItem[]>(`/integrations/azure-devops/work-items/${parentWorkItemId}/children`)
+    .then((response) => {
+      azureDevopsChildWorkItemsCache.set(parentWorkItemId, response);
+      return response;
+    })
+    .finally(() => {
+      if (azureDevopsChildWorkItemsRequests.get(parentWorkItemId) === request) {
+        azureDevopsChildWorkItemsRequests.delete(parentWorkItemId);
+      }
+    });
+
+  azureDevopsChildWorkItemsRequests.set(parentWorkItemId, request);
+  return request;
+};
 
 export const wbsOps = {
   createProject: (projectName: string) => 
@@ -84,8 +123,7 @@ export const wbsOps = {
   getDashboard: () => 
     apiClient.get('/dashboard'),
 
-  getAzureDevopsChildWorkItems: (parentWorkItemId: number) =>
-    apiClient.get(`/integrations/azure-devops/work-items/${parentWorkItemId}/children`),
+  getAzureDevopsChildWorkItems,
 
   exportWBS: (projects: any[]) =>
     apiClient.post('/wbs/export', projects, { responseType: 'blob' }),

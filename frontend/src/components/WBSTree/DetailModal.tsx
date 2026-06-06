@@ -63,6 +63,7 @@ const DetailModal = ({
   const [childCandidates, setChildCandidates] = useState<WorkItemCandidate[]>([]);
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
   const [candidateError, setCandidateError] = useState<string | null>(null);
+  const isMountedRef = useRef(false);
 
   // 初期値を保持
   const initialValues = useRef({
@@ -126,7 +127,14 @@ const DetailModal = ({
 
   const canLoadChildCandidates = editingType !== 'project' && !!parentTicketId;
 
-  const loadChildCandidates = useCallback(async () => {
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const loadChildCandidates = useCallback(async (forceRefresh = false) => {
     if (!canLoadChildCandidates || !parentTicketId) {
       setChildCandidates([]);
       setCandidateError(null);
@@ -136,13 +144,16 @@ const DetailModal = ({
     setIsLoadingCandidates(true);
     setCandidateError(null);
     try {
-      const res = await wbsOps.getAzureDevopsChildWorkItems(parentTicketId);
+      const res = await wbsOps.getAzureDevopsChildWorkItems(parentTicketId, { forceRefresh });
+      if (!isMountedRef.current) return;
       setChildCandidates(res.data);
     } catch (err) {
+      if (!isMountedRef.current) return;
       console.error(err);
       setChildCandidates([]);
       setCandidateError('Azure DevOpsのChild候補を取得できませんでした。');
     } finally {
+      if (!isMountedRef.current) return;
       setIsLoadingCandidates(false);
     }
   }, [canLoadChildCandidates, parentTicketId]);
@@ -231,7 +242,7 @@ const DetailModal = ({
                   {canLoadChildCandidates && (
                     <button
                       type="button"
-                      onClick={loadChildCandidates}
+                      onClick={() => loadChildCandidates(true)}
                       disabled={isLoadingCandidates}
                       className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-60"
                     >
