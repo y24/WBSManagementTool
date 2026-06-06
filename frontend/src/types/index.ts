@@ -39,7 +39,6 @@ export interface InitialData {
   subtask_types: MstSubtaskType[];
   members: MstMember[];
   holidays: MstHoliday[];
-  markers: Marker[];
   ticket_url_template?: string | null;
   status_mapping_new?: string | null;
   status_mapping_blocked?: string | null;

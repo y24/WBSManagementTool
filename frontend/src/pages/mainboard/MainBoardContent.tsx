@@ -3,7 +3,7 @@ import WBSTree from '../../components/WBSTree';
 import GanttChart from '../../components/GanttChart';
 import ResourceBoard from '../../components/ResourceView/ResourceBoard';
 import { DisplayOptions } from '../../components/FilterPanel';
-import { InitialData } from '../../types';
+import { InitialData, Marker } from '../../types';
 import { GanttRange, Project } from '../../types/wbs';
 
 type WBSRefreshOptions = boolean | {
@@ -19,7 +19,9 @@ interface MainBoardContentProps {
   ganttRef: RefObject<HTMLDivElement | null>;
   filteredProjects: Project[];
   initialData: InitialData | null;
+  markers: Marker[];
   onUpdate: (options?: WBSRefreshOptions) => Promise<void>;
+  onMarkerRefresh: () => void;
   onLocalUpdate: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, unknown>) => void;
   onLocalReorder: (newProjects: Project[]) => void;
   expandedProjects: Record<number, boolean>;
@@ -40,7 +42,9 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
   ganttRef,
   filteredProjects,
   initialData,
+  markers,
   onUpdate,
+  onMarkerRefresh,
   onLocalUpdate,
   onLocalReorder,
   expandedProjects,
@@ -133,6 +137,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
                 ref={!isResourceView ? ganttRef : inactiveGanttRef}
                 projects={filteredProjects}
                 initialData={initialData}
+                markers={markers}
                 range={dynamicGanttRange}
                 currentTodayStr={currentTodayStr}
                 expandedProjects={expandedProjects}
@@ -150,6 +155,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
                 isDarkMode={displayOptions.isDarkMode}
                 onScroll={onGanttScroll}
                 onRefresh={() => onUpdate(false)}
+                onMarkerRefresh={onMarkerRefresh}
                 onLocalUpdate={onLocalUpdate}
               />
             )}

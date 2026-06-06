@@ -1,6 +1,6 @@
 import React from 'react';
 import { format, getDay, parseISO, isValid } from 'date-fns';
-import { InitialData } from '../types';
+import { InitialData, Marker } from '../types';
 import { Project, GanttScale } from '../types/wbs';
 import { getDateX } from '../utils/ganttUtils';
 
@@ -9,6 +9,7 @@ interface GanttBackgroundProps {
   cellWidth: number;
   scale: GanttScale;
   initialData: InitialData | null;
+  markers: Marker[];
   range: { start_date: string; end_date: string };
   hoveredDate: string | null;
   showTodayHighlight: boolean;
@@ -23,6 +24,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
   cellWidth,
   scale,
   initialData,
+  markers,
   range,
   hoveredDate,
   showTodayHighlight,
@@ -82,7 +84,7 @@ const GanttBackground: React.FC<GanttBackgroundProps> = ({
       </div>
 
       {/* マーカー垂直線 (z-25) */}
-      {showMarkers && initialData?.markers?.map(m => {
+      {showMarkers && markers.map(m => {
         if (!range.start_date || !markerRange) return null;
         const temp = tempDates[m.id];
         const isDragging = dragState?.itemId === m.id && dragState?.itemType === 'marker';
@@ -134,6 +136,7 @@ const areGanttBackgroundPropsEqual = (prev: GanttBackgroundProps, next: GanttBac
     prev.cellWidth === next.cellWidth &&
     prev.scale === next.scale &&
     prev.initialData === next.initialData &&
+    prev.markers === next.markers &&
     prev.range.start_date === next.range.start_date &&
     prev.range.end_date === next.range.end_date &&
     prev.hoveredDate === next.hoveredDate &&

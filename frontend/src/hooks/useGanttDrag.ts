@@ -31,7 +31,8 @@ export const CELL_WIDTH = 24;
 export const useGanttDrag = (
   initialData: InitialData | null,
   scale: GanttScale,
-  onRefresh?: () => void
+  onRefresh?: () => void,
+  onMarkerRefresh?: () => void
 ) => {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [tempDates, setTempDates] = useState<Record<number, any>>({});
@@ -301,12 +302,16 @@ export const useGanttDrag = (
       }
 
       await apiClient.patch(endpoint, payload);
-      onRefresh?.();
+      if (currentDrag.itemType === 'marker') {
+        onMarkerRefresh?.();
+      } else {
+        onRefresh?.();
+      }
     } catch (err) {
       console.error('Failed to update period:', err);
       showErrorToastUnlessNetworkError(err, '期間の更新に失敗しました。');
     }
-  }, [onRefresh, updateDragPosition]);
+  }, [onRefresh, onMarkerRefresh, updateDragPosition]);
 
   useEffect(() => {
     if (dragState) {

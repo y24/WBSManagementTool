@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { format, getDay, isSameDay, parseISO, isValid, endOfWeek } from 'date-fns';
 import { GanttScale } from '../types/wbs';
 import { getDateX } from '../utils/ganttUtils';
-import { InitialData } from '../types';
+import { InitialData, Marker } from '../types';
 import { DragMode, ItemType, BarType } from '../hooks/useGanttDrag';
 
 interface GanttHeaderProps {
@@ -11,6 +11,7 @@ interface GanttHeaderProps {
   cellWidth: number;
   scale: GanttScale;
   initialData: InitialData | null;
+  markers: Marker[];
   showMarkers: boolean;
   onDateClick: (date: Date) => void;
   setHoveredDate: (date: string | null, mouseX?: number, mouseY?: number) => void;
@@ -32,6 +33,7 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
   cellWidth,
   scale,
   initialData,
+  markers,
   showMarkers,
   onDateClick,
   setHoveredDate,
@@ -149,7 +151,7 @@ const GanttHeader: React.FC<GanttHeaderProps> = ({
       </div>
 
       {/* マーカーラベル描画 (z-50) */}
-      {showMarkers && baseDateStr && initialData?.markers?.map(marker => {
+      {showMarkers && baseDateStr && markers.map(marker => {
         if (!markerRange) return null;
         const temp = tempDates[marker.id];
         const isDragging = dragState?.itemId === marker.id && dragState?.itemType === 'marker';
@@ -220,6 +222,7 @@ const areGanttHeaderPropsEqual = (prev: GanttHeaderProps, next: GanttHeaderProps
     prev.cellWidth === next.cellWidth &&
     prev.scale === next.scale &&
     prev.initialData === next.initialData &&
+    prev.markers === next.markers &&
     prev.showMarkers === next.showMarkers &&
     prev.todayStr === next.todayStr &&
     prevMarkerDragId === nextMarkerDragId &&

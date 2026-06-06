@@ -33,6 +33,8 @@ apiClient.interceptors.response.use(
 let initialDataPromise: Promise<AxiosResponse<InitialData>> | null = null;
 let initialDataCache: AxiosResponse<InitialData> | null = null;
 
+export const getMarkers = () => apiClient.get<import('../types').Marker[]>('/markers');
+
 export const getInitialData = (options: { forceRefresh?: boolean } = {}) => {
   if (!options.forceRefresh && initialDataCache) return Promise.resolve(initialDataCache);
   if (!options.forceRefresh && initialDataPromise) return initialDataPromise;

@@ -1,7 +1,7 @@
 import React, { useMemo, forwardRef, useState, useCallback } from 'react';
 import { format, differenceInCalendarDays, addDays, parseISO, startOfDay, eachDayOfInterval, isSameDay, isWeekend, subDays, startOfWeek } from 'date-fns';
 import { Project, Subtask, Task, GanttRange } from '../types/wbs';
-import { InitialData } from '../types';
+import { InitialData, Marker } from '../types';
 import MarkerModal from './MarkerModal';
 import { apiClient } from '../api/client';
 import { useGanttDrag } from '../hooks/useGanttDrag';
@@ -19,6 +19,7 @@ import ResourceTaskContextMenu, { ContextMenuSubtask } from './ResourceView/Reso
 interface GanttChartProps {
   projects: Project[];
   initialData: InitialData | null;
+  markers: Marker[];
   range: GanttRange;
   currentTodayStr: string;
   expandedProjects: Record<number, boolean>;
@@ -36,12 +37,14 @@ interface GanttChartProps {
   isDarkMode?: boolean;
   onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
   onRefresh?: () => void;
+  onMarkerRefresh?: () => void;
   onLocalUpdate?: (type: 'project' | 'task' | 'subtask', id: number, updates: Record<string, unknown>) => void;
 }
 
 const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   projects,
   initialData,
+  markers,
   range,
   currentTodayStr,
   expandedProjects,
@@ -59,6 +62,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   isDarkMode = false,
   onScroll,
   onRefresh,
+  onMarkerRefresh,
   onLocalUpdate
 }, ref) => {
   const [hoveredDateInfo, setHoveredDateInfo] = useState<{ date: string; x: number; y: number } | null>(null);
@@ -73,7 +77,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
   } | null>(null);
 
   // Drag logic
-  const { dragState, tempDates, handleMouseDown } = useGanttDrag(initialData, scale, onRefresh);
+  const { dragState, tempDates, handleMouseDown } = useGanttDrag(initialData, scale, onRefresh, onMarkerRefresh);
 
   const days = useMemo(() => {
     if (!range.start_date || !range.end_date) return [];
@@ -92,7 +96,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
         color
       });
       setIsMarkerModalOpen(false);
-      onRefresh?.();
+      onMarkerRefresh?.();
     } catch (err) {
       console.error('Failed to save marker:', err);
       showErrorToastUnlessNetworkError(err, 'マーカーの保存に失敗しました。');
@@ -103,7 +107,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
     try {
       await apiClient.delete(`/markers/${id}`);
       setIsMarkerModalOpen(false);
-      onRefresh?.();
+      onMarkerRefresh?.();
     } catch (err) {
       console.error('Failed to delete marker:', err);
       showErrorToastUnlessNetworkError(err, 'マーカーの削除に失敗しました。');
@@ -386,6 +390,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
             cellWidth={cellWidth}
             scale={scale}
             initialData={initialData}
+            markers={markers}
             showMarkers={showMarkers}
             onDateClick={(d) => {
               setSelectedDate(d);
@@ -409,6 +414,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
             cellWidth={cellWidth}
             scale={scale}
             initialData={initialData}
+            markers={markers}
             range={range}
             hoveredDate={hoveredDate}
             showTodayHighlight={showTodayHighlight}
@@ -571,7 +577,7 @@ const GanttChart = forwardRef<HTMLDivElement, GanttChartProps>(({
         <MarkerModal
           isOpen={isMarkerModalOpen}
           date={selectedDate}
-          existingMarker={initialData?.markers?.find(m => m.marker_date === format(selectedDate, 'yyyy-MM-dd'))}
+          existingMarker={markers.find(m => m.marker_date === format(selectedDate, 'yyyy-MM-dd'))}
           onSave={handleMarkerSave}
           onDelete={handleMarkerDelete}
           onClose={() => setIsMarkerModalOpen(false)}

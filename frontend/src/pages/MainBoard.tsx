@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, UIEvent, useMemo } from 'react';
 import { wbsOps } from '../api/wbsOperations';
-import { apiClient, getInitialData } from '../api/client';
+import { apiClient, getInitialData, getMarkers } from '../api/client';
 import { WBSResponse, Project } from '../types/wbs';
-import { InitialData } from '../types';
+import { InitialData, Marker } from '../types';
 import FilterPanel, { DisplayOptions, FilterState } from '../components/FilterPanel';
 import MainBoardContent from './mainboard/MainBoardContent';
 import { useFilteredProjects } from './mainboard/useFilteredProjects';
@@ -40,6 +40,7 @@ type WBSRefreshOptions = boolean | {
 export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
   const [initialData, setInitialData] = useState<InitialData | null>(null);
+  const [markers, setMarkers] = useState<Marker[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewSwitchLoading, setViewSwitchLoading] = useState(false);
   const [pendingViewMode, setPendingViewMode] = useState<DisplayOptions['viewMode'] | null>(null);
@@ -68,6 +69,15 @@ export default function MainBoard() {
     const initRes = await getInitialData({ forceRefresh });
     initialDataRef.current = initRes.data;
     setInitialData(initRes.data);
+  }, []);
+
+  const refreshMarkers = useCallback(async () => {
+    try {
+      const res = await getMarkers();
+      setMarkers(res.data);
+    } catch (err) {
+      console.error('Failed to fetch markers:', err);
+    }
   }, []);
 
   const isFetchingRef = useRef(false);
@@ -116,7 +126,14 @@ export default function MainBoard() {
         );
         setData(wbsRes.data);
         wbsTreeVersionRef.current = wbsRes.data.tree_version;
+
+        const prevInitialDataVersion = initialDataVersionRef.current;
         initialDataVersionRef.current = wbsRes.data.initial_data_version;
+
+        if (prevInitialDataVersion && prevInitialDataVersion !== wbsRes.data.initial_data_version) {
+          shouldRefreshInitialData = true;
+          forceInitialDataRefresh = true;
+        }
 
         if (shouldRefreshInitialData || !initialDataRef.current) {
           await loadInitialData(forceInitialDataRefresh);
@@ -219,6 +236,7 @@ export default function MainBoard() {
 
   useEffect(() => {
     fetchData(true);
+    refreshMarkers();
   }, [displayOptions.showDoneProjects, displayOptions.showRemoved]);
 
   useEffect(() => {
@@ -507,9 +525,11 @@ export default function MainBoard() {
         setDisplayOptions={setDisplayOptions}
         projects={data?.projects || []}
         initialData={initialData}
+        markers={markers}
         onClear={() => setFilters(createDefaultFilters())}
         onExport={() => setIsExportModalOpen(true)}
         onRefresh={() => fetchData(true)}
+        onMarkerRefresh={refreshMarkers}
         onViewModeSwitchStart={handleViewModeSwitchStart}
       />
 
@@ -521,7 +541,9 @@ export default function MainBoard() {
         ganttRef={ganttRef}
         filteredProjects={filteredProjects}
         initialData={initialData}
+        markers={markers}
         onUpdate={fetchData}
+        onMarkerRefresh={refreshMarkers}
         onLocalUpdate={localUpdate}
         onLocalReorder={localReorder}
         expandedProjects={expandedProjects}

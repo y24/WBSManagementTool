@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Tag, Plus, Edit2, Trash2, Calendar, MessageSquare, Palette, Check, AlertTriangle } from 'lucide-react';
-import { Marker, InitialData } from '../types';
+import { Marker } from '../types';
 import { apiClient } from '../api/client';
 import { format, parseISO } from 'date-fns';
 import { showErrorToastUnlessNetworkError } from '../utils/toast';
@@ -9,7 +9,7 @@ import { showErrorToastUnlessNetworkError } from '../utils/toast';
 interface MarkerListModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialData: InitialData | null;
+  markers: Marker[];
   onRefresh?: () => void;
 }
 
@@ -26,7 +26,7 @@ const COLORS = [
 const MarkerListModal: React.FC<MarkerListModalProps> = ({
   isOpen,
   onClose,
-  initialData,
+  markers,
   onRefresh
 }) => {
   const [editingId, setEditingId] = useState<number | 'new' | null>(null);
@@ -36,19 +36,16 @@ const MarkerListModal: React.FC<MarkerListModalProps> = ({
     note: '',
     color: COLORS[0].value
   });
-  
+
   // 編集前の初期値保持用（変更判定）
   const initialFormState = useRef({ ...editForm });
 
   const [showConfirm, setShowConfirm] = useState(false);
-  const [localMarkers, setLocalMarkers] = useState<Marker[]>(initialData?.markers || []);
+  const [localMarkers, setLocalMarkers] = useState<Marker[]>(markers);
 
   useEffect(() => {
-    if (initialData?.markers) {
-      // 親コンポーネントからの更新があれば反映する（ただし編集中でない場合や、外部由来の変更の場合を考慮し、通常は同期されます）
-      setLocalMarkers(initialData.markers);
-    }
-  }, [initialData?.markers]);
+    setLocalMarkers(markers);
+  }, [markers]);
 
   const isChanged = () => {
     if (editingId === null) return false;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Filter, ChevronDown, ChevronUp, Search, Settings2, RotateCcw, Tag } from 'lucide-react';
-import { InitialData } from '../types';
+import { InitialData, Marker } from '../types';
 import { Project } from '../types/wbs';
 export * from './FilterPanel/FilterPanelTypes';
 import { FilterState, DisplayOptions } from './FilterPanel/FilterPanelTypes';
@@ -22,9 +22,11 @@ interface FilterPanelProps {
   setDisplayOptions: React.Dispatch<React.SetStateAction<DisplayOptions>>;
   projects: Project[];
   initialData: InitialData | null;
+  markers: Marker[];
   onClear: () => void;
   onExport: () => void;
   onRefresh?: () => void;
+  onMarkerRefresh?: () => void;
   onViewModeSwitchStart?: (viewMode: DisplayOptions['viewMode']) => void;
 }
 
@@ -35,9 +37,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   setDisplayOptions,
   projects,
   initialData,
+  markers,
   onClear,
   onExport,
   onRefresh,
+  onMarkerRefresh,
   onViewModeSwitchStart,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -163,9 +167,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       {isMarkerListModalOpen && (
         <MarkerListModal
           isOpen={isMarkerListModalOpen}
-          initialData={initialData}
+          markers={markers}
           onClose={() => setIsMarkerListModalOpen(false)}
-          onRefresh={onRefresh}
+          onRefresh={onMarkerRefresh}
         />
       )}
 
