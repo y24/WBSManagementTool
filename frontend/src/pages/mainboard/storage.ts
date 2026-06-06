@@ -158,6 +158,14 @@ export function persistDisplayOptions(displayOptions: DisplayOptions): void {
   localStorage.setItem(STORAGE_KEYS.displayOptions, JSON.stringify(displayOptions));
 }
 
+let ganttScrollDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function persistGanttScrollLeft(scrollLeft: number): void {
-  localStorage.setItem(STORAGE_KEYS.ganttScrollLeft, scrollLeft.toString());
+  if (ganttScrollDebounceTimer !== null) {
+    clearTimeout(ganttScrollDebounceTimer);
+  }
+  ganttScrollDebounceTimer = setTimeout(() => {
+    localStorage.setItem(STORAGE_KEYS.ganttScrollLeft, scrollLeft.toString());
+    ganttScrollDebounceTimer = null;
+  }, 500);
 }
