@@ -7,6 +7,7 @@ Provides an abstract base class and two concrete implementations:
 from __future__ import annotations
 
 import base64
+import re
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -37,6 +38,12 @@ class AzureDevOpsClientBase(ABC):
         self, work_item_id: int, patch_ops: List[Dict[str, Any]]
     ) -> WorkItemData:
         """Apply JSON Patch operations and return the updated work item."""
+
+    @abstractmethod
+    def get_child_work_items(
+        self, parent_work_item_id: int, fields: List[str]
+    ) -> List[WorkItemData]:
+        """Fetch Work Items linked as children of the parent Work Item."""
 
 
 class AzureDevOpsHttpClient(AzureDevOpsClientBase):
@@ -141,6 +148,32 @@ class AzureDevOpsHttpClient(AzureDevOpsClientBase):
             fields=data.get("fields", {}),
         )
 
+    def get_child_work_items(
+        self, parent_work_item_id: int, fields: List[str]
+    ) -> List[WorkItemData]:
+        url = (
+            f"{self._base_url}/wit/workitems/{parent_work_item_id}"
+            f"?%24expand=Relations&api-version={self._api_version}"
+        )
+        resp = self._request_with_retry(
+            "GET",
+            url,
+            headers={**self._auth_headers, "Content-Type": "application/json"},
+        )
+        child_ids: List[int] = []
+        for relation in resp.json().get("relations", []) or []:
+            if relation.get("rel") != "System.LinkTypes.Hierarchy-Forward":
+                continue
+            match = re.search(r"/workItems/(\d+)$", relation.get("url", ""))
+            if match:
+                child_ids.append(int(match.group(1)))
+
+        if not child_ids:
+            return []
+
+        child_items = self.get_work_items_batch(child_ids, fields)
+        return [child_items[child_id] for child_id in child_ids if child_id in child_items]
+
 
 class AzureDevOpsMockClient(AzureDevOpsClientBase):
     """In-memory stub for development and unit testing.
@@ -157,6 +190,7 @@ class AzureDevOpsMockClient(AzureDevOpsClientBase):
     ) -> None:
         self._fields: Dict[int, Dict[str, Any]] = {}
         self._revs: Dict[int, int] = {}
+        self._children: Dict[int, List[int]] = {}
         if initial_items:
             for wid, f in initial_items.items():
                 self._fields[wid] = dict(f)
@@ -172,6 +206,9 @@ class AzureDevOpsMockClient(AzureDevOpsClientBase):
 
     def get_stored_fields(self, work_item_id: int) -> Dict[str, Any]:
         return dict(self._fields.get(work_item_id, {}))
+
+    def set_children(self, parent_work_item_id: int, child_work_item_ids: List[int]) -> None:
+        self._children[parent_work_item_id] = list(child_work_item_ids)
 
     # --- client interface ---
 
@@ -209,6 +246,25 @@ class AzureDevOpsMockClient(AzureDevOpsClientBase):
             rev=self._revs[work_item_id],
             fields=dict(self._fields[work_item_id]),
         )
+
+    def get_child_work_items(
+        self, parent_work_item_id: int, fields: List[str]
+    ) -> List[WorkItemData]:
+        child_ids = self._children.get(parent_work_item_id, [])
+        if not child_ids:
+            child_ids = [parent_work_item_id * 100 + i for i in range(1, 4)]
+            self._children[parent_work_item_id] = child_ids
+            for index, child_id in enumerate(child_ids, start=1):
+                if child_id not in self._fields:
+                    self._fields[child_id] = {
+                        "System.Title": f"Mock child work item {index} for #{parent_work_item_id}",
+                        "System.WorkItemType": "Task",
+                        "System.State": "New",
+                    }
+                    self._revs[child_id] = 1
+
+        child_items = self.get_work_items_batch(child_ids, fields)
+        return [child_items[child_id] for child_id in child_ids if child_id in child_items]
 
 
 def create_client(settings) -> AzureDevOpsClientBase:

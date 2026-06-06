@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from .repositories import SyncLockRepository, LOCK_NAME_DEVOPS_SYNC
 from .sync_service import SyncError, SyncResult, SyncSummary, run_sync
+from .client import create_client
 from .settings import get_settings
 
 
@@ -51,6 +52,13 @@ class SyncResponse(BaseModel):
     finished_at: datetime
     summary: SyncSummaryOut
     errors: List[SyncErrorOut]
+
+
+class WorkItemCandidateOut(BaseModel):
+    id: int
+    title: Optional[str] = None
+    work_item_type: Optional[str] = None
+    state: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -136,3 +144,40 @@ def sync_to_azure_devops(
             for e in result.errors
         ],
     )
+
+
+@router.get(
+    "/work-items/{parent_work_item_id}/children",
+    response_model=List[WorkItemCandidateOut],
+)
+def get_child_work_item_candidates(parent_work_item_id: int) -> List[WorkItemCandidateOut]:
+    """Return Azure DevOps Work Items linked as children of the parent Work Item."""
+    if parent_work_item_id <= 0:
+        raise HTTPException(status_code=400, detail="parent_work_item_id must be positive.")
+
+    settings = get_settings()
+    if not settings.use_mock and (not settings.organization or not settings.pat):
+        raise HTTPException(
+            status_code=503,
+            detail="Azure DevOps settings are not configured on the server.",
+        )
+
+    client = create_client(settings)
+    fields = ["System.Title", "System.WorkItemType", "System.State"]
+    try:
+        children = client.get_child_work_items(parent_work_item_id, fields)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to fetch child Work Items from Azure DevOps: {exc}",
+        ) from exc
+
+    return [
+        WorkItemCandidateOut(
+            id=item.id,
+            title=item.fields.get("System.Title"),
+            work_item_type=item.fields.get("System.WorkItemType"),
+            state=item.fields.get("System.State"),
+        )
+        for item in children
+    ]

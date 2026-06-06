@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, X, Check, Hash, MessageSquare, ExternalLink, Link, FolderKanban, ListTodo, AlignLeft, AlertTriangle, Pause } from 'lucide-react';
+import { FileText, X, Check, Hash, MessageSquare, ExternalLink, Link, FolderKanban, ListTodo, AlignLeft, AlertTriangle, Pause, RefreshCw, Loader2 } from 'lucide-react';
+import { wbsOps } from '../../api/wbsOperations';
 
 export type EditingType = 'project' | 'task' | 'subtask';
 
@@ -17,6 +18,7 @@ interface DetailModalProps {
   setMemoValue: (v: string) => void;
   syncToAzureDevops: boolean;
   setSyncToAzureDevops: (v: boolean) => void;
+  parentTicketId?: number | null;
   ticketUrlTemplate?: string | null;
   onClose: () => void;
   onSave: () => void;
@@ -28,6 +30,13 @@ const TYPE_LABELS: Record<EditingType, { label: string; icon: React.ReactNode }>
   project: { label: 'プロジェクト', icon: <FolderKanban size={18} className="text-violet-500" /> },
   task: { label: 'タスク', icon: <ListTodo size={18} className="text-blue-500" /> },
   subtask: { label: 'サブタスク', icon: <AlignLeft size={18} className="text-teal-500" /> },
+};
+
+const formatWorkItemCandidateLabel = (candidate: WorkItemCandidate) => {
+  const typeLabel = candidate.work_item_type || 'Work Item';
+  return candidate.title
+    ? `${typeLabel} ${candidate.id}: ${candidate.title}`
+    : `${typeLabel} ${candidate.id}`;
 };
 
 const DetailModal = ({
@@ -44,12 +53,16 @@ const DetailModal = ({
   syncToAzureDevops,
   setSyncToAzureDevops,
   ticketUrlTemplate,
+  parentTicketId,
   onClose,
   onSave,
   onOpenInterruption,
   disableHotkeys = false,
 }: DetailModalProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
+  const [childCandidates, setChildCandidates] = useState<WorkItemCandidate[]>([]);
+  const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
+  const [candidateError, setCandidateError] = useState<string | null>(null);
 
   // 初期値を保持
   const initialValues = useRef({
@@ -110,6 +123,33 @@ const DetailModal = ({
   const ticketUrl = ticketUrlTemplate && ticketIdValue
     ? ticketUrlTemplate.replace('{TICKET_ID}', ticketIdValue)
     : null;
+
+  const canLoadChildCandidates = editingType !== 'project' && !!parentTicketId;
+
+  const loadChildCandidates = useCallback(async () => {
+    if (!canLoadChildCandidates || !parentTicketId) {
+      setChildCandidates([]);
+      setCandidateError(null);
+      return;
+    }
+
+    setIsLoadingCandidates(true);
+    setCandidateError(null);
+    try {
+      const res = await wbsOps.getAzureDevopsChildWorkItems(parentTicketId);
+      setChildCandidates(res.data);
+    } catch (err) {
+      console.error(err);
+      setChildCandidates([]);
+      setCandidateError('Azure DevOpsのChild候補を取得できませんでした。');
+    } finally {
+      setIsLoadingCandidates(false);
+    }
+  }, [canLoadChildCandidates, parentTicketId]);
+
+  useEffect(() => {
+    loadChildCandidates();
+  }, [loadChildCandidates]);
 
   const { label, icon } = TYPE_LABELS[editingType];
 
@@ -180,6 +220,62 @@ const DetailModal = ({
               <p className="mt-1 text-xs text-gray-400 dark:text-slate-500 truncate px-1" title={ticketUrl}>
                 🔗 {ticketUrl}
               </p>
+            )}
+            {editingType !== 'project' && parentTicketId && (
+              <div className="mt-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-800/40 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">
+                    候補
+                  </span>
+                  <span className="text-[11px] text-gray-400 dark:text-slate-500">親チケット: {parentTicketId}</span>
+                  {canLoadChildCandidates && (
+                    <button
+                      type="button"
+                      onClick={loadChildCandidates}
+                      disabled={isLoadingCandidates}
+                      className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-60"
+                    >
+                      {isLoadingCandidates ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                      再取得
+                    </button>
+                  )}
+                </div>
+                {candidateError && (
+                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{candidateError}</p>
+                )}
+                {isLoadingCandidates && (
+                  <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">候補を取得しています...</p>
+                )}
+                {!isLoadingCandidates && canLoadChildCandidates && !candidateError && childCandidates.length === 0 && (
+                  <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">Child候補はありません。</p>
+                )}
+                {childCandidates.length > 0 && (
+                  <div className="mt-2 max-h-32 overflow-y-auto space-y-1 pr-1">
+                    {childCandidates.map((candidate) => (
+                      <button
+                        key={candidate.id}
+                        type="button"
+                        onClick={() => setTicketIdValue(String(candidate.id))}
+                        title={formatWorkItemCandidateLabel(candidate)}
+                        className={`w-full rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors ${
+                          ticketIdValue === String(candidate.id)
+                            ? 'border-indigo-300 bg-indigo-50 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200'
+                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="min-w-0 flex-1 truncate">
+                            {formatWorkItemCandidateLabel(candidate)}
+                          </span>
+                          {candidate.state && (
+                            <span className="shrink-0 text-gray-400 dark:text-slate-500">{candidate.state}</span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
             {ticketIdValue && (
               <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none w-fit">
@@ -298,6 +394,13 @@ const DetailModal = ({
     document.body
   );
 };
+
+interface WorkItemCandidate {
+  id: number;
+  title?: string | null;
+  work_item_type?: string | null;
+  state?: string | null;
+}
 
 // 確認用の小さなモーダルコンポーネント（内部使用）
 const SmallConfirmModal = ({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) => {

@@ -33,8 +33,18 @@ export const useDetailModal = ({
   const [linkUrlValue, setLinkUrlValue] = useState('');
   const [memoValue, setMemoValue] = useState('');
   const [syncToAzureDevops, setSyncToAzureDevops] = useState(true);
+  const [parentTicketId, setParentTicketId] = useState<number | null>(null);
 
   const openDetailModal = useCallback((type: EditingType, item: any) => {
+    let nextParentTicketId: number | null = null;
+    if (type === 'task') {
+      const parentProject = findItem('project', item.project_id) as Project | null;
+      nextParentTicketId = parentProject?.ticket_id ?? null;
+    } else if (type === 'subtask') {
+      const parentTask = findItem('task', item.task_id) as Task | null;
+      nextParentTicketId = parentTask?.ticket_id ?? null;
+    }
+
     setEditingItem({
       type,
       id: item.id,
@@ -45,7 +55,8 @@ export const useDetailModal = ({
     setLinkUrlValue(item.link_url || '');
     setMemoValue(item.memo || '');
     setSyncToAzureDevops(item.sync_to_azure_devops !== false);
-  }, []);
+    setParentTicketId(nextParentTicketId);
+  }, [findItem]);
 
   const closeDetailModal = useCallback(() => setEditingItem(null), []);
 
@@ -172,6 +183,7 @@ export const useDetailModal = ({
     setMemoValue,
     syncToAzureDevops,
     setSyncToAzureDevops,
+    parentTicketId,
     openDetailModal,
     closeDetailModal,
     handleDetailSave

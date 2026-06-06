@@ -84,6 +84,9 @@ export const wbsOps = {
   getDashboard: () => 
     apiClient.get('/dashboard'),
 
+  getAzureDevopsChildWorkItems: (parentWorkItemId: number) =>
+    apiClient.get(`/integrations/azure-devops/work-items/${parentWorkItemId}/children`),
+
   exportWBS: (projects: any[]) =>
     apiClient.post('/wbs/export', projects, { responseType: 'blob' }),
 };

@@ -84,6 +84,45 @@ def _make_subtask(
     return s
 
 
+def test_mock_client_returns_child_work_item_candidates():
+    client = AzureDevOpsMockClient(
+        {
+            201: {
+                "System.Title": "Child task",
+                "System.WorkItemType": "Task",
+                "System.State": "Active",
+            },
+            202: {
+                "System.Title": "Child bug",
+                "System.WorkItemType": "Bug",
+                "System.State": "New",
+            },
+        }
+    )
+    client.set_children(101, [201, 202])
+
+    children = client.get_child_work_items(
+        101, ["System.Title", "System.WorkItemType", "System.State"]
+    )
+
+    assert [item.id for item in children] == [201, 202]
+    assert children[0].fields["System.Title"] == "Child task"
+    assert children[1].fields["System.WorkItemType"] == "Bug"
+
+
+def test_mock_client_returns_default_child_work_item_candidates():
+    client = AzureDevOpsMockClient()
+
+    children = client.get_child_work_items(
+        101, ["System.Title", "System.WorkItemType", "System.State"]
+    )
+
+    assert [item.id for item in children] == [10101, 10102, 10103]
+    assert children[0].fields["System.Title"] == "Mock child work item 1 for #101"
+    assert children[0].fields["System.WorkItemType"] == "Task"
+    assert children[0].fields["System.State"] == "New"
+
+
 # ---------------------------------------------------------------------------
 # Tests: sync_to_azure_devops flag filtering
 # ---------------------------------------------------------------------------
