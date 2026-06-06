@@ -197,7 +197,7 @@ export default function ResourceList({
                         <span className="truncate font-medium text-[14px] text-slate-800 dark:text-slate-200">
                           {row.assignee?.member_name || '未アサイン'}
                         </span>
-                        {isDelayed && (
+                        {row.assignee !== null && isDelayed && (
                           <span title="遅延しているサブタスクがあります" className="inline-flex shrink-0">
                             <AlertTriangle
                               size={14}
@@ -206,7 +206,7 @@ export default function ResourceList({
                             />
                           </span>
                         )}
-                        {hasCriticalLoadRate && (
+                        {row.assignee !== null && hasCriticalLoadRate && (
                           <span title="計画または実績稼働率が赤しきい値です" className="inline-flex shrink-0">
                             <AlertCircle
                               size={13}
@@ -221,59 +221,75 @@ export default function ResourceList({
 
                   {/* Load rate + status badges */}
                   <div className="flex items-center shrink-0 gap-1 px-2 h-full">
-                    {/* Load rate column */}
-                    <div className="w-[76px] flex flex-col items-center justify-center gap-0.5">
-                      <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.loadRate, loadRateThresholds)}`}>
-                        {row.loadRate > 0 ? `${row.loadRate}%` : '—'}
-                      </span>
-                      {row.loadRate > 0 && (
-                        <div className="w-12 h-[3px] rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 mt-0.5">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${Math.min(row.loadRate, 100)}%`,
-                              backgroundColor: getLoadRateBarColor(row.loadRate, loadRateThresholds),
-                            }}
-                          />
+                    {row.assignee === null ? (
+                      <>
+                        <div className="w-[76px] flex items-center justify-center">
+                          <span className="text-[15px] font-semibold leading-none text-slate-300 dark:text-slate-600">—</span>
                         </div>
-                      )}
-                    </div>
-                    <div className="w-[76px] flex flex-col items-center justify-center gap-0.5">
-                      <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.actualLoadRate, loadRateThresholds)}`}>
-                        {row.actualLoadRate > 0 ? `${row.actualLoadRate}%` : '—'}
-                      </span>
-                      {row.actualLoadRate > 0 && (
-                        <div className="w-12 h-[3px] rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 mt-0.5">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${Math.min(row.actualLoadRate, 100)}%`,
-                              backgroundColor: getLoadRateBarColor(row.actualLoadRate, loadRateThresholds),
-                            }}
-                          />
+                        <div className="w-[76px] flex items-center justify-center">
+                          <span className="text-[15px] font-semibold leading-none text-slate-300 dark:text-slate-600">—</span>
                         </div>
-                      )}
-                    </div>
-                    <div className="w-[76px] flex items-center justify-center border-l border-r border-slate-200 dark:border-slate-700 px-2 mr-1">
-                      <span
-                        className={`min-w-[54px] h-6 px-1.5 flex items-center justify-center text-[13px] font-normal leading-none ${getScheduleVarianceTextColor(row.scheduleVariancePt, scheduleVarianceThresholds)}`}
-                        title="0ptに近いほど計画通りです"
-                      >
-                        {row.scheduleVariancePt === null
-                          ? '—'
-                          : `${row.scheduleVariancePt > 0 ? '+' : ''}${row.scheduleVariancePt}pt`}
-                      </span>
-                    </div>
+                        <div className="w-[76px] flex items-center justify-center border-l border-r border-slate-200 dark:border-slate-700 px-2 mr-1">
+                          <span className="min-w-[54px] h-6 px-1.5 flex items-center justify-center text-[13px] font-normal leading-none text-slate-300 dark:text-slate-600">—</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-[72px] flex items-center justify-center text-[13px] font-medium text-slate-300 dark:text-slate-600">—</div>
+                          <div className="w-[72px] flex items-center justify-center text-[13px] font-medium text-slate-300 dark:text-slate-600">—</div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Load rate column */}
+                        <div className="w-[76px] flex flex-col items-center justify-center gap-0.5">
+                          <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.loadRate, loadRateThresholds)}`}>
+                            {`${row.loadRate}%`}
+                          </span>
+                          <div className="w-12 h-[3px] rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 mt-0.5">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${Math.min(row.loadRate, 100)}%`,
+                                backgroundColor: getLoadRateBarColor(row.loadRate, loadRateThresholds),
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="w-[76px] flex flex-col items-center justify-center gap-0.5">
+                          <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.actualLoadRate, loadRateThresholds)}`}>
+                            {`${row.actualLoadRate}%`}
+                          </span>
+                          <div className="w-12 h-[3px] rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 mt-0.5">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${Math.min(row.actualLoadRate, 100)}%`,
+                                backgroundColor: getLoadRateBarColor(row.actualLoadRate, loadRateThresholds),
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="w-[76px] flex items-center justify-center border-l border-r border-slate-200 dark:border-slate-700 px-2 mr-1">
+                          <span
+                            className={`min-w-[54px] h-6 px-1.5 flex items-center justify-center text-[13px] font-normal leading-none ${getScheduleVarianceTextColor(row.scheduleVariancePt, scheduleVarianceThresholds)}`}
+                            title="0ptに近いほど計画通りです"
+                          >
+                            {row.scheduleVariancePt === null
+                              ? '—'
+                              : `${row.scheduleVariancePt > 0 ? '+' : ''}${row.scheduleVariancePt}pt`}
+                          </span>
+                        </div>
 
-                    {/* Status badges */}
-                    <div className="flex items-center gap-1">
-                      <div className={getStatusClasses(row.inProgressCount, 'inProgress')}>
-                        {row.inProgressCount}
-                      </div>
-                      <div className={getStatusClasses(row.delayedCount, 'delayed')}>
-                        {row.delayedCount}
-                      </div>
-                    </div>
+                        {/* Status badges */}
+                        <div className="flex items-center gap-1">
+                          <div className={getStatusClasses(row.inProgressCount, 'inProgress')}>
+                            {row.inProgressCount}
+                          </div>
+                          <div className={getStatusClasses(row.delayedCount, 'delayed')}>
+                            {row.delayedCount}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

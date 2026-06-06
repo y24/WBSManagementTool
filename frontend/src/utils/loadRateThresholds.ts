@@ -117,7 +117,7 @@ export const isScheduleVarianceThresholdsValid = (thresholds: ScheduleVarianceTh
   thresholds.critical > 0;
 
 export const getLoadRateTextColor = (rate: number, thresholds: LoadRateThresholds): string => {
-  if (rate <= 0) return 'text-slate-300 dark:text-slate-600';
+  if (rate < 0) return 'text-slate-300 dark:text-slate-600';
   if (rate <= thresholds.criticalLow) return 'text-rose-600 dark:text-rose-400';
   if (rate <= thresholds.warningLow) return 'text-amber-500 dark:text-amber-400';
   if (rate <= thresholds.normalHigh) return 'text-emerald-600 dark:text-emerald-400';
@@ -126,7 +126,7 @@ export const getLoadRateTextColor = (rate: number, thresholds: LoadRateThreshold
 };
 
 export const isLoadRateCritical = (rate: number, thresholds: LoadRateThresholds): boolean =>
-  rate > 0 && (rate <= thresholds.criticalLow || rate > thresholds.warningHigh);
+  rate >= 0 && (rate <= thresholds.criticalLow || rate > thresholds.warningHigh);
 
 export const getLoadRateBarColor = (rate: number, thresholds: LoadRateThresholds): string => {
   if (rate <= thresholds.criticalLow) return '#e11d48';
