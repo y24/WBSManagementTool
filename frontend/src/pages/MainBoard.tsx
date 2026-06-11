@@ -276,6 +276,7 @@ export default function MainBoard() {
 
   const filteredProjects = useFilteredProjects({ data, filters, initialData, displayOptions, currentTodayStr });
   const dynamicGanttRange = useDynamicGanttRange({ data, filteredProjects, currentTodayStr });
+  const isInitialLoading = loading && data === null;
 
   const scrollGanttHorizontally = useCallback((targetScrollLeft: number) => {
     const gantt = ganttRef.current;
@@ -554,6 +555,7 @@ export default function MainBoard() {
         currentTodayStr={currentTodayStr}
         onTreeScroll={handleTreeScroll}
         onGanttScroll={handleGanttScroll}
+        isInitialLoading={isInitialLoading}
       />
 
       <ConfirmModal

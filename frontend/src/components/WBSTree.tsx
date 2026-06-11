@@ -42,6 +42,7 @@ interface WBSTreeProps {
   displayOptions: DisplayOptions;
   currentTodayStr: string;
   onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
+  isInitialLoading?: boolean;
 }
 
 const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
@@ -58,7 +59,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   isPlanningMode = false,
   displayOptions,
   currentTodayStr,
-  onScroll
+  onScroll,
+  isInitialLoading = false
 }, ref) => {
   const [saving, setSaving] = useState(false);
   const [menuRendered, setMenuRendered] = useState(false);
@@ -251,7 +253,7 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
           />
         </DragDropContext>
 
-        {projects.length === 0 && (
+        {!isInitialLoading && projects.length === 0 && (
           <div className="p-8 text-center text-gray-500 dark:text-slate-500 w-full col-span-full">
             上部のボタンからプロジェクトを追加してください。
           </div>

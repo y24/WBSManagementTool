@@ -32,6 +32,7 @@ interface MainBoardContentProps {
   currentTodayStr: string;
   onTreeScroll: (e: UIEvent<HTMLDivElement>) => void;
   onGanttScroll: (e: UIEvent<HTMLDivElement>) => void;
+  isInitialLoading?: boolean;
 }
 
 const MainBoardContent: React.FC<MainBoardContentProps> = ({
@@ -55,6 +56,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
   currentTodayStr,
   onTreeScroll,
   onGanttScroll,
+  isInitialLoading = false,
 }) => {
   const isResourceView = displayOptions.viewMode === 'resource';
   const mountedViewsRef = useRef({
@@ -119,6 +121,7 @@ const MainBoardContent: React.FC<MainBoardContentProps> = ({
           displayOptions={displayOptions}
           currentTodayStr={currentTodayStr}
           onScroll={onTreeScroll}
+          isInitialLoading={isInitialLoading}
         />
       </div>
 
