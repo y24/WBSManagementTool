@@ -32,12 +32,21 @@ def settings():
     )
 
 
-def _make_project(db, ticket_id=101, testing_id=None, sync=True, planned_start=date(2026, 5, 1), planned_end=date(2026, 5, 10)):
+def _make_project(
+    db,
+    ticket_id=101,
+    testing_id=None,
+    sync=True,
+    sync_testing=True,
+    planned_start=date(2026, 5, 1),
+    planned_end=date(2026, 5, 10),
+):
     p = models.Project(
         project_name="Test Project",
         ticket_id=ticket_id,
         testing_id=testing_id,
         sync_to_azure_devops=sync,
+        sync_testing_to_azure_devops=sync_testing,
         planned_start_date=planned_start,
         planned_end_date=planned_end,
         status_id=1,
@@ -375,6 +384,20 @@ class TestMultiEntitySync:
         result2 = run_sync(db_session, dry_run=False, settings=settings, client=client)
         assert result2.summary.skipped_no_local_change == 2
         assert result2.summary.fetch_targets == 0
+
+    def test_project_ticket_and_testing_sync_flags_are_independent(self, db_session, settings):
+        _make_project(db_session, ticket_id=10, testing_id=11, sync=True, sync_testing=False)
+        _make_project(db_session, ticket_id=20, testing_id=21, sync=False, sync_testing=True)
+
+        client = AzureDevOpsMockClient()
+        result = run_sync(db_session, dry_run=False, settings=settings, client=client)
+
+        assert result.summary.candidates == 2
+        assert result.summary.updated == 2
+        assert client.get_stored_fields(10).get("Microsoft.VSTS.Scheduling.StartDate") == "2026-05-01T00:00:00+09:00"
+        assert client.get_stored_fields(11) == {}
+        assert client.get_stored_fields(20) == {}
+        assert client.get_stored_fields(21).get("Microsoft.VSTS.Scheduling.StartDate") == "2026-05-01T00:00:00+09:00"
 
     def test_project_task_subtask_all_synced(self, db_session, settings):
         proj = _make_project(db_session, ticket_id=10)

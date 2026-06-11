@@ -48,23 +48,37 @@ class SyncTargetRepository:
         for row in (
             self._db.query(Project)
             .filter(
-                Project.sync_to_azure_devops.is_(True),
-                (Project.ticket_id.isnot(None)) | (Project.testing_id.isnot(None)),
+                (
+                    (Project.sync_to_azure_devops.is_(True) & Project.ticket_id.isnot(None))
+                    | (
+                        Project.sync_testing_to_azure_devops.is_(True)
+                        & Project.testing_id.isnot(None)
+                    )
+                ),
                 Project.is_deleted.is_(False),
             )
             .all()
         ):
-            for entity_type, raw_ticket_id in (
-                ("project", row.ticket_id),
-                ("project_testing", row.testing_id),
-            ):
-                if raw_ticket_id is None:
-                    continue
+            if row.sync_to_azure_devops and row.ticket_id is not None:
                 targets.append(
                     SyncTarget(
-                        entity_type=entity_type,
+                        entity_type="project",
                         entity_id=row.id,
-                        raw_ticket_id=raw_ticket_id,
+                        raw_ticket_id=row.ticket_id,
+                        planned_start_date=row.planned_start_date,
+                        planned_end_date=row.planned_end_date,
+                        actual_start_date=row.actual_start_date,
+                        actual_end_date=row.actual_end_date,
+                        status_id=row.status_id,
+                        updated_at=row.updated_at,
+                    )
+                )
+            if row.sync_testing_to_azure_devops and row.testing_id is not None:
+                targets.append(
+                    SyncTarget(
+                        entity_type="project_testing",
+                        entity_id=row.id,
+                        raw_ticket_id=row.testing_id,
                         planned_start_date=row.planned_start_date,
                         planned_end_date=row.planned_end_date,
                         actual_start_date=row.actual_start_date,

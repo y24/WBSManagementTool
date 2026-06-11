@@ -80,6 +80,7 @@ export interface Project {
   link_url?: string | null;
   memo?: string | null;
   sync_to_azure_devops?: boolean;
+  sync_testing_to_azure_devops?: boolean;
   planned_start_date?: string | null;
   planned_end_date?: string | null;
   actual_start_date?: string | null;

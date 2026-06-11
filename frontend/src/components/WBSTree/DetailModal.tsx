@@ -20,6 +20,8 @@ interface DetailModalProps {
   setMemoValue: (v: string) => void;
   syncToAzureDevops: boolean;
   setSyncToAzureDevops: (v: boolean) => void;
+  syncTestingToAzureDevops: boolean;
+  setSyncTestingToAzureDevops: (v: boolean) => void;
   parentTicketId?: number | null;
   ticketUrlTemplate?: string | null;
   onClose: () => void;
@@ -56,6 +58,8 @@ const DetailModal = ({
   setMemoValue,
   syncToAzureDevops,
   setSyncToAzureDevops,
+  syncTestingToAzureDevops,
+  setSyncTestingToAzureDevops,
   ticketUrlTemplate,
   parentTicketId,
   onClose,
@@ -77,6 +81,7 @@ const DetailModal = ({
     linkUrlValue,
     memoValue,
     syncToAzureDevops,
+    syncTestingToAzureDevops,
   });
 
   const isChanged = () => {
@@ -86,7 +91,8 @@ const DetailModal = ({
       testingIdValue !== initialValues.current.testingIdValue ||
       linkUrlValue !== initialValues.current.linkUrlValue ||
       memoValue !== initialValues.current.memoValue ||
-      syncToAzureDevops !== initialValues.current.syncToAzureDevops
+      syncToAzureDevops !== initialValues.current.syncToAzureDevops ||
+      syncTestingToAzureDevops !== initialValues.current.syncTestingToAzureDevops
     );
   };
 
@@ -125,7 +131,7 @@ const DetailModal = ({
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [detailValue, ticketIdValue, testingIdValue, linkUrlValue, memoValue, syncToAzureDevops, showConfirm, onSave, disableHotkeys]);
+  }, [detailValue, ticketIdValue, testingIdValue, linkUrlValue, memoValue, syncToAzureDevops, syncTestingToAzureDevops, showConfirm, onSave, disableHotkeys]);
 
   const ticketUrl = ticketUrlTemplate && ticketIdValue
     ? ticketUrlTemplate.replace('{TICKET_ID}', ticketIdValue)
@@ -243,6 +249,17 @@ const DetailModal = ({
                     🔗 {ticketUrl}
                   </p>
                 )}
+                {editingType === 'project' && ticketIdValue && (
+                  <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none w-fit">
+                    <input
+                      type="checkbox"
+                      checked={!syncToAzureDevops}
+                      onChange={(e) => setSyncToAzureDevops(!e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    />
+                    <span className="text-xs text-gray-500 dark:text-slate-400">チケットIDの情報を同期しない</span>
+                  </label>
+                )}
                 {editingType === 'project' && (
                   <div className="mt-3">
                     <label className="block mb-1.5 text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -280,9 +297,20 @@ const DetailModal = ({
                         🔗 {testingUrl}
                       </p>
                     )}
+                    {testingIdValue && (
+                      <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none w-fit">
+                        <input
+                          type="checkbox"
+                          checked={!syncTestingToAzureDevops}
+                          onChange={(e) => setSyncTestingToAzureDevops(!e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-slate-600 focus:ring-slate-400 cursor-pointer"
+                        />
+                        <span className="text-xs text-gray-500 dark:text-slate-400">Testing IDの情報を同期しない</span>
+                      </label>
+                    )}
                   </div>
                 )}
-                {(ticketIdValue || testingIdValue) && (
+                {editingType !== 'project' && ticketIdValue && (
                   <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none w-fit">
                     <input
                       type="checkbox"

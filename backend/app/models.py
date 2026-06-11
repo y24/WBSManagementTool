@@ -99,6 +99,7 @@ class Project(Base):
     sort_order = Column(Integer, nullable=False, default=0)
     is_deleted = Column(Boolean, nullable=False, default=False)
     sync_to_azure_devops = Column(Boolean, nullable=False, default=True)
+    sync_testing_to_azure_devops = Column(Boolean, nullable=False, default=True)
     status_id = Column(Integer, ForeignKey("mst_statuses.id"), nullable=True, index=True)
     assignee_id = Column(Integer, ForeignKey("mst_members.id"), nullable=True, index=True)
     link_url = Column(Text, nullable=True)

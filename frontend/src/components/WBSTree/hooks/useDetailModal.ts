@@ -34,6 +34,7 @@ export const useDetailModal = ({
   const [linkUrlValue, setLinkUrlValue] = useState('');
   const [memoValue, setMemoValue] = useState('');
   const [syncToAzureDevops, setSyncToAzureDevops] = useState(true);
+  const [syncTestingToAzureDevops, setSyncTestingToAzureDevops] = useState(true);
   const [parentTicketId, setParentTicketId] = useState<number | null>(null);
 
   const openDetailModal = useCallback((type: EditingType, item: any) => {
@@ -57,6 +58,7 @@ export const useDetailModal = ({
     setLinkUrlValue(item.link_url || '');
     setMemoValue(item.memo || '');
     setSyncToAzureDevops(item.sync_to_azure_devops !== false);
+    setSyncTestingToAzureDevops(item.sync_testing_to_azure_devops ?? item.sync_to_azure_devops ?? true);
     setParentTicketId(nextParentTicketId);
   }, [findItem]);
 
@@ -73,6 +75,7 @@ export const useDetailModal = ({
     };
     if (editingItem.type === 'project') {
       updates.testing_id = testingIdValue !== '' ? parseInt(testingIdValue, 10) : null;
+      updates.sync_testing_to_azure_devops = syncTestingToAzureDevops;
     }
     if (editingItem.type === 'subtask') {
       updates.subtask_detail = detailValue || null;
@@ -118,6 +121,7 @@ export const useDetailModal = ({
           }
           if (item.type !== 'project') {
             delete (itemUpdates as any).testing_id;
+            delete (itemUpdates as any).sync_testing_to_azure_devops;
           }
 
           // 楽観的更新
@@ -194,6 +198,8 @@ export const useDetailModal = ({
     setMemoValue,
     syncToAzureDevops,
     setSyncToAzureDevops,
+    syncTestingToAzureDevops,
+    setSyncTestingToAzureDevops,
     parentTicketId,
     openDetailModal,
     closeDetailModal,

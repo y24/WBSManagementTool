@@ -246,6 +246,7 @@ class ProjectBase(BaseModel):
     link_url: Optional[str] = None
     memo: Optional[str] = None
     sync_to_azure_devops: bool = True
+    sync_testing_to_azure_devops: bool = True
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
@@ -268,6 +269,7 @@ class ProjectUpdate(BaseModel):
     link_url: Optional[str] = None
     memo: Optional[str] = None
     sync_to_azure_devops: Optional[bool] = None
+    sync_testing_to_azure_devops: Optional[bool] = None
     planned_start_date: Optional[date] = None
     planned_end_date: Optional[date] = None
     actual_start_date: Optional[date] = None
