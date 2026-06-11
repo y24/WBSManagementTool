@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, Trash2, X } from 'lucide-react';
 import { MstStatus } from '../../types';
 
 type DevOpsSyncField =
@@ -223,11 +223,13 @@ export function SystemSettingsSection({
                 </div>
                 <button
                   type="button"
-                  className="self-start text-xs font-semibold text-slate-500 hover:text-slate-800 disabled:opacity-50 dark:text-slate-400 dark:hover:text-slate-100 sm:self-center"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center self-start rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-100 sm:self-center"
                   onClick={() => clearSyncRule(rule.field)}
                   disabled={isSavingSetting}
+                  title={`${rule.label} の連携条件を削除`}
+                  aria-label={`${rule.label} の連携条件を削除`}
                 >
-                  常に連携
+                  <Trash2 size={16} />
                 </button>
               </div>
             ))
