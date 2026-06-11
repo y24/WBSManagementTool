@@ -32,14 +32,24 @@ apiClient.interceptors.response.use(
 // 初期データの取得リクエストを重複させないためのプロミス保存用
 let initialDataPromise: Promise<AxiosResponse<InitialData>> | null = null;
 let initialDataCache: AxiosResponse<InitialData> | null = null;
+let markersPromise: Promise<AxiosResponse<import('../types').Marker[]>> | null = null;
 
-export const getMarkers = () => apiClient.get<import('../types').Marker[]>('/markers');
+export const getMarkers = () => {
+  if (markersPromise) return markersPromise;
+
+  markersPromise = apiClient.get<import('../types').Marker[]>('/markers')
+    .finally(() => {
+      markersPromise = null;
+    });
+
+  return markersPromise;
+};
 
 export const getAzureDevOpsUsers = () => apiClient.get<AzureDevOpsUser[]>('/integrations/azure-devops/users');
 
 export const getInitialData = (options: { forceRefresh?: boolean } = {}) => {
   if (!options.forceRefresh && initialDataCache) return Promise.resolve(initialDataCache);
-  if (!options.forceRefresh && initialDataPromise) return initialDataPromise;
+  if (initialDataPromise) return initialDataPromise;
   
   initialDataPromise = apiClient.get('/initial-data')
     .then((response) => {

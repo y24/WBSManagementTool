@@ -1,6 +1,11 @@
 import type { AxiosResponse } from 'axios';
 import { apiClient } from './client';
 
+interface WBSVersion {
+  tree_version: string;
+  initial_data_version: string;
+}
+
 interface AzureDevopsChildWorkItem {
   id: number;
   title?: string | null;
@@ -10,6 +15,30 @@ interface AzureDevopsChildWorkItem {
 
 const azureDevopsChildWorkItemsCache = new Map<number, AxiosResponse<AzureDevopsChildWorkItem[]>>();
 const azureDevopsChildWorkItemsRequests = new Map<number, Promise<AxiosResponse<AzureDevopsChildWorkItem[]>>>();
+let wbsVersionRequest: Promise<AxiosResponse<WBSVersion>> | null = null;
+let dashboardRequest: Promise<AxiosResponse> | null = null;
+
+const getWBSVersion = () => {
+  if (wbsVersionRequest) return wbsVersionRequest;
+
+  wbsVersionRequest = apiClient.get<WBSVersion>('/wbs/version')
+    .finally(() => {
+      wbsVersionRequest = null;
+    });
+
+  return wbsVersionRequest;
+};
+
+const getDashboard = () => {
+  if (dashboardRequest) return dashboardRequest;
+
+  dashboardRequest = apiClient.get('/dashboard')
+    .finally(() => {
+      dashboardRequest = null;
+    });
+
+  return dashboardRequest;
+};
 
 const getAzureDevopsChildWorkItems = (
   parentWorkItemId: number,
@@ -120,11 +149,9 @@ export const wbsOps = {
     return apiClient.get(`/wbs?${params.toString()}`);
   },
 
-  getWBSVersion: () =>
-    apiClient.get('/wbs/version'),
+  getWBSVersion,
 
-  getDashboard: () => 
-    apiClient.get('/dashboard'),
+  getDashboard,
 
   getAzureDevopsChildWorkItems,
 
