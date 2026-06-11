@@ -7,6 +7,8 @@ interface NewStatus {
   status_name: string;
   color_code: string;
   azure_devops_state: string;
+  azure_devops_sync_ticket_id: boolean;
+  azure_devops_sync_testing_id: boolean;
 }
 
 interface StatusSectionProps {
@@ -46,6 +48,8 @@ export function StatusSection({
   deleteItem,
   onDragEnd,
 }: StatusSectionProps) {
+  const newStatusHasDevOpsState = newStatus.azure_devops_state.trim().length > 0;
+
   return (
     <section className="master-section">
       <div className="master-section-header">
@@ -85,6 +89,24 @@ export function StatusSection({
               onKeyDown={e => e.key === 'Enter' && createStatus()}
               title="Azure DevOpsのSystem.Stateに同期する名前"
             />
+            <label className="master-status-sync-toggle" title="このステータスをチケットIDの同期対象にする">
+              <input
+                type="checkbox"
+                checked={newStatusHasDevOpsState && newStatus.azure_devops_sync_ticket_id}
+                disabled={!newStatusHasDevOpsState}
+                onChange={e => setNewStatus({ ...newStatus, azure_devops_sync_ticket_id: e.target.checked })}
+                aria-label="チケットIDを同期対象にする"
+              />
+            </label>
+            <label className="master-status-sync-toggle" title="このステータスをTesting IDの同期対象にする">
+              <input
+                type="checkbox"
+                checked={newStatusHasDevOpsState && newStatus.azure_devops_sync_testing_id}
+                disabled={!newStatusHasDevOpsState}
+                onChange={e => setNewStatus({ ...newStatus, azure_devops_sync_testing_id: e.target.checked })}
+                aria-label="Testing IDを同期対象にする"
+              />
+            </label>
             <button className="master-confirm-btn" onClick={createStatus}><CheckIcon /></button>
             <button className="master-cancel-btn" onClick={() => setShowAddStatus(false)}><XIcon /></button>
           </div>
@@ -94,6 +116,8 @@ export function StatusSection({
       <div className="master-status-list-header" aria-hidden="true">
         <span>ステータス</span>
         <span>Azure DevOps System.State</span>
+        <span>チケットID</span>
+        <span>Testing ID</span>
       </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
@@ -104,9 +128,11 @@ export function StatusSection({
               ref={provided.innerRef} 
               className="master-list"
             >
-              {statuses.map((s, index) => (
-                <Draggable key={s.id} draggableId={s.id.toString()} index={index}>
-                  {(provided, snapshot) => (
+              {statuses.map((s, index) => {
+                const hasDevOpsState = Boolean(s.azure_devops_state?.trim());
+                return (
+                  <Draggable key={s.id} draggableId={s.id.toString()} index={index}>
+                    {(provided, snapshot) => (
                     <div 
                       ref={provided.innerRef}
                       {...provided.draggableProps}
@@ -173,6 +199,36 @@ export function StatusSection({
                         />
                       )}
                       {!isEditing(s.id, 'status') && (
+                        <label
+                          className="master-status-sync-toggle"
+                          title="このステータスをチケットIDの同期対象にする"
+                          onMouseDown={e => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={hasDevOpsState && s.azure_devops_sync_ticket_id}
+                            disabled={!hasDevOpsState}
+                            onChange={e => saveEdit('/masters/statuses', s.id, { azure_devops_sync_ticket_id: e.target.checked })}
+                            aria-label={`${s.status_name}をチケットIDの同期対象にする`}
+                          />
+                        </label>
+                      )}
+                      {!isEditing(s.id, 'status') && (
+                        <label
+                          className="master-status-sync-toggle"
+                          title="このステータスをTesting IDの同期対象にする"
+                          onMouseDown={e => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={hasDevOpsState && s.azure_devops_sync_testing_id}
+                            disabled={!hasDevOpsState}
+                            onChange={e => saveEdit('/masters/statuses', s.id, { azure_devops_sync_testing_id: e.target.checked })}
+                            aria-label={`${s.status_name}をTesting IDの同期対象にする`}
+                          />
+                        </label>
+                      )}
+                      {!isEditing(s.id, 'status') && (
                         <div className="master-actions">
                           <button className="master-action-btn master-edit" onClick={() => startEdit(s.id, 'status', s.status_name, s.color_code)} title="編集">
                             <PencilIcon />
@@ -185,9 +241,10 @@ export function StatusSection({
                         </div>
                       )}
                     </div>
-                  )}
-                </Draggable>
-              ))}
+                    )}
+                  </Draggable>
+                );
+              })}
               {provided.placeholder}
             </div>
           )}

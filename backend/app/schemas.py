@@ -27,6 +27,8 @@ class StatusBase(BaseModel):
     status_name: str
     color_code: str
     azure_devops_state: Optional[str] = None
+    azure_devops_sync_ticket_id: bool = True
+    azure_devops_sync_testing_id: bool = True
     sort_order: int = 0
     is_active: bool = True
     is_system_reserved: bool = False
@@ -38,6 +40,8 @@ class StatusUpdate(BaseModel):
     status_name: Optional[str] = None
     color_code: Optional[str] = None
     azure_devops_state: Optional[str] = None
+    azure_devops_sync_ticket_id: Optional[bool] = None
+    azure_devops_sync_testing_id: Optional[bool] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
     is_system_reserved: Optional[bool] = None

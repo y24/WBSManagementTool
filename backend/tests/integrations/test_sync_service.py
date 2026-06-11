@@ -194,6 +194,37 @@ class TestSyncTargetFiltering:
         result = run_sync(db_session, dry_run=True, settings=AzureDevOpsSettings(), client=client)
         assert result.summary.candidates == 0
 
+    def test_status_can_exclude_ticket_id_sync_targets(self, db_session):
+        status = db_session.query(models.MstStatus).filter(models.MstStatus.id == 1).one()
+        status.azure_devops_state = "New"
+        status.azure_devops_sync_ticket_id = False
+        db_session.commit()
+
+        proj = _make_project(db_session, ticket_id=101, testing_id=None)
+        _make_task(db_session, proj.id, ticket_id=201)
+        task = db_session.query(models.Task).filter(models.Task.project_id == proj.id).one()
+        _make_subtask(db_session, task.id, ticket_id=301)
+
+        client = AzureDevOpsMockClient()
+        result = run_sync(db_session, dry_run=True, settings=AzureDevOpsSettings(), client=client)
+
+        assert result.summary.candidates == 0
+
+    def test_status_can_exclude_testing_id_without_excluding_ticket_id(self, db_session, settings):
+        status = db_session.query(models.MstStatus).filter(models.MstStatus.id == 1).one()
+        status.azure_devops_state = "New"
+        status.azure_devops_sync_testing_id = False
+        db_session.commit()
+        _make_project(db_session, ticket_id=101, testing_id=102)
+
+        client = AzureDevOpsMockClient()
+        result = run_sync(db_session, dry_run=False, settings=settings, client=client)
+
+        assert result.summary.candidates == 1
+        assert result.summary.updated == 1
+        assert client.get_stored_fields(101).get("Microsoft.VSTS.Scheduling.StartDate") == "2026-05-01T00:00:00+09:00"
+        assert client.get_stored_fields(102) == {}
+
 
 # ---------------------------------------------------------------------------
 # Tests: hash comparison (skip unchanged)
@@ -369,11 +400,14 @@ class TestPatchBehavior:
         assert result.summary.field_updates["System.State"] == 1
         assert client.get_stored_fields(101).get("System.State") == "Active"
 
-    def test_blank_state_mapping_does_not_clear_remote_state_by_default(self, db_session, settings):
+    def test_blank_state_mapping_excludes_sync_target(self, db_session, settings):
         settings.field_mapping = {
             **settings.field_mapping,
             "azure_devops_state": "System.State",
         }
+        status = db_session.query(models.MstStatus).filter(models.MstStatus.id == 1).one()
+        status.azure_devops_state = None
+        db_session.commit()
         _make_project(db_session, ticket_id=101)
 
         client = AzureDevOpsMockClient(initial_items={
@@ -387,7 +421,7 @@ class TestPatchBehavior:
         })
         result = run_sync(db_session, dry_run=False, settings=settings, client=client)
 
-        assert result.summary.skipped_same_remote_value == 1
+        assert result.summary.candidates == 0
         assert result.summary.updated == 0
         assert client.get_stored_fields(101).get("System.State") == "New"
 

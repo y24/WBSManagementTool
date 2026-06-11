@@ -141,7 +141,16 @@ AZURE_DEVOPS_FIELD_MAPPING={"planned_start_date":"Microsoft.VSTS.Scheduling.Star
 | 担当者一覧 | Azure DevOps アカウント | `System.AssignedTo` |
 | ステータス一覧 | Azure DevOps System.State | `System.State` |
 
-ステータスの `Azure DevOps System.State` が空欄の場合、そのステータスでは `System.State` は更新されません。
+ステータスの `Azure DevOps System.State` が空欄の場合、そのステータスでは以下の同期対象チェックは無効になり、Azure DevOps 同期対象から除外されます。
+
+ステータス一覧では、ステータスごとに以下の同期対象を切り替えできます。
+
+| 設定項目 | 対象 |
+|---|---|
+| チケットID | プロジェクト・タスク・サブタスクの `ticket_id` を使う同期 |
+| Testing ID | プロジェクトの `testing_id` を使う同期 |
+
+チェックを外したステータスのレコードは、そのID種別の Azure DevOps 同期対象から除外されます。
 
 > [!NOTE]
 > フロントエンドでの操作UIは現在開発中です。現時点では、以下の PowerShell コマンドで個別に有効化できます。

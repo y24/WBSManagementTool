@@ -826,7 +826,7 @@ code {
 
 .master-status-list-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 14rem;
+  grid-template-columns: minmax(0, 1fr) 14rem 5.5rem 5.5rem;
   align-items: center;
   gap: 0.75rem;
   margin: 0.25rem 0 0.15rem;
@@ -936,6 +936,33 @@ code {
   max-width: 14rem;
   flex: 0 0 14rem;
   font-size: 0.78rem;
+}
+
+.master-status-sync-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 5.5rem;
+  flex: 0 0 5.5rem;
+  color: #64748b;
+  cursor: pointer;
+  user-select: none;
+}
+
+.master-status-sync-toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: #64748b;
+  cursor: pointer;
+}
+
+.master-status-sync-toggle input:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+:root.dark .master-status-sync-toggle {
+  color: #94a3b8;
 }
 
 .master-devops-account-select:focus {

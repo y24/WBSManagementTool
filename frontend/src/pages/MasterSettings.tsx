@@ -51,6 +51,8 @@ interface NewStatus {
   status_name: string;
   color_code: string;
   azure_devops_state: string;
+  azure_devops_sync_ticket_id: boolean;
+  azure_devops_sync_testing_id: boolean;
 }
 
 interface NewSubtaskType {
@@ -122,7 +124,13 @@ export default function MasterSettings() {
   const [editValue, setEditValue] = useState('');
   const [editColorValue, setEditColorValue] = useState('#000000');
 
-  const [newStatus, setNewStatus] = useState<NewStatus>({ status_name: '', color_code: '#3b82f6', azure_devops_state: '' });
+  const [newStatus, setNewStatus] = useState<NewStatus>({
+    status_name: '',
+    color_code: '#3b82f6',
+    azure_devops_state: '',
+    azure_devops_sync_ticket_id: true,
+    azure_devops_sync_testing_id: true,
+  });
   const [newSubtaskType, setNewSubtaskType] = useState<NewSubtaskType>({ type_name: '' });
   const [newMember, setNewMember] = useState<NewMember>({ member_name: '', color_code: '#9ca3af' });
   const [newHoliday, setNewHoliday] = useState<NewHoliday>({ holiday_date: '', holiday_name: '' });
@@ -329,9 +337,17 @@ export default function MasterSettings() {
         status_name: newStatus.status_name.trim(),
         color_code: newStatus.color_code,
         azure_devops_state: newStatus.azure_devops_state.trim() || null,
+        azure_devops_sync_ticket_id: newStatus.azure_devops_sync_ticket_id,
+        azure_devops_sync_testing_id: newStatus.azure_devops_sync_testing_id,
         sort_order: data?.statuses.length ?? 0,
       });
-      setNewStatus({ status_name: '', color_code: '#3b82f6', azure_devops_state: '' });
+      setNewStatus({
+        status_name: '',
+        color_code: '#3b82f6',
+        azure_devops_state: '',
+        azure_devops_sync_ticket_id: true,
+        azure_devops_sync_testing_id: true,
+      });
       setShowAddStatus(false);
       fetchData();
     } catch (err) {

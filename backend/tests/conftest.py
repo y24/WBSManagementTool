@@ -19,12 +19,12 @@ def db_session():
     
     # Add default statuses (matches seed.py logic)
     statuses = [
-        models.MstStatus(id=1, status_name="New", color_code="#cccccc", sort_order=1, is_system_reserved=True),
-        models.MstStatus(id=2, status_name="In Progress", color_code="#007bff", sort_order=2, is_system_reserved=False),
-        models.MstStatus(id=3, status_name="In Review", color_code="#a973e2", sort_order=3, is_system_reserved=True),
-        models.MstStatus(id=4, status_name="Done", color_code="#28a745", sort_order=4, is_system_reserved=True),
-        models.MstStatus(id=5, status_name="Blocked", color_code="#dc3545", sort_order=5, is_system_reserved=True),
-        models.MstStatus(id=7, status_name="Removed", color_code="#6c757d", sort_order=7, is_system_reserved=True),
+        models.MstStatus(id=1, status_name="New", color_code="#cccccc", azure_devops_state="New", sort_order=1, is_system_reserved=True),
+        models.MstStatus(id=2, status_name="In Progress", color_code="#007bff", azure_devops_state="In Progress", sort_order=2, is_system_reserved=False),
+        models.MstStatus(id=3, status_name="In Review", color_code="#a973e2", azure_devops_state="In Review", sort_order=3, is_system_reserved=True),
+        models.MstStatus(id=4, status_name="Done", color_code="#28a745", azure_devops_state="Done", sort_order=4, is_system_reserved=True),
+        models.MstStatus(id=5, status_name="Blocked", color_code="#dc3545", azure_devops_state="Blocked", sort_order=5, is_system_reserved=True),
+        models.MstStatus(id=7, status_name="Removed", color_code="#6c757d", azure_devops_state="Removed", sort_order=7, is_system_reserved=True),
     ]
     db.add_all(statuses)
     

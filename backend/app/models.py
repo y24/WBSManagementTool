@@ -29,6 +29,8 @@ class MstStatus(Base):
     status_name = Column(String(50), nullable=False)
     color_code = Column(String(20), nullable=False)
     azure_devops_state = Column(String(100), nullable=True)
+    azure_devops_sync_ticket_id = Column(Boolean, nullable=False, default=True)
+    azure_devops_sync_testing_id = Column(Boolean, nullable=False, default=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     is_system_reserved = Column(Boolean, nullable=False, default=False)

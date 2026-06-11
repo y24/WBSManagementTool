@@ -44,6 +44,26 @@ class SyncTargetRepository:
     def __init__(self, db: Session) -> None:
         self._db = db
 
+    @staticmethod
+    def _is_ticket_sync_allowed(row: Project | Task | Subtask) -> bool:
+        return (
+            row.status is None
+            or (
+                bool(row.status.azure_devops_state and row.status.azure_devops_state.strip())
+                and row.status.azure_devops_sync_ticket_id
+            )
+        )
+
+    @staticmethod
+    def _is_testing_sync_allowed(row: Project) -> bool:
+        return (
+            row.status is None
+            or (
+                bool(row.status.azure_devops_state and row.status.azure_devops_state.strip())
+                and row.status.azure_devops_sync_testing_id
+            )
+        )
+
     def get_all(self) -> List[SyncTarget]:
         targets: List[SyncTarget] = []
 
@@ -61,7 +81,7 @@ class SyncTargetRepository:
             )
             .all()
         ):
-            if row.sync_to_azure_devops and row.ticket_id is not None:
+            if row.sync_to_azure_devops and row.ticket_id is not None and self._is_ticket_sync_allowed(row):
                 targets.append(
                     SyncTarget(
                         entity_type="project",
@@ -77,7 +97,7 @@ class SyncTargetRepository:
                         updated_at=row.updated_at,
                     )
                 )
-            if row.sync_testing_to_azure_devops and row.testing_id is not None:
+            if row.sync_testing_to_azure_devops and row.testing_id is not None and self._is_testing_sync_allowed(row):
                 targets.append(
                     SyncTarget(
                         entity_type="project_testing",
@@ -103,6 +123,8 @@ class SyncTargetRepository:
             )
             .all()
         ):
+            if not self._is_ticket_sync_allowed(row):
+                continue
             targets.append(
                 SyncTarget(
                     entity_type="task",
@@ -128,6 +150,8 @@ class SyncTargetRepository:
             )
             .all()
         ):
+            if not self._is_ticket_sync_allowed(row):
+                continue
             targets.append(
                 SyncTarget(
                     entity_type="subtask",

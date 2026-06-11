@@ -10,6 +10,8 @@ export interface MstStatus extends MasterBase {
   status_name: string;
   color_code: string;
   azure_devops_state?: string | null;
+  azure_devops_sync_ticket_id: boolean;
+  azure_devops_sync_testing_id: boolean;
   is_system_reserved: boolean;
 }
 
