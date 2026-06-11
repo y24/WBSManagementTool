@@ -400,7 +400,7 @@ class TestPatchBehavior:
         assert result.summary.field_updates["System.State"] == 1
         assert client.get_stored_fields(101).get("System.State") == "Active"
 
-    def test_blank_state_mapping_excludes_sync_target(self, db_session, settings):
+    def test_blank_state_mapping_skips_state_field_only(self, db_session, settings):
         settings.field_mapping = {
             **settings.field_mapping,
             "azure_devops_state": "System.State",
@@ -421,8 +421,9 @@ class TestPatchBehavior:
         })
         result = run_sync(db_session, dry_run=False, settings=settings, client=client)
 
-        assert result.summary.candidates == 0
+        assert result.summary.candidates == 1
         assert result.summary.updated == 0
+        assert result.summary.skipped_same_remote_value == 1
         assert client.get_stored_fields(101).get("System.State") == "New"
 
 
@@ -451,6 +452,30 @@ class TestStatusConditionBehavior:
 
         assert result.summary.updated == 1
         assert client.get_stored_fields(301).get("Custom.ActualEndDate") == "2026-05-08T00:00:00+09:00"
+
+    def test_actual_end_date_is_patched_when_done_state_mapping_is_blank(self, db_session, settings):
+        settings.field_mapping = {
+            **settings.field_mapping,
+            "azure_devops_state": "System.State",
+        }
+        done_status = db_session.query(models.MstStatus).filter(models.MstStatus.id == 4).one()
+        done_status.azure_devops_state = None
+        db_session.commit()
+
+        proj = _make_project(db_session, ticket_id=None)
+        task = _make_task(db_session, proj.id, ticket_id=None)
+        _make_subtask(db_session, task.id, ticket_id=301, status_id=4)
+
+        settings.sync_status_conditions = {"actual_end_date": [4]}
+        client = AzureDevOpsMockClient()
+        result = run_sync(db_session, dry_run=False, settings=settings, client=client)
+
+        assert result.summary.candidates == 1
+        assert result.summary.updated == 1
+        assert result.summary.field_updates["Custom.ActualEndDate"] == 1
+        stored = client.get_stored_fields(301)
+        assert stored.get("Custom.ActualEndDate") == "2026-05-08T00:00:00+09:00"
+        assert "System.State" not in stored
 
 
 # ---------------------------------------------------------------------------

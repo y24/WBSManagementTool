@@ -46,23 +46,11 @@ class SyncTargetRepository:
 
     @staticmethod
     def _is_ticket_sync_allowed(row: Project | Task | Subtask) -> bool:
-        return (
-            row.status is None
-            or (
-                bool(row.status.azure_devops_state and row.status.azure_devops_state.strip())
-                and row.status.azure_devops_sync_ticket_id
-            )
-        )
+        return row.status is None or row.status.azure_devops_sync_ticket_id
 
     @staticmethod
     def _is_testing_sync_allowed(row: Project) -> bool:
-        return (
-            row.status is None
-            or (
-                bool(row.status.azure_devops_state and row.status.azure_devops_state.strip())
-                and row.status.azure_devops_sync_testing_id
-            )
-        )
+        return row.status is None or row.status.azure_devops_sync_testing_id
 
     def get_all(self) -> List[SyncTarget]:
         targets: List[SyncTarget] = []
