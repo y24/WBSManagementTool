@@ -40,12 +40,10 @@ const syncToggleStyles = {
   ticket: {
     on: 'border-blue-200 bg-blue-50 text-blue-700 shadow-blue-100/70 hover:bg-blue-100 dark:border-blue-800/70 dark:bg-blue-950/35 dark:text-blue-200 dark:shadow-none dark:hover:bg-blue-900/45',
     off: 'border-gray-200 bg-white text-gray-500 hover:border-blue-200 hover:bg-blue-50/70 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-blue-800/60 dark:hover:bg-blue-950/25 dark:hover:text-blue-300',
-    dotOn: 'bg-blue-500 dark:bg-blue-300',
   },
   testing: {
     on: 'border-violet-200 bg-violet-50 text-violet-700 shadow-violet-100/70 hover:bg-violet-100 dark:border-violet-800/70 dark:bg-violet-950/35 dark:text-violet-200 dark:shadow-none dark:hover:bg-violet-900/45',
     off: 'border-gray-200 bg-white text-gray-500 hover:border-violet-200 hover:bg-violet-50/70 hover:text-violet-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-violet-800/60 dark:hover:bg-violet-950/25 dark:hover:text-violet-300',
-    dotOn: 'bg-violet-500 dark:bg-violet-300',
   },
 };
 
@@ -61,25 +59,21 @@ const SyncToggleButton = ({
   label: string;
 }) => {
   const styles = syncToggleStyles[tone];
-  const stateText = synced ? '同期ON' : '同期OFF';
+  const stateText = synced ? 'DevOps同期ON' : 'DevOps同期OFF';
 
   return (
     <button
       type="button"
       aria-pressed={synced}
+      aria-label={`${label}: ${stateText}`}
       title={`${label}: ${stateText}`}
       onClick={() => onChange(!synced)}
-      className={`mt-2.5 inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold shadow-sm transition-all active:scale-[0.98] ${
+      className={`inline-flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-xl border text-xs font-semibold shadow-sm transition-all active:scale-[0.98] ${
         synced ? styles.on : styles.off
       }`}
     >
       <span className={`flex h-5 w-5 items-center justify-center rounded-md ${synced ? 'bg-white/80 dark:bg-white/10' : 'bg-gray-100 dark:bg-slate-800'}`}>
         {synced ? <Link size={13} /> : <Unlink size={13} />}
-      </span>
-      <span>{label}</span>
-      <span className="flex items-center gap-1 text-[11px] font-bold">
-        <span className={`h-1.5 w-1.5 rounded-full ${synced ? styles.dotOn : 'bg-gray-300 dark:bg-slate-600'}`} />
-        {stateText}
       </span>
     </button>
   );
@@ -277,34 +271,44 @@ const DetailModal = ({
                     </a>
                   )}
                 </label>
-                <input
-                  id="modal-ticket-id-input"
-                  name="ticket-id"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
-                  value={ticketIdValue}
-                  autoFocus
-                  onFocus={(e) => e.target.select()}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/[^0-9]/g, '');
-                    setTicketIdValue(v);
-                  }}
-                  placeholder="チケットIDを入力..."
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    id="modal-ticket-id-input"
+                    name="ticket-id"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    className="min-w-0 flex-1 px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
+                    value={ticketIdValue}
+                    autoFocus
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/[^0-9]/g, '');
+                      setTicketIdValue(v);
+                    }}
+                    placeholder="チケットIDを入力..."
+                  />
+                  {editingType === 'project' && ticketIdValue && (
+                    <SyncToggleButton
+                      synced={syncToAzureDevops}
+                      onChange={setSyncToAzureDevops}
+                      tone="ticket"
+                      label="チケットID"
+                    />
+                  )}
+                  {editingType !== 'project' && ticketIdValue && (
+                    <SyncToggleButton
+                      synced={syncToAzureDevops}
+                      onChange={setSyncToAzureDevops}
+                      tone="ticket"
+                      label="チケットID"
+                    />
+                  )}
+                </div>
                 {ticketUrl && (
                   <p className="mt-1 text-xs text-gray-400 dark:text-slate-500 truncate px-1" title={ticketUrl}>
                     🔗 {ticketUrl}
                   </p>
-                )}
-                {editingType === 'project' && ticketIdValue && (
-                  <SyncToggleButton
-                    synced={syncToAzureDevops}
-                    onChange={setSyncToAzureDevops}
-                    tone="ticket"
-                    label="チケットID"
-                  />
                 )}
                 {editingType === 'project' && (
                   <div className="mt-3">
@@ -323,43 +327,37 @@ const DetailModal = ({
                         </a>
                       )}
                     </label>
-                    <input
-                      id="modal-testing-id-input"
-                      name="testing-id"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
-                      value={testingIdValue}
-                      onFocus={(e) => e.target.select()}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/[^0-9]/g, '');
-                        setTestingIdValue(v);
-                      }}
-                      placeholder="Testing IDを入力..."
-                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="modal-testing-id-input"
+                        name="testing-id"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        className="min-w-0 flex-1 px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 outline-none text-sm transition-all shadow-inner bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 font-medium"
+                        value={testingIdValue}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/[^0-9]/g, '');
+                          setTestingIdValue(v);
+                        }}
+                        placeholder="Testing IDを入力..."
+                      />
+                      {testingIdValue && (
+                        <SyncToggleButton
+                          synced={syncTestingToAzureDevops}
+                          onChange={setSyncTestingToAzureDevops}
+                          tone="testing"
+                          label="Testing ID"
+                        />
+                      )}
+                    </div>
                     {testingUrl && (
                       <p className="mt-1 text-xs text-gray-400 dark:text-slate-500 truncate px-1" title={testingUrl}>
                         🔗 {testingUrl}
                       </p>
                     )}
-                    {testingIdValue && (
-                      <SyncToggleButton
-                        synced={syncTestingToAzureDevops}
-                        onChange={setSyncTestingToAzureDevops}
-                        tone="testing"
-                        label="Testing ID"
-                      />
-                    )}
                   </div>
-                )}
-                {editingType !== 'project' && ticketIdValue && (
-                  <SyncToggleButton
-                    synced={syncToAzureDevops}
-                    onChange={setSyncToAzureDevops}
-                    tone="ticket"
-                    label="チケットID"
-                  />
                 )}
               </div>
 
