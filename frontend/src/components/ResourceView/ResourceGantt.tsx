@@ -5,6 +5,7 @@ import { GanttRange, GanttScale } from '../../types/wbs';
 import { ResourceRow, ResourceSubtask } from '../../pages/mainboard/useResourceData';
 import { getScaleCellWidth, getDateX, getGanttUnits } from '../../utils/ganttUtils';
 import { useGanttDrag } from '../../hooks/useGanttDrag';
+import { getResourcePlannedDateRange, withResourcePlannedDateRange } from '../../utils/resourcePlanning';
 import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
 import GanttBar from '../GanttBar';
@@ -179,12 +180,11 @@ export default function ResourceGantt({
     row.subtasks.forEach(task => {
       if (removedStatusId !== undefined && task.status_id === removedStatusId) return;
 
-      const startStr = task.planned_start_date;
-      const endStr = task.planned_end_date || task.planned_start_date;
-      if (!startStr && !endStr) return;
+      const plannedRange = getResourcePlannedDateRange(task, doneStatusId);
+      if (!plannedRange) return;
 
-      const startDate = parseISO(startStr || endStr || '');
-      const endDate = parseISO(endStr || startStr || '');
+      const startDate = parseISO(plannedRange.start);
+      const endDate = parseISO(plannedRange.end);
       if (!isValid(startDate) || !isValid(endDate)) return;
 
       const rangeStart = differenceInCalendarDays(endDate, startDate) >= 0 ? startDate : endDate;
@@ -237,7 +237,7 @@ export default function ResourceGantt({
     }
 
     return cells;
-  }, [cellWidth, days, holidaySet, isDarkMode, loadScopeEndDate, removedStatusId, todayStr, unitDateKeys]);
+  }, [cellWidth, days, doneStatusId, holidaySet, isDarkMode, loadScopeEndDate, removedStatusId, todayStr, unitDateKeys]);
 
   return (
     <div className="h-full min-h-0 w-full overflow-hidden bg-white dark:bg-slate-950 transition-colors">
@@ -321,6 +321,7 @@ export default function ResourceGantt({
                           style={{ height: `${overlaidTrackHeight}px` }}
                         >
                           {track.map((subtask: ResourceSubtask) => {
+                            const plannedSubtask = withResourcePlannedDateRange(subtask, doneStatusId);
                             const isStartDelayed =
                               newStatusId !== null &&
                               subtask.status_id === newStatusId &&
@@ -343,7 +344,7 @@ export default function ResourceGantt({
                                 {/* Ghost planned bar */}
                                 <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
                                   <GanttBar
-                                    item={subtask}
+                                    item={plannedSubtask}
                                     itemType="subtask"
                                     baseDate={baseDate}
                                     cellWidth={cellWidth}
@@ -365,7 +366,7 @@ export default function ResourceGantt({
                                     isDelayedHighlight={highlightResourceDelayedTasks && isStartDelayed}
                                     barVisibility="planned"
                                     overridePlannedBarColor={ghostColor}
-                                    onBarContextMenu={handleBarContextMenu}
+                                    onBarContextMenu={(event) => handleBarContextMenu(event, subtask)}
                                   />
                                 </div>
                                 {/* Actual status bar */}

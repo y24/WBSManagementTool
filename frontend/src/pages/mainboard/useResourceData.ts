@@ -3,6 +3,7 @@ import { parseISO, format, addDays } from 'date-fns';
 import { Project, Subtask } from '../../types/wbs';
 import { InitialData, MstMember } from '../../types';
 import { getDisplayActualEndDate } from '../../utils/ganttDateRange';
+import { getResourcePlannedDateRange } from '../../utils/resourcePlanning';
 
 export interface ResourceSubtask extends Subtask {
   project_name: string;
@@ -188,8 +189,11 @@ export function useResourceData(
     };
 
     const getPlannedBounds = (t: ResourceSubtask): DateBounds[] => {
-      const start = parseDateTime(t.planned_start_date);
-      const end = parseDateTime(t.planned_end_date);
+      const range = getResourcePlannedDateRange(t, doneStatusId);
+      if (!range) return [];
+
+      const start = parseDateTime(range.start);
+      const end = parseDateTime(range.end);
       return start !== null && end !== null ? [{ start, end }] : [];
     };
 
@@ -223,7 +227,8 @@ export function useResourceData(
     };
 
     const getPlannedReviewBounds = (t: ResourceSubtask): DateBounds[] => {
-      const plannedEnd = t.planned_end_date ? parseISO(t.planned_end_date) : null;
+      const plannedRange = getResourcePlannedDateRange(t, doneStatusId);
+      const plannedEnd = plannedRange ? parseISO(plannedRange.end) : null;
       const reviewDays = getFiniteEffort(t.review_days);
       if (!plannedEnd || Number.isNaN(plannedEnd.getTime()) || reviewDays === null || reviewDays <= 0) {
         return [];

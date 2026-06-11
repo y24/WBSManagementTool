@@ -4,6 +4,7 @@ import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns';
 import { InitialData } from '../../types';
 import { ResourceRow, ResourceSubtask } from '../../pages/mainboard/useResourceData';
 import { getLoadRateTextColor, LoadRateThresholds } from '../../utils/loadRateThresholds';
+import { getResourcePlannedDateRange } from '../../utils/resourcePlanning';
 
 interface ResourceSummaryBarProps {
   data: ResourceRow[];
@@ -93,15 +94,18 @@ const getIdleRanges = (
   row: ResourceRow,
   todayStr: string,
   endDateStr: string | undefined,
-  holidaySet: Set<string>
+  holidaySet: Set<string>,
+  doneStatusId: number | null
 ) => {
   if (!endDateStr) return [];
 
   const plannedDates = new Set<string>();
   row.subtasks.forEach(subtask => {
-    if (!subtask.planned_start_date || !subtask.planned_end_date) return;
-    let current = parseISO(subtask.planned_start_date.split('T')[0]);
-    const end = parseISO(subtask.planned_end_date.split('T')[0]);
+    const plannedRange = getResourcePlannedDateRange(subtask, doneStatusId);
+    if (!plannedRange) return;
+
+    let current = parseISO(plannedRange.start);
+    const end = parseISO(plannedRange.end);
     while (current <= end) {
       plannedDates.add(format(current, 'yyyy-MM-dd'));
       current = addDays(current, 1);
@@ -138,7 +142,8 @@ const getBusiestPeriod = (
   row: ResourceRow,
   todayStr: string,
   endDateStr: string | undefined,
-  holidaySet: Set<string>
+  holidaySet: Set<string>,
+  doneStatusId: number | null
 ) => {
   if (!endDateStr) return null;
 
@@ -150,10 +155,8 @@ const getBusiestPeriod = (
     const dateKey = format(current, 'yyyy-MM-dd');
     if (isWorkingDay(current, holidaySet)) {
       const tasks = row.subtasks.filter(subtask => {
-        if (!subtask.planned_start_date || !subtask.planned_end_date) return false;
-        const start = subtask.planned_start_date.split('T')[0];
-        const end = subtask.planned_end_date.split('T')[0];
-        return start <= dateKey && dateKey <= end;
+        const plannedRange = getResourcePlannedDateRange(subtask, doneStatusId);
+        return !!plannedRange && plannedRange.start <= dateKey && dateKey <= plannedRange.end;
       });
       dailyTasks.push({ date: dateKey, tasks });
     }
@@ -283,10 +286,10 @@ export default function ResourceSummaryBar({
     .filter(item => item.delayed.length > 0);
   const idleRows = assigned
     .filter(row => row.loadRate <= loadRateThresholds.criticalLow)
-    .map(row => ({ row, idleRanges: getIdleRanges(row, todayStr, loadScopeEndDate, holidaySet) }));
+    .map(row => ({ row, idleRanges: getIdleRanges(row, todayStr, loadScopeEndDate, holidaySet, doneStatusId) }));
   const overloadedRows = assigned
     .filter(row => row.loadRate >= loadRateThresholds.overload)
-    .map(row => ({ row, busiest: getBusiestPeriod(row, todayStr, loadScopeEndDate, holidaySet) }));
+    .map(row => ({ row, busiest: getBusiestPeriod(row, todayStr, loadScopeEndDate, holidaySet, doneStatusId) }));
 
   const cards: SummaryCard[] = [
     {
