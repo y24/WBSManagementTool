@@ -843,6 +843,25 @@ code {
   border-bottom-color: #334155;
 }
 
+.master-subtask-type-list-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 14rem;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.25rem 0 0.15rem;
+  padding: 0.35rem 4.7rem 0.35rem 3.75rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+:root.dark .master-subtask-type-list-header {
+  color: #94a3b8;
+  border-bottom-color: #334155;
+}
+
 .master-list-item {
   display: flex;
   align-items: center;
@@ -866,6 +885,10 @@ code {
 }
 
 .master-status-row {
+  gap: 0.75rem;
+}
+
+.master-subtask-type-row {
   gap: 0.75rem;
 }
 
@@ -932,6 +955,13 @@ code {
 }
 
 .master-status-state-input {
+  width: 14rem;
+  max-width: 14rem;
+  flex: 0 0 14rem;
+  font-size: 0.78rem;
+}
+
+.master-subtask-work-item-type-input {
   width: 14rem;
   max-width: 14rem;
   flex: 0 0 14rem;

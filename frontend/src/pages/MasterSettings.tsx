@@ -57,6 +57,7 @@ interface NewStatus {
 
 interface NewSubtaskType {
   type_name: string;
+  azure_devops_work_item_type: string;
 }
 
 interface NewMember {
@@ -131,7 +132,7 @@ export default function MasterSettings() {
     azure_devops_sync_ticket_id: true,
     azure_devops_sync_testing_id: true,
   });
-  const [newSubtaskType, setNewSubtaskType] = useState<NewSubtaskType>({ type_name: '' });
+  const [newSubtaskType, setNewSubtaskType] = useState<NewSubtaskType>({ type_name: '', azure_devops_work_item_type: '' });
   const [newMember, setNewMember] = useState<NewMember>({ member_name: '', color_code: '#9ca3af' });
   const [newHoliday, setNewHoliday] = useState<NewHoliday>({ holiday_date: '', holiday_name: '' });
 
@@ -363,9 +364,10 @@ export default function MasterSettings() {
     try {
       await apiClient.post('/masters/subtask-types', {
         type_name: newSubtaskType.type_name.trim(),
+        azure_devops_work_item_type: newSubtaskType.azure_devops_work_item_type.trim() || null,
         sort_order: data?.subtask_types.length ?? 0,
       });
-      setNewSubtaskType({ type_name: '' });
+      setNewSubtaskType({ type_name: '', azure_devops_work_item_type: '' });
       setShowAddSubtaskType(false);
       fetchData();
     } catch (err) {

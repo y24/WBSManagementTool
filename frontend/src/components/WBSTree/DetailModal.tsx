@@ -23,6 +23,7 @@ interface DetailModalProps {
   syncTestingToAzureDevops: boolean;
   setSyncTestingToAzureDevops: (v: boolean) => void;
   parentTicketId?: number | null;
+  subtaskTypeId?: number | null;
   ticketUrlTemplate?: string | null;
   onClose: () => void;
   onSave: () => void;
@@ -86,6 +87,14 @@ const formatWorkItemCandidateLabel = (candidate: WorkItemCandidate) => {
     : `${typeLabel} ${candidate.id}`;
 };
 
+const WORK_ITEM_TYPE_FILTER_STORAGE_KEY = 'wbs.detailModal.filterCandidatesByWorkItemType';
+
+const getInitialWorkItemTypeFilter = () => {
+  if (typeof window === 'undefined') return true;
+  const stored = window.localStorage.getItem(WORK_ITEM_TYPE_FILTER_STORAGE_KEY);
+  return stored == null ? true : stored === 'true';
+};
+
 const DetailModal = ({
   editingType,
   editingName,
@@ -105,6 +114,7 @@ const DetailModal = ({
   setSyncTestingToAzureDevops,
   ticketUrlTemplate,
   parentTicketId,
+  subtaskTypeId,
   onClose,
   onSave,
   onOpenInterruption,
@@ -114,6 +124,7 @@ const DetailModal = ({
   const [childCandidates, setChildCandidates] = useState<WorkItemCandidate[]>([]);
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
   const [candidateError, setCandidateError] = useState<string | null>(null);
+  const [filterByWorkItemType, setFilterByWorkItemType] = useState(getInitialWorkItemTypeFilter);
   const isMountedRef = useRef(false);
 
   // 初期値を保持
@@ -184,6 +195,12 @@ const DetailModal = ({
     : null;
 
   const canLoadChildCandidates = editingType !== 'project' && !!parentTicketId;
+  const canFilterByWorkItemType = editingType === 'subtask' && subtaskTypeId != null;
+
+  const handleFilterByWorkItemTypeChange = (checked: boolean) => {
+    setFilterByWorkItemType(checked);
+    window.localStorage.setItem(WORK_ITEM_TYPE_FILTER_STORAGE_KEY, String(checked));
+  };
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -202,7 +219,11 @@ const DetailModal = ({
     setIsLoadingCandidates(true);
     setCandidateError(null);
     try {
-      const res = await wbsOps.getAzureDevopsChildWorkItems(parentTicketId, { forceRefresh });
+      const res = await wbsOps.getAzureDevopsChildWorkItems(parentTicketId, {
+        forceRefresh,
+        filterByWorkItemType: canFilterByWorkItemType && filterByWorkItemType,
+        subtaskTypeId: canFilterByWorkItemType ? subtaskTypeId : null,
+      });
       if (!isMountedRef.current) return;
       setChildCandidates(res.data);
     } catch (err) {
@@ -214,7 +235,7 @@ const DetailModal = ({
       if (!isMountedRef.current) return;
       setIsLoadingCandidates(false);
     }
-  }, [canLoadChildCandidates, parentTicketId]);
+  }, [canFilterByWorkItemType, canLoadChildCandidates, filterByWorkItemType, parentTicketId, subtaskTypeId]);
 
   useEffect(() => {
     loadChildCandidates();
@@ -368,12 +389,27 @@ const DetailModal = ({
                       候補
                     </span>
                     <span className="text-[11px] text-gray-400 dark:text-slate-500">親チケット: {parentTicketId}</span>
+                    {editingType === 'subtask' && (
+                      <label
+                        className="ml-auto inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 dark:text-slate-400"
+                        title={canFilterByWorkItemType ? 'サブタスク種別に設定したWork Item Typeで候補を絞り込みます' : 'サブタスク種別が未設定のため絞り込みできません'}
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5 accent-slate-500"
+                          checked={filterByWorkItemType}
+                          disabled={!canFilterByWorkItemType}
+                          onChange={e => handleFilterByWorkItemTypeChange(e.target.checked)}
+                        />
+                        Work Item Typeでフィルタ
+                      </label>
+                    )}
                     {canLoadChildCandidates && (
                       <button
                         type="button"
                         onClick={() => loadChildCandidates(true)}
                         disabled={isLoadingCandidates}
-                        className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-60"
+                        className={`${editingType === 'subtask' ? '' : 'ml-auto'} inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-gray-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-60`}
                       >
                         {isLoadingCandidates ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
                         再取得

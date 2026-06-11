@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app import models
 from app.database import get_db
 from .repositories import SyncLockRepository, LOCK_NAME_DEVOPS_SYNC
 from .sync_service import SyncError, SyncResult, SyncSummary, run_sync
@@ -159,7 +160,12 @@ def sync_to_azure_devops(
     "/work-items/{parent_work_item_id}/children",
     response_model=List[WorkItemCandidateOut],
 )
-def get_child_work_item_candidates(parent_work_item_id: int) -> List[WorkItemCandidateOut]:
+def get_child_work_item_candidates(
+    parent_work_item_id: int,
+    filter_by_work_item_type: bool = Query(default=False),
+    subtask_type_id: Optional[int] = Query(default=None),
+    db: Session = Depends(get_db),
+) -> List[WorkItemCandidateOut]:
     """Return Azure DevOps Work Items linked as children of the parent Work Item."""
     if parent_work_item_id <= 0:
         raise HTTPException(status_code=400, detail="parent_work_item_id must be positive.")
@@ -181,6 +187,16 @@ def get_child_work_item_candidates(parent_work_item_id: int) -> List[WorkItemCan
             detail=f"Failed to fetch child Work Items from Azure DevOps: {exc}",
         ) from exc
 
+    target_work_item_type: Optional[str] = None
+    if filter_by_work_item_type and subtask_type_id is not None:
+        subtask_type = (
+            db.query(models.MstSubtaskType)
+            .filter(models.MstSubtaskType.id == subtask_type_id)
+            .first()
+        )
+        if subtask_type and subtask_type.azure_devops_work_item_type:
+            target_work_item_type = subtask_type.azure_devops_work_item_type.strip().lower()
+
     return [
         WorkItemCandidateOut(
             id=item.id,
@@ -189,6 +205,8 @@ def get_child_work_item_candidates(parent_work_item_id: int) -> List[WorkItemCan
             state=item.fields.get("System.State"),
         )
         for item in children
+        if not target_work_item_type
+        or str(item.fields.get("System.WorkItemType") or "").strip().lower() == target_work_item_type
     ]
 
 

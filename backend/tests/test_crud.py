@@ -9,6 +9,23 @@ def test_create_project(db_session):
     assert db_project.project_name == "Test Project"
     assert db_project.id is not None
 
+def test_subtask_type_devops_work_item_type_round_trip(db_session):
+    subtask_type = crud.create_subtask_type(
+        db_session,
+        schemas.SubtaskTypeCreate(
+            type_name="Implementation",
+            azure_devops_work_item_type="Task",
+        ),
+    )
+    assert subtask_type.azure_devops_work_item_type == "Task"
+
+    updated = crud.update_subtask_type(
+        db_session,
+        subtask_type.id,
+        schemas.SubtaskTypeUpdate(azure_devops_work_item_type="Bug"),
+    )
+    assert updated.azure_devops_work_item_type == "Bug"
+
 def test_link_url_columns_are_unbounded_text():
     assert isinstance(models.Project.__table__.c.link_url.type, models.Text)
     assert isinstance(models.Task.__table__.c.link_url.type, models.Text)

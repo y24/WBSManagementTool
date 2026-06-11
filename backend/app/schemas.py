@@ -6,6 +6,7 @@ from decimal import Decimal
 # --- Masters ---
 class SubtaskTypeBase(BaseModel):
     type_name: str
+    azure_devops_work_item_type: Optional[str] = None
     sort_order: int = 0
     is_active: bool = True
 
@@ -14,6 +15,7 @@ class SubtaskTypeCreate(SubtaskTypeBase):
 
 class SubtaskTypeUpdate(BaseModel):
     type_name: Optional[str] = None
+    azure_devops_work_item_type: Optional[str] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
 

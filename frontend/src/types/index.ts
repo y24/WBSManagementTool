@@ -17,6 +17,7 @@ export interface MstStatus extends MasterBase {
 
 export interface MstSubtaskType extends MasterBase {
   type_name: string;
+  azure_devops_work_item_type?: string | null;
 }
 
 export interface MstMember extends MasterBase {

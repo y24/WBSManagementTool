@@ -4,6 +4,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 
 interface NewSubtaskType {
   type_name: string;
+  azure_devops_work_item_type: string;
 }
 
 interface SubtaskTypeSectionProps {
@@ -65,15 +66,29 @@ export function SubtaskTypeSection({
               className="master-input"
               placeholder="種別名"
               value={newSubtaskType.type_name}
-              onChange={e => setNewSubtaskType({ type_name: e.target.value })}
+              onChange={e => setNewSubtaskType({ ...newSubtaskType, type_name: e.target.value })}
               onKeyDown={e => e.key === 'Enter' && createSubtaskType()}
               autoFocus
+            />
+            <input
+              type="text"
+              className="master-input master-subtask-work-item-type-input"
+              placeholder="Work Item Type"
+              value={newSubtaskType.azure_devops_work_item_type}
+              onChange={e => setNewSubtaskType({ ...newSubtaskType, azure_devops_work_item_type: e.target.value })}
+              onKeyDown={e => e.key === 'Enter' && createSubtaskType()}
+              title="候補絞り込みに使うAzure DevOpsのWork Item Type"
             />
             <button className="master-confirm-btn" onClick={createSubtaskType}><CheckIcon /></button>
             <button className="master-cancel-btn" onClick={() => setShowAddSubtaskType(false)}><XIcon /></button>
           </div>
         </div>
       )}
+
+      <div className="master-subtask-type-list-header" aria-hidden="true">
+        <span>種別</span>
+        <span>Azure DevOps Work Item Type</span>
+      </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="subtask-types-list">
@@ -86,10 +101,10 @@ export function SubtaskTypeSection({
               {displayedSubtaskTypes.map((t, index) => (
                 <Draggable key={t.id} draggableId={t.id.toString()} index={index}>
                   {(provided, snapshot) => (
-                    <div 
+                    <div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
-                      className={`master-list-item master-sortable-chip-row ${snapshot.isDragging ? 'dragging' : ''}`}
+                      className={`master-list-item master-subtask-type-row master-sortable-chip-row ${snapshot.isDragging ? 'dragging' : ''}`}
                     >
                       <div className="master-list-item-content master-sortable-chip-content">
                         <div {...provided.dragHandleProps} className="master-drag-handle mr-2 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
@@ -118,6 +133,32 @@ export function SubtaskTypeSection({
                           </span>
                         )}
                       </div>
+                      {!isEditing(t.id, 'subtask_type') && (
+                        <input
+                          type="text"
+                          className="master-input master-subtask-work-item-type-input"
+                          defaultValue={t.azure_devops_work_item_type ?? ''}
+                          placeholder="未設定"
+                          title="候補絞り込みに使うAzure DevOpsのWork Item Type"
+                          onMouseDown={e => e.stopPropagation()}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.currentTarget.blur();
+                            }
+                            if (e.key === 'Escape') {
+                              e.currentTarget.value = t.azure_devops_work_item_type ?? '';
+                              e.currentTarget.blur();
+                            }
+                          }}
+                          onBlur={e => {
+                            const nextType = e.currentTarget.value.trim();
+                            const currentType = t.azure_devops_work_item_type ?? '';
+                            if (nextType !== currentType) {
+                              saveEdit('/masters/subtask-types', t.id, { azure_devops_work_item_type: nextType || null });
+                            }
+                          }}
+                        />
+                      )}
                       {!isEditing(t.id, 'subtask_type') && (
                         <div className="master-actions">
                           <button className="master-action-btn master-edit" onClick={() => startEdit(t.id, 'subtask_type', t.type_name)} title="編集"><PencilIcon /></button>

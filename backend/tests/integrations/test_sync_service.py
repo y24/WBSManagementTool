@@ -133,6 +133,50 @@ def test_mock_client_returns_default_child_work_item_candidates():
     assert children[0].fields["System.State"] == "New"
 
 
+def test_child_work_item_candidates_filter_by_subtask_type_work_item_type(db_session, monkeypatch):
+    subtask_type = models.MstSubtaskType(
+        type_name="Bug fix",
+        azure_devops_work_item_type="Bug",
+        sort_order=1,
+    )
+    db_session.add(subtask_type)
+    db_session.commit()
+    db_session.refresh(subtask_type)
+
+    client = AzureDevOpsMockClient(
+        {
+            201: {
+                "System.Title": "Child task",
+                "System.WorkItemType": "Task",
+                "System.State": "Active",
+            },
+            202: {
+                "System.Title": "Child bug",
+                "System.WorkItemType": "Bug",
+                "System.State": "New",
+            },
+        }
+    )
+    client.set_children(101, [201, 202])
+    monkeypatch.setattr(devops_router, "create_client", lambda settings: client)
+
+    filtered = devops_router.get_child_work_item_candidates(
+        101,
+        filter_by_work_item_type=True,
+        subtask_type_id=subtask_type.id,
+        db=db_session,
+    )
+    unfiltered = devops_router.get_child_work_item_candidates(
+        101,
+        filter_by_work_item_type=False,
+        subtask_type_id=subtask_type.id,
+        db=db_session,
+    )
+
+    assert [item.id for item in filtered] == [202]
+    assert [item.id for item in unfiltered] == [201, 202]
+
+
 def test_mock_client_returns_users():
     client = AzureDevOpsMockClient()
 

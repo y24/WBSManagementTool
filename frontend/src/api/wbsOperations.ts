@@ -13,8 +13,8 @@ interface AzureDevopsChildWorkItem {
   state?: string | null;
 }
 
-const azureDevopsChildWorkItemsCache = new Map<number, AxiosResponse<AzureDevopsChildWorkItem[]>>();
-const azureDevopsChildWorkItemsRequests = new Map<number, Promise<AxiosResponse<AzureDevopsChildWorkItem[]>>>();
+const azureDevopsChildWorkItemsCache = new Map<string, AxiosResponse<AzureDevopsChildWorkItem[]>>();
+const azureDevopsChildWorkItemsRequests = new Map<string, Promise<AxiosResponse<AzureDevopsChildWorkItem[]>>>();
 let wbsVersionRequest: Promise<AxiosResponse<WBSVersion>> | null = null;
 let dashboardRequest: Promise<AxiosResponse> | null = null;
 
@@ -42,29 +42,44 @@ const getDashboard = () => {
 
 const getAzureDevopsChildWorkItems = (
   parentWorkItemId: number,
-  options: { forceRefresh?: boolean } = {}
+  options: { forceRefresh?: boolean; filterByWorkItemType?: boolean; subtaskTypeId?: number | null } = {}
 ) => {
-  if (!options.forceRefresh) {
-    const cached = azureDevopsChildWorkItemsCache.get(parentWorkItemId);
+  const cacheKey = [
+    parentWorkItemId,
+    options.filterByWorkItemType ? 'type-filter' : 'all',
+    options.subtaskTypeId ?? 'none',
+  ].join(':');
+
+  const shouldUseCache = !options.forceRefresh && !options.filterByWorkItemType;
+
+  if (shouldUseCache) {
+    const cached = azureDevopsChildWorkItemsCache.get(cacheKey);
     if (cached) return Promise.resolve(cached);
 
-    const pending = azureDevopsChildWorkItemsRequests.get(parentWorkItemId);
+    const pending = azureDevopsChildWorkItemsRequests.get(cacheKey);
     if (pending) return pending;
   }
 
+  const params = new URLSearchParams();
+  if (options.filterByWorkItemType) params.append('filter_by_work_item_type', 'true');
+  if (options.subtaskTypeId != null) params.append('subtask_type_id', String(options.subtaskTypeId));
+  const query = params.toString();
+
   const request = apiClient
-    .get<AzureDevopsChildWorkItem[]>(`/integrations/azure-devops/work-items/${parentWorkItemId}/children`)
+    .get<AzureDevopsChildWorkItem[]>(`/integrations/azure-devops/work-items/${parentWorkItemId}/children${query ? `?${query}` : ''}`)
     .then((response) => {
-      azureDevopsChildWorkItemsCache.set(parentWorkItemId, response);
+      if (!options.filterByWorkItemType) {
+        azureDevopsChildWorkItemsCache.set(cacheKey, response);
+      }
       return response;
     })
     .finally(() => {
-      if (azureDevopsChildWorkItemsRequests.get(parentWorkItemId) === request) {
-        azureDevopsChildWorkItemsRequests.delete(parentWorkItemId);
+      if (azureDevopsChildWorkItemsRequests.get(cacheKey) === request) {
+        azureDevopsChildWorkItemsRequests.delete(cacheKey);
       }
     });
 
-  azureDevopsChildWorkItemsRequests.set(parentWorkItemId, request);
+  azureDevopsChildWorkItemsRequests.set(cacheKey, request);
   return request;
 };
 

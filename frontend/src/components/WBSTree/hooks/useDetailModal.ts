@@ -36,6 +36,7 @@ export const useDetailModal = ({
   const [syncToAzureDevops, setSyncToAzureDevops] = useState(true);
   const [syncTestingToAzureDevops, setSyncTestingToAzureDevops] = useState(true);
   const [parentTicketId, setParentTicketId] = useState<number | null>(null);
+  const [subtaskTypeId, setSubtaskTypeId] = useState<number | null>(null);
 
   const openDetailModal = useCallback((type: EditingType, item: any) => {
     let nextParentTicketId: number | null = null;
@@ -60,6 +61,7 @@ export const useDetailModal = ({
     setSyncToAzureDevops(item.sync_to_azure_devops !== false);
     setSyncTestingToAzureDevops(item.sync_testing_to_azure_devops ?? item.sync_to_azure_devops ?? true);
     setParentTicketId(nextParentTicketId);
+    setSubtaskTypeId(type === 'subtask' ? item.subtask_type_id ?? null : null);
   }, [findItem]);
 
   const closeDetailModal = useCallback(() => setEditingItem(null), []);
@@ -201,6 +203,7 @@ export const useDetailModal = ({
     syncTestingToAzureDevops,
     setSyncTestingToAzureDevops,
     parentTicketId,
+    subtaskTypeId,
     openDetailModal,
     closeDetailModal,
     handleDetailSave
