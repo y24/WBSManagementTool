@@ -10,7 +10,7 @@ from app.integrations.azure_devops import router as devops_router
 from app.integrations.azure_devops.client import AzureDevOpsMockClient
 from app.integrations.azure_devops.hash_service import compute_payload_hash
 from app.integrations.azure_devops.repositories import DevopsSyncStateRepository
-from app.integrations.azure_devops.settings import AzureDevOpsSettings
+from app.integrations.azure_devops.settings import AzureDevOpsSettings, load_settings
 from app.integrations.azure_devops.sync_service import SyncResult, SyncSummary, run_sync
 
 
@@ -131,6 +131,28 @@ def test_mock_client_returns_default_child_work_item_candidates():
     assert children[0].fields["System.Title"] == "Mock child work item 1 for #101"
     assert children[0].fields["System.WorkItemType"] == "Task"
     assert children[0].fields["System.State"] == "New"
+
+
+def test_mock_client_returns_users():
+    client = AzureDevOpsMockClient()
+
+    users = client.list_users()
+
+    assert len(users) == 20
+    assert users[0]["displayName"] == "Aoi Tanaka"
+    assert users[0]["principalName"] == "aoi.tanaka@example.com"
+
+
+def test_env_field_mapping_preserves_assigned_to_default(monkeypatch):
+    monkeypatch.setenv(
+        "AZURE_DEVOPS_FIELD_MAPPING",
+        '{"planned_start_date": "Custom.StartDate"}',
+    )
+
+    loaded = load_settings()
+
+    assert loaded.field_mapping["planned_start_date"] == "Custom.StartDate"
+    assert loaded.field_mapping["azure_devops_assigned_to"] == "System.AssignedTo"
 
 
 # ---------------------------------------------------------------------------
@@ -304,6 +326,30 @@ class TestPatchBehavior:
         # Hash must remain None (not updated)
         assert state.last_sent_hash is None
         assert state.last_status == "failed"
+
+    def test_patches_assigned_to_from_member_mapping(self, db_session, settings):
+        settings.field_mapping = {
+            **settings.field_mapping,
+            "azure_devops_assigned_to": "System.AssignedTo",
+        }
+        member = models.MstMember(
+            member_name="Assigned Member",
+            color_code="#9ca3af",
+            azure_devops_unique_name="assigned.member@example.com",
+            azure_devops_display_name="Assigned Member",
+        )
+        db_session.add(member)
+        db_session.commit()
+        proj = _make_project(db_session, ticket_id=101)
+        proj.assignee_id = member.id
+        db_session.commit()
+
+        client = AzureDevOpsMockClient()
+        result = run_sync(db_session, dry_run=False, settings=settings, client=client)
+
+        assert result.summary.updated == 1
+        assert result.summary.field_updates["System.AssignedTo"] == 1
+        assert client.get_stored_fields(101).get("System.AssignedTo") == "assigned.member@example.com"
 
 
 class TestStatusConditionBehavior:

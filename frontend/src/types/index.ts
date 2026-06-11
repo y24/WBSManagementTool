@@ -20,6 +20,15 @@ export interface MstMember extends MasterBase {
   member_name: string;
   color_code: string;
   exclude_from_resource_view: boolean;
+  azure_devops_unique_name?: string | null;
+  azure_devops_display_name?: string | null;
+}
+
+export interface AzureDevOpsUser {
+  descriptor: string;
+  display_name: string;
+  unique_name: string;
+  mail_address?: string | null;
 }
 
 export interface MstHoliday extends MasterBase {

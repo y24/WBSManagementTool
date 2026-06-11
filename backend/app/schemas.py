@@ -50,6 +50,8 @@ class MemberBase(BaseModel):
     member_name: str
     color_code: str = "#9ca3af"
     exclude_from_resource_view: bool = False
+    azure_devops_unique_name: Optional[str] = None
+    azure_devops_display_name: Optional[str] = None
     sort_order: int = 0
     is_active: bool = True
 
@@ -60,6 +62,8 @@ class MemberUpdate(BaseModel):
     member_name: Optional[str] = None
     color_code: Optional[str] = None
     exclude_from_resource_view: Optional[bool] = None
+    azure_devops_unique_name: Optional[str] = None
+    azure_devops_display_name: Optional[str] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
 

@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -35,6 +35,7 @@ class SyncSummaryOut(BaseModel):
     skipped_same_remote_value: int
     updated: int
     failed: int
+    field_updates: Dict[str, int] = Field(default_factory=dict)
 
 
 class SyncErrorOut(BaseModel):
@@ -59,6 +60,13 @@ class WorkItemCandidateOut(BaseModel):
     title: Optional[str] = None
     work_item_type: Optional[str] = None
     state: Optional[str] = None
+
+
+class AzureDevOpsUserOut(BaseModel):
+    descriptor: str
+    display_name: str
+    unique_name: str
+    mail_address: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -133,6 +141,7 @@ def sync_to_azure_devops(
             skipped_same_remote_value=result.summary.skipped_same_remote_value,
             updated=result.summary.updated,
             failed=result.summary.failed,
+            field_updates=result.summary.field_updates,
         ),
         errors=[
             SyncErrorOut(
@@ -181,3 +190,41 @@ def get_child_work_item_candidates(parent_work_item_id: int) -> List[WorkItemCan
         )
         for item in children
     ]
+
+
+@router.get("/users", response_model=List[AzureDevOpsUserOut])
+def list_azure_devops_users() -> List[AzureDevOpsUserOut]:
+    """Return Azure DevOps users without persisting the fetched list locally."""
+    settings = get_settings()
+    if not settings.use_mock and (not settings.organization or not settings.pat):
+        raise HTTPException(
+            status_code=503,
+            detail="Azure DevOps settings are not configured on the server.",
+        )
+
+    client = create_client(settings)
+    try:
+        users = client.list_users()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to fetch Azure DevOps users: {exc}",
+        ) from exc
+
+    results: List[AzureDevOpsUserOut] = []
+    for user in users:
+        display_name = user.get("displayName") or user.get("principalName") or user.get("mailAddress") or ""
+        unique_name = user.get("principalName") or user.get("mailAddress") or display_name
+        descriptor = user.get("descriptor") or unique_name
+        if not unique_name:
+            continue
+        results.append(
+            AzureDevOpsUserOut(
+                descriptor=descriptor,
+                display_name=display_name,
+                unique_name=unique_name,
+                mail_address=user.get("mailAddress"),
+            )
+        )
+
+    return sorted(results, key=lambda user: (user.display_name.lower(), user.unique_name.lower()))

@@ -45,6 +45,10 @@ class AzureDevOpsClientBase(ABC):
     ) -> List[WorkItemData]:
         """Fetch Work Items linked as children of the parent Work Item."""
 
+    @abstractmethod
+    def list_users(self) -> List[Dict[str, Any]]:
+        """Fetch Azure DevOps users visible to the organization."""
+
 
 class AzureDevOpsHttpClient(AzureDevOpsClientBase):
     """Real HTTP client using the Azure DevOps REST API v7.1.
@@ -69,6 +73,7 @@ class AzureDevOpsHttpClient(AzureDevOpsClientBase):
         suppress_notifications: bool = False,
     ) -> None:
         token = base64.b64encode(f":{pat}".encode()).decode()
+        self._organization = organization
         # project が指定されていない場合は org レベル URL を使用
         if project:
             self._base_url = f"https://dev.azure.com/{organization}/{project}/_apis"
@@ -174,6 +179,24 @@ class AzureDevOpsHttpClient(AzureDevOpsClientBase):
         child_items = self.get_work_items_batch(child_ids, fields)
         return [child_items[child_id] for child_id in child_ids if child_id in child_items]
 
+    def list_users(self) -> List[Dict[str, Any]]:
+        graph_base_url = f"https://vssps.dev.azure.com/{self._organization}"
+        users: List[Dict[str, Any]] = []
+        continuation_token: Optional[str] = None
+
+        while True:
+            url = f"{graph_base_url}/_apis/graph/users?api-version={self._api_version}-preview.1"
+            headers = {**self._auth_headers, "Content-Type": "application/json"}
+            if continuation_token:
+                headers["X-MS-ContinuationToken"] = continuation_token
+            resp = self._request_with_retry("GET", url, headers=headers)
+            users.extend(resp.json().get("value", []))
+            continuation_token = resp.headers.get("X-MS-ContinuationToken")
+            if not continuation_token:
+                break
+
+        return users
+
 
 class AzureDevOpsMockClient(AzureDevOpsClientBase):
     """In-memory stub for development and unit testing.
@@ -265,6 +288,39 @@ class AzureDevOpsMockClient(AzureDevOpsClientBase):
 
         child_items = self.get_work_items_batch(child_ids, fields)
         return [child_items[child_id] for child_id in child_ids if child_id in child_items]
+
+    def list_users(self) -> List[Dict[str, Any]]:
+        names = [
+            "Aoi Tanaka",
+            "Haruto Sato",
+            "Yui Suzuki",
+            "Ren Takahashi",
+            "Sakura Ito",
+            "Minato Watanabe",
+            "Hina Yamamoto",
+            "Sota Nakamura",
+            "Mei Kobayashi",
+            "Riku Kato",
+            "Mio Yoshida",
+            "Yuto Yamada",
+            "Akari Sasaki",
+            "Kaito Yamaguchi",
+            "Rin Matsumoto",
+            "Hinata Inoue",
+            "Yuna Kimura",
+            "Daichi Hayashi",
+            "Nana Shimizu",
+            "Toma Saito",
+        ]
+        return [
+            {
+                "descriptor": f"mock.user.{index}",
+                "displayName": name,
+                "principalName": f"{name.lower().replace(' ', '.')}@example.com",
+                "mailAddress": f"{name.lower().replace(' ', '.')}@example.com",
+            }
+            for index, name in enumerate(names, start=1)
+        ]
 
 
 def create_client(settings) -> AzureDevOpsClientBase:

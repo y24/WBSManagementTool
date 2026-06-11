@@ -1,5 +1,5 @@
 import axios, { type AxiosResponse } from 'axios';
-import type { InitialData } from '../types';
+import type { AzureDevOpsUser, InitialData } from '../types';
 import { markNetworkErrorToastShown, showToast } from '../utils/toast';
 
 // APIクライアントのベース設定
@@ -34,6 +34,8 @@ let initialDataPromise: Promise<AxiosResponse<InitialData>> | null = null;
 let initialDataCache: AxiosResponse<InitialData> | null = null;
 
 export const getMarkers = () => apiClient.get<import('../types').Marker[]>('/markers');
+
+export const getAzureDevOpsUsers = () => apiClient.get<AzureDevOpsUser[]>('/integrations/azure-devops/users');
 
 export const getInitialData = (options: { forceRefresh?: boolean } = {}) => {
   if (!options.forceRefresh && initialDataCache) return Promise.resolve(initialDataCache);

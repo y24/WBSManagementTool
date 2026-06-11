@@ -52,6 +52,7 @@ class SyncSummary:
     skipped_same_remote_value: int = 0
     updated: int = 0
     failed: int = 0
+    field_updates: Dict[str, int] = field(default_factory=dict)
 
 
 @dataclass
@@ -122,8 +123,16 @@ def _build_patch_ops(
             continue
 
         wbs_raw = getattr(target, wbs_attr, None)
-        wbs_val = normalize_date(wbs_raw)
-        devops_val = normalize_devops_date(devops_fields.get(devops_field))
+        if wbs_attr == "azure_devops_assigned_to":
+            wbs_val = str(wbs_raw).strip() if wbs_raw else None
+            devops_raw = devops_fields.get(devops_field)
+            if isinstance(devops_raw, dict):
+                devops_val = devops_raw.get("uniqueName") or devops_raw.get("mailAddress") or devops_raw.get("displayName")
+            else:
+                devops_val = str(devops_raw).strip() if devops_raw else None
+        else:
+            wbs_val = normalize_date(wbs_raw)
+            devops_val = normalize_devops_date(devops_fields.get(devops_field))
 
         if wbs_val is None and not clear_remote_when_local_null:
             continue
@@ -131,7 +140,7 @@ def _build_patch_ops(
         if wbs_val == devops_val:
             continue
 
-        patch_value = f"{wbs_val}T00:00:00+09:00" if wbs_val is not None else None
+        patch_value = wbs_val if wbs_attr == "azure_devops_assigned_to" or wbs_val is None else f"{wbs_val}T00:00:00+09:00"
         ops.append({"op": "add", "path": f"/fields/{devops_field}", "value": patch_value})
 
     return ops
@@ -148,6 +157,13 @@ def _determine_status(summary: SyncSummary, dry_run: bool) -> str:
         + summary.updated
     )
     return "partial_success" if total_ok > 0 else "failed"
+
+
+def _record_field_updates(summary: SyncSummary, patch_ops: List[Dict[str, Any]]) -> None:
+    for op in patch_ops:
+        path = op.get("path", "")
+        field_name = path[len("/fields/"):] if path.startswith("/fields/") else path
+        summary.field_updates[field_name] = summary.field_updates.get(field_name, 0) + 1
 
 
 # ---------------------------------------------------------------------------
@@ -320,11 +336,13 @@ def run_sync(
         # dry_run: count as "would update" but skip PATCH
         if dry_run:
             summary.updated += 1
+            _record_field_updates(summary, patch_ops)
             continue
 
         try:
             updated = client.patch_work_item(work_item_id, patch_ops)
             summary.updated += 1
+            _record_field_updates(summary, patch_ops)
             state_repo.update_success(
                 target.entity_type,
                 target.entity_id,

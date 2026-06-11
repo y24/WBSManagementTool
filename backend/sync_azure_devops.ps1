@@ -61,6 +61,14 @@ try {
     Write-Host "  skipped_same_value    : $($res.summary.skipped_same_remote_value)"
     Write-Host "  updated               : $($res.summary.updated)" -ForegroundColor $(if ($res.summary.updated -gt 0) { "Green" } else { "White" })
     Write-Host "  failed                : $($res.summary.failed)" -ForegroundColor $(if ($res.summary.failed -gt 0) { "Red" } else { "White" })
+    if ($res.summary.field_updates) {
+        Write-Host "  field_updates         :" -ForegroundColor Green
+        $res.summary.field_updates.PSObject.Properties |
+            Sort-Object Name |
+            ForEach-Object {
+                Write-Host "    $($_.Name) : $($_.Value)" -ForegroundColor Green
+            }
+    }
     Write-Host ""
 
     if ($res.errors.Count -gt 0) {

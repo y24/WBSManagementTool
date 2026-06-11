@@ -1,6 +1,9 @@
-import type { MstMember } from '../../types';
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon, PlusIcon, TrashIcon, XIcon, sectionIconStyle, GpIcon } from './icons';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import type { AzureDevOpsUser, MstMember } from '../../types';
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon, PlusIcon, SyncIcon, TrashIcon, XIcon, sectionIconStyle, GpIcon } from './icons';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { Check, ChevronDown, Search, X } from 'lucide-react';
 
 interface NewMember {
   member_name: string;
@@ -9,6 +12,9 @@ interface NewMember {
 
 interface MemberSectionProps {
   members: MstMember[];
+  devOpsUsers: AzureDevOpsUser[];
+  isFetchingDevOpsUsers: boolean;
+  refreshDevOpsUsers: () => void;
   showAddMember: boolean;
   setShowAddMember: (value: boolean) => void;
   newMember: NewMember;
@@ -28,8 +34,234 @@ interface MemberSectionProps {
   setIsMemberListExpanded: (value: boolean) => void;
 }
 
+interface DevOpsAccountSelectProps {
+  value: string | null | undefined;
+  displayName: string | null | undefined;
+  users: AzureDevOpsUser[];
+  isFetchingUsers: boolean;
+  onRefreshUsers: () => void;
+  onChange: (user: AzureDevOpsUser | null) => void;
+}
+
+function DevOpsAccountSelect({
+  value,
+  displayName,
+  users,
+  isFetchingUsers,
+  onRefreshUsers,
+  onChange,
+}: DevOpsAccountSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, direction: 'down' as 'up' | 'down' });
+  const selectedUser = users.find(user => user.unique_name === value);
+  const selectedLabel = selectedUser?.display_name || displayName || value || '未設定';
+
+  const filteredUsers = useMemo(() => {
+    const normalized = searchTerm.trim().toLowerCase();
+    if (!normalized) return users;
+    return users.filter(user => (
+      user.display_name.toLowerCase().includes(normalized) ||
+      user.unique_name.toLowerCase().includes(normalized) ||
+      (user.mail_address ?? '').toLowerCase().includes(normalized)
+    ));
+  }, [searchTerm, users]);
+
+  const openDropdown = () => {
+    if (isFetchingUsers) return;
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const dropdownWidth = Math.max(rect.width, 320);
+      const estimatedHeight = 320;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const direction = spaceBelow < estimatedHeight && spaceAbove > spaceBelow ? 'up' : 'down';
+      let left = rect.left + window.scrollX;
+      if (rect.left + dropdownWidth > viewportWidth - 20) {
+        left = Math.max(10, rect.right + window.scrollX - dropdownWidth);
+      }
+      setCoords({
+        top: direction === 'down' ? rect.bottom + window.scrollY : rect.top + window.scrollY,
+        left,
+        width: dropdownWidth,
+        direction,
+      });
+    }
+    setIsOpen(true);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEvents = (e: Event) => {
+      if (e.type === 'mousedown' && e.target instanceof Node) {
+        if (dropdownRef.current?.contains(e.target) || buttonRef.current?.contains(e.target)) {
+          return;
+        }
+      }
+      if (e.type === 'scroll' && dropdownRef.current?.contains(e.target as Node)) {
+        return;
+      }
+      setIsOpen(false);
+    };
+
+    window.addEventListener('mousedown', handleEvents, true);
+    window.addEventListener('scroll', handleEvents, true);
+    window.addEventListener('resize', handleEvents);
+    return () => {
+      window.removeEventListener('mousedown', handleEvents, true);
+      window.removeEventListener('scroll', handleEvents, true);
+      window.removeEventListener('resize', handleEvents);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = window.setTimeout(() => searchInputRef.current?.focus(), 50);
+      return () => window.clearTimeout(timer);
+    }
+    setSearchTerm('');
+  }, [isOpen]);
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        className="master-devops-account-select"
+        disabled={isFetchingUsers}
+        onMouseDown={e => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          isOpen ? setIsOpen(false) : openDropdown();
+        }}
+        title={users.length === 0 ? '右上の更新ボタンでAzure DevOpsユーザーを取得してください' : 'Azure DevOpsのAssigned Toに同期するアカウント'}
+      >
+        <span className={value ? 'master-devops-account-label' : 'master-devops-account-placeholder'}>
+          {selectedLabel}
+        </span>
+        <ChevronDown size={14} className="master-devops-account-chevron" />
+      </button>
+
+      {isOpen && createPortal(
+        <div
+          ref={dropdownRef}
+          className="absolute z-[9999] bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-xl rounded-xl py-2 overflow-hidden ring-1 ring-black/5 dark:ring-white/10"
+          style={{
+            top: coords.direction === 'down' ? coords.top + 6 : coords.top - 6,
+            left: coords.left,
+            width: coords.width,
+            transform: coords.direction === 'up' ? 'translateY(-100%)' : 'none',
+          }}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between px-3 pb-2 mb-2 border-b border-gray-50 dark:border-slate-800">
+            <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">Azure DevOps</span>
+            {value && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(null);
+                  setIsOpen(false);
+                }}
+                className="text-[10px] text-blue-600 hover:text-blue-800 font-bold uppercase tracking-tight"
+              >
+                クリア
+              </button>
+            )}
+          </div>
+
+          <div className="px-3 pb-2 mb-2 border-b border-gray-50 dark:border-slate-800">
+            <div className="relative group/search">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/search:text-blue-500 transition-colors pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="名前・メールで検索..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-8 py-1.5 text-xs bg-gray-50/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50 rounded-lg focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/10 dark:text-slate-200 transition-all font-medium"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSearchTerm('');
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="max-h-64 overflow-y-auto overscroll-contain px-1">
+            {filteredUsers.length === 0 ? (
+              <div className="px-3 py-6 text-center">
+                <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">一致するユーザーがありません</p>
+                {users.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRefreshUsers();
+                    }}
+                    disabled={isFetchingUsers}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 shadow-sm transition-colors hover:border-blue-300 hover:text-blue-600 dark:hover:border-blue-700 dark:hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <SyncIcon />
+                    {isFetchingUsers ? '取得中...' : 'DevOpsユーザー一覧を取得'}
+                  </button>
+                )}
+              </div>
+            ) : filteredUsers.map(user => {
+              const selected = user.unique_name === value;
+              return (
+                <button
+                  key={user.descriptor}
+                  type="button"
+                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-colors text-left ${selected ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-800'}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(user);
+                    setIsOpen(false);
+                  }}
+                >
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors shadow-sm ${selected ? 'bg-blue-600 border-blue-600' : 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600'}`}>
+                    {selected && <Check size={10} className="text-white stroke-[3px]" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className={`text-xs truncate ${selected ? 'text-blue-700 dark:text-blue-400 font-bold' : 'text-gray-700 dark:text-slate-300 font-medium'}`}>
+                      {user.display_name}
+                    </div>
+                    <div className="text-[10px] text-gray-400 dark:text-slate-500 truncate">
+                      {user.unique_name}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
 export function MemberSection({
   members,
+  devOpsUsers,
+  isFetchingDevOpsUsers,
+  refreshDevOpsUsers,
   showAddMember,
   setShowAddMember,
   newMember,
@@ -89,6 +321,7 @@ export function MemberSection({
 
       <div className="master-member-list-header" aria-hidden="true">
         <span>担当者</span>
+        <span>Azure DevOps</span>
         <span>担当者ビュー除外</span>
       </div>
 
@@ -141,6 +374,21 @@ export function MemberSection({
                           <span className="master-item-name">{m.member_name}</span>
                         )}
                       </div>
+                      {!isEditing(m.id, 'member') && (
+                        <DevOpsAccountSelect
+                          value={m.azure_devops_unique_name}
+                          displayName={m.azure_devops_display_name}
+                          users={devOpsUsers}
+                          isFetchingUsers={isFetchingDevOpsUsers}
+                          onRefreshUsers={refreshDevOpsUsers}
+                          onChange={(user) => {
+                            saveEdit('/masters/members', m.id, {
+                              azure_devops_unique_name: user?.unique_name ?? null,
+                              azure_devops_display_name: user?.display_name ?? null,
+                            });
+                          }}
+                        />
+                      )}
                       {!isEditing(m.id, 'member') && (
                         <label
                           className="master-resource-exclude-toggle"

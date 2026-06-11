@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { apiClient, getInitialData } from '../api/client';
+import { apiClient, getAzureDevOpsUsers, getInitialData } from '../api/client';
 import { wbsOps } from '../api/wbsOperations';
-import { InitialData } from '../types';
+import { AzureDevOpsUser, InitialData } from '../types';
 import { HolidaySection } from '../components/masterSettings/HolidaySection';
 import { MemberSection } from '../components/masterSettings/MemberSection';
 import { StatusMappingSection } from '../components/masterSettings/StatusMappingSection';
@@ -146,6 +146,8 @@ export default function MasterSettings() {
   const [statusMappingDone, setStatusMappingDone] = useState<number[]>([]);
   const [isSavingSetting, setIsSavingSetting] = useState(false);
   const [isSyncingHolidays, setIsSyncingHolidays] = useState(false);
+  const [isFetchingDevOpsUsers, setIsFetchingDevOpsUsers] = useState(false);
+  const [devOpsUsers, setDevOpsUsers] = useState<AzureDevOpsUser[]>([]);
   const [isSubtaskTypeListExpanded, setIsSubtaskTypeListExpanded] = useState(false);
   const [isMemberListExpanded, setIsMemberListExpanded] = useState(false);
   const [isHolidayListExpanded, setIsHolidayListExpanded] = useState(false);
@@ -408,6 +410,20 @@ export default function MasterSettings() {
     }
   };
 
+  const refreshDevOpsUsers = async () => {
+    try {
+      setIsFetchingDevOpsUsers(true);
+      const res = await getAzureDevOpsUsers();
+      setDevOpsUsers(res.data);
+      showInfoToast('Azure DevOpsユーザーを取得しました。', `${res.data.length}件のユーザーを読み込みました。`);
+    } catch (err) {
+      console.error(err);
+      showErrorToastUnlessNetworkError(err, 'Azure DevOpsユーザーの取得に失敗しました。');
+    } finally {
+      setIsFetchingDevOpsUsers(false);
+    }
+  };
+
   const saveSetting = async (key: string, value: string) => {
     try {
       setIsSavingSetting(true);
@@ -556,6 +572,9 @@ export default function MasterSettings() {
           <div id="members" className="master-scroll-section">
             <MemberSection
               members={data?.members ?? []}
+              devOpsUsers={devOpsUsers}
+              isFetchingDevOpsUsers={isFetchingDevOpsUsers}
+              refreshDevOpsUsers={refreshDevOpsUsers}
               showAddMember={showAddMember}
               setShowAddMember={setShowAddMember}
               newMember={newMember}

@@ -24,6 +24,7 @@ class AzureDevOpsSettings:
             "planned_end_date": "Microsoft.VSTS.Scheduling.TargetDate",
             "actual_start_date": "Custom.ActualStartDate",
             "actual_end_date": "Custom.ActualEndDate",
+            "azure_devops_assigned_to": "System.AssignedTo",
         }
     )
 
@@ -51,7 +52,9 @@ def load_settings() -> AzureDevOpsSettings:
     field_mapping_env = os.getenv("AZURE_DEVOPS_FIELD_MAPPING")
     if field_mapping_env:
         try:
-            s.field_mapping = json.loads(field_mapping_env)
+            parsed_mapping = json.loads(field_mapping_env)
+            if isinstance(parsed_mapping, dict):
+                s.field_mapping.update(parsed_mapping)
         except json.JSONDecodeError:
             pass
 

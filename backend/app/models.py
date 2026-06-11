@@ -46,6 +46,8 @@ class MstMember(Base):
     member_name = Column(String(100), nullable=False)
     color_code = Column(String(20), nullable=False, default="#9ca3af")
     exclude_from_resource_view = Column(Boolean, nullable=False, default=False)
+    azure_devops_unique_name = Column(String(255), nullable=True)
+    azure_devops_display_name = Column(String(255), nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

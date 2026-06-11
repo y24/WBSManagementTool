@@ -806,9 +806,9 @@ code {
 }
 
 .master-member-list-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16rem 7.5rem;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
   margin: 0.25rem 0 0.15rem;
   padding: 0.35rem 4.7rem 0.35rem 3.75rem;
@@ -886,6 +886,75 @@ code {
   color: #64748b;
   cursor: pointer;
   user-select: none;
+}
+
+.master-devops-account-select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 16rem;
+  min-width: 12rem;
+  max-width: 16rem;
+  flex-shrink: 0;
+  margin-left: 0.75rem;
+  padding: 0.34rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #334155;
+  font-size: 0.78rem;
+  outline: none;
+  text-align: left;
+}
+
+.master-devops-account-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.master-devops-account-select:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+:root.dark .master-devops-account-select {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+:root.dark .master-devops-account-select:disabled {
+  background: #0f172a;
+  color: #64748b;
+}
+
+.master-devops-account-label,
+.master-devops-account-placeholder {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.master-devops-account-label {
+  color: #334155;
+  font-weight: 600;
+}
+
+.master-devops-account-placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.master-devops-account-chevron {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+:root.dark .master-devops-account-label {
+  color: #f1f5f9;
 }
 
 .master-resource-exclude-toggle input {
