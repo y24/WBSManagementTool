@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, X, Check, Hash, MessageSquare, ExternalLink, Link, FolderKanban, ListTodo, AlignLeft, AlertTriangle, Pause, RefreshCw, Loader2 } from 'lucide-react';
+import { FileText, X, Check, Hash, MessageSquare, ExternalLink, Link, Unlink, FolderKanban, ListTodo, AlignLeft, AlertTriangle, Pause, RefreshCw, Loader2 } from 'lucide-react';
 import { wbsOps } from '../../api/wbsOperations';
 
 export type EditingType = 'project' | 'task' | 'subtask';
@@ -34,6 +34,55 @@ const TYPE_LABELS: Record<EditingType, { label: string; icon: React.ReactNode }>
   project: { label: 'プロジェクト', icon: <FolderKanban size={18} className="text-violet-500" /> },
   task: { label: 'タスク', icon: <ListTodo size={18} className="text-blue-500" /> },
   subtask: { label: 'サブタスク', icon: <AlignLeft size={18} className="text-teal-500" /> },
+};
+
+const syncToggleStyles = {
+  ticket: {
+    on: 'border-blue-200 bg-blue-50 text-blue-700 shadow-blue-100/70 hover:bg-blue-100 dark:border-blue-800/70 dark:bg-blue-950/35 dark:text-blue-200 dark:shadow-none dark:hover:bg-blue-900/45',
+    off: 'border-gray-200 bg-white text-gray-500 hover:border-blue-200 hover:bg-blue-50/70 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-blue-800/60 dark:hover:bg-blue-950/25 dark:hover:text-blue-300',
+    dotOn: 'bg-blue-500 dark:bg-blue-300',
+  },
+  testing: {
+    on: 'border-violet-200 bg-violet-50 text-violet-700 shadow-violet-100/70 hover:bg-violet-100 dark:border-violet-800/70 dark:bg-violet-950/35 dark:text-violet-200 dark:shadow-none dark:hover:bg-violet-900/45',
+    off: 'border-gray-200 bg-white text-gray-500 hover:border-violet-200 hover:bg-violet-50/70 hover:text-violet-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-violet-800/60 dark:hover:bg-violet-950/25 dark:hover:text-violet-300',
+    dotOn: 'bg-violet-500 dark:bg-violet-300',
+  },
+};
+
+const SyncToggleButton = ({
+  synced,
+  onChange,
+  tone,
+  label,
+}: {
+  synced: boolean;
+  onChange: (value: boolean) => void;
+  tone: 'ticket' | 'testing';
+  label: string;
+}) => {
+  const styles = syncToggleStyles[tone];
+  const stateText = synced ? '同期ON' : '同期OFF';
+
+  return (
+    <button
+      type="button"
+      aria-pressed={synced}
+      title={`${label}: ${stateText}`}
+      onClick={() => onChange(!synced)}
+      className={`mt-2.5 inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold shadow-sm transition-all active:scale-[0.98] ${
+        synced ? styles.on : styles.off
+      }`}
+    >
+      <span className={`flex h-5 w-5 items-center justify-center rounded-md ${synced ? 'bg-white/80 dark:bg-white/10' : 'bg-gray-100 dark:bg-slate-800'}`}>
+        {synced ? <Link size={13} /> : <Unlink size={13} />}
+      </span>
+      <span>{label}</span>
+      <span className="flex items-center gap-1 text-[11px] font-bold">
+        <span className={`h-1.5 w-1.5 rounded-full ${synced ? styles.dotOn : 'bg-gray-300 dark:bg-slate-600'}`} />
+        {stateText}
+      </span>
+    </button>
+  );
 };
 
 const formatWorkItemCandidateLabel = (candidate: WorkItemCandidate) => {
@@ -250,15 +299,12 @@ const DetailModal = ({
                   </p>
                 )}
                 {editingType === 'project' && ticketIdValue && (
-                  <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none w-fit">
-                    <input
-                      type="checkbox"
-                      checked={!syncToAzureDevops}
-                      onChange={(e) => setSyncToAzureDevops(!e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                    />
-                    <span className="text-xs text-gray-500 dark:text-slate-400">チケットIDの情報を同期しない</span>
-                  </label>
+                  <SyncToggleButton
+                    synced={syncToAzureDevops}
+                    onChange={setSyncToAzureDevops}
+                    tone="ticket"
+                    label="チケットID"
+                  />
                 )}
                 {editingType === 'project' && (
                   <div className="mt-3">
@@ -298,28 +344,22 @@ const DetailModal = ({
                       </p>
                     )}
                     {testingIdValue && (
-                      <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none w-fit">
-                        <input
-                          type="checkbox"
-                          checked={!syncTestingToAzureDevops}
-                          onChange={(e) => setSyncTestingToAzureDevops(!e.target.checked)}
-                          className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-slate-600 focus:ring-slate-400 cursor-pointer"
-                        />
-                        <span className="text-xs text-gray-500 dark:text-slate-400">Testing IDの情報を同期しない</span>
-                      </label>
+                      <SyncToggleButton
+                        synced={syncTestingToAzureDevops}
+                        onChange={setSyncTestingToAzureDevops}
+                        tone="testing"
+                        label="Testing ID"
+                      />
                     )}
                   </div>
                 )}
                 {editingType !== 'project' && ticketIdValue && (
-                  <label className="mt-2.5 flex items-center gap-2 cursor-pointer select-none w-fit">
-                    <input
-                      type="checkbox"
-                      checked={!syncToAzureDevops}
-                      onChange={(e) => setSyncToAzureDevops(!e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                    />
-                    <span className="text-xs text-gray-500 dark:text-slate-400">情報を同期しない</span>
-                  </label>
+                  <SyncToggleButton
+                    synced={syncToAzureDevops}
+                    onChange={setSyncToAzureDevops}
+                    tone="ticket"
+                    label="チケットID"
+                  />
                 )}
               </div>
 
