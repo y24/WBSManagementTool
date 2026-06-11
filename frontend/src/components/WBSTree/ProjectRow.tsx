@@ -59,11 +59,26 @@ const ProjectRow = memo(({
   hasDuplicateTicketId = false
 }: ProjectRowProps) => {
   const warning = getWarning(project, initialData);
-  const ticketLinkClassName = hasDuplicateTicketId
+  const usesTestingLink = project.testing_id != null && project.sync_testing_to_azure_devops !== false;
+  const linkTargetId = usesTestingLink ? project.testing_id : project.ticket_id;
+  const linkUrl = linkTargetId && initialData?.ticket_url_template
+    ? initialData.ticket_url_template.replace('{TICKET_ID}', String(linkTargetId))
+    : null;
+  const testingLinkClassName = 'text-violet-500 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/25 hover:bg-violet-100 dark:hover:bg-violet-900/40 border border-violet-100 dark:border-violet-800/60 transition-colors shrink-0 p-0.5 rounded';
+  const ticketLinkClassName = usesTestingLink
+    ? testingLinkClassName
+    : hasDuplicateTicketId
     ? 'text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/25 hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 transition-colors shrink-0 p-0.5 rounded'
     : project.sync_to_azure_devops === false
     ? 'text-gray-400 hover:text-gray-500 dark:text-slate-500 dark:hover:text-slate-400 transition-colors shrink-0 p-0.5'
     : 'text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/45 border border-blue-100 dark:border-blue-800/60 transition-colors shrink-0 p-0.5 rounded';
+  const linkTitle = usesTestingLink
+    ? `Testing IDを開く (#${project.testing_id})`
+    : hasDuplicateTicketId
+    ? `同じチケットIDの連携対象があります (#${project.ticket_id})`
+    : project.sync_to_azure_devops === false
+    ? `チケットを開く (#${project.ticket_id}) - 情報を同期しない`
+    : `チケットを開く (#${project.ticket_id})`;
 
   const getHighlight = (field: string, value: any) => 
     shouldHighlightField('project', field, value, project, initialData);
@@ -170,16 +185,16 @@ const ProjectRow = memo(({
         className={`flex-shrink-0 flex items-center justify-center ${commonCellClasses}`}
         style={{ width: 30, minWidth: 30, scrollMarginLeft: nameWidth }}
       >
-        {project.ticket_id && initialData?.ticket_url_template && (
+        {linkUrl && (
           <a
-            href={initialData.ticket_url_template.replace('{TICKET_ID}', String(project.ticket_id))}
+            href={linkUrl}
             target="_blank"
             rel="noopener noreferrer"
             className={ticketLinkClassName}
-            title={hasDuplicateTicketId ? `同じチケットIDの連携対象があります (#${project.ticket_id})` : project.sync_to_azure_devops === false ? `チケットを開く (#${project.ticket_id}) - 情報を同期しない` : `チケットを開く (#${project.ticket_id})`}
+            title={linkTitle}
             onClick={(e) => e.stopPropagation()}
           >
-            {hasDuplicateTicketId ? <AlertTriangle size={14} /> : <Link size={14} />}
+            {!usesTestingLink && hasDuplicateTicketId ? <AlertTriangle size={14} /> : <Link size={14} />}
           </a>
         )}
       </div>
