@@ -6,6 +6,7 @@ import { GpIcon } from './icons';
 interface NewStatus {
   status_name: string;
   color_code: string;
+  azure_devops_state: string;
 }
 
 interface StatusSectionProps {
@@ -75,11 +76,25 @@ export function StatusSection({
               value={newStatus.color_code}
               onChange={e => setNewStatus({ ...newStatus, color_code: e.target.value })}
             />
+            <input
+              type="text"
+              className="master-input master-status-state-input"
+              placeholder="Azure DevOps State"
+              value={newStatus.azure_devops_state}
+              onChange={e => setNewStatus({ ...newStatus, azure_devops_state: e.target.value })}
+              onKeyDown={e => e.key === 'Enter' && createStatus()}
+              title="Azure DevOpsのSystem.Stateに同期する名前"
+            />
             <button className="master-confirm-btn" onClick={createStatus}><CheckIcon /></button>
             <button className="master-cancel-btn" onClick={() => setShowAddStatus(false)}><XIcon /></button>
           </div>
         </div>
       )}
+
+      <div className="master-status-list-header" aria-hidden="true">
+        <span>ステータス</span>
+        <span>Azure DevOps System.State</span>
+      </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="statuses-list">
@@ -95,7 +110,7 @@ export function StatusSection({
                     <div 
                       ref={provided.innerRef}
                       {...provided.draggableProps}
-                      className={`master-list-item ${snapshot.isDragging ? 'dragging' : ''}`}
+                      className={`master-list-item master-status-row ${snapshot.isDragging ? 'dragging' : ''}`}
                     >
                       <div className="master-list-item-content">
                         <div {...provided.dragHandleProps} className="master-drag-handle mr-2 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
@@ -131,6 +146,32 @@ export function StatusSection({
                           <span className="master-item-name">{s.status_name}</span>
                         )}
                       </div>
+                      {!isEditing(s.id, 'status') && (
+                        <input
+                          type="text"
+                          className="master-input master-status-state-input"
+                          defaultValue={s.azure_devops_state ?? ''}
+                          placeholder="未設定"
+                          title="Azure DevOpsのSystem.Stateに同期する名前"
+                          onMouseDown={e => e.stopPropagation()}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.currentTarget.blur();
+                            }
+                            if (e.key === 'Escape') {
+                              e.currentTarget.value = s.azure_devops_state ?? '';
+                              e.currentTarget.blur();
+                            }
+                          }}
+                          onBlur={e => {
+                            const nextState = e.currentTarget.value.trim();
+                            const currentState = s.azure_devops_state ?? '';
+                            if (nextState !== currentState) {
+                              saveEdit('/masters/statuses', s.id, { azure_devops_state: nextState || null });
+                            }
+                          }}
+                        />
+                      )}
                       {!isEditing(s.id, 'status') && (
                         <div className="master-actions">
                           <button className="master-action-btn master-edit" onClick={() => startEdit(s.id, 'status', s.status_name, s.color_code)} title="編集">

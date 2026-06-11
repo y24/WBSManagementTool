@@ -130,6 +130,10 @@ def _build_patch_ops(
                 devops_val = devops_raw.get("uniqueName") or devops_raw.get("mailAddress") or devops_raw.get("displayName")
             else:
                 devops_val = str(devops_raw).strip() if devops_raw else None
+        elif wbs_attr == "azure_devops_state":
+            wbs_val = str(wbs_raw).strip() if wbs_raw else None
+            devops_raw = devops_fields.get(devops_field)
+            devops_val = str(devops_raw).strip() if devops_raw else None
         else:
             wbs_val = normalize_date(wbs_raw)
             devops_val = normalize_devops_date(devops_fields.get(devops_field))
@@ -140,7 +144,7 @@ def _build_patch_ops(
         if wbs_val == devops_val:
             continue
 
-        patch_value = wbs_val if wbs_attr == "azure_devops_assigned_to" or wbs_val is None else f"{wbs_val}T00:00:00+09:00"
+        patch_value = wbs_val if wbs_attr in ("azure_devops_assigned_to", "azure_devops_state") or wbs_val is None else f"{wbs_val}T00:00:00+09:00"
         ops.append({"op": "add", "path": f"/fields/{devops_field}", "value": patch_value})
 
     return ops

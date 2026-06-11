@@ -9,6 +9,7 @@ export interface MasterBase {
 export interface MstStatus extends MasterBase {
   status_name: string;
   color_code: string;
+  azure_devops_state?: string | null;
   is_system_reserved: boolean;
 }
 

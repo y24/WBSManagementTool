@@ -50,6 +50,7 @@ type DevOpsSyncStatusConditions = Record<DevOpsSyncField, number[]>;
 interface NewStatus {
   status_name: string;
   color_code: string;
+  azure_devops_state: string;
 }
 
 interface NewSubtaskType {
@@ -121,7 +122,7 @@ export default function MasterSettings() {
   const [editValue, setEditValue] = useState('');
   const [editColorValue, setEditColorValue] = useState('#000000');
 
-  const [newStatus, setNewStatus] = useState<NewStatus>({ status_name: '', color_code: '#3b82f6' });
+  const [newStatus, setNewStatus] = useState<NewStatus>({ status_name: '', color_code: '#3b82f6', azure_devops_state: '' });
   const [newSubtaskType, setNewSubtaskType] = useState<NewSubtaskType>({ type_name: '' });
   const [newMember, setNewMember] = useState<NewMember>({ member_name: '', color_code: '#9ca3af' });
   const [newHoliday, setNewHoliday] = useState<NewHoliday>({ holiday_date: '', holiday_name: '' });
@@ -327,9 +328,10 @@ export default function MasterSettings() {
       await apiClient.post('/masters/statuses', {
         status_name: newStatus.status_name.trim(),
         color_code: newStatus.color_code,
+        azure_devops_state: newStatus.azure_devops_state.trim() || null,
         sort_order: data?.statuses.length ?? 0,
       });
-      setNewStatus({ status_name: '', color_code: '#3b82f6' });
+      setNewStatus({ status_name: '', color_code: '#3b82f6', azure_devops_state: '' });
       setShowAddStatus(false);
       fetchData();
     } catch (err) {

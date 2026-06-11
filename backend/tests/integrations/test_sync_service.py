@@ -153,6 +153,7 @@ def test_env_field_mapping_preserves_assigned_to_default(monkeypatch):
 
     assert loaded.field_mapping["planned_start_date"] == "Custom.StartDate"
     assert loaded.field_mapping["azure_devops_assigned_to"] == "System.AssignedTo"
+    assert loaded.field_mapping["azure_devops_state"] == "System.State"
 
 
 # ---------------------------------------------------------------------------
@@ -350,6 +351,45 @@ class TestPatchBehavior:
         assert result.summary.updated == 1
         assert result.summary.field_updates["System.AssignedTo"] == 1
         assert client.get_stored_fields(101).get("System.AssignedTo") == "assigned.member@example.com"
+
+    def test_patches_state_from_status_mapping(self, db_session, settings):
+        settings.field_mapping = {
+            **settings.field_mapping,
+            "azure_devops_state": "System.State",
+        }
+        status = db_session.query(models.MstStatus).filter(models.MstStatus.id == 1).one()
+        status.azure_devops_state = "Active"
+        db_session.commit()
+        _make_project(db_session, ticket_id=101)
+
+        client = AzureDevOpsMockClient()
+        result = run_sync(db_session, dry_run=False, settings=settings, client=client)
+
+        assert result.summary.updated == 1
+        assert result.summary.field_updates["System.State"] == 1
+        assert client.get_stored_fields(101).get("System.State") == "Active"
+
+    def test_blank_state_mapping_does_not_clear_remote_state_by_default(self, db_session, settings):
+        settings.field_mapping = {
+            **settings.field_mapping,
+            "azure_devops_state": "System.State",
+        }
+        _make_project(db_session, ticket_id=101)
+
+        client = AzureDevOpsMockClient(initial_items={
+            101: {
+                "Microsoft.VSTS.Scheduling.StartDate": "2026-05-01T00:00:00Z",
+                "Microsoft.VSTS.Scheduling.TargetDate": "2026-05-10T00:00:00Z",
+                "Custom.ActualStartDate": None,
+                "Custom.ActualEndDate": None,
+                "System.State": "New",
+            }
+        })
+        result = run_sync(db_session, dry_run=False, settings=settings, client=client)
+
+        assert result.summary.skipped_same_remote_value == 1
+        assert result.summary.updated == 0
+        assert client.get_stored_fields(101).get("System.State") == "New"
 
 
 class TestStatusConditionBehavior:

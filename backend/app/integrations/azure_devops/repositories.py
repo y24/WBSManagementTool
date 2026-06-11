@@ -31,6 +31,7 @@ class SyncTarget:
     actual_start_date: object
     actual_end_date: object
     azure_devops_assigned_to: Optional[str]
+    azure_devops_state: Optional[str]
     status_id: Optional[int]
     updated_at: datetime
 
@@ -71,6 +72,7 @@ class SyncTargetRepository:
                         actual_start_date=row.actual_start_date,
                         actual_end_date=row.actual_end_date,
                         azure_devops_assigned_to=row.assignee.azure_devops_unique_name if row.assignee else None,
+                        azure_devops_state=row.status.azure_devops_state if row.status else None,
                         status_id=row.status_id,
                         updated_at=row.updated_at,
                     )
@@ -86,6 +88,7 @@ class SyncTargetRepository:
                         actual_start_date=row.actual_start_date,
                         actual_end_date=row.actual_end_date,
                         azure_devops_assigned_to=row.assignee.azure_devops_unique_name if row.assignee else None,
+                        azure_devops_state=row.status.azure_devops_state if row.status else None,
                         status_id=row.status_id,
                         updated_at=row.updated_at,
                     )
@@ -110,6 +113,7 @@ class SyncTargetRepository:
                     actual_start_date=row.actual_start_date,
                     actual_end_date=row.actual_end_date,
                     azure_devops_assigned_to=row.assignee.azure_devops_unique_name if row.assignee else None,
+                    azure_devops_state=row.status.azure_devops_state if row.status else None,
                     status_id=row.status_id,
                     updated_at=row.updated_at,
                 )
@@ -134,6 +138,7 @@ class SyncTargetRepository:
                     actual_start_date=row.actual_start_date,
                     actual_end_date=row.actual_end_date,
                     azure_devops_assigned_to=row.assignee.azure_devops_unique_name if row.assignee else None,
+                    azure_devops_state=row.status.azure_devops_state if row.status else None,
                     status_id=row.status_id,
                     updated_at=row.updated_at,
                 )

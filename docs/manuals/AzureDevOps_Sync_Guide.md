@@ -1,6 +1,6 @@
 # WBS管理ツール：Azure DevOps 同期 セットアップ・運用ガイド
 
-本機能は、WBS管理ツールで管理している日付情報（開始予定日・終了予定日・開始日・終了日）を、Azure DevOps の Work Item に定期的に反映する連携機能です。
+本機能は、WBS管理ツールで管理している日付情報（開始予定日・終了予定日・開始日・終了日）、担当者、ステータスを、Azure DevOps の Work Item に定期的に反映する連携機能です。
 
 **同期方向: WBS管理ツール → Azure DevOps（一方向のみ）**
 
@@ -11,7 +11,7 @@
 ### 同期の仕組み
 
 1. 各プロジェクト・タスク・サブタスクの「チケットID」欄の値を Azure DevOps の **Work Item ID** として使用します。
-2. 日付4項目のハッシュ値を前回と比較し、**変更があったレコードのみ** Azure DevOps に問い合わせます。
+2. 同期対象項目のハッシュ値を前回と比較し、**変更があったレコードのみ** Azure DevOps に問い合わせます。
 3. Azure DevOps 側のフィールドと比較し、**実際に差分があるフィールドのみ** 更新します。
 
 この設計により、Azure DevOps へのリクエスト数を最小限に抑えます。
@@ -98,7 +98,7 @@ AZURE_DEVOPS_SUPPRESS_NOTIFICATIONS=false
 Azure DevOps のフィールド名が標準と異なる場合は、以下の変数をJSON文字列で指定します。
 
 ```ini
-AZURE_DEVOPS_FIELD_MAPPING={"planned_start_date":"Microsoft.VSTS.Scheduling.StartDate","planned_end_date":"Microsoft.VSTS.Scheduling.TargetDate","actual_start_date":"Custom.ActualStartDate","actual_end_date":"Custom.ActualEndDate"}
+AZURE_DEVOPS_FIELD_MAPPING={"planned_start_date":"Microsoft.VSTS.Scheduling.StartDate","planned_end_date":"Microsoft.VSTS.Scheduling.TargetDate","actual_start_date":"Custom.ActualStartDate","actual_end_date":"Custom.ActualEndDate","azure_devops_assigned_to":"System.AssignedTo","azure_devops_state":"System.State"}
 ```
 
 デフォルトのマッピング:
@@ -109,6 +109,8 @@ AZURE_DEVOPS_FIELD_MAPPING={"planned_start_date":"Microsoft.VSTS.Scheduling.Star
 | 終了予定日 | `Microsoft.VSTS.Scheduling.TargetDate` |
 | 開始日（実績） | `Custom.ActualStartDate` |
 | 終了日（実績） | `Custom.ActualEndDate` |
+| 担当者 | `System.AssignedTo` |
+| ステータス | `System.State` |
 
 ---
 
@@ -129,6 +131,17 @@ AZURE_DEVOPS_FIELD_MAPPING={"planned_start_date":"Microsoft.VSTS.Scheduling.Star
 ### Azure DevOps同期フラグの有効化
 
 同期対象にするレコードごとに、**Azure DevOps同期フラグ**（`sync_to_azure_devops`）を有効化する必要があります。
+
+### 担当者・ステータスの紐づけ
+
+マスタ・設定画面で以下を設定します。
+
+| マスタ | 設定項目 | 同期先 |
+|---|---|---|
+| 担当者一覧 | Azure DevOps アカウント | `System.AssignedTo` |
+| ステータス一覧 | Azure DevOps System.State | `System.State` |
+
+ステータスの `Azure DevOps System.State` が空欄の場合、そのステータスでは `System.State` は更新されません。
 
 > [!NOTE]
 > フロントエンドでの操作UIは現在開発中です。現時点では、以下の PowerShell コマンドで個別に有効化できます。

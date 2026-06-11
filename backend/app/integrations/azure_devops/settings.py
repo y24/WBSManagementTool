@@ -25,6 +25,7 @@ class AzureDevOpsSettings:
             "actual_start_date": "Custom.ActualStartDate",
             "actual_end_date": "Custom.ActualEndDate",
             "azure_devops_assigned_to": "System.AssignedTo",
+            "azure_devops_state": "System.State",
         }
     )
 

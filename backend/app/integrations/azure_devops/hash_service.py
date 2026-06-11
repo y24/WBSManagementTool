@@ -41,7 +41,11 @@ def compute_date_hash(
 def compute_payload_hash(payload: Mapping[str, Optional[Union[date, str]]]) -> str:
     """Return SHA-256 hex digest of the active Azure DevOps sync payload."""
     normalized = {
-        key: (str(value).strip() if key == "azure_devops_assigned_to" and value else normalize_date(value))
+        key: (
+            str(value).strip()
+            if key in ("azure_devops_assigned_to", "azure_devops_state") and value
+            else normalize_date(value)
+        )
         for key, value in payload.items()
     }
     json_str = json.dumps(normalized, sort_keys=True, ensure_ascii=True)
