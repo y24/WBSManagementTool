@@ -1,5 +1,5 @@
 import pytest
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app import crud, schemas, models
 from app.crud.shared_filter import create_shared_filter, get_shared_filter
 
@@ -20,7 +20,7 @@ def test_create_and_get_shared_filter(db_session):
 
 def test_shared_filter_cleanup(db_session):
     # 1. Manually insert an old record (100 days ago)
-    old_date = datetime.now(UTC) - timedelta(days=100)
+    old_date = datetime.now(timezone.utc) - timedelta(days=100)
     old_filter = models.SharedFilter(
         token="old-token",
         filter_data='{"test": "old"}',

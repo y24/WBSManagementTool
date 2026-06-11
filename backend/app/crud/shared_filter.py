@@ -1,11 +1,11 @@
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from .. import models, schemas
 
 def create_shared_filter(db: Session, filter_in: schemas.SharedFilterCreate) -> models.SharedFilter:
     # 1. Cleanup old records (90 days)
-    threshold = datetime.now(UTC) - timedelta(days=90)
+    threshold = datetime.now(timezone.utc) - timedelta(days=90)
     old_filters = db.query(models.SharedFilter).filter(models.SharedFilter.created_at < threshold).all()
     for old_filter in old_filters:
         db.delete(old_filter)
