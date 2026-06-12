@@ -107,7 +107,6 @@ export const useWBSKeyboardNavigation = ({
 
     if (type === 'subtask') {
       const s = data as Subtask;
-      if (field === 'review_start' && Number(s.review_days) === 0) return true;
       if (field === 'planned_effort' && s.is_auto_effort) return true;
       if (field === 'actual_effort' && s.is_auto_effort) return true;
     }
