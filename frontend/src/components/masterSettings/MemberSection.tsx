@@ -10,6 +10,8 @@ interface NewMember {
   color_code: string;
 }
 
+type ResourceViewMode = 'visible' | 'load_rate_off' | 'hidden';
+
 interface MemberSectionProps {
   members: MstMember[];
   devOpsUsers: AzureDevOpsUser[];
@@ -257,6 +259,11 @@ function DevOpsAccountSelect({
   );
 }
 
+const getResourceViewMode = (member: MstMember): ResourceViewMode => {
+  if (member.resource_view_mode) return member.resource_view_mode;
+  return member.exclude_from_resource_view ? 'hidden' : 'visible';
+};
+
 export function MemberSection({
   members,
   devOpsUsers,
@@ -322,7 +329,7 @@ export function MemberSection({
       <div className="master-member-list-header" aria-hidden="true">
         <span>担当者</span>
         <span>Azure DevOps</span>
-        <span>担当者ビュー除外</span>
+        <span>担当者ビュー</span>
       </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
@@ -390,18 +397,18 @@ export function MemberSection({
                         />
                       )}
                       {!isEditing(m.id, 'member') && (
-                        <label
-                          className="master-resource-exclude-toggle"
-                          title="担当者ビューの表示対象から除外"
+                        <select
+                          className="master-resource-view-mode-select"
+                          title="担当者ビューでの表示と稼働率計算"
                           onMouseDown={e => e.stopPropagation()}
+                          value={getResourceViewMode(m)}
+                          onChange={e => saveEdit('/masters/members', m.id, { resource_view_mode: e.target.value })}
+                          aria-label={`${m.member_name}の担当者ビュー設定`}
                         >
-                          <input
-                            type="checkbox"
-                            checked={m.exclude_from_resource_view}
-                            onChange={e => saveEdit('/masters/members', m.id, { exclude_from_resource_view: e.target.checked })}
-                            aria-label={`${m.member_name}を担当者ビューから除外`}
-                          />
-                        </label>
+                          <option value="visible">表示する</option>
+                          <option value="load_rate_off">表示する・稼働率計算OFF</option>
+                          <option value="hidden">非表示</option>
+                        </select>
                       )}
                       {!isEditing(m.id, 'member') && (
                         <div className="master-actions">

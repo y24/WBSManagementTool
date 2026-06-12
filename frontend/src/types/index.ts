@@ -24,6 +24,7 @@ export interface MstMember extends MasterBase {
   member_name: string;
   color_code: string;
   exclude_from_resource_view: boolean;
+  resource_view_mode?: 'visible' | 'load_rate_off' | 'hidden';
   azure_devops_unique_name?: string | null;
   azure_devops_display_name?: string | null;
 }

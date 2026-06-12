@@ -50,6 +50,7 @@ class MstMember(Base):
     member_name = Column(String(100), nullable=False)
     color_code = Column(String(20), nullable=False, default="#9ca3af")
     exclude_from_resource_view = Column(Boolean, nullable=False, default=False)
+    resource_view_mode = Column(String(30), nullable=False, default="visible")
     azure_devops_unique_name = Column(String(255), nullable=True)
     azure_devops_display_name = Column(String(255), nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
@@ -60,6 +61,10 @@ class MstMember(Base):
     __table_args__ = (
         CheckConstraint("member_name <> ''", name="check_member_name_empty"),
         CheckConstraint("sort_order >= 0", name="check_member_sort"),
+        CheckConstraint(
+            "resource_view_mode IN ('visible', 'load_rate_off', 'hidden')",
+            name="check_member_resource_view_mode",
+        ),
     )
 
 class MstHoliday(Base):

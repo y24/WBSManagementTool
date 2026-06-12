@@ -87,7 +87,12 @@ def delete_subtask_type(db: Session, type_id: int):
     return db_type
 
 def create_member(db: Session, member: schemas.MemberCreate):
-    db_member = models.MstMember(**member.model_dump())
+    member_data = member.model_dump()
+    if member_data.get("resource_view_mode") == "hidden":
+        member_data["exclude_from_resource_view"] = True
+    elif member_data.get("exclude_from_resource_view"):
+        member_data["resource_view_mode"] = "hidden"
+    db_member = models.MstMember(**member_data)
     db.add(db_member)
     db.commit()
     db.refresh(db_member)
@@ -97,7 +102,15 @@ def update_member(db: Session, member_id: int, member: schemas.MemberUpdate):
     db_member = db.query(models.MstMember).filter(models.MstMember.id == member_id).first()
     if not db_member:
         return None
-    for key, value in member.model_dump(exclude_unset=True).items():
+    update_data = member.model_dump(exclude_unset=True)
+    if "resource_view_mode" in update_data:
+        update_data["exclude_from_resource_view"] = update_data["resource_view_mode"] == "hidden"
+    elif update_data.get("exclude_from_resource_view") is True:
+        update_data["resource_view_mode"] = "hidden"
+    elif update_data.get("exclude_from_resource_view") is False and db_member.resource_view_mode == "hidden":
+        update_data["resource_view_mode"] = "visible"
+
+    for key, value in update_data.items():
         setattr(db_member, key, value)
     db.commit()
     db.refresh(db_member)

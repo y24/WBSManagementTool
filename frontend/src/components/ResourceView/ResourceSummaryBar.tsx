@@ -260,6 +260,7 @@ export default function ResourceSummaryBar({
   loadScopeEndDate,
 }: ResourceSummaryBarProps) {
   const assigned = data.filter(r => r.assignee !== null);
+  const loadRateAssigned = assigned.filter(r => r.isLoadRateCalculationEnabled && r.loadRate !== null);
 
   const holidaySet = useMemo(
     () => new Set(initialData?.holidays.map(h => h.holiday_date) ?? []),
@@ -280,31 +281,31 @@ export default function ResourceSummaryBar({
 
   if (assigned.length === 0) return null;
 
-  const avgLoadRate = Math.round(
-    assigned.reduce((sum, r) => sum + r.loadRate, 0) / assigned.length
-  );
+  const avgLoadRate = loadRateAssigned.length > 0
+    ? Math.round(loadRateAssigned.reduce((sum, r) => sum + (r.loadRate ?? 0), 0) / loadRateAssigned.length)
+    : null;
   const delayedCount = assigned.filter(r => r.delayedCount > 0).length;
-  const idleCount = assigned.filter(r => r.loadRate <= loadRateThresholds.criticalLow).length;
-  const overloadedCount = assigned.filter(r => r.loadRate >= loadRateThresholds.overload).length;
+  const idleCount = loadRateAssigned.filter(r => (r.loadRate ?? 0) <= loadRateThresholds.criticalLow).length;
+  const overloadedCount = loadRateAssigned.filter(r => (r.loadRate ?? 0) >= loadRateThresholds.overload).length;
 
   const delayedRows = assigned
     .map(row => ({ row, delayed: getDelayedSubtasks(row, todayStr, doneStatusId, newStatusId, pendingStatusId) }))
     .filter(item => item.delayed.length > 0);
   const idleRows = assigned
-    .filter(row => row.loadRate <= loadRateThresholds.criticalLow)
+    .filter(row => row.isLoadRateCalculationEnabled && row.loadRate !== null && row.loadRate <= loadRateThresholds.criticalLow)
     .map(row => ({ row, idleRanges: getIdleRanges(row, todayStr, loadScopeEndDate, holidaySet, doneStatusId) }));
   const overloadedRows = assigned
-    .filter(row => row.loadRate >= loadRateThresholds.overload)
+    .filter(row => row.isLoadRateCalculationEnabled && row.loadRate !== null && row.loadRate >= loadRateThresholds.overload)
     .map(row => ({ row, busiest: getBusiestPeriod(row, todayStr, loadScopeEndDate, holidaySet, doneStatusId) }));
 
   const cards: SummaryCard[] = [
     {
       kind: 'average',
       label: '平均予定稼働率',
-      value: avgLoadRate > 0 ? `${avgLoadRate}%` : '—',
-      bg: getLoadRateCardBg(avgLoadRate, loadRateThresholds),
-      textColor: getLoadRateTextColor(avgLoadRate, loadRateThresholds),
-      labelColor: getLoadRateLabelColor(avgLoadRate, loadRateThresholds),
+      value: avgLoadRate !== null && avgLoadRate > 0 ? `${avgLoadRate}%` : '—',
+      bg: getLoadRateCardBg(avgLoadRate ?? 0, loadRateThresholds),
+      textColor: getLoadRateTextColor(avgLoadRate ?? 0, loadRateThresholds),
+      labelColor: getLoadRateLabelColor(avgLoadRate ?? 0, loadRateThresholds),
       tooltip: null,
     },
     {

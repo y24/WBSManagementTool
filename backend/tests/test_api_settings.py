@@ -74,3 +74,28 @@ def test_member_resource_view_exclusion_round_trip_in_initial_data(db_session):
 
     initial_data = get_initial_data(db_session)
     assert initial_data["members"][0].exclude_from_resource_view is True
+    assert initial_data["members"][0].resource_view_mode == "hidden"
+
+
+def test_member_resource_view_mode_round_trip_in_initial_data(db_session):
+    member = update_member(
+        1,
+        schemas.MemberUpdate(resource_view_mode="load_rate_off"),
+        db_session,
+    )
+    assert member.resource_view_mode == "load_rate_off"
+    assert member.exclude_from_resource_view is False
+
+    initial_data = get_initial_data(db_session)
+    assert initial_data["members"][0].resource_view_mode == "load_rate_off"
+    assert initial_data["members"][0].exclude_from_resource_view is False
+
+
+def test_member_hidden_resource_view_mode_updates_legacy_exclusion(db_session):
+    member = update_member(
+        1,
+        schemas.MemberUpdate(resource_view_mode="hidden"),
+        db_session,
+    )
+    assert member.resource_view_mode == "hidden"
+    assert member.exclude_from_resource_view is True

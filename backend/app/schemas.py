@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -58,6 +58,7 @@ class MemberBase(BaseModel):
     member_name: str
     color_code: str = "#9ca3af"
     exclude_from_resource_view: bool = False
+    resource_view_mode: Literal["visible", "load_rate_off", "hidden"] = "visible"
     azure_devops_unique_name: Optional[str] = None
     azure_devops_display_name: Optional[str] = None
     sort_order: int = 0
@@ -70,6 +71,7 @@ class MemberUpdate(BaseModel):
     member_name: Optional[str] = None
     color_code: Optional[str] = None
     exclude_from_resource_view: Optional[bool] = None
+    resource_view_mode: Optional[Literal["visible", "load_rate_off", "hidden"]] = None
     azure_devops_unique_name: Optional[str] = None
     azure_devops_display_name: Optional[str] = None
     sort_order: Optional[int] = None

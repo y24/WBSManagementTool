@@ -15,9 +15,10 @@ export interface ResourceRow {
   assignee: MstMember | null;
   subtasks: ResourceSubtask[];
   overlaidTracks: ResourceSubtask[][];
-  loadRate: number;
-  actualLoadRate: number;
+  loadRate: number | null;
+  actualLoadRate: number | null;
   scheduleVariancePt: number | null;
+  isLoadRateCalculationEnabled: boolean;
   inProgressCount: number;
   delayedCount: number;
   completedCount: number;
@@ -76,6 +77,11 @@ function getFiniteEffort(value: number | null | undefined): number | null {
   return Number.isFinite(effort) ? Math.max(0, effort) : null;
 }
 
+function getResourceViewMode(member: MstMember): 'visible' | 'load_rate_off' | 'hidden' {
+  if (member.resource_view_mode) return member.resource_view_mode;
+  return member.exclude_from_resource_view ? 'hidden' : 'visible';
+}
+
 function getPreviousDateTimestamp(timestamp: number): number {
   return addDays(new Date(timestamp), -1).getTime();
 }
@@ -116,8 +122,9 @@ export function useResourceData(
     const assigneeMap = new Map<number | 'unassigned', ResourceRow>();
 
     initialData.members
-      .filter(member => !member.exclude_from_resource_view)
+      .filter(member => getResourceViewMode(member) !== 'hidden')
       .forEach(member => {
+        const resourceViewMode = getResourceViewMode(member);
         assigneeMap.set(member.id, {
           assignee: member,
           subtasks: [],
@@ -125,6 +132,7 @@ export function useResourceData(
           loadRate: 0,
           actualLoadRate: 0,
           scheduleVariancePt: null,
+          isLoadRateCalculationEnabled: resourceViewMode === 'visible',
           inProgressCount: 0,
           delayedCount: 0,
           completedCount: 0,
@@ -137,6 +145,7 @@ export function useResourceData(
       loadRate: 0,
       actualLoadRate: 0,
       scheduleVariancePt: null,
+      isLoadRateCalculationEnabled: true,
       inProgressCount: 0,
       delayedCount: 0,
       completedCount: 0,
@@ -483,7 +492,10 @@ export function useResourceData(
 
       row.overlaidTracks = packTracks(row.subtasks, getMergedBounds);
 
-      if (availableWorkingDays > 0 && loadScopeEndDate) {
+      if (!row.isLoadRateCalculationEnabled) {
+        row.loadRate = null;
+        row.actualLoadRate = null;
+      } else if (availableWorkingDays > 0 && loadScopeEndDate) {
         let plannedEffortDays = 0;
         row.subtasks.forEach(subtask => {
           if (subtask.status_id === removedStatusId) return;
@@ -493,7 +505,7 @@ export function useResourceData(
         row.loadRate = Math.round((plannedEffortDays / availableWorkingDays) * 100);
       }
 
-      if (actualAvailableWorkingDays > 0 && actualLoadScopeStartDate) {
+      if (row.isLoadRateCalculationEnabled && actualAvailableWorkingDays > 0 && actualLoadScopeStartDate) {
         let actualEffortDays = 0;
         row.subtasks.forEach(subtask => {
           if (subtask.status_id === removedStatusId) return;
@@ -516,6 +528,7 @@ export function useResourceData(
 
     const getSortCategory = (row: ResourceRow) => {
       if (row.delayedCount > 0) return 0;
+      if (row.loadRate === null) return 4;
       if (row.loadRate > 100) return 1;
       if (row.loadRate >= 30) return 2;
       return 3;
@@ -532,7 +545,7 @@ export function useResourceData(
         if (catA !== catB) return catA - catB;
 
         if (b.delayedCount !== a.delayedCount) return b.delayedCount - a.delayedCount;
-        if (b.loadRate !== a.loadRate) return b.loadRate - a.loadRate;
+        if (b.loadRate !== a.loadRate) return (b.loadRate ?? -1) - (a.loadRate ?? -1);
 
         return (a.assignee?.member_name || '').localeCompare(b.assignee?.member_name || '', 'ja');
       });

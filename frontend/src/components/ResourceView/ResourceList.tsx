@@ -229,34 +229,14 @@ export default function ResourceList({
                     ) : (
                       <>
                         {/* Load rate column */}
-                        <div className="w-[76px] flex flex-col items-center justify-center gap-0.5">
-                          <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.loadRate, loadRateThresholds)}`}>
-                            {`${row.loadRate}%`}
-                          </span>
-                          <div className="w-12 h-[3px] rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 mt-0.5">
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${Math.min(row.loadRate, 100)}%`,
-                                backgroundColor: getLoadRateBarColor(row.loadRate, loadRateThresholds),
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="w-[76px] flex flex-col items-center justify-center gap-0.5">
-                          <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(row.actualLoadRate, loadRateThresholds)}`}>
-                            {`${row.actualLoadRate}%`}
-                          </span>
-                          <div className="w-12 h-[3px] rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 mt-0.5">
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${Math.min(row.actualLoadRate, 100)}%`,
-                                backgroundColor: getLoadRateBarColor(row.actualLoadRate, loadRateThresholds),
-                              }}
-                            />
-                          </div>
-                        </div>
+                        <LoadRateCell
+                          value={row.loadRate}
+                          loadRateThresholds={loadRateThresholds}
+                        />
+                        <LoadRateCell
+                          value={row.actualLoadRate}
+                          loadRateThresholds={loadRateThresholds}
+                        />
                         {/* Status badges */}
                         <div className="flex items-center gap-1">
                           <div className="border-l border-slate-200 dark:border-slate-700 ml-1 pl-1">
@@ -291,3 +271,34 @@ export default function ResourceList({
     </div>
   );
 }
+
+const LoadRateCell: React.FC<{
+  value: number | null;
+  loadRateThresholds: LoadRateThresholds;
+  title?: string;
+}> = ({ value, loadRateThresholds, title }) => {
+  if (value === null) {
+    return (
+      <div className="w-[76px] flex items-center justify-center" title={title ?? '稼働率計算OFF'}>
+        <span className="text-[15px] font-semibold leading-none text-slate-300 dark:text-slate-600">—</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-[76px] flex flex-col items-center justify-center gap-0.5">
+      <span className={`text-[15px] font-semibold leading-none ${getLoadRateTextColor(value, loadRateThresholds)}`}>
+        {`${value}%`}
+      </span>
+      <div className="w-12 h-[3px] rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 mt-0.5">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${Math.min(value, 100)}%`,
+            backgroundColor: getLoadRateBarColor(value, loadRateThresholds),
+          }}
+        />
+      </div>
+    </div>
+  );
+};
