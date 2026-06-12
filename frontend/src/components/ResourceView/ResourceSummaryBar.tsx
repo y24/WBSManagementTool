@@ -67,17 +67,19 @@ const getDelayedSubtasks = (
   row: ResourceRow,
   todayStr: string,
   doneStatusId: number | null,
-  newStatusId: number | null
+  newStatusId: number | null,
+  pendingStatusId: number | null
 ) => {
   return row.subtasks
     .map(subtask => {
       const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
+      const isPending = pendingStatusId !== null && subtask.status_id === pendingStatusId;
       const isStartDelayed =
         newStatusId !== null &&
         subtask.status_id === newStatusId &&
         !!subtask.planned_start_date &&
         subtask.planned_start_date < todayStr;
-      const isEndDelayed = !isDone && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
+      const isEndDelayed = !isDone && !isPending && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
       if (!isStartDelayed && !isEndDelayed) return null;
 
       const basisDate = isEndDelayed ? subtask.planned_end_date : subtask.planned_start_date;
@@ -271,6 +273,10 @@ export default function ResourceSummaryBar({
     if (initialData?.status_mapping_new) return Number.parseInt(initialData.status_mapping_new, 10);
     return initialData?.statuses.find(status => status.status_name === 'New')?.id ?? null;
   }, [initialData]);
+  const pendingStatusId = useMemo(
+    () => initialData?.statuses.find(status => status.status_name === 'Pending')?.id ?? null,
+    [initialData]
+  );
 
   if (assigned.length === 0) return null;
 
@@ -282,7 +288,7 @@ export default function ResourceSummaryBar({
   const overloadedCount = assigned.filter(r => r.loadRate >= loadRateThresholds.overload).length;
 
   const delayedRows = assigned
-    .map(row => ({ row, delayed: getDelayedSubtasks(row, todayStr, doneStatusId, newStatusId) }))
+    .map(row => ({ row, delayed: getDelayedSubtasks(row, todayStr, doneStatusId, newStatusId, pendingStatusId) }))
     .filter(item => item.delayed.length > 0);
   const idleRows = assigned
     .filter(row => row.loadRate <= loadRateThresholds.criticalLow)

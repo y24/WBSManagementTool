@@ -84,6 +84,10 @@ export default function ResourceGantt({
     }
     return initialData?.statuses.find(s => s.status_name === 'New')?.id ?? null;
   }, [initialData]);
+  const pendingStatusId = useMemo(
+    () => initialData?.statuses.find(s => s.status_name === 'Pending')?.id ?? null,
+    [initialData],
+  );
 
   const days = useMemo(() => {
     if (!range.start_date || !range.end_date) return [];
@@ -331,6 +335,7 @@ export default function ResourceGantt({
                             const isEndOverdue =
                               doneStatusId !== null &&
                               subtask.status_id !== doneStatusId &&
+                              subtask.status_id !== pendingStatusId &&
                               !!subtask.planned_end_date &&
                               subtask.planned_end_date < todayStr;
 

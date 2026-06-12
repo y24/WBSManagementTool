@@ -167,13 +167,14 @@ export function useResourceData(
           }
 
           const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
+          const isPending = pendingStatusId !== undefined && subtask.status_id === pendingStatusId;
           if (isDone) {
             row.completedCount++;
           }
 
           const isNew = newStatusId !== undefined && subtask.status_id === newStatusId;
           const startDelayed = isNew && !!subtask.planned_start_date && subtask.planned_start_date < todayStr;
-          const endDelayed = !isDone && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
+          const endDelayed = !isDone && !isPending && !!subtask.planned_end_date && subtask.planned_end_date < todayStr;
           if (startDelayed || endDelayed) {
             row.delayedCount++;
           }
