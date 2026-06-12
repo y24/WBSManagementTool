@@ -330,7 +330,7 @@ export function MemberSection({
         <span>担当者</span>
         <span>メニュー表示</span>
         <span>Azure DevOps ユーザー</span>
-        <span>担当者ビュー</span>
+        <span>担当者ビュー表示</span>
       </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
