@@ -358,7 +358,7 @@ export default function ResourceTaskContextMenu({
             {savingField === 'assignee' && <Loader2 size={14} className="animate-spin text-slate-400" />}
           </div>
           <div className="max-h-44 overflow-y-auto rounded-md border border-slate-200 dark:border-slate-700">
-            {[{ id: null, member_name: '未設定', color_code: '#94a3b8' }, ...(initialData?.members ?? [])].map(member => {
+            {[{ id: null, member_name: '未設定', color_code: '#94a3b8', show_in_choices: true }, ...(initialData?.members ?? []).filter(member => member.show_in_choices || member.id === draftTask.assignee_id)].map(member => {
               const isSelected = (member.id ?? null) === (draftTask.assignee_id ?? null);
               return (
                 <button

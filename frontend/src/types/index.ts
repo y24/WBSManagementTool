@@ -23,6 +23,7 @@ export interface MstSubtaskType extends MasterBase {
 export interface MstMember extends MasterBase {
   member_name: string;
   color_code: string;
+  show_in_choices: boolean;
   exclude_from_resource_view: boolean;
   resource_view_mode?: 'visible' | 'load_rate_off' | 'hidden';
   azure_devops_unique_name?: string | null;

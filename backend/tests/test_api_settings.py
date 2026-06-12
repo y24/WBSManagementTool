@@ -64,6 +64,18 @@ def test_member_color_round_trip_in_initial_data(db_session):
     assert initial_data["members"][0].color_code == "#64748b"
 
 
+def test_member_choice_visibility_round_trip_in_initial_data(db_session):
+    member = update_member(
+        1,
+        schemas.MemberUpdate(show_in_choices=False),
+        db_session,
+    )
+    assert member.show_in_choices is False
+
+    initial_data = get_initial_data(db_session)
+    assert initial_data["members"][0].show_in_choices is False
+
+
 def test_member_resource_view_exclusion_round_trip_in_initial_data(db_session):
     member = update_member(
         1,

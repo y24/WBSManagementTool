@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import type { AzureDevOpsUser, MstMember } from '../../types';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon, PlusIcon, SyncIcon, TrashIcon, XIcon, sectionIconStyle, GpIcon } from './icons';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Check, ChevronDown, Search, X } from 'lucide-react';
+import { Check, ChevronDown, Eye, EyeOff, Search, X } from 'lucide-react';
 
 interface NewMember {
   member_name: string;
@@ -328,7 +328,8 @@ export function MemberSection({
 
       <div className="master-member-list-header" aria-hidden="true">
         <span>担当者</span>
-        <span>Azure DevOps</span>
+        <span>メニュー表示</span>
+        <span>Azure DevOps ユーザー</span>
         <span>担当者ビュー</span>
       </div>
 
@@ -381,6 +382,19 @@ export function MemberSection({
                           <span className="master-item-name">{m.member_name}</span>
                         )}
                       </div>
+                      {!isEditing(m.id, 'member') && (
+                        <button
+                          type="button"
+                          className={`master-choice-toggle ${m.show_in_choices ? 'active' : 'inactive'}`}
+                          onMouseDown={e => e.stopPropagation()}
+                          onClick={() => saveEdit('/masters/members', m.id, { show_in_choices: !m.show_in_choices })}
+                          title={m.show_in_choices ? 'プルダウン等の選択肢に表示中' : 'プルダウン等の選択肢では非表示'}
+                          aria-label={`${m.member_name}を選択肢に${m.show_in_choices ? '表示しない' : '表示する'}`}
+                        >
+                          {m.show_in_choices ? <Eye size={14} /> : <EyeOff size={14} />}
+                          <span>{m.show_in_choices ? '表示' : '非表示'}</span>
+                        </button>
+                      )}
                       {!isEditing(m.id, 'member') && (
                         <DevOpsAccountSelect
                           value={m.azure_devops_unique_name}

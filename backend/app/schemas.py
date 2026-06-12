@@ -57,6 +57,7 @@ class Status(StatusBase):
 class MemberBase(BaseModel):
     member_name: str
     color_code: str = "#9ca3af"
+    show_in_choices: bool = True
     exclude_from_resource_view: bool = False
     resource_view_mode: Literal["visible", "load_rate_off", "hidden"] = "visible"
     azure_devops_unique_name: Optional[str] = None
@@ -70,6 +71,7 @@ class MemberCreate(MemberBase):
 class MemberUpdate(BaseModel):
     member_name: Optional[str] = None
     color_code: Optional[str] = None
+    show_in_choices: Optional[bool] = None
     exclude_from_resource_view: Optional[bool] = None
     resource_view_mode: Optional[Literal["visible", "load_rate_off", "hidden"]] = None
     azure_devops_unique_name: Optional[str] = None

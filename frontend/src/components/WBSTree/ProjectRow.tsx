@@ -246,7 +246,7 @@ const ProjectRow = memo(({
           value={project.assignee_id}
           options={[
             { id: null, name: '未設定' },
-            ...(initialData?.members.map(m => ({ id: m.id, name: m.member_name })) || [])
+            ...(initialData?.members.map(m => ({ id: m.id, name: m.member_name, hiddenFromMenu: !m.show_in_choices })) || [])
           ]}
           onChange={(v: number | null) => onUpdateField('project', project.id, 'assignee_id', v)}
           className="w-full text-sm"

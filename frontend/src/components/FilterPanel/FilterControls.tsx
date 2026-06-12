@@ -73,7 +73,9 @@ const FilterControls: React.FC<FilterControlsProps> = ({
         values={filters.assigneeIds}
         options={[
           { id: UNASSIGNED_ASSIGNEE_ID, name: '未アサイン' },
-          ...members.map(m => ({ id: m.id, name: m.member_name })),
+          ...members
+            .filter(m => m.show_in_choices || filters.assigneeIds.includes(m.id))
+            .map(m => ({ id: m.id, name: m.member_name })),
         ]}
         onChange={(ids) => setFilters((prev: FilterState) => ({ ...prev, assigneeIds: ids as number[] }))}
         placeholder="担当者を選択"

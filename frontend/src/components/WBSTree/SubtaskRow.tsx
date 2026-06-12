@@ -261,7 +261,7 @@ const SubtaskRow = memo(({
           value={subtask.assignee_id}
           options={[
             { id: null, name: '未設定' },
-            ...(initialData?.members.map(m => ({ id: m.id, name: m.member_name })) || [])
+            ...(initialData?.members.map(m => ({ id: m.id, name: m.member_name, hiddenFromMenu: !m.show_in_choices })) || [])
           ]}
           onChange={v => onUpdateField('subtask', subtask.id, 'assignee_id', v)}
           className="w-full text-sm"

@@ -234,7 +234,7 @@ const TaskRow = memo(({
           value={task.assignee_id}
           options={[
             { id: null, name: '未設定' },
-            ...(initialData?.members.map(m => ({ id: m.id, name: m.member_name })) || [])
+            ...(initialData?.members.map(m => ({ id: m.id, name: m.member_name, hiddenFromMenu: !m.show_in_choices })) || [])
           ]}
           onChange={(v: number | null) => onUpdateField('task', task.id, 'assignee_id', v)}
           className="w-full text-sm"

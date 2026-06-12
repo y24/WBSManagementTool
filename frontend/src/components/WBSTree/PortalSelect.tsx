@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Check } from 'lucide-react';
 
 interface PortalSelectProps {
   value: any;
-  options: { id: any; name: string }[];
+  options: { id: any; name: string; hiddenFromMenu?: boolean }[];
   onChange: (value: any) => void;
   className?: string;
   placeholder?: string;
@@ -41,6 +41,7 @@ const PortalSelect = memo(({
   const [activeIndex, setActiveIndex] = useState(-1);
   const prevValueRef = useRef(value);
   const selectedOption = options.find(o => o.id === value);
+  const menuOptions = useMemo(() => options.filter(o => !o.hiddenFromMenu), [options]);
 
   useEffect(() => {
     // 外部からの値更新を検知
@@ -157,10 +158,10 @@ const PortalSelect = memo(({
   // メニュー開封時に現在の値に合わせて activeIndex を初期化
   useEffect(() => {
     if (isOpen) {
-      const idx = options.findIndex(o => o.id === value);
+      const idx = menuOptions.findIndex(o => o.id === value);
       setActiveIndex(idx >= 0 ? idx : 0);
     }
-  }, [isOpen, options, value]);
+  }, [isOpen, menuOptions, value]);
 
   // ドロップダウンが開いている時のキーボード操作
   useEffect(() => {
@@ -171,15 +172,15 @@ const PortalSelect = memo(({
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setActiveIndex(prev => (prev < options.length - 1 ? prev + 1 : prev));
+        setActiveIndex(prev => (prev < menuOptions.length - 1 ? prev + 1 : prev));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setActiveIndex(prev => (prev > 0 ? prev - 1 : 0));
       } else if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-        if (activeIndex >= 0 && activeIndex < options.length) {
-          onChange(options[activeIndex].id);
+        if (activeIndex >= 0 && activeIndex < menuOptions.length) {
+          onChange(menuOptions[activeIndex].id);
           setIsOpen(false);
           if (onEditingChange) onEditingChange(false);
           if (onFocusChange) onFocusChange(true);
@@ -194,8 +195,8 @@ const PortalSelect = memo(({
         // 編集時（ドロップダウン開封時）のTab
         e.preventDefault();
         e.stopPropagation();
-        if (activeIndex >= 0 && activeIndex < options.length) {
-          onChange(options[activeIndex].id);
+        if (activeIndex >= 0 && activeIndex < menuOptions.length) {
+          onChange(menuOptions[activeIndex].id);
         }
         setIsOpen(false);
         if (onEditingChange) onEditingChange(false);
@@ -205,7 +206,7 @@ const PortalSelect = memo(({
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, activeIndex, options, onChange, onEditingChange]);
+  }, [isOpen, activeIndex, menuOptions, onChange, onEditingChange]);
 
   // activeIndexが変わった時にスクロールさせる
   useEffect(() => {
@@ -284,7 +285,7 @@ const PortalSelect = memo(({
             </div>
           )}
           <div className="max-h-60 overflow-y-auto overscroll-contain">
-            {options.map((opt, index) => {
+            {menuOptions.map((opt, index) => {
               const isActive = index === activeIndex;
               return (
                 <button

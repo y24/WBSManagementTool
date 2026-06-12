@@ -49,6 +49,7 @@ class MstMember(Base):
     id = Column(Integer, primary_key=True, index=True)
     member_name = Column(String(100), nullable=False)
     color_code = Column(String(20), nullable=False, default="#9ca3af")
+    show_in_choices = Column(Boolean, nullable=False, default=True)
     exclude_from_resource_view = Column(Boolean, nullable=False, default=False)
     resource_view_mode = Column(String(30), nullable=False, default="visible")
     azure_devops_unique_name = Column(String(255), nullable=True)
