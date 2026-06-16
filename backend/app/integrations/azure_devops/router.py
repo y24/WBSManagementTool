@@ -211,8 +211,11 @@ def get_child_work_item_candidates(
 
 
 @router.get("/users", response_model=List[AzureDevOpsUserOut])
-def list_azure_devops_users() -> List[AzureDevOpsUserOut]:
-    """Return Azure DevOps users without persisting the fetched list locally."""
+def list_azure_devops_users(
+    query: str = Query(..., min_length=1, max_length=100),
+    limit: int = Query(default=50, ge=1, le=100),
+) -> List[AzureDevOpsUserOut]:
+    """Search Azure DevOps users without persisting the fetched list locally."""
     settings = get_settings()
     if not settings.use_mock and (not settings.organization or not settings.pat):
         raise HTTPException(
@@ -222,7 +225,7 @@ def list_azure_devops_users() -> List[AzureDevOpsUserOut]:
 
     client = create_client(settings)
     try:
-        users = client.list_users()
+        users = client.search_users(query.strip())
     except Exception as exc:
         raise HTTPException(
             status_code=502,
@@ -231,9 +234,38 @@ def list_azure_devops_users() -> List[AzureDevOpsUserOut]:
 
     results: List[AzureDevOpsUserOut] = []
     for user in users:
-        display_name = user.get("displayName") or user.get("principalName") or user.get("mailAddress") or ""
-        unique_name = user.get("principalName") or user.get("mailAddress") or display_name
-        descriptor = user.get("descriptor") or unique_name
+        properties = user.get("properties") or {}
+
+        def property_value(name: str) -> Optional[str]:
+            value = properties.get(name)
+            if isinstance(value, dict):
+                raw = value.get("$value")
+                return str(raw) if raw is not None else None
+            return str(value) if value is not None else None
+
+        schema_class = property_value("SchemaClassName")
+        if schema_class and schema_class.lower() != "user":
+            continue
+        if user.get("isContainer") is True or user.get("isActive") is False:
+            continue
+
+        display_name = (
+            user.get("providerDisplayName")
+            or user.get("displayName")
+            or property_value("DisplayName")
+            or property_value("Account")
+            or property_value("Mail")
+            or ""
+        )
+        unique_name = (
+            property_value("Account")
+            or property_value("Mail")
+            or user.get("principalName")
+            or user.get("uniqueName")
+            or display_name
+        )
+        mail_address = property_value("Mail") or user.get("mailAddress")
+        descriptor = user.get("subjectDescriptor") or user.get("descriptor") or unique_name
         if not unique_name:
             continue
         results.append(
@@ -241,8 +273,8 @@ def list_azure_devops_users() -> List[AzureDevOpsUserOut]:
                 descriptor=descriptor,
                 display_name=display_name,
                 unique_name=unique_name,
-                mail_address=user.get("mailAddress"),
+                mail_address=mail_address,
             )
         )
 
-    return sorted(results, key=lambda user: (user.display_name.lower(), user.unique_name.lower()))
+    return sorted(results, key=lambda user: (user.display_name.lower(), user.unique_name.lower()))[:limit]

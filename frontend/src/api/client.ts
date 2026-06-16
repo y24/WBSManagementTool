@@ -45,7 +45,9 @@ export const getMarkers = () => {
   return markersPromise;
 };
 
-export const getAzureDevOpsUsers = () => apiClient.get<AzureDevOpsUser[]>('/integrations/azure-devops/users');
+export const getAzureDevOpsUsers = (query: string) => (
+  apiClient.get<AzureDevOpsUser[]>('/integrations/azure-devops/users', { params: { query } })
+);
 
 export const getInitialData = (options: { forceRefresh?: boolean } = {}) => {
   if (!options.forceRefresh && initialDataCache) return Promise.resolve(initialDataCache);

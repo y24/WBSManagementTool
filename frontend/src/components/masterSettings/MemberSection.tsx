@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { AzureDevOpsUser, MstMember } from '../../types';
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon, PlusIcon, SyncIcon, TrashIcon, XIcon, sectionIconStyle, GpIcon } from './icons';
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon, PlusIcon, TrashIcon, XIcon, sectionIconStyle, GpIcon } from './icons';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Check, ChevronDown, Eye, EyeOff, Search, X } from 'lucide-react';
 
@@ -16,7 +16,7 @@ interface MemberSectionProps {
   members: MstMember[];
   devOpsUsers: AzureDevOpsUser[];
   isFetchingDevOpsUsers: boolean;
-  refreshDevOpsUsers: () => void;
+  refreshDevOpsUsers: (query: string) => void;
   showAddMember: boolean;
   setShowAddMember: (value: boolean) => void;
   newMember: NewMember;
@@ -41,7 +41,7 @@ interface DevOpsAccountSelectProps {
   displayName: string | null | undefined;
   users: AzureDevOpsUser[];
   isFetchingUsers: boolean;
-  onRefreshUsers: () => void;
+  onSearchUsers: (query: string) => void;
   onChange: (user: AzureDevOpsUser | null) => void;
 }
 
@@ -50,7 +50,7 @@ function DevOpsAccountSelect({
   displayName,
   users,
   isFetchingUsers,
-  onRefreshUsers,
+  onSearchUsers,
   onChange,
 }: DevOpsAccountSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,15 +62,13 @@ function DevOpsAccountSelect({
   const selectedUser = users.find(user => user.unique_name === value);
   const selectedLabel = selectedUser?.display_name || displayName || value || '未設定';
 
-  const filteredUsers = useMemo(() => {
-    const normalized = searchTerm.trim().toLowerCase();
-    if (!normalized) return users;
-    return users.filter(user => (
-      user.display_name.toLowerCase().includes(normalized) ||
-      user.unique_name.toLowerCase().includes(normalized) ||
-      (user.mail_address ?? '').toLowerCase().includes(normalized)
-    ));
-  }, [searchTerm, users]);
+  const hasSearchTerm = searchTerm.trim().length > 0;
+
+  const searchUsers = () => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+    onSearchUsers(trimmed);
+  };
 
   const openDropdown = () => {
     if (isFetchingUsers) return;
@@ -127,7 +125,6 @@ function DevOpsAccountSelect({
       const timer = window.setTimeout(() => searchInputRef.current?.focus(), 50);
       return () => window.clearTimeout(timer);
     }
-    setSearchTerm('');
   }, [isOpen]);
 
   return (
@@ -142,7 +139,7 @@ function DevOpsAccountSelect({
           e.stopPropagation();
           isOpen ? setIsOpen(false) : openDropdown();
         }}
-        title={users.length === 0 ? '右上の更新ボタンでAzure DevOpsユーザーを取得してください' : 'Azure DevOpsのAssigned Toに同期するアカウント'}
+        title="Azure DevOpsのAssigned Toに同期するアカウント"
       >
         <span className={value ? 'master-devops-account-label' : 'master-devops-account-placeholder'}>
           {selectedLabel}
@@ -185,9 +182,15 @@ function DevOpsAccountSelect({
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="名前・メールで検索..."
+                placeholder="名前・メールを入力してEnter"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchUsers();
+                  }
+                }}
                 className="w-full pl-9 pr-8 py-1.5 text-xs bg-gray-50/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50 rounded-lg focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/10 dark:text-slate-200 transition-all font-medium"
               />
               {searchTerm && (
@@ -206,25 +209,17 @@ function DevOpsAccountSelect({
           </div>
 
           <div className="max-h-64 overflow-y-auto overscroll-contain px-1">
-            {filteredUsers.length === 0 ? (
+            {isFetchingUsers ? (
               <div className="px-3 py-6 text-center">
-                <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">一致するユーザーがありません</p>
-                {users.length === 0 && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRefreshUsers();
-                    }}
-                    disabled={isFetchingUsers}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 shadow-sm transition-colors hover:border-blue-300 hover:text-blue-600 dark:hover:border-blue-700 dark:hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <SyncIcon />
-                    {isFetchingUsers ? '取得中...' : 'DevOpsユーザー一覧を取得'}
-                  </button>
-                )}
+                <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">検索中...</p>
               </div>
-            ) : filteredUsers.map(user => {
+            ) : users.length === 0 ? (
+              <div className="px-3 py-6 text-center">
+                <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">
+                  {hasSearchTerm ? '一致するユーザーがありません' : '検索語を入力してEnterで候補を表示します'}
+                </p>
+              </div>
+            ) : users.map(user => {
               const selected = user.unique_name === value;
               return (
                 <button
@@ -401,7 +396,7 @@ export function MemberSection({
                           displayName={m.azure_devops_display_name}
                           users={devOpsUsers}
                           isFetchingUsers={isFetchingDevOpsUsers}
-                          onRefreshUsers={refreshDevOpsUsers}
+                          onSearchUsers={refreshDevOpsUsers}
                           onChange={(user) => {
                             saveEdit('/masters/members', m.id, {
                               azure_devops_unique_name: user?.unique_name ?? null,

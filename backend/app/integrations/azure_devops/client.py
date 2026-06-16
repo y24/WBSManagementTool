@@ -12,6 +12,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlencode
 
 import httpx
 
@@ -46,8 +47,8 @@ class AzureDevOpsClientBase(ABC):
         """Fetch Work Items linked as children of the parent Work Item."""
 
     @abstractmethod
-    def list_users(self) -> List[Dict[str, Any]]:
-        """Fetch Azure DevOps users visible to the organization."""
+    def search_users(self, query: str) -> List[Dict[str, Any]]:
+        """Search Azure DevOps users visible to the organization."""
 
 
 class AzureDevOpsHttpClient(AzureDevOpsClientBase):
@@ -179,23 +180,22 @@ class AzureDevOpsHttpClient(AzureDevOpsClientBase):
         child_items = self.get_work_items_batch(child_ids, fields)
         return [child_items[child_id] for child_id in child_ids if child_id in child_items]
 
-    def list_users(self) -> List[Dict[str, Any]]:
-        graph_base_url = f"https://vssps.dev.azure.com/{self._organization}"
-        users: List[Dict[str, Any]] = []
-        continuation_token: Optional[str] = None
-
-        while True:
-            url = f"{graph_base_url}/_apis/graph/users?api-version={self._api_version}-preview.1"
-            headers = {**self._auth_headers, "Content-Type": "application/json"}
-            if continuation_token:
-                headers["X-MS-ContinuationToken"] = continuation_token
-            resp = self._request_with_retry("GET", url, headers=headers)
-            users.extend(resp.json().get("value", []))
-            continuation_token = resp.headers.get("X-MS-ContinuationToken")
-            if not continuation_token:
-                break
-
-        return users
+    def search_users(self, query: str) -> List[Dict[str, Any]]:
+        params = urlencode(
+            {
+                "searchFilter": "General",
+                "filterValue": query,
+                "queryMembership": "None",
+                "api-version": self._api_version,
+            }
+        )
+        url = f"https://vssps.dev.azure.com/{self._organization}/_apis/identities?{params}"
+        resp = self._request_with_retry(
+            "GET",
+            url,
+            headers={**self._auth_headers, "Content-Type": "application/json"},
+        )
+        return resp.json().get("value", [])
 
 
 class AzureDevOpsMockClient(AzureDevOpsClientBase):
@@ -289,7 +289,7 @@ class AzureDevOpsMockClient(AzureDevOpsClientBase):
         child_items = self.get_work_items_batch(child_ids, fields)
         return [child_items[child_id] for child_id in child_ids if child_id in child_items]
 
-    def list_users(self) -> List[Dict[str, Any]]:
+    def search_users(self, query: str) -> List[Dict[str, Any]]:
         names = [
             "Aoi Tanaka",
             "Haruto Sato",
@@ -312,6 +312,7 @@ class AzureDevOpsMockClient(AzureDevOpsClientBase):
             "Nana Shimizu",
             "Toma Saito",
         ]
+        normalized = query.strip().lower()
         return [
             {
                 "descriptor": f"mock.user.{index}",
@@ -320,6 +321,10 @@ class AzureDevOpsMockClient(AzureDevOpsClientBase):
                 "mailAddress": f"{name.lower().replace(' ', '.')}@example.com",
             }
             for index, name in enumerate(names, start=1)
+            if (
+                normalized in name.lower()
+                or normalized in f"{name.lower().replace(' ', '.')}@example.com"
+            )
         ]
 
 

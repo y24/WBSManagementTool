@@ -430,15 +430,21 @@ export default function MasterSettings() {
     }
   };
 
-  const refreshDevOpsUsers = async () => {
+  const refreshDevOpsUsers = async (query: string) => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      setDevOpsUsers([]);
+      return;
+    }
+
     try {
       setIsFetchingDevOpsUsers(true);
-      const res = await getAzureDevOpsUsers();
+      const res = await getAzureDevOpsUsers(trimmedQuery);
       setDevOpsUsers(res.data);
-      showInfoToast('Azure DevOpsユーザーを取得しました。', `${res.data.length}件のユーザーを読み込みました。`);
+      showInfoToast('Azure DevOpsユーザーを検索しました。', `${res.data.length}件の候補が見つかりました。`);
     } catch (err) {
       console.error(err);
-      showErrorToastUnlessNetworkError(err, 'Azure DevOpsユーザーの取得に失敗しました。');
+      showErrorToastUnlessNetworkError(err, 'Azure DevOpsユーザーの検索に失敗しました。');
     } finally {
       setIsFetchingDevOpsUsers(false);
     }

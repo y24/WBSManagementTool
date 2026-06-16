@@ -180,11 +180,49 @@ def test_child_work_item_candidates_filter_by_subtask_type_work_item_type(db_ses
 def test_mock_client_returns_users():
     client = AzureDevOpsMockClient()
 
-    users = client.list_users()
+    users = client.search_users("tanaka")
 
-    assert len(users) == 20
+    assert len(users) == 1
     assert users[0]["displayName"] == "Aoi Tanaka"
     assert users[0]["principalName"] == "aoi.tanaka@example.com"
+
+
+def test_user_search_endpoint_maps_identity_response(monkeypatch):
+    class IdentitySearchClient(AzureDevOpsMockClient):
+        def search_users(self, query):
+            return [
+                {
+                    "descriptor": "legacy.descriptor",
+                    "subjectDescriptor": "aad.user-descriptor",
+                    "providerDisplayName": "Searched User",
+                    "isActive": True,
+                    "properties": {
+                        "SchemaClassName": {"$value": "User"},
+                        "Account": {"$value": "searched.user@example.com"},
+                        "Mail": {"$value": "searched.user@example.com"},
+                    },
+                },
+                {
+                    "subjectDescriptor": "vssgp.group-descriptor",
+                    "providerDisplayName": "Searched Group",
+                    "isActive": True,
+                    "isContainer": True,
+                    "properties": {
+                        "SchemaClassName": {"$value": "Group"},
+                        "Account": {"$value": "group"},
+                    },
+                },
+            ]
+
+    monkeypatch.setattr(devops_router, "create_client", lambda settings: IdentitySearchClient())
+
+    users = devops_router.list_azure_devops_users(query="searched", limit=50)
+
+    assert len(users) == 1
+    assert users[0].descriptor == "aad.user-descriptor"
+    assert users[0].display_name == "Searched User"
+    assert users[0].unique_name == "searched.user@example.com"
+    assert users[0].mail_address == "searched.user@example.com"
 
 
 def test_env_field_mapping_preserves_assigned_to_default(monkeypatch):
