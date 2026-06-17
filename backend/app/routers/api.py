@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
+from datetime import date, timedelta
 import httpx
 import json
 from sqlalchemy import func
@@ -69,15 +70,23 @@ def read_wbs(
     include_done: bool = False,
     include_removed: bool = False,
     weeks: int = 8,
+    done_project_window_start: date | None = None,
+    done_project_window_end: date | None = None,
     refresh_ongoing_end_dates: bool = True,
     db: Session = Depends(get_db)
 ):
     if refresh_ongoing_end_dates:
         crud.refresh_subtasks_actual_end_date(db, project_ids)
-    projects = crud.get_wbs_data(db, project_ids, include_done, include_removed)
+    projects = crud.get_wbs_data(
+        db,
+        project_ids,
+        include_done,
+        include_removed,
+        done_project_window_start,
+        done_project_window_end,
+    )
     
     # Dynamic gantt range calculation
-    from datetime import date, timedelta
     today = date.today()
     
     all_dates = []
@@ -515,4 +524,3 @@ def delete_subtask_interruption(interruption_id: int, db: Session = Depends(get_
     if not success:
         raise HTTPException(status_code=404, detail="Interruption not found")
     return {"status": "ok"}
-

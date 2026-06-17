@@ -161,6 +161,76 @@ def test_get_wbs_data_keeps_zero_planned_effort_totals(db_session):
     assert p_wbs.planned_effort_total == 0
     assert p_wbs.tasks[0].planned_effort_total == 0
 
+def test_get_wbs_data_limits_done_projects_to_window(db_session):
+    done_in_window = crud.create_project(
+        db_session,
+        schemas.ProjectCreate(
+            project_name="Done in window",
+            status_id=4,
+            planned_start_date=date(2024, 1, 10),
+            planned_end_date=date(2024, 1, 20),
+        ),
+    )
+    crud.create_project(
+        db_session,
+        schemas.ProjectCreate(
+            project_name="Done outside window",
+            status_id=4,
+            planned_start_date=date(2023, 1, 10),
+            planned_end_date=date(2023, 1, 20),
+        ),
+    )
+    done_with_child_in_window = crud.create_project(
+        db_session,
+        schemas.ProjectCreate(
+            project_name="Done with child in window",
+            status_id=4,
+            planned_start_date=date(2023, 1, 10),
+            planned_end_date=date(2023, 1, 20),
+        ),
+    )
+    child_task = crud.create_task(
+        db_session,
+        schemas.TaskCreate(
+            project_id=done_with_child_in_window.id,
+            task_name="Child task",
+            planned_start_date=date(2024, 1, 15),
+            planned_end_date=date(2024, 1, 16),
+        ),
+    )
+    crud.create_subtask(
+        db_session,
+        schemas.SubtaskCreate(
+            task_id=child_task.id,
+            status_id=4,
+            subtask_detail="Child subtask",
+            planned_start_date=date(2024, 1, 15),
+            planned_end_date=date(2024, 1, 16),
+        ),
+    )
+    active_outside_window = crud.create_project(
+        db_session,
+        schemas.ProjectCreate(
+            project_name="Active outside window",
+            status_id=1,
+            planned_start_date=date(2023, 1, 10),
+            planned_end_date=date(2023, 1, 20),
+        ),
+    )
+
+    wbs_data = crud.get_wbs_data(
+        db_session,
+        include_done=True,
+        done_project_window_start=date(2024, 1, 1),
+        done_project_window_end=date(2024, 1, 31),
+    )
+
+    project_ids = {project.id for project in wbs_data}
+    assert done_in_window.id in project_ids
+    assert done_with_child_in_window.id in project_ids
+    assert active_outside_window.id in project_ids
+    assert len(wbs_data) == 3
+
 def test_auto_planned_effort_excludes_review_days(db_session):
     project = crud.create_project(db_session, schemas.ProjectCreate(project_name="P1"))
     task = crud.create_task(db_session, schemas.TaskCreate(project_id=project.id, task_name="T1"))

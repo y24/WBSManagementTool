@@ -1,11 +1,18 @@
 from datetime import date, timedelta
 from decimal import Decimal
-from sqlalchemy import func
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, selectinload
 from .. import models, schemas
 from .base import check_overlap
 
-def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool = False, include_removed: bool = False):
+def get_wbs_data(
+    db: Session,
+    project_ids: list[int] = None,
+    include_done: bool = False,
+    include_removed: bool = False,
+    done_project_window_start: date | None = None,
+    done_project_window_end: date | None = None,
+):
     from .base import get_status_ids_by_category
     done_ids = get_status_ids_by_category(db, "done")
     
@@ -19,16 +26,46 @@ def get_wbs_data(db: Session, project_ids: list[int] = None, include_done: bool 
     
     # Project status level filters
     exclude_project_status_ids = []
+    done_project_status_ids = [d_id for d_id in done_ids if d_id != removed_id]
     if not include_done:
         # Avoid excluding items that are both 'Done' and 'Removed' if include_removed is True
-        for d_id in done_ids:
-            if d_id != removed_id:
-                exclude_project_status_ids.append(d_id)
+        exclude_project_status_ids.extend(done_project_status_ids)
     if not include_removed:
         exclude_project_status_ids.append(removed_id)
         
     if exclude_project_status_ids:
         query = query.filter((models.Project.status_id == None) | (~models.Project.status_id.in_(exclude_project_status_ids)))
+
+    if include_done and done_project_status_ids and done_project_window_start and done_project_window_end:
+        def overlaps_window(model):
+            planned_start = func.coalesce(model.planned_start_date, model.planned_end_date)
+            planned_end = func.coalesce(model.planned_end_date, model.planned_start_date)
+            actual_start = func.coalesce(model.actual_start_date, model.actual_end_date)
+            actual_end = func.coalesce(model.actual_end_date, model.actual_start_date)
+            return or_(
+                and_(planned_start <= done_project_window_end, planned_end >= done_project_window_start),
+                and_(actual_start <= done_project_window_end, actual_end >= done_project_window_start),
+            )
+
+        task_overlaps_done_window = models.Project.tasks.any(
+            and_(models.Task.is_deleted == False, overlaps_window(models.Task))
+        )
+        subtask_overlaps_done_window = models.Project.tasks.any(
+            and_(
+                models.Task.is_deleted == False,
+                models.Task.subtasks.any(
+                    and_(models.Subtask.is_deleted == False, overlaps_window(models.Subtask))
+                ),
+            )
+        )
+        overlaps_done_window = or_(
+            overlaps_window(models.Project),
+            task_overlaps_done_window,
+            subtask_overlaps_done_window,
+        )
+        is_done_project = models.Project.status_id.in_(done_project_status_ids)
+        is_not_done_project = (models.Project.status_id == None) | (~models.Project.status_id.in_(done_project_status_ids))
+        query = query.filter(or_(is_not_done_project, and_(is_done_project, overlaps_done_window)))
         
     if project_ids:
         query = query.filter(models.Project.id.in_(project_ids))

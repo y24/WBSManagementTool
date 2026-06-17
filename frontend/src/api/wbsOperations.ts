@@ -13,6 +13,16 @@ interface AzureDevopsChildWorkItem {
   state?: string | null;
 }
 
+interface GetWBSOptions {
+  projectIds?: number[];
+  includeDone?: boolean;
+  includeRemoved?: boolean;
+  weeks?: number;
+  refreshOngoingEndDates?: boolean;
+  doneProjectWindowStart?: string;
+  doneProjectWindowEnd?: string;
+}
+
 const azureDevopsChildWorkItemsCache = new Map<string, AxiosResponse<AzureDevopsChildWorkItem[]>>();
 const azureDevopsChildWorkItemsRequests = new Map<string, Promise<AxiosResponse<AzureDevopsChildWorkItem[]>>>();
 let wbsVersionRequest: Promise<AxiosResponse<WBSVersion>> | null = null;
@@ -152,15 +162,26 @@ export const wbsOps = {
       new_base_date: newBaseDate
     }),
 
-  getWBS: (projectIds?: number[], includeDone?: boolean, includeRemoved?: boolean, weeks: number = 8, refreshOngoingEndDates: boolean = true) => {
+  getWBS: (
+    projectIdsOrOptions?: number[] | GetWBSOptions,
+    includeDone?: boolean,
+    includeRemoved?: boolean,
+    weeks: number = 8,
+    refreshOngoingEndDates: boolean = true
+  ) => {
+    const options: GetWBSOptions = Array.isArray(projectIdsOrOptions)
+      ? { projectIds: projectIdsOrOptions, includeDone, includeRemoved, weeks, refreshOngoingEndDates }
+      : projectIdsOrOptions ?? {};
     const params = new URLSearchParams();
-    if (projectIds && projectIds.length > 0) {
-      projectIds.forEach(id => params.append('project_ids', id.toString()));
+    if (options.projectIds && options.projectIds.length > 0) {
+      options.projectIds.forEach(id => params.append('project_ids', id.toString()));
     }
-    if (includeDone !== undefined) params.append('include_done', includeDone.toString());
-    if (includeRemoved !== undefined) params.append('include_removed', includeRemoved.toString());
-    params.append('weeks', weeks.toString());
-    params.append('refresh_ongoing_end_dates', refreshOngoingEndDates.toString());
+    if (options.includeDone !== undefined) params.append('include_done', options.includeDone.toString());
+    if (options.includeRemoved !== undefined) params.append('include_removed', options.includeRemoved.toString());
+    params.append('weeks', (options.weeks ?? weeks).toString());
+    if (options.doneProjectWindowStart) params.append('done_project_window_start', options.doneProjectWindowStart);
+    if (options.doneProjectWindowEnd) params.append('done_project_window_end', options.doneProjectWindowEnd);
+    params.append('refresh_ongoing_end_dates', (options.refreshOngoingEndDates ?? refreshOngoingEndDates).toString());
     return apiClient.get(`/wbs?${params.toString()}`);
   },
 

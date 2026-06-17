@@ -37,6 +37,7 @@ export function useFilteredProjects({
     const newStatusId = initialData?.statuses.find((status) => status.status_name === 'New')?.id;
     const pendingStatusId = initialData?.statuses.find((status) => status.status_name === 'Pending')?.id;
     const subtaskTypeNameById = new Map(initialData?.subtask_types.map((type) => [type.id, type.type_name]) ?? []);
+    const shouldHideDoneProjects = displayOptions.viewMode === 'wbs' && !displayOptions.showDoneProjects;
 
     const hasConditions =
       filters.statusIds.length > 0 ||
@@ -59,7 +60,7 @@ export function useFilteredProjects({
         if (!displayOptions.showRemoved && project.status_id === removedStatusId) return false;
         if (
           !isSelectedProject &&
-          !displayOptions.showDoneProjects &&
+          shouldHideDoneProjects &&
           doneStatusId !== null &&
           project.status_id === doneStatusId
         ) {

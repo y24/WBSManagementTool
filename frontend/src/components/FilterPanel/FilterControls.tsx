@@ -23,6 +23,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
   const members = initialData?.members || [];
   const doneStatusId = initialData?.status_mapping_done ? parseInt(initialData.status_mapping_done, 10) : null;
   const removedStatusId = statuses.find(s => s.status_name === 'Removed')?.id || 7;
+  const shouldHideDoneProjects = displayOptions.viewMode === 'wbs' && !displayOptions.showDoneProjects;
 
   return (
     <>
@@ -44,7 +45,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
               id: p.id,
               name: p.project_name,
               badge: isDoneProject ? '完了済' : undefined,
-              hiddenUntilSearch: isDoneProject && !displayOptions.showDoneProjects,
+              hiddenUntilSearch: isDoneProject && shouldHideDoneProjects,
             };
           })}
         onChange={(ids) => setFilters((prev: FilterState) => ({ ...prev, projectIds: ids as number[] }))}

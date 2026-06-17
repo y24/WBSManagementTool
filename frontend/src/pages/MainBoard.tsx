@@ -25,7 +25,7 @@ import {
 import ConfirmModal from '../components/WBSTree/ConfirmModal';
 import { Download } from 'lucide-react';
 import LoadingOverlay from '../components/LoadingOverlay';
-import { parseISO } from 'date-fns';
+import { addDays, format, parseISO } from 'date-fns';
 import { getDateX } from '../utils/ganttUtils';
 import { showErrorToastUnlessNetworkError } from '../utils/toast';
 import { useCurrentDateString } from '../hooks/useCurrentDateString';
@@ -36,6 +36,16 @@ type WBSRefreshOptions = boolean | {
   refreshInitialData?: boolean;
   checkTreeVersion?: boolean;
 };
+
+function getResourceLoadScopeDays(scope: DisplayOptions['resourceLoadScope']): number {
+  if (scope === '1w') return 6;
+  if (scope === '2w') return 13;
+  if (scope === '1m') return 29;
+  if (scope === '2m') return 59;
+  return 89;
+}
+
+const RESOURCE_DONE_PROJECT_FETCH_WINDOW_DAYS = 89;
 
 export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
@@ -117,13 +127,23 @@ export default function MainBoard() {
           }
         }
 
-        const wbsRes = await wbsOps.getWBS(
-          undefined, // projectIds
-          true,
-          true,
-          8,
-          !skipStatusAutoRefresh
-        );
+        const isResourceView = displayOptions.viewMode === 'resource';
+        const resourceScopeDays = getResourceLoadScopeDays(displayOptions.resourceLoadScope);
+        const resourceDoneProjectWindowDays = RESOURCE_DONE_PROJECT_FETCH_WINDOW_DAYS;
+        const doneWindowStart = isResourceView
+          ? format(addDays(parseISO(currentTodayStr), -resourceDoneProjectWindowDays), 'yyyy-MM-dd')
+          : undefined;
+        const doneWindowEnd = isResourceView
+          ? format(addDays(parseISO(currentTodayStr), resourceDoneProjectWindowDays), 'yyyy-MM-dd')
+          : undefined;
+        const wbsRes = await wbsOps.getWBS({
+          includeDone: isResourceView || displayOptions.showDoneProjects,
+          includeRemoved: true,
+          weeks: isResourceView ? Math.ceil(resourceScopeDays / 7) : 8,
+          refreshOngoingEndDates: !skipStatusAutoRefresh,
+          doneProjectWindowStart: doneWindowStart,
+          doneProjectWindowEnd: doneWindowEnd,
+        });
         setData(wbsRes.data);
         wbsTreeVersionRef.current = wbsRes.data.tree_version;
 
@@ -145,7 +165,13 @@ export default function MainBoard() {
         setLoading(false);
       }
     },
-    [loadInitialData],
+    [
+      loadInitialData,
+      displayOptions.viewMode,
+      displayOptions.showDoneProjects,
+      displayOptions.resourceLoadScope,
+      currentTodayStr,
+    ],
   );
 
   useEffect(() => {
@@ -237,7 +263,7 @@ export default function MainBoard() {
   useEffect(() => {
     fetchData(true);
     refreshMarkers();
-  }, [displayOptions.showDoneProjects, displayOptions.showRemoved]);
+  }, [fetchData, refreshMarkers, displayOptions.showRemoved]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
