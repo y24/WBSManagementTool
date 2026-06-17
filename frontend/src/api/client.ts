@@ -2,10 +2,21 @@ import axios, { type AxiosResponse } from 'axios';
 import type { AzureDevOpsUser, InitialData } from '../types';
 import { markNetworkErrorToastShown, showToast } from '../utils/toast';
 
+const normalizeBaseUrl = (value: string) => `${value.trim().replace(/\/+$/, '')}/`;
+
+const getApiBaseUrl = () => {
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+  if (configuredBaseUrl) return normalizeBaseUrl(configuredBaseUrl);
+
+  const appBasePath = import.meta.env.BASE_URL || '/';
+  const normalizedAppBasePath = appBasePath.endsWith('/') ? appBasePath : `${appBasePath}/`;
+  return `${normalizedAppBasePath}api/`;
+};
+
 // APIクライアントのベース設定
 export const apiClient = axios.create({
-  // VITE_API_URL優先、なければ現在のドメインからの相対パス(/wbs/api など)
-  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.BASE_URL + 'api').replace(/\/+$/, '/').replace(/^\/+/, '/'),
+  // VITE_API_BASE_URL優先、なければアプリの配置パスから相対APIパス(/wbs/api など)を組み立てる
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

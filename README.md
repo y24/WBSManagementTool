@@ -64,6 +64,16 @@ npm install
 npm run dev
 ```
 
+#### サブディレクトリ配下で公開する場合
+`http://<ホスト名>/wbs` のようにルート以外へ配置する場合は、`frontend/.env.example` を参考に `frontend/.env` を作成し、配置パスとAPIのベースURLを指定します。
+
+```env
+VITE_BASE_PATH=/wbs/
+VITE_API_BASE_URL=/wbs/api/
+```
+
+API を別ホストで動かす場合は、`VITE_API_BASE_URL=http://localhost:8000/api/` のような絶対URLも指定できます。
+
 ### Windows Server / IIS へのデプロイ
 Windows Server および IIS を利用した社内公開・常時稼働の手順は、[IIS セットアップガイド](IIS_Setup_Guide.md) に詳細をまとめています。
 
