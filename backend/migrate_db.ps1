@@ -11,5 +11,9 @@ if (Test-Path ".\venv\Scripts\activate.ps1") {
 
 Write-Host "Applying migrations to the database..."
 alembic upgrade head
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Database migration failed."
+    exit $LASTEXITCODE
+}
 
 Write-Host "Database migration complete!"

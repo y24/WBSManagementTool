@@ -2,7 +2,7 @@ import React from 'react';
 import { ChartNoAxesGantt, Check, Link2, Download } from 'lucide-react';
 import { FilterState, DisplayOptions } from './FilterPanelTypes';
 import { apiClient } from '../../api/client';
-import { showErrorToastUnlessNetworkError } from '../../utils/toast';
+import { showErrorToast, showErrorToastUnlessNetworkError } from '../../utils/toast';
 
 interface ActionButtonsProps {
   filters: FilterState;
@@ -18,6 +18,31 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   onExport
 }) => {
   const [isCopied, setIsCopied] = React.useState(false);
+
+  const copyTextToClipboard = async (text: string) => {
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-9999px';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+      const copied = document.execCommand('copy');
+      if (!copied) {
+        throw new Error('Clipboard copy command failed');
+      }
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  };
 
   return (
     <>
@@ -35,16 +60,24 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
 
       <button
         onClick={async () => {
+          let url = '';
           try {
             const response = await apiClient.post<{ token: string }>('/shared-filters', { filter_data: filters });
             const token = response.data.token;
-            const url = `${window.location.origin}${window.location.pathname}?share=${token}`;
-            await navigator.clipboard.writeText(url);
+            url = `${window.location.origin}${window.location.pathname}?share=${token}`;
+          } catch (error) {
+            console.error('Failed to create shared filter:', error);
+            showErrorToastUnlessNetworkError(error, 'URLの発行に失敗しました。');
+            return;
+          }
+
+          try {
+            await copyTextToClipboard(url);
             setIsCopied(true);
             setTimeout(() => setIsCopied(false), 2000);
           } catch (error) {
-            console.error('Failed to share filters:', error);
-            showErrorToastUnlessNetworkError(error, 'URLの発行に失敗しました。');
+            console.error('Failed to copy shared filter URL:', error);
+            showErrorToast('URLは発行されましたが、クリップボードへのコピーに失敗しました。');
           }
         }}
         className={`relative p-2 rounded-lg border transition-all shadow-sm ${isCopied
