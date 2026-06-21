@@ -42,7 +42,7 @@ interface DevOpsAccountSelectProps {
   users: AzureDevOpsUser[];
   isFetchingUsers: boolean;
   onSearchUsers: (query: string) => void;
-  onChange: (user: AzureDevOpsUser | null) => void;
+  onChange: (user: AzureDevOpsUser | string | null) => void;
 }
 
 function DevOpsAccountSelect({
@@ -70,8 +70,16 @@ function DevOpsAccountSelect({
     onSearchUsers(trimmed);
   };
 
+  const setManualValue = () => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+    onChange(trimmed);
+    setIsOpen(false);
+  };
+
   const openDropdown = () => {
     if (isFetchingUsers) return;
+    setSearchTerm(value || '');
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
@@ -182,13 +190,17 @@ function DevOpsAccountSelect({
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="名前・メールを入力してEnter"
+                placeholder="例: yamada@example.com"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    searchUsers();
+                    if (e.ctrlKey || e.metaKey) {
+                      setManualValue();
+                    } else {
+                      searchUsers();
+                    }
                   }
                 }}
                 className="w-full pl-9 pr-8 py-1.5 text-xs bg-gray-50/50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700/50 rounded-lg focus:outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/10 dark:text-slate-200 transition-all font-medium"
@@ -206,6 +218,33 @@ function DevOpsAccountSelect({
                 </button>
               )}
             </div>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  searchUsers();
+                }}
+                disabled={!hasSearchTerm || isFetchingUsers}
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-bold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              >
+                <Search size={12} />
+                検索
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setManualValue();
+                }}
+                disabled={!hasSearchTerm || isFetchingUsers}
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-blue-200 bg-blue-50 px-2 py-1.5 text-[11px] font-bold text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-900/60 dark:bg-blue-950/35 dark:text-blue-200 dark:hover:bg-blue-900/45"
+                title="検索結果にない場合でも、入力値をそのままAzure DevOpsユーザーとして保存します"
+              >
+                <Check size={12} />
+                入力値を設定
+              </button>
+            </div>
           </div>
 
           <div className="max-h-64 overflow-y-auto overscroll-contain px-1">
@@ -216,7 +255,7 @@ function DevOpsAccountSelect({
             ) : users.length === 0 ? (
               <div className="px-3 py-6 text-center">
                 <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">
-                  {hasSearchTerm ? '一致するユーザーがありません' : '検索語を入力してEnterで候補を表示します'}
+                  {hasSearchTerm ? '一致するユーザーがありません。入力値をそのまま設定できます。' : '検索語または直接設定する値を入力してください'}
                 </p>
               </div>
             ) : users.map(user => {
@@ -399,8 +438,8 @@ export function MemberSection({
                           onSearchUsers={refreshDevOpsUsers}
                           onChange={(user) => {
                             saveEdit('/masters/members', m.id, {
-                              azure_devops_unique_name: user?.unique_name ?? null,
-                              azure_devops_display_name: user?.display_name ?? null,
+                              azure_devops_unique_name: typeof user === 'string' ? user : user?.unique_name ?? null,
+                              azure_devops_display_name: typeof user === 'string' ? user : user?.display_name ?? null,
                             });
                           }}
                         />
