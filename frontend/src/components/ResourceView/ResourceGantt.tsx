@@ -10,6 +10,7 @@ import GanttHeader from '../GanttHeader';
 import GanttBackground from '../GanttBackground';
 import GanttBar from '../GanttBar';
 import ResourceTaskContextMenu from './ResourceTaskContextMenu';
+import ResourceDateSubtasksModal from './ResourceDateSubtasksModal';
 
 const OVERLAID_TRACK_HEIGHT = 36;
 const OVERLAID_STACKED_TRACK_HEIGHT = 26;
@@ -68,6 +69,7 @@ export default function ResourceGantt({
 }: ResourceGanttProps) {
   const { dragState, tempDates, handleMouseDown } = useGanttDrag(initialData, scale, onRefresh);
   const [hoveredDate, setHoveredDate] = React.useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = React.useState<string | null>(null);
   const [contextMenu, setContextMenu] = React.useState<{
     subtask: ResourceSubtask;
     x: number;
@@ -173,6 +175,10 @@ export default function ResourceGantt({
     });
   }, []);
 
+  const handleDateClick = useCallback((date: Date) => {
+    setSelectedDate(format(date, 'yyyy-MM-dd'));
+  }, []);
+
   const renderUnplannedHighlights = useCallback((row: ResourceRow) => {
     const isWeekendOrHoliday = (date: Date): boolean => {
       const day = date.getDay();
@@ -261,7 +267,7 @@ export default function ResourceGantt({
             showMarkers={showMarkers}
             dragState={dragState}
             tempDates={tempDates}
-            onDateClick={() => {}}
+            onDateClick={handleDateClick}
             setHoveredDate={setHoveredDate}
             handleMouseDown={handleMouseDown}
             todayStr={todayStr}
@@ -448,6 +454,14 @@ export default function ResourceGantt({
           onClose={() => setContextMenu(null)}
           onRefresh={onRefresh}
           onLocalUpdate={onLocalUpdate}
+        />
+      )}
+      {selectedDate && (
+        <ResourceDateSubtasksModal
+          date={selectedDate}
+          data={data}
+          initialData={initialData}
+          onClose={() => setSelectedDate(null)}
         />
       )}
     </div>
