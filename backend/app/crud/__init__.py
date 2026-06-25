@@ -67,6 +67,7 @@ from .subtask import (
 
 from .wbs import (
     get_wbs_data,
+    get_project_options,
     duplicate_items,
     clear_actuals,
     clear_plans_actuals,

@@ -312,6 +312,14 @@ class Project(ProjectBase):
     tasks: List[Task] = []
     model_config = { "from_attributes": True }
 
+class ProjectOption(BaseModel):
+    id: int
+    project_name: str
+    status_id: Optional[int]
+    sort_order: int
+    is_deleted: bool
+    model_config = { "from_attributes": True }
+
 class ProjectWBS(Project):
     tasks: List[TaskWBS] = []
     planned_effort_total: Union[Decimal, float, int] = Decimal('0.0')

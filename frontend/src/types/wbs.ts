@@ -72,6 +72,13 @@ export interface Task {
   subtasks: Subtask[];
 }
 
+export interface ProjectOption {
+  id: number;
+  project_name: string;
+  status_id?: number | null;
+  sort_order: number;
+  is_deleted: boolean;
+}
 export interface Project {
   id: number;
   project_name: string;

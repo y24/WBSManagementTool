@@ -1,14 +1,14 @@
 import React from 'react';
 import MultiSelect from '../MultiSelect';
 import { FilterState, DisplayOptions, UNASSIGNED_ASSIGNEE_ID } from './FilterPanelTypes';
-import { Project } from '../../types/wbs';
+import { ProjectOption } from '../../types/wbs';
 import { InitialData } from '../../types';
 
 interface FilterControlsProps {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   displayOptions: DisplayOptions;
-  projects: Project[];
+  projects: ProjectOption[];
   initialData: InitialData | null;
 }
 

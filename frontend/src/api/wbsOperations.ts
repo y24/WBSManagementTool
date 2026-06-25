@@ -96,6 +96,14 @@ const getAzureDevopsChildWorkItems = (
 export const wbsOps = {
   createProject: (projectName: string) => 
     apiClient.post('/projects', { project_name: projectName }),
+
+  getProjectOptions: (options: { includeDone?: boolean; includeRemoved?: boolean } = {}) => {
+    const params = new URLSearchParams();
+    if (options.includeDone !== undefined) params.append('include_done', options.includeDone.toString());
+    if (options.includeRemoved !== undefined) params.append('include_removed', options.includeRemoved.toString());
+    const query = params.toString();
+    return apiClient.get(`/projects/options${query ? `?${query}` : ''}`);
+  },
     
   createTask: (projectId: number, taskName: string) => 
     apiClient.post('/tasks', { project_id: projectId, task_name: taskName }),

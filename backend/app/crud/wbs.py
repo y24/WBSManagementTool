@@ -161,6 +161,32 @@ def get_wbs_data(
         result.append(p_wbs)
         
     return result
+
+def get_project_options(
+    db: Session,
+    include_done: bool = False,
+    include_removed: bool = False,
+):
+    from .base import get_status_ids_by_category
+    done_ids = get_status_ids_by_category(db, "done")
+
+    removed_status = db.query(models.MstStatus).filter(models.MstStatus.status_name == "Removed").first()
+    removed_id = removed_status.id if removed_status else 7
+
+    query = db.query(models.Project).filter(models.Project.is_deleted == False)
+
+    exclude_project_status_ids = []
+    done_project_status_ids = [d_id for d_id in done_ids if d_id != removed_id]
+    if not include_done:
+        exclude_project_status_ids.extend(done_project_status_ids)
+    if not include_removed:
+        exclude_project_status_ids.append(removed_id)
+
+    if exclude_project_status_ids:
+        query = query.filter((models.Project.status_id == None) | (~models.Project.status_id.in_(exclude_project_status_ids)))
+
+    return query.order_by(models.Project.sort_order, models.Project.id).all()
+
 def duplicate_items(db: Session, req: schemas.DuplicateRequest):
     # Get all projects, tasks, subtasks to be duplicated
     # Filter out children if parent is also selected to be duplicated

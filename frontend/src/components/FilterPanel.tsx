@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Filter, ChevronDown, ChevronUp, Search, Settings2, RotateCcw, Tag } from 'lucide-react';
 import { InitialData, Marker } from '../types';
-import { Project } from '../types/wbs';
+import { ProjectOption } from '../types/wbs';
 export * from './FilterPanel/FilterPanelTypes';
 import { FilterState, DisplayOptions } from './FilterPanel/FilterPanelTypes';
 import FilterControls from './FilterPanel/FilterControls';
@@ -20,7 +20,7 @@ interface FilterPanelProps {
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   displayOptions: DisplayOptions;
   setDisplayOptions: React.Dispatch<React.SetStateAction<DisplayOptions>>;
-  projects: Project[];
+  projects: ProjectOption[];
   initialData: InitialData | null;
   markers: Marker[];
   onClear: () => void;

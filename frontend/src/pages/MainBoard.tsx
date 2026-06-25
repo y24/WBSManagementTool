@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, UIEvent, useMemo } from 'react';
 import { wbsOps } from '../api/wbsOperations';
 import { apiClient, getInitialData, getMarkers } from '../api/client';
-import { WBSResponse, Project } from '../types/wbs';
+import { WBSResponse, Project, ProjectOption } from '../types/wbs';
 import { InitialData, Marker } from '../types';
 import FilterPanel, { DisplayOptions, FilterState } from '../components/FilterPanel';
 import MainBoardContent from './mainboard/MainBoardContent';
@@ -28,6 +28,7 @@ import LoadingOverlay from '../components/LoadingOverlay';
 import { addDays, format, parseISO } from 'date-fns';
 import { getDateX } from '../utils/ganttUtils';
 import { showErrorToastUnlessNetworkError } from '../utils/toast';
+import { parseStatusMapping } from '../utils/subtaskStatusAutoUpdates';
 import { useCurrentDateString } from '../hooks/useCurrentDateString';
 
 type WBSRefreshOptions = boolean | {
@@ -49,6 +50,7 @@ const RESOURCE_DONE_PROJECT_FETCH_WINDOW_DAYS = 89;
 
 export default function MainBoard() {
   const [data, setData] = useState<WBSResponse | null>(null);
+  const [projectOptions, setProjectOptions] = useState<ProjectOption[]>([]);
   const [initialData, setInitialData] = useState<InitialData | null>(null);
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,6 +93,7 @@ export default function MainBoard() {
   }, []);
 
   const isFetchingRef = useRef(false);
+  const fetchingDoneProjectIdsRef = useRef<Set<number>>(new Set());
 
   const fetchData = useCallback(
     async (options: WBSRefreshOptions = false) => {
@@ -136,15 +139,19 @@ export default function MainBoard() {
         const doneWindowEnd = isResourceView
           ? format(addDays(parseISO(currentTodayStr), resourceDoneProjectWindowDays), 'yyyy-MM-dd')
           : undefined;
-        const wbsRes = await wbsOps.getWBS({
-          includeDone: isResourceView || displayOptions.showDoneProjects,
-          includeRemoved: true,
-          weeks: isResourceView ? Math.ceil(resourceScopeDays / 7) : 8,
-          refreshOngoingEndDates: !skipStatusAutoRefresh,
-          doneProjectWindowStart: doneWindowStart,
-          doneProjectWindowEnd: doneWindowEnd,
-        });
+        const [wbsRes, projectOptionsRes] = await Promise.all([
+          wbsOps.getWBS({
+            includeDone: isResourceView || displayOptions.showDoneProjects,
+            includeRemoved: true,
+            weeks: isResourceView ? Math.ceil(resourceScopeDays / 7) : 8,
+            refreshOngoingEndDates: !skipStatusAutoRefresh,
+            doneProjectWindowStart: doneWindowStart,
+            doneProjectWindowEnd: doneWindowEnd,
+          }),
+          wbsOps.getProjectOptions({ includeDone: true, includeRemoved: true }),
+        ]);
         setData(wbsRes.data);
+        setProjectOptions(projectOptionsRes.data);
         wbsTreeVersionRef.current = wbsRes.data.tree_version;
 
         const prevInitialDataVersion = initialDataVersionRef.current;
@@ -299,6 +306,50 @@ export default function MainBoard() {
     window.addEventListener('refresh-wbs', handleRefresh);
     return () => window.removeEventListener('refresh-wbs', handleRefresh);
   }, [fetchData]);
+
+  useEffect(() => {
+    if (!data || !initialData || displayOptions.showDoneProjects) return;
+
+    const doneStatusIds = parseStatusMapping(initialData.status_mapping_done, [4, 7]);
+
+    const loadedProjectIds = new Set(data.projects.map((project) => project.id));
+    const selectedProjectIds = new Set(filters.projectIds);
+
+    const targetIds = projectOptions
+      .filter((project) => project.status_id != null && doneStatusIds.includes(project.status_id))
+      .filter((project) => selectedProjectIds.has(project.id))
+      .filter((project) => !loadedProjectIds.has(project.id))
+      .filter((project) => !fetchingDoneProjectIdsRef.current.has(project.id))
+      .map((project) => project.id);
+
+    if (targetIds.length === 0) return;
+
+    targetIds.forEach((id) => fetchingDoneProjectIdsRef.current.add(id));
+
+    wbsOps.getWBS({
+      projectIds: targetIds,
+      includeDone: true,
+      includeRemoved: true,
+      refreshOngoingEndDates: false,
+    })
+      .then((response) => {
+        setData((current) => {
+          if (!current) return current;
+          const mergedProjects = new Map(current.projects.map((project) => [project.id, project]));
+          response.data.projects.forEach((project: Project) => mergedProjects.set(project.id, project));
+          return {
+            ...current,
+            projects: Array.from(mergedProjects.values()).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id),
+          };
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        targetIds.forEach((id) => fetchingDoneProjectIdsRef.current.delete(id));
+      });
+  }, [data, displayOptions.showDoneProjects, filters.projectIds, initialData, projectOptions]);
 
   const filteredProjects = useFilteredProjects({ data, filters, initialData, displayOptions, currentTodayStr });
   const dynamicGanttRange = useDynamicGanttRange({ data, filteredProjects, currentTodayStr });
@@ -550,7 +601,7 @@ export default function MainBoard() {
         setFilters={setFilters}
         displayOptions={displayOptions}
         setDisplayOptions={setDisplayOptions}
-        projects={data?.projects || []}
+        projects={projectOptions}
         initialData={initialData}
         markers={markers}
         onClear={() => setFilters(createDefaultFilters())}

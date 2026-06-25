@@ -141,6 +141,14 @@ def export_wbs(
     )
 
 # --- Projects ---
+@router.get("/projects/options", response_model=List[schemas.ProjectOption])
+def read_project_options(
+    include_done: bool = False,
+    include_removed: bool = False,
+    db: Session = Depends(get_db),
+):
+    return crud.get_project_options(db, include_done, include_removed)
+
 @router.post("/projects", response_model=schemas.Project)
 def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)):
     db_proj = crud.create_project(db=db, project=project)

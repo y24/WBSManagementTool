@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { FilterState, DisplayOptions, UNASSIGNED_ASSIGNEE_ID } from '../../components/FilterPanel';
 import { InitialData } from '../../types';
 import { Project, Task, WBSResponse } from '../../types/wbs';
+import { parseStatusMapping } from '../../utils/subtaskStatusAutoUpdates';
 
 interface UseFilteredProjectsParams {
   data: WBSResponse | null;
@@ -32,7 +33,7 @@ export function useFilteredProjects({
     if (!data?.projects) return [];
 
     const todayStr = currentTodayStr;
-    const doneStatusId = initialData?.status_mapping_done ? Number.parseInt(initialData.status_mapping_done, 10) : null;
+    const doneStatusIds = initialData ? parseStatusMapping(initialData.status_mapping_done, [4, 7]) : [4, 7];
     const removedStatusId = initialData?.statuses.find((status) => status.status_name === 'Removed')?.id ?? 7;
     const newStatusId = initialData?.statuses.find((status) => status.status_name === 'New')?.id;
     const pendingStatusId = initialData?.statuses.find((status) => status.status_name === 'Pending')?.id;
@@ -61,8 +62,8 @@ export function useFilteredProjects({
         if (
           !isSelectedProject &&
           shouldHideDoneProjects &&
-          doneStatusId !== null &&
-          project.status_id === doneStatusId
+          project.status_id != null &&
+          doneStatusIds.includes(project.status_id)
         ) {
           return false;
         }
@@ -98,7 +99,7 @@ export function useFilteredProjects({
               }
 
               if (filters.onlyDelayed) {
-                const isDone = doneStatusId !== null && subtask.status_id === doneStatusId;
+                const isDone = doneStatusIds.includes(subtask.status_id);
                 const isNew = newStatusId !== undefined && subtask.status_id === newStatusId;
                 const isPending = pendingStatusId !== undefined && subtask.status_id === pendingStatusId;
                 const isStartDelayed = isNew && !!subtask.planned_start_date && subtask.planned_start_date < todayStr;
@@ -136,7 +137,7 @@ export function useFilteredProjects({
               }
 
               if (filters.onlyDelayed) {
-                const isDone = doneStatusId !== null && task.status_id === doneStatusId;
+                const isDone = task.status_id != null && doneStatusIds.includes(task.status_id);
                 const isNew = newStatusId !== undefined && task.status_id === newStatusId;
                 const isPending = pendingStatusId !== undefined && task.status_id === pendingStatusId;
                 const isStartDelayed = isNew && !!task.planned_start_date && task.planned_start_date < todayStr;
