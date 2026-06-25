@@ -115,11 +115,14 @@ def get_wbs_data(
             t_wbs.actual_effort_total = sum((s.actual_effort_days or Decimal('0')) for s in valid_subtasks)
             t_wbs.work_days_total = sum((s.work_days or Decimal('0')) for s in valid_subtasks)
             
-            # Weighted progress for Task
-            if valid_subtasks:
+            # Weighted progress for Task.
+            # Subtasks flagged as "対象外" (is_progress_excluded) are dropped from the
+            # progress average entirely so they don't drag the parent down with a 0%.
+            progress_subtasks = [s for s in valid_subtasks if not s.is_progress_excluded]
+            if progress_subtasks:
                 # We use planned_effort_days with fallback 1 only for progress weighting.
-                progress_weight_total = sum(get_progress_weight(s) for s in valid_subtasks)
-                weighted_sum = sum((Decimal(str(s.progress_percent or 0)) * get_progress_weight(s)) for s in valid_subtasks)
+                progress_weight_total = sum(get_progress_weight(s) for s in progress_subtasks)
+                weighted_sum = sum((Decimal(str(s.progress_percent or 0)) * get_progress_weight(s)) for s in progress_subtasks)
                 t_wbs.progress_percent = int(round(float(weighted_sum) / float(progress_weight_total)))
             else:
                 t_wbs.progress_percent = 0
@@ -259,6 +262,7 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
                     memo=orig_s.memo,
                     sort_order=orig_s.sort_order,
                     is_auto_effort=orig_s.is_auto_effort,
+                    is_progress_excluded=orig_s.is_progress_excluded,
                     workload_percent=orig_s.workload_percent
                 )
                 db.add(new_s)
@@ -313,6 +317,7 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
                 memo=orig_s.memo,
                 sort_order=orig_s.sort_order,
                 is_auto_effort=orig_s.is_auto_effort,
+                is_progress_excluded=orig_s.is_progress_excluded,
                 workload_percent=orig_s.workload_percent
             )
             db.add(new_s)
@@ -345,6 +350,7 @@ def duplicate_items(db: Session, req: schemas.DuplicateRequest):
             memo=orig_s.memo,
             sort_order=max_sort + 1,
             is_auto_effort=orig_s.is_auto_effort,
+            is_progress_excluded=orig_s.is_progress_excluded,
             workload_percent=orig_s.workload_percent
         )
         db.add(new_s)

@@ -197,6 +197,7 @@ class Subtask(Base):
     memo = Column(Text, nullable=True)
     sort_order = Column(Integer, nullable=False, default=0)
     is_auto_effort = Column(Boolean, nullable=False, default=True)
+    is_progress_excluded = Column(Boolean, nullable=False, default=False)
     workload_percent = Column(Integer, nullable=False, default=100)
     is_deleted = Column(Boolean, nullable=False, default=False)
     sync_to_azure_devops = Column(Boolean, nullable=False, default=True)

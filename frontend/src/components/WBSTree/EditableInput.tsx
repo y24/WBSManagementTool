@@ -15,6 +15,14 @@ interface EditableInputProps {
   readOnly?: boolean;
   isAuto?: boolean;
   onToggleAuto?: (isAuto: boolean) => void;
+  /** Label shown next to the popover toggle checkbox (default: "自動"). */
+  toggleLabel?: string;
+  /**
+   * When true, the `isAuto` flag is treated as an "対象外" (excluded) state instead of
+   * "auto-calculated": the value is rendered muted/gray with the toggle label as text,
+   * rather than the blue "auto" styling.
+   */
+  autoIsExclusion?: boolean;
   highlight?: boolean;
   autoPercent?: boolean;
   onInputChange?: (value: number | null) => void;
@@ -37,6 +45,7 @@ interface DisplayViewProps {
   suffix?: string;
   precision?: number;
   isAuto?: boolean;
+  autoIsExclusion?: boolean;
   isActuallyReadOnly: boolean;
   readOnly?: boolean;
   highlight?: boolean;
@@ -46,22 +55,38 @@ interface DisplayViewProps {
 }
 
 const DisplayView = ({
-  type, value, isAuto, isActuallyReadOnly, readOnly, highlight, className, onClick, displayValue
-}: DisplayViewProps) => (
-  <div
-    className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1 
-      ${!isActuallyReadOnly ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5' : 'cursor-default'} 
-      ${isActuallyReadOnly ? 'bg-gray-50/30 dark:bg-slate-800/30' : ''} 
-      ${isAuto ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-slate-300'} 
-      ${type === 'number' ? 'border border-gray-200 dark:border-slate-700 bg-gray-50/30 dark:bg-slate-800/30 rounded' : ''} 
-      ${highlight ? 'bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/50' : ''} 
-      ${className}`}
-    onClick={onClick}
-    title={isAuto ? "自動算出中 (クリックで設定変更可能)" : (readOnly ? "入力不可" : (type === 'date' && value ? formatDateForInput(value) : String(value || "未入力")))}
-  >
-    {displayValue()}
-  </div>
-);
+  type, value, isAuto, autoIsExclusion, isActuallyReadOnly, readOnly, highlight, className, onClick, displayValue
+}: DisplayViewProps) => {
+  // "対象外" (excluded) renders muted/gray; "自動" (auto-calculated) renders blue.
+  const isExcluded = isAuto && autoIsExclusion;
+  const textColor = isAuto
+    ? (autoIsExclusion
+        ? 'text-gray-500 dark:text-slate-400 italic'
+        : 'text-blue-600 dark:text-blue-400 font-medium')
+    : 'text-gray-700 dark:text-slate-300';
+  const autoTitle = autoIsExclusion ? "進捗率計算の対象外 (クリックで設定変更可能)" : "自動算出中 (クリックで設定変更可能)";
+  // 数値セルの枠/背景。対象外の灰色塗りはセル全体に敷くため（呼び出し側）、ここでは枠線のみ少し濃くする。
+  const numberCellClasses = type === 'number'
+    ? (isExcluded
+        ? 'border border-gray-300 dark:border-slate-600 bg-transparent rounded'
+        : 'border border-gray-200 dark:border-slate-700 bg-gray-50/30 dark:bg-slate-800/30 rounded')
+    : '';
+  return (
+    <div
+      className={`w-full h-full flex items-center transition-colors overflow-hidden truncate px-1
+        ${!isActuallyReadOnly ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5' : 'cursor-default'}
+        ${isActuallyReadOnly ? 'bg-gray-50/30 dark:bg-slate-800/30' : ''}
+        ${textColor}
+        ${numberCellClasses}
+        ${highlight ? 'bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100/50 dark:hover:bg-yellow-900/50' : ''}
+        ${className}`}
+      onClick={onClick}
+      title={isAuto ? autoTitle : (readOnly ? "入力不可" : (type === 'date' && value ? formatDateForInput(value) : String(value || "未入力")))}
+    >
+      {displayValue()}
+    </div>
+  );
+};
 
 /**
  * ポップアップエディタ (Date or Auto付きNumber)
@@ -70,14 +95,19 @@ interface PopoverEditorProps {
   type: string;
   isAuto?: boolean;
   onToggleAuto?: (isAuto: boolean) => void;
+  toggleLabel?: string;
   onPickerToggle: (e: React.MouseEvent) => void;
   children: React.ReactNode;
 }
 
 const PopoverEditor = ({
-  type, isAuto, onToggleAuto, onPickerToggle, children
+  type, isAuto, onToggleAuto, toggleLabel = '自動', onPickerToggle, children
 }: PopoverEditorProps) => {
-  const width = type === 'date' ? (onToggleAuto ? '220px' : '160px') : (onToggleAuto ? '180px' : '100px');
+  // Wider toggle labels (e.g. "対象外") need a bit more room than the default "自動".
+  const toggleWide = onToggleAuto && toggleLabel.length > 2;
+  const width = type === 'date'
+    ? (onToggleAuto ? '220px' : '160px')
+    : (onToggleAuto ? (toggleWide ? '200px' : '180px') : '100px');
 
   return (
     <div className="absolute left-0 top-0 z-[1000] flex items-center bg-white dark:bg-slate-800 shadow-2xl border-2 border-blue-500 rounded ring-4 ring-blue-500/10 whitespace-nowrap overflow-hidden"
@@ -117,7 +147,7 @@ const PopoverEditor = ({
             readOnly
             className="w-3.5 h-3.5 rounded border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-blue-600 focus:ring-blue-500 cursor-pointer pointer-events-none"
           />
-          <span className="text-[11px] text-blue-700 dark:text-blue-400 font-bold">自動</span>
+          <span className="text-[11px] text-blue-700 dark:text-blue-400 font-bold whitespace-nowrap">{toggleLabel}</span>
         </div>
       )}
     </div>
@@ -125,7 +155,7 @@ const PopoverEditor = ({
 };
 
 const EditableInput = memo(({
-  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, highlight, autoPercent, onInputChange, placeholder, isFocused, onFocusChange, onEditingChange, onTab, isEditing: isGlobalEditing, nameWidth, clearValue
+  value, onChange, type = "text", className = "", min, max, step, precision, suffix, readOnly, isAuto, onToggleAuto, toggleLabel, autoIsExclusion, highlight, autoPercent, onInputChange, placeholder, isFocused, onFocusChange, onEditingChange, onTab, isEditing: isGlobalEditing, nameWidth, clearValue
 }: EditableInputProps) => {
   const [val, setVal] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -437,6 +467,10 @@ const EditableInput = memo(({
       if (isAuto) return <span className="text-gray-400 dark:text-slate-500 text-[10px] italic font-bold">(自動)</span>;
       return <span className="text-gray-300 dark:text-slate-600 text-[10px]">--/--</span>;
     }
+    // 進捗率の「対象外」など、除外フラグONの数値項目は値の代わりにラベルを表示
+    if (isAuto && autoIsExclusion) {
+      return <span className="text-gray-400 dark:text-slate-500 text-[10px] italic font-bold">{toggleLabel || '対象外'}</span>;
+    }
     if (value == null || value === '') return <span className="text-gray-300 dark:text-slate-600 text-[10px]">-</span>;
 
     let formattedValue = value;
@@ -462,6 +496,7 @@ const EditableInput = memo(({
         suffix={suffix}
         precision={precision}
         isAuto={isAuto}
+        autoIsExclusion={autoIsExclusion}
         isActuallyReadOnly={isActuallyReadOnly}
         readOnly={readOnly}
         highlight={highlight}
@@ -540,6 +575,7 @@ const EditableInput = memo(({
           type={type}
           isAuto={isAuto}
           onToggleAuto={onToggleAuto}
+          toggleLabel={toggleLabel}
           onPickerToggle={(e: React.MouseEvent) => {
             e.stopPropagation();
             try { (datePickerRef.current as any)?.showPicker(); } catch (err) { datePickerRef.current?.click(); }

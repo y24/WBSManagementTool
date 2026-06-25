@@ -226,13 +226,16 @@ const SubtaskRow = memo(({
           nameWidth={nameWidth}
         />
       </div>
-      <div className={`w-24 ${dateCellClasses} overflow-hidden`} style={{ scrollMarginLeft: nameWidth }}>
-        {(localProgress != null) && (
+      <div className={`w-24 ${dateCellClasses}`} style={{ scrollMarginLeft: nameWidth }}>
+        {subtask.is_progress_excluded ? (
+          // 対象外: 緑バーの代わりにセル全体を薄い灰色で塗り、0% と区別する
+          <div className="absolute inset-0 bg-gray-200/70 dark:bg-slate-700/50 pointer-events-none" />
+        ) : (localProgress != null && (
           <div
             className="absolute top-0 left-0 h-full bg-green-500/20 dark:bg-green-500/30 transition-all duration-300 pointer-events-none"
             style={{ width: `${localProgress}%` }}
           />
-        )}
+        ))}
         <div className="relative z-10 w-full h-full flex items-center">
           <EditableInput
             type="number"
@@ -243,6 +246,10 @@ const SubtaskRow = memo(({
             max={100}
             suffix="%"
             autoPercent={true}
+            isAuto={!!subtask.is_progress_excluded}
+            onToggleAuto={(v: boolean) => onUpdateField('subtask', subtask.id, 'is_progress_excluded', v)}
+            toggleLabel="対象外"
+            autoIsExclusion={true}
             isFocused={focusedField === 'progress'}
             onFocusChange={() => onFocusChange?.(`s-${subtask.id}`, 'progress')}
             onEditingChange={onEditingChange}

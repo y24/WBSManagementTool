@@ -175,7 +175,7 @@ def get_dashboard_data(db: Session) -> schemas.DashboardData:
     low_progress_soon = []
     for s in all_subtasks_base:
         if s.planned_end_date and monday <= s.planned_end_date <= sunday:
-            if s.status_id != done_id and (s.progress_percent or 0) < 50:
+            if s.status_id != done_id and not s.is_progress_excluded and (s.progress_percent or 0) < 50:
                 low_progress_soon.append(schemas.SubtaskSummary(
                     id=s.id,
                     task_name=s.task.task_name,

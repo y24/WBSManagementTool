@@ -35,6 +35,7 @@ export interface Subtask {
   sync_to_azure_devops?: boolean;
   sort_order: number;
   is_auto_effort: boolean;
+  is_progress_excluded?: boolean;
   workload_percent?: number | null;
   is_deleted: boolean;
   project_name?: string;

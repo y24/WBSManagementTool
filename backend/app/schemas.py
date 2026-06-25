@@ -123,6 +123,7 @@ class SubtaskBase(BaseModel):
     memo: Optional[str] = None
     sync_to_azure_devops: bool = True
     is_auto_effort: bool = True
+    is_progress_excluded: bool = False
     workload_percent: int = 100
     sort_order: int = 0
 
@@ -153,6 +154,7 @@ class SubtaskUpdate(BaseModel):
     memo: Optional[str] = None
     sync_to_azure_devops: Optional[bool] = None
     is_auto_effort: Optional[bool] = None
+    is_progress_excluded: Optional[bool] = None
     workload_percent: Optional[int] = None
     sort_order: Optional[int] = None
     skip_status_auto_update: Optional[bool] = False
@@ -164,6 +166,7 @@ class Subtask(SubtaskBase):
     status_id: int
     assignee_id: Optional[int]
     is_auto_effort: bool
+    is_progress_excluded: bool
     workload_percent: int
     is_deleted: bool
     created_at: datetime
