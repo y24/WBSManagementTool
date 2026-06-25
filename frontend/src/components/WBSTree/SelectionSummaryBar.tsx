@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { Calculator, ListChecks } from 'lucide-react';
+import { Calculator, CalendarRange, ListChecks } from 'lucide-react';
 import { SelectedSubtaskSummary } from './hooks/useWBSSelection';
 
 interface SelectionSummaryBarProps {
@@ -14,6 +14,8 @@ const effortFormatter = new Intl.NumberFormat('ja-JP', {
 });
 
 const formatEffort = (value: number) => `${effortFormatter.format(value)}人日`;
+
+const formatDate = (dateStr: string | null) => dateStr?.split('T')[0].replace(/-/g, '/') ?? '—';
 
 const SelectionSummaryBar: React.FC<SelectionSummaryBarProps> = ({ summary, visible }) => {
   const shouldRender = visible || summary.count > 0;
@@ -36,6 +38,42 @@ const SelectionSummaryBar: React.FC<SelectionSummaryBarProps> = ({ summary, visi
             {summary.count}
           </span>
         </div>
+
+        {(summary.plannedStartDate || summary.plannedEndDate) && (
+          <div
+            className="flex items-center gap-2"
+            title="選択中サブタスクの予定開始日（最小）〜予定終了日（最大）"
+          >
+            <CalendarRange size={14} className="text-slate-400" />
+            <span className="text-slate-500 dark:text-slate-400">予定期間</span>
+            <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+              {formatDate(summary.plannedStartDate)} 〜 {formatDate(summary.plannedEndDate)}
+            </span>
+            {summary.plannedBusinessDays > 0 && (
+              <span className="rounded bg-slate-100 px-1.5 py-0.5 tabular-nums text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {summary.plannedBusinessDays}営業日
+              </span>
+            )}
+          </div>
+        )}
+
+        {(summary.actualStartDate || summary.actualEndDate) && (
+          <div
+            className="flex items-center gap-2"
+            title="選択中サブタスクの実績開始日（最小）〜実績終了日（最大）"
+          >
+            <CalendarRange size={14} className="text-emerald-500/80" />
+            <span className="text-slate-500 dark:text-slate-400">実績期間</span>
+            <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+              {formatDate(summary.actualStartDate)} 〜 {formatDate(summary.actualEndDate)}
+            </span>
+            {summary.actualBusinessDays > 0 && (
+              <span className="rounded bg-slate-100 px-1.5 py-0.5 tabular-nums text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {summary.actualBusinessDays}営業日
+              </span>
+            )}
+          </div>
+        )}
 
         <div
           className="flex items-center gap-2"

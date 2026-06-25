@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, forwardRef, useCallback } from 'react';
+import React, { useRef, useEffect, useState, forwardRef, useCallback, useMemo } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { Project, Subtask } from '../types/wbs';
 import { InitialData } from '../types';
@@ -67,7 +67,8 @@ const WBSTree = forwardRef<HTMLDivElement, WBSTreeProps>(({
   const [isInterruptionModalOpen, setIsInterruptionModalOpen] = useState(false);
 
   // Selection Hook
-  const selection = useWBSSelection(projects);
+  const holidays = useMemo(() => initialData?.holidays.map(h => h.holiday_date) ?? [], [initialData]);
+  const selection = useWBSSelection(projects, holidays);
   const { checkedIds, setCheckedIds, toggleCheckProject, toggleCheckTask, toggleCheckSubtask, totalSelectedCount, selectedIds, selectedCounts, minimalIds, selectedSubtaskSummary, clearSelection } = selection;
   const showSelectionSummary = selectedSubtaskSummary.count >= 2;
 

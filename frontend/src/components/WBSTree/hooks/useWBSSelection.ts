@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
+import { parseISO } from 'date-fns';
 import { Project, Subtask, Task } from '../../../types/wbs';
+import { getBusinessDaysCount } from '../utils';
 
 export interface SelectedSubtaskSummary {
   count: number;
@@ -7,11 +9,17 @@ export interface SelectedSubtaskSummary {
   actualEffortDays: number;
   plannedEffortInputCount: number;
   actualEffortInputCount: number;
+  plannedStartDate: string | null;
+  plannedEndDate: string | null;
+  plannedBusinessDays: number;
+  actualStartDate: string | null;
+  actualEndDate: string | null;
+  actualBusinessDays: number;
 }
 
 const roundEffort = (value: number) => Math.round(value * 10) / 10;
 
-export const useWBSSelection = (projects: Project[]) => {
+export const useWBSSelection = (projects: Project[], holidays: string[] = []) => {
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
   const [lastCheckedId, setLastCheckedId] = useState<string | null>(null);
 
@@ -139,6 +147,10 @@ export const useWBSSelection = (projects: Project[]) => {
     let actualEffortDays = 0;
     let plannedEffortInputCount = 0;
     let actualEffortInputCount = 0;
+    let minPlannedStart: string | null = null;
+    let maxPlannedEnd: string | null = null;
+    let minActualStart: string | null = null;
+    let maxActualEnd: string | null = null;
     const pIds: number[] = [];
     const tIds: number[] = [];
     const sIds: number[] = [];
@@ -158,6 +170,26 @@ export const useWBSSelection = (projects: Project[]) => {
       if (subtask.actual_effort_days != null) {
         actualEffortInputCount++;
         actualEffortDays += Number(subtask.actual_effort_days) || 0;
+      }
+
+      if (subtask.planned_start_date) {
+        const start = subtask.planned_start_date.split('T')[0];
+        if (!minPlannedStart || start < minPlannedStart) minPlannedStart = start;
+      }
+
+      if (subtask.planned_end_date) {
+        const end = subtask.planned_end_date.split('T')[0];
+        if (!maxPlannedEnd || end > maxPlannedEnd) maxPlannedEnd = end;
+      }
+
+      if (subtask.actual_start_date) {
+        const start = subtask.actual_start_date.split('T')[0];
+        if (!minActualStart || start < minActualStart) minActualStart = start;
+      }
+
+      if (subtask.actual_end_date) {
+        const end = subtask.actual_end_date.split('T')[0];
+        if (!maxActualEnd || end > maxActualEnd) maxActualEnd = end;
       }
     };
 
@@ -185,6 +217,13 @@ export const useWBSSelection = (projects: Project[]) => {
       });
     });
 
+    const plannedBusinessDays = minPlannedStart && maxPlannedEnd
+      ? getBusinessDaysCount(parseISO(minPlannedStart), parseISO(maxPlannedEnd), holidays)
+      : 0;
+    const actualBusinessDays = minActualStart && maxActualEnd
+      ? getBusinessDaysCount(parseISO(minActualStart), parseISO(maxActualEnd), holidays)
+      : 0;
+
     return {
       selectedCounts: { pCount, tCount, sCount },
       totalSelectedCount: pCount + tCount + sCount,
@@ -195,10 +234,16 @@ export const useWBSSelection = (projects: Project[]) => {
         plannedEffortDays: roundEffort(plannedEffortDays),
         actualEffortDays: roundEffort(actualEffortDays),
         plannedEffortInputCount,
-        actualEffortInputCount
+        actualEffortInputCount,
+        plannedStartDate: minPlannedStart,
+        plannedEndDate: maxPlannedEnd,
+        plannedBusinessDays,
+        actualStartDate: minActualStart,
+        actualEndDate: maxActualEnd,
+        actualBusinessDays
       }
     };
-  }, [projects, checkedIds]);
+  }, [projects, checkedIds, holidays]);
 
   const clearSelection = useCallback(() => {
     setCheckedIds({});
