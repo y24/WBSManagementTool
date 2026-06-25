@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from datetime import date
 from .. import models, schemas
-from .recalc import recalculate_task_dates, recalculate_task_status, recalculate_project_dates
+from .recalc import recalculate_task_dates, recalculate_project_dates, recalculate_project_status
 from .base import get_status_ids_by_category
 
 # --- Tasks ---
@@ -69,10 +69,16 @@ def update_task(db: Session, task_id: int, task: schemas.TaskUpdate):
         if new_project_id != old_project_id:
             recalculate_project_dates(db, old_project_id)
     
-    # Recalculate status only if we didn't explicitly update it
-    if "status_id" not in update_dict:
-        recalculate_task_status(db, task_id)
-        
+    # NOTE: Do NOT recalculate status here. A task's status is derived from its
+    # subtasks, so editing the task's own fields (e.g. its name) can never change
+    # the computed status. Status sync is driven from the child side
+    # (update_subtask -> recalculate_task_status). Recalculating on a self-edit
+    # would clobber a manually-set status (e.g. Pending).
+    # When a task is moved to a different project, refresh both projects' status.
+    if new_project_id != old_project_id:
+        recalculate_project_status(db, old_project_id)
+        recalculate_project_status(db, new_project_id)
+
     db.refresh(db_task)
     return db_task
 

@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from datetime import date
 from .. import models, schemas
-from .recalc import recalculate_project_dates, recalculate_project_status
+from .recalc import recalculate_project_dates
 from .base import get_status_ids_by_category
 
 # --- Projects ---
@@ -53,11 +53,13 @@ def update_project(db: Session, project_id: int, project: schemas.ProjectUpdate)
     # Recalculate if auto-date is enabled
     if db_project.is_auto_planned_date or db_project.is_auto_actual_date:
         recalculate_project_dates(db, project_id)
-    
-    # Recalculate status only if we didn't explicitly update it
-    if "status_id" not in update_dict:
-        recalculate_project_status(db, project_id)
-        
+
+    # NOTE: Do NOT recalculate status here. A project's status is derived from
+    # its tasks, so editing the project's own fields (e.g. its name) can never
+    # change the computed status. Status sync is driven from the child side
+    # (update_task -> recalculate_task_status -> recalculate_project_status).
+    # Recalculating on a self-edit would clobber a manually-set status (e.g. Pending).
+
     db.refresh(db_project)
     return db_project
 
