@@ -307,6 +307,16 @@ const DetailModal = ({
                       const v = e.target.value.replace(/[^0-9]/g, '');
                       setTicketIdValue(v);
                     }}
+                    onKeyDown={(e) => {
+                      // Tab（Shift+Tab以外）で候補ではなく「詳細」入力欄へフォーカスを移動する
+                      if (e.key === 'Tab' && !e.shiftKey) {
+                        const detailInput = document.getElementById('modal-detail-input');
+                        if (detailInput) {
+                          e.preventDefault();
+                          (detailInput as HTMLInputElement).focus();
+                        }
+                      }
+                    }}
                     placeholder="チケットIDを入力..."
                   />
                   {editingType === 'project' && ticketIdValue && (
