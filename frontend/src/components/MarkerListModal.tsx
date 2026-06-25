@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, Plus, Edit2, Trash2, Calendar, MessageSquare, Palette, Check, AlertTriangle } from 'lucide-react';
+import { X, Tag, Plus, Edit2, Trash2, Calendar, MessageSquare, Palette, Check, AlertTriangle, Search } from 'lucide-react';
 import { Marker } from '../types';
 import { apiClient } from '../api/client';
 import { format, parseISO } from 'date-fns';
@@ -42,6 +42,7 @@ const MarkerListModal: React.FC<MarkerListModalProps> = ({
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [localMarkers, setLocalMarkers] = useState<Marker[]>(markers);
+  const [nameFilter, setNameFilter] = useState('');
 
   useEffect(() => {
     setLocalMarkers(markers);
@@ -82,6 +83,11 @@ const MarkerListModal: React.FC<MarkerListModalProps> = ({
   }, [isOpen, showConfirm, editingId, editForm, onClose]);
 
   if (!isOpen) return null;
+
+  // マーカー名でフィルタし、日付が新しい順に並べる
+  const displayMarkers = localMarkers
+    .filter(m => m.name.toLowerCase().includes(nameFilter.trim().toLowerCase()))
+    .sort((a, b) => b.marker_date.localeCompare(a.marker_date));
 
   const handleEditClick = (marker: Marker) => {
     if (isChanged()) {
@@ -198,6 +204,29 @@ const MarkerListModal: React.FC<MarkerListModalProps> = ({
           </div>
         </div>
 
+        {/* Filter */}
+        <div className="px-6 pt-4 pb-3 border-b dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 shrink-0">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+              placeholder="マーカー名で絞り込み"
+              className="w-full pl-9 pr-9 py-2 border border-gray-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+            />
+            {nameFilter && (
+              <button
+                onClick={() => setNameFilter('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                title="クリア"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950/50">
           <div className="space-y-3">
@@ -211,13 +240,15 @@ const MarkerListModal: React.FC<MarkerListModalProps> = ({
               />
             )}
             
-            {localMarkers.length === 0 && editingId !== 'new' && (
+            {displayMarkers.length === 0 && editingId !== 'new' && (
               <div className="text-center py-10 text-gray-500 dark:text-slate-400 text-sm">
-                登録されているマーカーはありません。
+                {localMarkers.length === 0
+                  ? '登録されているマーカーはありません。'
+                  : '該当するマーカーはありません。'}
               </div>
             )}
 
-            {localMarkers.sort((a, b) => a.marker_date.localeCompare(b.marker_date)).map(marker => (
+            {displayMarkers.map(marker => (
               editingId === marker.id ? (
                 <MarkerEditRow
                   key={marker.id}
